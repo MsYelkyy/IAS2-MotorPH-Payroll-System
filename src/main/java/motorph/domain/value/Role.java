@@ -1,18 +1,26 @@
 package motorph.domain.value;
 
 /**
- * Enumeration defining the different user roles in the MotorPH payroll system.
- * Each role has specific permissions and features:
- * - ADMIN: Payroll administration and oversight
- * - HR: Employee management, attendance, and leave approvals
- * - IT: System configuration, user management, and security
- * - EMPLOYEE: View personal profile, attendance, and payslips
- * - FINANCE: Payroll processing and report generation
+ * Represents the role of a user in the system.
  */
 public enum Role {
+
     ADMIN,
     HR,
-    IT,
-    EMPLOYEE,
     FINANCE,
+    IT,
+    EMPLOYEE;
+
+    // converts text to role
+    public static Role fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Role is required.");
+        }
+
+        try {
+            return Role.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid role: " + value);
+        }
+    }
 }
