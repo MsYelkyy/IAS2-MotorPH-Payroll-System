@@ -4,7 +4,13 @@ import motorph.domain.model.LeaveRequest;
 import motorph.domain.value.LeaveStatus;
 import motorph.infrastructure.config.DatabaseConnection;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,156 +19,260 @@ import java.util.List;
  */
 public class LeaveRepository {
 
-    // find all leave requests
+    private static final String BASE_SELECT = """
+            SELECT lr.leave_request_id,
+                   lr.employee_id,
+                   lr.leave_type_id,
+                   lr.start_date,
+                   lr.end_date,
+                   lr.leave_hours,
+                   lr.reason,
+                   lr.leave_status_id,
+                   lr.date_submitted,
+                   ls.leave_status_name
+            FROM leave_request lr
+            JOIN leave_status ls ON lr.leave_status_id = ls.leave_status_id
+            """;
+
+    // finds all leave requests
     public List<LeaveRequest> findAll() {
-        List<LeaveRequest> list = new ArrayList<>();
-        String sql = "SELECT * FROM leave_request";
+        List<LeaveRequest> requests = new ArrayList<>();
+        String sql = BASE_SELECT + " ORDER BY lr.date_submitted DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                list.add(mapRow(rs));
+                requests.add(mapRow(rs));
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find leave requests.", e);
         }
 
-        return list;
+        return requests;
     }
 
-    // find leave by id
+    // finds leave request by id
     public LeaveRequest findById(int leaveRequestId) {
-        String sql = "SELECT * FROM leave_request WHERE leave_request_id = ?";
+        String sql = BASE_SELECT + " WHERE lr.leave_request_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, leaveRequestId);
-            ResultSet rs = stmt.executeQuery();
 
-            if (rs.next()) {
-                return mapRow(rs);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find leave request by id.", e);
         }
 
         return null;
     }
 
-    // find leave by employee
+    // finds leave requests by employee
     public List<LeaveRequest> findByEmployeeId(int employeeId) {
-        List<LeaveRequest> list = new ArrayList<>();
-        String sql = "SELECT * FROM leave_request WHERE employee_id = ?";
+        List<LeaveRequest> requests = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE lr.employee_id = ? ORDER BY lr.date_submitted DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, employeeId);
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    requests.add(mapRow(rs));
+                }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find leave requests by employee id.", e);
         }
 
-        return list;
+        return requests;
     }
 
-    // find leave by status
+    // finds leave requests by status
     public List<LeaveRequest> findByStatus(LeaveStatus status) {
-        List<LeaveRequest> list = new ArrayList<>();
-        String sql = "SELECT * FROM leave_request WHERE request_status = ?";
+        List<LeaveRequest> requests = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE ls.leave_status_name = ? ORDER BY lr.date_submitted DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, status.name());
-            ResultSet rs = stmt.executeQuery();
 
-            while (rs.next()) {
-                list.add(mapRow(rs));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    requests.add(mapRow(rs));
+                }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find leave requests by status.", e);
         }
 
-        return list;
+        return requests;
     }
 
-    // find pending leave requests
+    // finds pending leave requests
     public List<LeaveRequest> findPending() {
         return findByStatus(LeaveStatus.PENDING);
     }
 
-    // insert leave request
-    public void save(LeaveRequest req) {
-        String sql = "INSERT INTO leave_request " +
-                "(employee_id, leave_type_id, start_date, end_date, leave_hours, reason, request_status, date_submitted) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    // finds leave requests within date range
+    public List<LeaveRequest> findByDateRange(LocalDate startDate, LocalDate endDate) {
+        List<LeaveRequest> requests = new ArrayList<>();
+        String sql = BASE_SELECT + " WHERE lr.start_date >= ? AND lr.end_date <= ? ORDER BY lr.start_date";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, req.getEmployeeId());
-            stmt.setInt(2, Integer.parseInt(req.getLeaveType()));
-            stmt.setDate(3, new java.sql.Date(req.getFromDate().getTime()));
-            stmt.setDate(4, new java.sql.Date(req.getToDate().getTime()));
-            stmt.setDouble(5, 0);
-            stmt.setString(6, req.getReason());
-            stmt.setString(7, req.getStatus().name());
-            stmt.setTimestamp(8, new Timestamp(req.getRequestDate().getTime()));
+            stmt.setDate(1, Date.valueOf(startDate));
+            stmt.setDate(2, Date.valueOf(endDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    requests.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find leave requests by date range.", e);
+        }
+
+        return requests;
+    }
+
+    // checks if employee has overlapping approved leave
+    public boolean hasConflict(int employeeId, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM leave_request lr
+                JOIN leave_status ls ON lr.leave_status_id = ls.leave_status_id
+                WHERE lr.employee_id = ?
+                  AND ls.leave_status_name = 'APPROVED'
+                  AND lr.start_date <= ?
+                  AND lr.end_date >= ?
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setDate(2, Date.valueOf(endDate));
+            stmt.setDate(3, Date.valueOf(startDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check leave conflict.", e);
+        }
+
+        return false;
+    }
+
+    // saves a leave request
+    public void save(LeaveRequest request) {
+        String sql = """
+                INSERT INTO leave_request (
+                    employee_id,
+                    leave_type_id,
+                    start_date,
+                    end_date,
+                    leave_hours,
+                    reason,
+                    leave_status_id,
+                    date_submitted
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, request.getEmployeeId());
+            stmt.setInt(2, request.getLeaveTypeId());
+            stmt.setDate(3, Date.valueOf(request.getStartDate()));
+            stmt.setDate(4, Date.valueOf(request.getEndDate()));
+            stmt.setDouble(5, request.getLeaveHours());
+            stmt.setString(6, request.getReason());
+            stmt.setInt(7, resolveLeaveStatusId(conn, request.getStatus()));
+            stmt.setTimestamp(8, Timestamp.valueOf(request.getRequestDate()));
 
             stmt.executeUpdate();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to save leave request.", e);
         }
     }
 
-    // update leave status
+    // updates leave request status
     public void updateStatus(int leaveRequestId, LeaveStatus status) {
-        String sql = "UPDATE leave_request SET request_status = ? WHERE leave_request_id = ?";
+        String sql = "UPDATE leave_request SET leave_status_id = ? WHERE leave_request_id = ?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setString(1, status.name());
+            stmt.setInt(1, resolveLeaveStatusId(conn, status));
             stmt.setInt(2, leaveRequestId);
-
             stmt.executeUpdate();
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update leave request status.", e);
         }
     }
 
-    // cancel leave request
+    // cancels a leave request
     public void cancel(int leaveRequestId) {
         updateStatus(leaveRequestId, LeaveStatus.CANCELLED);
     }
 
-    // maps result set to LeaveRequest
+    // maps result set to leave request
     private LeaveRequest mapRow(ResultSet rs) throws SQLException {
+        Timestamp submittedAt = rs.getTimestamp("date_submitted");
+
         return new LeaveRequest(
-                String.valueOf(rs.getInt("leave_request_id")),
+                rs.getInt("leave_request_id"),
                 rs.getInt("employee_id"),
-                rs.getTimestamp("date_submitted"),
-                rs.getDate("start_date"),
-                rs.getDate("end_date"),
+                submittedAt.toLocalDateTime(),
+                rs.getDate("start_date").toLocalDate(),
+                rs.getDate("end_date").toLocalDate(),
+                rs.getDouble("leave_hours"),
                 rs.getString("reason"),
-                String.valueOf(rs.getInt("leave_type_id")),
-                LeaveStatus.fromString(rs.getString("request_status")),
+                rs.getInt("leave_type_id"),
+                LeaveStatus.fromValue(rs.getString("leave_status_name")),
+                null,
                 null,
                 null
         );
+    }
+
+    // resolves leave status id
+    private int resolveLeaveStatusId(Connection conn, LeaveStatus status) throws SQLException {
+        String sql = "SELECT leave_status_id FROM leave_status WHERE leave_status_name = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, status.name());
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("leave_status_id");
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("Leave status not found: " + status);
     }
 }
