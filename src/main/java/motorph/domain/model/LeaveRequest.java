@@ -1,60 +1,113 @@
 package motorph.domain.model;
 
-import java.util.Date;
-
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import motorph.domain.value.LeaveStatus;
 
 /**
- * Represents a leave request with date range and reason.
+ * Represents a leave request in the system.
  */
 public class LeaveRequest extends Request {
 
-    private final Date from;
-    private final Date to;
+    private final LocalDate startDate;
+    private final LocalDate endDate;
+    private final double leaveHours;
     private final String reason;
-    private final String leaveType;
+    private final int leaveTypeId;
 
     // constructors
-    public LeaveRequest(String requestId, int employeeId, Date requestDate,
-                        Date from, Date to, String reason, String leaveType) {
+    public LeaveRequest(
+            Integer requestId,
+            int employeeId,
+            LocalDateTime requestDate,
+            LocalDate startDate,
+            LocalDate endDate,
+            double leaveHours,
+            String reason,
+            int leaveTypeId) {
 
-        this(requestId, employeeId, requestDate,
-                from, to, reason, leaveType,
-                LeaveStatus.PENDING, null, null);
+        this(
+                requestId,
+                employeeId,
+                requestDate,
+                startDate,
+                endDate,
+                leaveHours,
+                reason,
+                leaveTypeId,
+                LeaveStatus.PENDING,
+                null,
+                null,
+                null
+        );
     }
 
     // constructors
-    public LeaveRequest(String requestId, int employeeId, Date requestDate,
-                        Date from, Date to, String reason, String leaveType,
-                        LeaveStatus status, String reviewedBy, Date dateReviewed) {
+    public LeaveRequest(
+            Integer requestId,
+            int employeeId,
+            LocalDateTime requestDate,
+            LocalDate startDate,
+            LocalDate endDate,
+            double leaveHours,
+            String reason,
+            int leaveTypeId,
+            LeaveStatus status,
+            Integer approverAccountId,
+            String remarks,
+            LocalDateTime dateReviewed) {
 
-        super(requestId, employeeId, requestDate, status, reviewedBy, dateReviewed);
+        super(
+                requestId,
+                employeeId,
+                requestDate,
+                status,
+                approverAccountId,
+                remarks,
+                dateReviewed
+        );
 
-        this.from = copyDate(requireNonNull(from, "From date is required"));
-        this.to = copyDate(requireNonNull(to, "To date is required"));
-
-        if (this.from.after(this.to)) {
-            throw new IllegalArgumentException("From date cannot be after To date.");
-        }
-
-        this.reason = requireNonBlank(reason, "Reason is required");
-        this.leaveType = requireNonBlank(leaveType, "Leave type is required");
+        this.startDate = requireNonNull(startDate, "Start date is required.");
+        this.endDate = requireNonNull(endDate, "End date is required.");
+        validateDateRange(this.startDate, this.endDate);
+        this.leaveHours = validateLeaveHours(leaveHours);
+        this.reason = requireNonBlank(reason, "Reason is required.");
+        this.leaveTypeId = validatePositive(leaveTypeId, "Leave type ID must be positive.");
     }
 
     // getters
-    public Date getFromDate() {
-        return copyDate(from);
+    public LocalDate getStartDate() {
+        return startDate;
     }
 
-    public Date getToDate() {
-        return copyDate(to);
+    public LocalDate getEndDate() {
+        return endDate;
+    }
+
+    public double getLeaveHours() {
+        return leaveHours;
     }
 
     public String getReason() {
         return reason;
     }
 
-    public String getLeaveType() {
-        return leaveType;
+    public int getLeaveTypeId() {
+        return leaveTypeId;
+    }
+
+    // validates the leave date range
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date.");
+        }
+    }
+
+    // validates leave hours
+    private double validateLeaveHours(double leaveHours) {
+        if (leaveHours < 0) {
+            throw new IllegalArgumentException("Leave hours cannot be negative.");
+        }
+        return leaveHours;
     }
 }

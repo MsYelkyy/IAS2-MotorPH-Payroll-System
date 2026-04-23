@@ -1,15 +1,24 @@
 package motorph.domain.value;
 
+/**
+ * Represents the status of a user account.
+ */
 public enum AccountStatus {
+
     ACTIVE,
     DISABLED,
     LOCKED;
 
-    public static AccountStatus fromString(String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Account status cannot be null.");
+    // Converts text to account status.
+    public static AccountStatus fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Account status is required.");
         }
-        return AccountStatus.valueOf(value.trim().toUpperCase());
 
+        try {
+            return AccountStatus.valueOf(value.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid account status: " + value);
+        }
     }
 }

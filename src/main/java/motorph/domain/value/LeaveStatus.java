@@ -1,14 +1,19 @@
 package motorph.domain.value;
 
+/**
+ * Represents the status of a leave request.
+ */
 public enum LeaveStatus {
-        PENDING,
-        APPROVED,
-        REJECTED,
-        CANCELLED;
 
-    public static LeaveStatus fromString(String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Leave status cannot be null.");
+    PENDING,
+    APPROVED,
+    REJECTED,
+    CANCELLED;
+
+    // Converts text to leave status.
+    public static LeaveStatus fromValue(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException("Leave status is required.");
         }
 
         try {
@@ -16,9 +21,5 @@ public enum LeaveStatus {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid leave status: " + value);
         }
-    }
-
-    public boolean isFinal() {
-        return this == APPROVED || this == REJECTED || this == CANCELLED;
     }
 }
