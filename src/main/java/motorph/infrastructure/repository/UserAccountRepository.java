@@ -93,6 +93,43 @@ public class UserAccountRepository {
         return null;
     }
 
+    // Finds an account by user account id.
+    public UserAccount findById(int userAccountId) {
+        String sql = """
+            SELECT ua.user_account_id,
+                   ua.employee_id,
+                   ua.company_email,
+                   ua.username,
+                   ua.password_hash,
+                   ua.password_salt,
+                   ua.role_id,
+                   ua.is_locked,
+                   ua.is_active,
+                   ua.last_login_at,
+                   r.role_name
+            FROM user_account ua
+            JOIN role r ON ua.role_id = r.role_id
+            WHERE ua.user_account_id = ?
+            """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userAccountId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find user account by id.", e);
+        }
+
+        return null;
+    }
+
     // Finds an account by employee id.
     public UserAccount findByEmployeeId(int employeeId) {
         String sql = """
@@ -323,7 +360,12 @@ public class UserAccountRepository {
 
             stmt.setInt(1, resolveRoleId(conn, role));
             stmt.setInt(2, userAccountId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update account role.", e);
@@ -339,7 +381,12 @@ public class UserAccountRepository {
 
             stmt.setBoolean(1, isLocked);
             stmt.setInt(2, userAccountId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update account lock status.", e);
@@ -355,7 +402,12 @@ public class UserAccountRepository {
 
             stmt.setBoolean(1, isActive);
             stmt.setInt(2, userAccountId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update account active status.", e);
@@ -376,7 +428,12 @@ public class UserAccountRepository {
             stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
             stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
             stmt.setInt(3, userAccountId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update account password.", e);
@@ -391,7 +448,12 @@ public class UserAccountRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, userAccountId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update last login time.", e);

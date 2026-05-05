@@ -1,10 +1,8 @@
-CREATE DATABASE IF NOT EXISTS `motorph_db`;
-USE `motorph_db`;
--- MySQL dump 10.13  Distrib 8.0.45, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.46, for Win64 (x86_64)
 --
--- Host: localhost    Database: mydb
+-- Host: localhost    Database: motorph_db
 -- ------------------------------------------------------
--- Server version	8.0.45
+-- Server version	8.0.46
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -35,6 +33,7 @@ CREATE TABLE `attendance` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`attendance_id`),
+  UNIQUE KEY `uq_attendance_employee_work_date` (`employee_id`,`work_date`),
   KEY `fk_attendance_employee_idx` (`employee_id`),
   CONSTRAINT `fk_attendance_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5169 DEFAULT CHARSET=utf8mb3;
@@ -296,7 +295,8 @@ CREATE TABLE `leave_approval` (
   `leave_approval__id` int NOT NULL AUTO_INCREMENT,
   `leave_request_id` int NOT NULL,
   `approved_by` int NOT NULL,
-  `approved_at` date DEFAULT NULL,
+  `action` enum('APPROVED','REJECTED','CANCELLED','UPDATED') NOT NULL,
+  `action_at` datetime DEFAULT NULL,
   `remarks` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -512,6 +512,40 @@ LOCK TABLES `pagibig_contribution_rate` WRITE;
 /*!40000 ALTER TABLE `pagibig_contribution_rate` DISABLE KEYS */;
 INSERT INTO `pagibig_contribution_rate` VALUES (1,3,1000.00,1500.00,0.0100,0.0200,100.00,100.00,'2024-01-01',NULL,'2026-04-16 14:34:37','2026-04-16 14:34:37'),(2,3,1500.01,999999.99,0.0200,0.0200,100.00,100.00,'2024-01-01',NULL,'2026-04-16 14:34:37','2026-04-16 14:34:37');
 /*!40000 ALTER TABLE `pagibig_contribution_rate` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `password_reset_request`
+--
+
+DROP TABLE IF EXISTS `password_reset_request`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `password_reset_request` (
+  `reset_request_id` int NOT NULL AUTO_INCREMENT,
+  `user_account_id` int NOT NULL,
+  `request_status` enum('PENDING','COMPLETED','EXPIRED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+  `requested_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `completed_at` datetime DEFAULT NULL,
+  `cancelled_at` datetime DEFAULT NULL,
+  `resolved_by_employee_id` int DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`reset_request_id`),
+  KEY `fk_password_reset_user_account` (`user_account_id`),
+  KEY `fk_password_reset_resolved_by_employee` (`resolved_by_employee_id`),
+  CONSTRAINT `fk_password_reset_resolved_by_employee` FOREIGN KEY (`resolved_by_employee_id`) REFERENCES `employee` (`employee_id`),
+  CONSTRAINT `fk_password_reset_user_account` FOREIGN KEY (`user_account_id`) REFERENCES `user_account` (`user_account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `password_reset_request`
+--
+
+LOCK TABLES `password_reset_request` WRITE;
+/*!40000 ALTER TABLE `password_reset_request` DISABLE KEYS */;
+/*!40000 ALTER TABLE `password_reset_request` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -980,6 +1014,41 @@ INSERT INTO `sss_contribution_rate` VALUES (1,1,0.00,3249.99,135.00,290.00,'2024
 UNLOCK TABLES;
 
 --
+-- Table structure for table `two_factor_code`
+--
+
+DROP TABLE IF EXISTS `two_factor_code`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `two_factor_code` (
+  `two_factor_code_id` int NOT NULL AUTO_INCREMENT,
+  `user_account_id` int NOT NULL,
+  `reset_request_id` int DEFAULT NULL,
+  `otp_code_hash` varchar(255) NOT NULL,
+  `purpose` enum('LOGIN_2FA','PASSWORD_RESET') NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `is_used` tinyint(1) NOT NULL DEFAULT '0',
+  `used_at` datetime DEFAULT NULL,
+  `attempt_count` int NOT NULL DEFAULT '0',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`two_factor_code_id`),
+  KEY `fk_two_factor_user_account` (`user_account_id`),
+  KEY `fk_two_factor_password_reset` (`reset_request_id`),
+  CONSTRAINT `fk_two_factor_password_reset` FOREIGN KEY (`reset_request_id`) REFERENCES `password_reset_request` (`reset_request_id`),
+  CONSTRAINT `fk_two_factor_user_account` FOREIGN KEY (`user_account_id`) REFERENCES `user_account` (`user_account_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `two_factor_code`
+--
+
+LOCK TABLES `two_factor_code` WRITE;
+/*!40000 ALTER TABLE `two_factor_code` DISABLE KEYS */;
+/*!40000 ALTER TABLE `two_factor_code` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `user_access_logs`
 --
 
@@ -1099,4 +1168,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-23 23:17:11
+-- Dump completed on 2026-05-05 18:28:58

@@ -1,0 +1,191 @@
+package motorph.infrastructure.repository;
+
+import motorph.infrastructure.config.DatabaseConnection;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+/**
+ * Handles database operations for employee leave credit records.
+ */
+public class LeaveCreditRepository {
+
+    // checks if employee has enough leave credits
+    public boolean hasEnoughCredits(int employeeId, int leaveTypeId, int year, double leaveHours) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validatePositive(leaveTypeId, "Leave type ID must be positive.");
+        validateYear(year);
+        validateLeaveHours(leaveHours);
+
+        String sql = """
+                SELECT remaining_credits
+                FROM leave_credit
+                WHERE employee_id = ?
+                  AND leave_type_id = ?
+                  AND year = ?
+                """;
+
+        double requestedCredits = convertHoursToCredits(leaveHours);
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setInt(2, leaveTypeId);
+            stmt.setInt(3, year);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("remaining_credits") >= requestedCredits;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check leave credits.", e);
+        }
+
+        return false;
+    }
+
+    // gets remaining leave credits
+    public double getRemainingCredits(int employeeId, int leaveTypeId, int year) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validatePositive(leaveTypeId, "Leave type ID must be positive.");
+        validateYear(year);
+
+        String sql = """
+                SELECT remaining_credits
+                FROM leave_credit
+                WHERE employee_id = ?
+                  AND leave_type_id = ?
+                  AND year = ?
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setInt(2, leaveTypeId);
+            stmt.setInt(3, year);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("remaining_credits");
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to get remaining leave credits.", e);
+        }
+
+        return 0.0;
+    }
+
+    // deducts leave credits after approval
+    public void deductCredits(int employeeId, int leaveTypeId, int year, double leaveHours) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validatePositive(leaveTypeId, "Leave type ID must be positive.");
+        validateYear(year);
+        validateLeaveHours(leaveHours);
+
+        String sql = """
+                UPDATE leave_credit
+                SET used_credits = used_credits + ?,
+                    remaining_credits = remaining_credits - ?
+                WHERE employee_id = ?
+                  AND leave_type_id = ?
+                  AND year = ?
+                  AND remaining_credits >= ?
+                """;
+
+        double requestedCredits = convertHoursToCredits(leaveHours);
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, requestedCredits);
+            stmt.setDouble(2, requestedCredits);
+            stmt.setInt(3, employeeId);
+            stmt.setInt(4, leaveTypeId);
+            stmt.setInt(5, year);
+            stmt.setDouble(6, requestedCredits);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalStateException("Insufficient leave credits.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to deduct leave credits.", e);
+        }
+    }
+
+    // restores leave credits after reversing approved leave
+    public void restoreCredits(int employeeId, int leaveTypeId, int year, double leaveHours) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validatePositive(leaveTypeId, "Leave type ID must be positive.");
+        validateYear(year);
+        validateLeaveHours(leaveHours);
+
+        String sql = """
+                UPDATE leave_credit
+                SET used_credits = used_credits - ?,
+                    remaining_credits = remaining_credits + ?
+                WHERE employee_id = ?
+                  AND leave_type_id = ?
+                  AND year = ?
+                  AND used_credits >= ?
+                """;
+
+        double requestedCredits = convertHoursToCredits(leaveHours);
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDouble(1, requestedCredits);
+            stmt.setDouble(2, requestedCredits);
+            stmt.setInt(3, employeeId);
+            stmt.setInt(4, leaveTypeId);
+            stmt.setInt(5, year);
+            stmt.setDouble(6, requestedCredits);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalStateException("Leave credits cannot be restored.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to restore leave credits.", e);
+        }
+    }
+
+    // converts leave hours to leave credits
+    private double convertHoursToCredits(double leaveHours) {
+        return leaveHours / 8.0;
+    }
+
+    // validates positive number input
+    private void validatePositive(int value, String message) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    // validates year input
+    private void validateYear(int year) {
+        if (year < 2000) {
+            throw new IllegalArgumentException("Leave credit year is invalid.");
+        }
+    }
+
+    // validates leave hours input
+    private void validateLeaveHours(double leaveHours) {
+        if (leaveHours <= 0) {
+            throw new IllegalArgumentException("Leave hours must be greater than zero.");
+        }
+    }
+}

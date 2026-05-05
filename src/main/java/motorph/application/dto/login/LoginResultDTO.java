@@ -3,7 +3,7 @@ package motorph.application.dto.login;
 import motorph.domain.value.Role;
 
 /**
- * Carries the authenticated user details returned after a login attempt.
+ * Carries the authentication result returned during login.
  */
 public class LoginResultDTO {
 
@@ -12,6 +12,7 @@ public class LoginResultDTO {
     private final String companyEmail;
     private final Role role;
     private final boolean authenticated;
+    private final boolean otpRequired;
     private final String message;
 
     // constructors
@@ -20,12 +21,14 @@ public class LoginResultDTO {
                           String companyEmail,
                           Role role,
                           boolean authenticated,
+                          boolean otpRequired,
                           String message) {
         this.userAccountId = userAccountId;
         this.employeeId = employeeId;
         this.companyEmail = companyEmail;
         this.role = role;
         this.authenticated = authenticated;
+        this.otpRequired = otpRequired;
         this.message = message;
     }
 
@@ -34,27 +37,26 @@ public class LoginResultDTO {
         return userAccountId;
     }
 
-    // getters
     public int getEmployeeId() {
         return employeeId;
     }
 
-    // getters
     public String getCompanyEmail() {
         return companyEmail;
     }
 
-    // getters
     public Role getRole() {
         return role;
     }
 
-    // getters
     public boolean isAuthenticated() {
         return authenticated;
     }
 
-    // getters
+    public boolean isOtpRequired() {
+        return otpRequired;
+    }
+
     public String getMessage() {
         return message;
     }
