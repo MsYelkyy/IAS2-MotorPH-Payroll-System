@@ -16,10 +16,11 @@ import java.util.List;
  */
 public class PayrollCalculator {
 
-    // Computes payroll breakdown for the given cutoff date.
+    // computes payroll breakdown for the given cutoff date
     public PayrollBreakdown computeDeductions(
             PayrollInputDTO input,
             List<Attendance> logs,
+            double approvedOvertimeHours,
             LocalDate cutoffDate) {
 
         if (input == null) {
@@ -39,22 +40,25 @@ public class PayrollCalculator {
         requireNonNegative(input.getPhoneAllowance(), "Phone allowance cannot be negative.");
         requireNonNegative(input.getClothingAllowance(), "Clothing allowance cannot be negative.");
         requireNonNegative(input.getHourlyRate(), "Hourly rate cannot be negative.");
+        requireNonNegative(approvedOvertimeHours, "Approved overtime hours cannot be negative.");
 
         YearMonth yearMonth = YearMonth.from(cutoffDate);
         int lastDayOfMonth = yearMonth.lengthOfMonth();
-        int payPeriod = (cutoffDate.getDayOfMonth() <= 15) ? 1 : 2;
+        int payPeriod = cutoffDate.getDayOfMonth() <= 15 ? 1 : 2;
 
         double semiMonthlyBasic = input.getBasicSalary() / 2.0;
         double rice = input.getRiceSubsidy() / 2.0;
         double phone = input.getPhoneAllowance() / 2.0;
         double clothing = input.getClothingAllowance() / 2.0;
-        double totalEarnings = semiMonthlyBasic + rice + phone + clothing;
+        double overtimePay = approvedOvertimeHours * input.getHourlyRate();
+
+        double totalEarnings = semiMonthlyBasic + rice + phone + clothing + overtimePay;
 
         List<Attendance> filteredLogs = filterLogsByDateRange(
                 logs,
                 cutoffDate,
-                (payPeriod == 1) ? 1 : 16,
-                (payPeriod == 1) ? 15 : lastDayOfMonth
+                payPeriod == 1 ? 1 : 16,
+                payPeriod == 1 ? 15 : lastDayOfMonth
         );
 
         AttendanceDeduction attendanceDeduction = calculateAttendanceDeductions(input, filteredLogs);
@@ -67,7 +71,6 @@ public class PayrollCalculator {
         double pagibig = 0.0;
         double tax = 0.0;
 
-        // Applies monthly government deductions on the second cutoff.
         if (payPeriod == 2) {
             double monthlyBasic = input.getBasicSalary();
 
@@ -78,7 +81,7 @@ public class PayrollCalculator {
             double mandatory = sss + philhealth + pagibig;
             double taxable = Math.max(
                     0.0,
-                    monthlyBasic - mandatory - lateDeduction - undertimeDeduction
+                    monthlyBasic + overtimePay - mandatory - lateDeduction - undertimeDeduction
             );
 
             tax = computeMonthlyTax(taxable, 0.0);
@@ -92,6 +95,7 @@ public class PayrollCalculator {
                 rice,
                 phone,
                 clothing,
+                overtimePay,
                 totalEarnings,
                 lateDeduction,
                 undertimeDeduction,
@@ -129,7 +133,7 @@ public class PayrollCalculator {
         }
     }
 
-    // Filters attendance logs within the current cutoff range.
+    // filters attendance logs within the current cutoff range
     private static List<Attendance> filterLogsByDateRange(
             List<Attendance> logs,
             LocalDate cutoffDate,
@@ -153,7 +157,7 @@ public class PayrollCalculator {
         return filtered;
     }
 
-    // Calculates late and undertime deductions from attendance logs.
+    // calculates late and undertime deductions from attendance logs
     private static AttendanceDeduction calculateAttendanceDeductions(
             PayrollInputDTO input,
             List<Attendance> logs) {
@@ -183,7 +187,7 @@ public class PayrollCalculator {
         return new AttendanceDeduction(lateTotal, undertimeTotal);
     }
 
-    // Calculates the employee share of SSS.
+    // calculates the employee share of SSS
     private static double calculateSSS(double monthlyBasic) {
         if (monthlyBasic > 24750.0) {
             return 1125.00;
@@ -192,23 +196,23 @@ public class PayrollCalculator {
         return monthlyBasic * 0.045;
     }
 
-    // Calculates the employee share of PhilHealth.
+    // calculates the employee share of PhilHealth
     private static double calculatePhilHealth(double monthlyBasic) {
         double salary = Math.max(10000.0, Math.min(monthlyBasic, 60000.0));
         return (salary * 0.03) / 2.0;
     }
 
-    // Calculates the employee share of Pag-IBIG.
+    // calculates the employee share of Pag-IBIG
     private static double calculatePagIbig(double monthlySalary) {
         if (monthlySalary < 1000) {
             return 0.0;
         }
 
-        double rate = (monthlySalary <= 1500) ? 0.01 : 0.02;
+        double rate = monthlySalary <= 1500 ? 0.01 : 0.02;
         return Math.min(monthlySalary * rate, 100.0);
     }
 
-    // Validates that a numeric value is not negative.
+    // validates that a numeric value is not negative
     private static double requireNonNegative(double value, String message) {
         if (value < 0) {
             throw new IllegalArgumentException(message);
@@ -217,7 +221,7 @@ public class PayrollCalculator {
         return value;
     }
 
-    // Computes withholding tax from monthly taxable income.
+    // computes withholding tax from monthly taxable income
     public static double computeMonthlyTax(double monthlyGross, double monthlyDeductions) {
         double taxable = Math.max(0.0, monthlyGross - monthlyDeductions);
 

@@ -8,9 +8,8 @@ import motorph.domain.model.Employee;
 import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.EmploymentStatus;
-import motorph.domain.value.LeaveStatus;
+import motorph.domain.value.RequestStatus;
 import motorph.domain.value.Role;
-import motorph.infrastructure.repository.LeaveApprovalRepository;
 import motorph.infrastructure.repository.LeaveCreditRepository;
 import motorph.infrastructure.repository.LeaveRepository;
 
@@ -25,13 +24,11 @@ public class LeaveService {
 
     private final LeaveRepository leaveRepository;
     private final LeaveCreditRepository leaveCreditRepository;
-    private final LeaveApprovalRepository leaveApprovalRepository;
     private final EmployeeService employeeService;
 
     // constructors
     public LeaveService(LeaveRepository leaveRepository,
                         LeaveCreditRepository leaveCreditRepository,
-                        LeaveApprovalRepository leaveApprovalRepository,
                         EmployeeService employeeService) {
 
         if (leaveRepository == null) {
@@ -42,26 +39,21 @@ public class LeaveService {
             throw new IllegalArgumentException("LeaveCreditRepository is required.");
         }
 
-        if (leaveApprovalRepository == null) {
-            throw new IllegalArgumentException("LeaveApprovalRepository is required.");
-        }
-
         if (employeeService == null) {
             throw new IllegalArgumentException("EmployeeService is required.");
         }
 
         this.leaveRepository = leaveRepository;
         this.leaveCreditRepository = leaveCreditRepository;
-        this.leaveApprovalRepository = leaveApprovalRepository;
         this.employeeService = employeeService;
     }
 
-    // Returns all leave requests.
+    // returns all leave requests
     public List<LeaveRequest> getAllLeaveRequests() {
         return leaveRepository.findAll();
     }
 
-    // Returns one leave request by id.
+    // returns one leave request by id
     public LeaveRequest getLeaveRequestById(int leaveRequestId) {
         validateLeaveRequestId(leaveRequestId);
 
@@ -74,33 +66,33 @@ public class LeaveService {
         return request;
     }
 
-    // Returns leave requests of one employee.
+    // returns leave requests of one employee
     public List<LeaveRequest> getLeaveRequestsByEmployeeId(int employeeId) {
         validateEmployeeId(employeeId);
         return leaveRepository.findByEmployeeId(employeeId);
     }
 
-    // Returns leave requests by status.
-    public List<LeaveRequest> getLeaveRequestsByStatus(LeaveStatus status) {
+    // returns leave requests by status
+    public List<LeaveRequest> getLeaveRequestsByStatus(RequestStatus status) {
         if (status == null) {
-            throw new ValidationException("Leave status is required.");
+            throw new ValidationException("Request status is required.");
         }
 
         return leaveRepository.findByStatus(status);
     }
 
-    // Returns pending leave requests.
+    // returns pending leave requests
     public List<LeaveRequest> getPendingLeaveRequests() {
         return leaveRepository.findPending();
     }
 
-    // Returns leave requests within a date range.
+    // returns leave requests within a date range
     public List<LeaveRequest> getLeaveRequestsByDateRange(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
         return leaveRepository.findByDateRange(startDate, endDate);
     }
 
-    // Returns remaining leave credits for one employee and leave type.
+    // returns remaining leave credits
     public double getRemainingLeaveCredits(int employeeId, int leaveTypeId, int year) {
         validateEmployeeId(employeeId);
         validateLeaveTypeId(leaveTypeId);
@@ -109,13 +101,14 @@ public class LeaveService {
         return leaveCreditRepository.getRemainingCredits(employeeId, leaveTypeId, year);
     }
 
-    // Submits a new leave request.
+    // submits a new leave request
     public void submitLeaveRequest(int employeeId,
                                    int leaveTypeId,
                                    LocalDate startDate,
                                    LocalDate endDate,
                                    double leaveHours,
                                    String reason) {
+
         validateEmployeeId(employeeId);
         validateLeaveTypeId(leaveTypeId);
         validateDateRange(startDate, endDate);
@@ -142,18 +135,18 @@ public class LeaveService {
         LeaveRequest request = new LeaveRequest(
                 null,
                 employeeId,
-                LocalDateTime.now(),
+                leaveTypeId,
                 startDate,
                 endDate,
                 leaveHours,
                 reason.trim(),
-                leaveTypeId
+                LocalDateTime.now()
         );
 
         leaveRepository.save(request);
     }
 
-    // Approves a leave request.
+    // approves a leave request
     public void approveLeaveRequest(UserAccount actorAccount, int leaveRequestId) {
         validateActorAccount(actorAccount);
         validateLeaveRequestId(leaveRequestId);
@@ -163,7 +156,7 @@ public class LeaveService {
         requireHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
-        if (request.getStatus() != LeaveStatus.PENDING) {
+        if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending leave requests can be approved.");
         }
 
@@ -177,7 +170,11 @@ public class LeaveService {
             throw new BusinessRuleException("Employee does not have enough leave credits.");
         }
 
-        leaveRepository.updateStatus(leaveRequestId, LeaveStatus.APPROVED);
+        leaveRepository.updateStatus(
+                leaveRequestId,
+                RequestStatus.APPROVED,
+                actorAccount.getUserAccountId()
+        );
 
         leaveCreditRepository.deductCredits(
                 request.getEmployeeId(),
@@ -185,16 +182,9 @@ public class LeaveService {
                 year,
                 request.getLeaveHours()
         );
-
-        leaveApprovalRepository.save(
-                leaveRequestId,
-                actorAccount.getUserAccountId(),
-                "APPROVED",
-                "Leave request approved."
-        );
     }
 
-    // Rejects a leave request.
+    // rejects a leave request
     public void rejectLeaveRequest(UserAccount actorAccount, int leaveRequestId) {
         validateActorAccount(actorAccount);
         validateLeaveRequestId(leaveRequestId);
@@ -204,21 +194,18 @@ public class LeaveService {
         requireHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
-        if (request.getStatus() != LeaveStatus.PENDING) {
+        if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending leave requests can be rejected.");
         }
 
-        leaveRepository.updateStatus(leaveRequestId, LeaveStatus.REJECTED);
-
-        leaveApprovalRepository.save(
+        leaveRepository.updateStatus(
                 leaveRequestId,
-                actorAccount.getUserAccountId(),
-                "REJECTED",
-                "Leave request rejected."
+                RequestStatus.REJECTED,
+                actorAccount.getUserAccountId()
         );
     }
 
-    // Cancels a pending leave request by the employee owner.
+    // cancels a pending leave request by the employee owner
     public void cancelLeaveRequest(int actorEmployeeId, int leaveRequestId) {
         validateEmployeeId(actorEmployeeId);
         validateLeaveRequestId(leaveRequestId);
@@ -229,19 +216,19 @@ public class LeaveService {
             throw new UnauthorizedException("You can only cancel your own leave request.");
         }
 
-        if (request.getStatus() != LeaveStatus.PENDING) {
+        if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending leave requests can be cancelled.");
         }
 
-        leaveRepository.updateStatus(leaveRequestId, LeaveStatus.CANCELLED);
+        leaveRepository.updateStatus(leaveRequestId, RequestStatus.CANCELLED, null);
     }
 
-    // Updates an approved leave request to rejected and restores credits.
-    public void reverseApprovedLeave(UserAccount actorAccount, int leaveRequestId, LeaveStatus newStatus, String remarks) {
+    // reverses an approved leave request and restores credits
+    public void reverseApprovedLeave(UserAccount actorAccount, int leaveRequestId, RequestStatus newStatus) {
         validateActorAccount(actorAccount);
         validateLeaveRequestId(leaveRequestId);
 
-        if (newStatus != LeaveStatus.REJECTED && newStatus != LeaveStatus.CANCELLED) {
+        if (newStatus != RequestStatus.REJECTED && newStatus != RequestStatus.CANCELLED) {
             throw new ValidationException("Approved leave can only be changed to rejected or cancelled.");
         }
 
@@ -250,7 +237,7 @@ public class LeaveService {
         requireHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
-        if (request.getStatus() != LeaveStatus.APPROVED) {
+        if (request.getStatus() != RequestStatus.APPROVED) {
             throw new BusinessRuleException("Only approved leave requests can be reversed.");
         }
 
@@ -261,34 +248,30 @@ public class LeaveService {
                 request.getLeaveHours()
         );
 
-        leaveRepository.updateStatus(leaveRequestId, newStatus);
-
-        leaveApprovalRepository.save(
+        leaveRepository.updateStatus(
                 leaveRequestId,
-                actorAccount.getUserAccountId(),
-                newStatus.name(),
-                cleanRemarks(remarks, "Approved leave was changed to " + newStatus.name() + ".")
+                newStatus,
+                actorAccount.getUserAccountId()
         );
     }
 
-    // Counts pending leave requests.
+    // counts pending leave requests
     public int countPendingRequests() {
         return leaveRepository.findPending().size();
     }
 
-    // Counts approved leave requests that include today.
+    // counts approved leave requests that include today
     public int countApprovedLeavesToday() {
         LocalDate today = LocalDate.now();
 
-        return (int) leaveRepository.findByStatus(LeaveStatus.APPROVED)
+        return (int) leaveRepository.findByStatus(RequestStatus.APPROVED)
                 .stream()
-                .filter(request ->
-                        !today.isBefore(request.getStartDate()) &&
-                                !today.isAfter(request.getEndDate()))
+                .filter(request -> !today.isBefore(request.getStartDate())
+                        && !today.isAfter(request.getEndDate()))
                 .count();
     }
 
-    // Validates if employee is allowed to file leave.
+    // validates if employee is allowed to file leave
     private void validateLeaveEligibility(Employee employee) {
         if (employee == null) {
             throw new ValidationException("Employee is required.");
@@ -299,7 +282,7 @@ public class LeaveService {
         }
     }
 
-    // Ensures only HR or ADMIN can approve or reject.
+    // ensures only HR or ADMIN can approve or reject
     private void requireHrOrAdmin(UserAccount actorAccount) {
         Role role = actorAccount.getRole();
 
@@ -308,14 +291,14 @@ public class LeaveService {
         }
     }
 
-    // Prevents users from approving or rejecting their own request.
+    // prevents users from approving or rejecting their own request
     private void preventSelfApproval(int actorEmployeeId, LeaveRequest request) {
         if (request.getEmployeeId() == actorEmployeeId) {
             throw new UnauthorizedException("You cannot approve or reject your own leave request.");
         }
     }
 
-    // Validates actor account input.
+    // validates actor account input
     private void validateActorAccount(UserAccount actorAccount) {
         if (actorAccount == null) {
             throw new UnauthorizedException("User account is required.");
@@ -334,28 +317,28 @@ public class LeaveService {
         }
     }
 
-    // Validates employee id input.
+    // validates employee id input
     private void validateEmployeeId(int employeeId) {
         if (employeeId <= 0) {
             throw new ValidationException("Employee ID is required.");
         }
     }
 
-    // Validates leave request id input.
+    // validates leave request id input
     private void validateLeaveRequestId(int leaveRequestId) {
         if (leaveRequestId <= 0) {
             throw new ValidationException("Leave request ID is required.");
         }
     }
 
-    // Validates leave type id input.
+    // validates leave type id input
     private void validateLeaveTypeId(int leaveTypeId) {
         if (leaveTypeId <= 0) {
             throw new ValidationException("Leave type ID is required.");
         }
     }
 
-    // Validates date range input.
+    // validates date range input
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null) {
             throw new ValidationException("Start date is required.");
@@ -370,33 +353,24 @@ public class LeaveService {
         }
     }
 
-    // Validates leave hours input.
+    // validates leave hours input
     private void validateLeaveHours(double leaveHours) {
         if (leaveHours <= 0) {
             throw new ValidationException("Leave hours must be greater than zero.");
         }
     }
 
-    // Validates leave reason input.
+    // validates leave reason input
     private void validateReason(String reason) {
         if (reason == null || reason.isBlank()) {
             throw new ValidationException("Reason is required.");
         }
     }
 
-    // Validates leave credit year input.
+    // validates leave credit year input
     private void validateYear(int year) {
         if (year < 2000) {
             throw new ValidationException("Leave credit year is invalid.");
         }
-    }
-
-    // Cleans remarks or uses a default value.
-    private String cleanRemarks(String remarks, String defaultRemarks) {
-        if (remarks == null || remarks.trim().isEmpty()) {
-            return defaultRemarks;
-        }
-
-        return remarks.trim();
     }
 }
