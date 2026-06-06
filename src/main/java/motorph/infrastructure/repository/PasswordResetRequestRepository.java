@@ -11,14 +11,18 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Handles database operations for password reset request records.
  */
 public class PasswordResetRequestRepository {
 
-    // Saves a new password reset request and returns the generated id.
+    // saves a new password reset request and returns the generated id
     public int saveAndReturnId(PasswordResetRequest request) {
+        validateRequest(request);
+
         String sql = """
                 INSERT INTO password_reset_request (
                     user_account_id,
@@ -56,17 +60,11 @@ public class PasswordResetRequestRepository {
         throw new IllegalStateException("Failed to retrieve generated reset request ID.");
     }
 
-    // Finds one password reset request by id.
+    // finds one password reset request by id
     public PasswordResetRequest findById(int resetRequestId) {
-        String sql = """
-                SELECT reset_request_id,
-                       user_account_id,
-                       request_status,
-                       requested_at,
-                       completed_at,
-                       cancelled_at,
-                       resolved_by_employee_id
-                FROM password_reset_request
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+
+        String sql = baseSelect() + """
                 WHERE reset_request_id = ?
                 """;
 
@@ -88,17 +86,11 @@ public class PasswordResetRequestRepository {
         return null;
     }
 
-    // Finds the latest pending password reset request for a user account.
+    // finds the latest pending password reset request for a user account
     public PasswordResetRequest findLatestPendingByUserAccountId(int userAccountId) {
-        String sql = """
-                SELECT reset_request_id,
-                       user_account_id,
-                       request_status,
-                       requested_at,
-                       completed_at,
-                       cancelled_at,
-                       resolved_by_employee_id
-                FROM password_reset_request
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        String sql = baseSelect() + """
                 WHERE user_account_id = ?
                   AND request_status = 'PENDING'
                 ORDER BY requested_at DESC
@@ -123,64 +115,135 @@ public class PasswordResetRequestRepository {
         return null;
     }
 
-    // Marks a password reset request as completed.
-    public void markCompleted(int resetRequestId) {
-        String sql = """
-                UPDATE password_reset_request
-                SET request_status = 'COMPLETED',
-                    completed_at = NOW()
-                WHERE reset_request_id = ?
+    // finds all pending password reset requests
+    public List<PasswordResetRequest> findPendingRequests() {
+        List<PasswordResetRequest> results = new ArrayList<>();
+
+        String sql = baseSelect() + """
+                WHERE request_status = 'PENDING'
+                ORDER BY requested_at DESC
                 """;
 
-        executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as completed.");
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                results.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find pending password reset requests.", e);
+        }
+
+        return results;
     }
 
-    // Marks a password reset request as expired.
-    public void markExpired(int resetRequestId) {
+    // marks a password reset request as approved
+    public void markApproved(int resetRequestId, int approvedByEmployeeId) {
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+        validatePositive(approvedByEmployeeId, "Approver employee ID must be positive.");
+
         String sql = """
                 UPDATE password_reset_request
-                SET request_status = 'EXPIRED'
-                WHERE reset_request_id = ?
-                """;
-
-        executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as expired.");
-    }
-
-    // Marks a password reset request as cancelled.
-    public void markCancelled(int resetRequestId) {
-        String sql = """
-                UPDATE password_reset_request
-                SET request_status = 'CANCELLED',
-                    cancelled_at = NOW()
-                WHERE reset_request_id = ?
-                """;
-
-        executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as cancelled.");
-    }
-
-    // Marks a password reset request as manually resolved.
-    public void markManuallyResolved(int resetRequestId, int resolvedByEmployeeId) {
-        String sql = """
-                UPDATE password_reset_request
-                SET request_status = 'COMPLETED',
-                    completed_at = NOW(),
+                SET request_status = 'APPROVED',
                     resolved_by_employee_id = ?
                 WHERE reset_request_id = ?
+                  AND request_status = 'PENDING'
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, resolvedByEmployeeId);
+            stmt.setInt(1, approvedByEmployeeId);
             stmt.setInt(2, resetRequestId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("Pending password reset request not found.");
+            }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to mark password reset request as manually resolved.", e);
+            throw new RuntimeException("Failed to approve password reset request.", e);
         }
     }
 
-    // Maps one result set row to a password reset request.
+    // marks a password reset request as completed
+    public void markCompleted(int resetRequestId) {
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+
+        String sql = """
+                UPDATE password_reset_request
+                SET request_status = 'COMPLETED',
+                    completed_at = NOW()
+                WHERE reset_request_id = ?
+                  AND request_status = 'APPROVED'
+                """;
+
+        executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as completed.");
+    }
+
+    // marks a password reset request as expired
+    public void markExpired(int resetRequestId) {
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+
+        String sql = """
+                UPDATE password_reset_request
+                SET request_status = 'EXPIRED'
+                WHERE reset_request_id = ?
+                  AND request_status IN ('PENDING', 'APPROVED')
+                """;
+
+        executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as expired.");
+    }
+
+    // marks a password reset request as cancelled
+    public void markCancelled(int resetRequestId, int cancelledByEmployeeId) {
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+        validatePositive(cancelledByEmployeeId, "Canceller employee ID must be positive.");
+
+        String sql = """
+                UPDATE password_reset_request
+                SET request_status = 'CANCELLED',
+                    cancelled_at = NOW(),
+                    resolved_by_employee_id = ?
+                WHERE reset_request_id = ?
+                  AND request_status IN ('PENDING', 'APPROVED')
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, cancelledByEmployeeId);
+            stmt.setInt(2, resetRequestId);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("Password reset request not found or already closed.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to cancel password reset request.", e);
+        }
+    }
+
+    // builds the base select query
+    private String baseSelect() {
+        return """
+                SELECT reset_request_id,
+                       user_account_id,
+                       request_status,
+                       requested_at,
+                       completed_at,
+                       cancelled_at,
+                       resolved_by_employee_id
+                FROM password_reset_request
+                """;
+    }
+
+    // maps one result set row to a password reset request
     private PasswordResetRequest mapRow(ResultSet rs) throws SQLException {
         return new PasswordResetRequest(
                 rs.getInt("reset_request_id"),
@@ -193,20 +256,49 @@ public class PasswordResetRequestRepository {
         );
     }
 
-    // Executes a simple status update.
+    // executes a simple status update
     private void executeStatusUpdate(String sql, int resetRequestId, String errorMessage) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, resetRequestId);
-            stmt.executeUpdate();
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("Password reset request not found or status is not valid for update.");
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException(errorMessage, e);
         }
     }
 
-    // Sets a nullable timestamp value.
+    // validates password reset request input
+    private void validateRequest(PasswordResetRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Password reset request is required.");
+        }
+
+        validatePositive(request.getUserAccountId(), "User account ID must be positive.");
+
+        if (request.getRequestStatus() == null) {
+            throw new IllegalArgumentException("Request status is required.");
+        }
+
+        if (request.getRequestedAt() == null) {
+            throw new IllegalArgumentException("Requested date and time is required.");
+        }
+    }
+
+    // validates positive number input
+    private void validatePositive(int value, String message) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    // sets a nullable timestamp value
     private void setNullableTimestamp(PreparedStatement stmt, int index, LocalDateTime value) throws SQLException {
         if (value == null) {
             stmt.setNull(index, Types.TIMESTAMP);
@@ -216,7 +308,7 @@ public class PasswordResetRequestRepository {
         stmt.setTimestamp(index, Timestamp.valueOf(value));
     }
 
-    // Sets a nullable integer value.
+    // sets a nullable integer value
     private void setNullableInteger(PreparedStatement stmt, int index, Integer value) throws SQLException {
         if (value == null) {
             stmt.setNull(index, Types.INTEGER);
@@ -226,13 +318,13 @@ public class PasswordResetRequestRepository {
         stmt.setInt(index, value);
     }
 
-    // Gets a nullable timestamp as local date time.
+    // gets a nullable timestamp as local date time
     private LocalDateTime getLocalDateTime(ResultSet rs, String columnName) throws SQLException {
         Timestamp value = rs.getTimestamp(columnName);
         return value == null ? null : value.toLocalDateTime();
     }
 
-    // Gets a nullable integer value.
+    // gets a nullable integer value
     private Integer getNullableInteger(ResultSet rs, String columnName) throws SQLException {
         int value = rs.getInt(columnName);
         return rs.wasNull() ? null : value;

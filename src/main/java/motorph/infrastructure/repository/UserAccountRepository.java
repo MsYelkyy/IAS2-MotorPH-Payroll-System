@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDateTime;
@@ -19,24 +20,40 @@ import java.util.List;
  */
 public class UserAccountRepository {
 
-    // Finds an active account by company email.
+    private static final String BASE_SELECT = """
+            SELECT ua.user_account_id,
+                   ua.employee_id,
+                   ua.company_email,
+                   ua.username,
+                   ua.password_hash,
+                   ua.password_salt,
+                   ua.is_locked,
+                   ua.is_active,
+                   ua.last_login_at,
+                   MIN(r.role_name) AS role_name
+            FROM user_account ua
+            LEFT JOIN user_role ur ON ua.user_account_id = ur.user_account_id
+            LEFT JOIN role r ON ur.role_id = r.role_id
+            """;
+
+    private static final String GROUP_BY_ACCOUNT = """
+            GROUP BY ua.user_account_id,
+                     ua.employee_id,
+                     ua.company_email,
+                     ua.username,
+                     ua.password_hash,
+                     ua.password_salt,
+                     ua.is_locked,
+                     ua.is_active,
+                     ua.last_login_at
+            """;
+
+    // finds an active account by company email
     public UserAccount findActiveByCompanyEmail(String companyEmail) {
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
-                WHERE ua.company_email = ? AND ua.is_active = 1
-                """;
+        String sql = BASE_SELECT + """
+                WHERE ua.company_email = ?
+                  AND ua.is_active = 1
+                """ + GROUP_BY_ACCOUNT;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -56,24 +73,11 @@ public class UserAccountRepository {
         return null;
     }
 
-    // Finds an account by company email.
+    // finds an account by company email
     public UserAccount findByCompanyEmail(String companyEmail) {
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
+        String sql = BASE_SELECT + """
                 WHERE ua.company_email = ?
-                """;
+                """ + GROUP_BY_ACCOUNT;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -93,24 +97,13 @@ public class UserAccountRepository {
         return null;
     }
 
-    // Finds an account by user account id.
+    // finds an account by user account id
     public UserAccount findById(int userAccountId) {
-        String sql = """
-            SELECT ua.user_account_id,
-                   ua.employee_id,
-                   ua.company_email,
-                   ua.username,
-                   ua.password_hash,
-                   ua.password_salt,
-                   ua.role_id,
-                   ua.is_locked,
-                   ua.is_active,
-                   ua.last_login_at,
-                   r.role_name
-            FROM user_account ua
-            JOIN role r ON ua.role_id = r.role_id
-            WHERE ua.user_account_id = ?
-            """;
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        String sql = BASE_SELECT + """
+                WHERE ua.user_account_id = ?
+                """ + GROUP_BY_ACCOUNT;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -130,24 +123,13 @@ public class UserAccountRepository {
         return null;
     }
 
-    // Finds an account by employee id.
+    // finds an account by employee id
     public UserAccount findByEmployeeId(int employeeId) {
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = BASE_SELECT + """
                 WHERE ua.employee_id = ?
-                """;
+                """ + GROUP_BY_ACCOUNT;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -167,155 +149,53 @@ public class UserAccountRepository {
         return null;
     }
 
-    // Finds all active accounts.
+    // finds all active accounts
     public List<UserAccount> findAllActive() {
-        List<UserAccount> accounts = new ArrayList<>();
-
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
-                WHERE ua.is_active = 1 AND ua.is_locked = 0
+        String sql = BASE_SELECT + """
+                WHERE ua.is_active = 1
+                  AND ua.is_locked = 0
+                """ + GROUP_BY_ACCOUNT + """
                 ORDER BY ua.user_account_id
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                accounts.add(mapRow(rs));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find active user accounts.", e);
-        }
-
-        return accounts;
+        return executeListQuery(sql);
     }
 
-    // Finds all disabled accounts.
+    // finds all disabled accounts
     public List<UserAccount> findAllDisabled() {
-        List<UserAccount> accounts = new ArrayList<>();
-
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
+        String sql = BASE_SELECT + """
                 WHERE ua.is_active = 0
+                """ + GROUP_BY_ACCOUNT + """
                 ORDER BY ua.user_account_id
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                accounts.add(mapRow(rs));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find disabled user accounts.", e);
-        }
-
-        return accounts;
+        return executeListQuery(sql);
     }
 
-    // Finds all locked accounts.
+    // finds all locked accounts
     public List<UserAccount> findAllLocked() {
-        List<UserAccount> accounts = new ArrayList<>();
-
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
+        String sql = BASE_SELECT + """
                 WHERE ua.is_locked = 1
+                """ + GROUP_BY_ACCOUNT + """
                 ORDER BY ua.user_account_id
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                accounts.add(mapRow(rs));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find locked user accounts.", e);
-        }
-
-        return accounts;
+        return executeListQuery(sql);
     }
 
-    // Finds all accounts.
+    // finds all accounts
     public List<UserAccount> findAll() {
-        List<UserAccount> accounts = new ArrayList<>();
-
-        String sql = """
-                SELECT ua.user_account_id,
-                       ua.employee_id,
-                       ua.company_email,
-                       ua.username,
-                       ua.password_hash,
-                       ua.password_salt,
-                       ua.role_id,
-                       ua.is_locked,
-                       ua.is_active,
-                       ua.last_login_at,
-                       r.role_name
-                FROM user_account ua
-                JOIN role r ON ua.role_id = r.role_id
+        String sql = BASE_SELECT + GROUP_BY_ACCOUNT + """
                 ORDER BY ua.user_account_id
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-
-            while (rs.next()) {
-                accounts.add(mapRow(rs));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to find user accounts.", e);
-        }
-
-        return accounts;
+        return executeListQuery(sql);
     }
 
-    // Saves a new account.
+    // saves a new account and assigns its role
     public void save(UserAccount userAccount) {
+        validateUserAccount(userAccount);
+
         String sql = """
                 INSERT INTO user_account (
                     employee_id,
@@ -323,144 +203,109 @@ public class UserAccountRepository {
                     username,
                     password_hash,
                     password_salt,
-                    role_id,
                     is_locked,
                     is_active,
                     last_login_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
 
-            stmt.setInt(1, userAccount.getEmployeeId());
-            stmt.setString(2, normalizeRequired(userAccount.getCompanyEmail(), "Company email is required."));
-            stmt.setString(3, normalizeOptional(userAccount.getUsername()));
-            stmt.setString(4, normalizeRequired(userAccount.getPasswordHash(), "Password hash is required."));
-            stmt.setString(5, normalizeRequired(userAccount.getPasswordSalt(), "Password salt is required."));
-            stmt.setInt(6, resolveRoleId(conn, userAccount.getRole()));
-            stmt.setBoolean(7, userAccount.isLocked());
-            stmt.setBoolean(8, userAccount.isActive());
-            setNullableTimestamp(stmt, 9, userAccount.getLastLoginAt());
+            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setInt(1, userAccount.getEmployeeId());
+                stmt.setString(2, normalizeRequired(userAccount.getCompanyEmail(), "Company email is required."));
+                stmt.setString(3, normalizeOptional(userAccount.getUsername()));
+                stmt.setString(4, normalizeRequired(userAccount.getPasswordHash(), "Password hash is required."));
+                stmt.setString(5, normalizeRequired(userAccount.getPasswordSalt(), "Password salt is required."));
+                stmt.setBoolean(6, userAccount.isLocked());
+                stmt.setBoolean(7, userAccount.isActive());
+                setNullableTimestamp(stmt, 8, userAccount.getLastLoginAt());
 
-            stmt.executeUpdate();
+                stmt.executeUpdate();
+
+                int userAccountId = getGeneratedId(stmt);
+                assignRole(conn, userAccountId, userAccount.getRole());
+            }
+
+            conn.commit();
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save user account.", e);
         }
     }
 
-    // Updates the account role.
+    // updates the account role
     public void updateRole(int userAccountId, Role role) {
-        String sql = "UPDATE user_account SET role_id = ? WHERE user_account_id = ?";
+        validatePositive(userAccountId, "User account ID must be positive.");
+        validateRole(role);
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            conn.setAutoCommit(false);
 
-            stmt.setInt(1, resolveRoleId(conn, role));
-            stmt.setInt(2, userAccountId);
+            deleteRoles(conn, userAccountId);
+            assignRole(conn, userAccountId, role);
 
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("User account not found.");
-            }
+            conn.commit();
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to update account role.", e);
         }
     }
 
-    // Updates the lock status.
+    // updates the lock status
     public void updateLockStatus(int userAccountId, boolean isLocked) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
         String sql = "UPDATE user_account SET is_locked = ? WHERE user_account_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        executeAccountUpdate(sql, stmt -> {
             stmt.setBoolean(1, isLocked);
             stmt.setInt(2, userAccountId);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("User account not found.");
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update account lock status.", e);
-        }
+        });
     }
 
-    // Updates the active status.
+    // updates the active status
     public void updateActiveStatus(int userAccountId, boolean isActive) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
         String sql = "UPDATE user_account SET is_active = ? WHERE user_account_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        executeAccountUpdate(sql, stmt -> {
             stmt.setBoolean(1, isActive);
             stmt.setInt(2, userAccountId);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("User account not found.");
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update account active status.", e);
-        }
+        });
     }
 
-    // Updates the password.
+    // updates the password
     public void updatePassword(int userAccountId, String hash, String salt) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
         String sql = """
                 UPDATE user_account
-                SET password_hash = ?, password_salt = ?
+                SET password_hash = ?,
+                    password_salt = ?
                 WHERE user_account_id = ?
                 """;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
+        executeAccountUpdate(sql, stmt -> {
             stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
             stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
             stmt.setInt(3, userAccountId);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("User account not found.");
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update account password.", e);
-        }
+        });
     }
 
-    // Updates the last login time.
+    // updates the last login time
     public void updateLastLogin(int userAccountId) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
         String sql = "UPDATE user_account SET last_login_at = NOW() WHERE user_account_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, userAccountId);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("User account not found.");
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to update last login time.", e);
-        }
+        executeAccountUpdate(sql, stmt -> stmt.setInt(1, userAccountId));
     }
 
-    // Checks if a company email already exists.
+    // checks if a company email already exists
     public boolean existsByCompanyEmail(String companyEmail) {
         String sql = "SELECT COUNT(*) FROM user_account WHERE company_email = ?";
 
@@ -482,10 +327,16 @@ public class UserAccountRepository {
         return false;
     }
 
-    // Maps the result set to a user account.
+    // maps the result set to a user account
     private UserAccount mapRow(ResultSet rs) throws SQLException {
         Timestamp lastLoginValue = rs.getTimestamp("last_login_at");
         LocalDateTime lastLoginAt = lastLoginValue == null ? null : lastLoginValue.toLocalDateTime();
+
+        String roleName = rs.getString("role_name");
+
+        if (roleName == null || roleName.isBlank()) {
+            throw new IllegalStateException("User account has no assigned role.");
+        }
 
         return new UserAccount(
                 rs.getInt("user_account_id"),
@@ -494,18 +345,61 @@ public class UserAccountRepository {
                 rs.getString("username"),
                 rs.getString("password_hash"),
                 rs.getString("password_salt"),
-                Role.fromValue(rs.getString("role_name")),
+                Role.fromValue(roleName),
                 rs.getBoolean("is_locked"),
                 rs.getBoolean("is_active"),
                 lastLoginAt
         );
     }
 
-    // Resolves the role id from the role name.
-    private int resolveRoleId(Connection conn, Role role) throws SQLException {
-        if (role == null) {
-            throw new IllegalArgumentException("Role is required.");
+    // executes a list query and maps all rows
+    private List<UserAccount> executeListQuery(String sql) {
+        List<UserAccount> accounts = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                accounts.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to query user accounts.", e);
         }
+
+        return accounts;
+    }
+
+    // assigns one role to the user account
+    private void assignRole(Connection conn, int userAccountId, Role role) throws SQLException {
+        validateRole(role);
+
+        String sql = """
+                INSERT INTO user_role (user_account_id, role_id)
+                VALUES (?, ?)
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userAccountId);
+            stmt.setInt(2, resolveRoleId(conn, role));
+            stmt.executeUpdate();
+        }
+    }
+
+    // deletes existing roles for the user account
+    private void deleteRoles(Connection conn, int userAccountId) throws SQLException {
+        String sql = "DELETE FROM user_role WHERE user_account_id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userAccountId);
+            stmt.executeUpdate();
+        }
+    }
+
+    // resolves the role id from the role name
+    private int resolveRoleId(Connection conn, Role role) throws SQLException {
+        validateRole(role);
 
         String sql = "SELECT role_id FROM role WHERE role_name = ?";
 
@@ -522,7 +416,63 @@ public class UserAccountRepository {
         throw new IllegalArgumentException("Role not found: " + role);
     }
 
-    // Sets a nullable timestamp value.
+    // gets the generated user account id
+    private int getGeneratedId(PreparedStatement stmt) throws SQLException {
+        try (ResultSet rs = stmt.getGeneratedKeys()) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        }
+
+        throw new IllegalStateException("Failed to retrieve generated user account ID.");
+    }
+
+    // executes an account update
+    private void executeAccountUpdate(String sql, StatementBinder binder) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            binder.bind(stmt);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update user account.", e);
+        }
+    }
+
+    // validates user account input
+    private void validateUserAccount(UserAccount userAccount) {
+        if (userAccount == null) {
+            throw new IllegalArgumentException("User account is required.");
+        }
+
+        validatePositive(userAccount.getEmployeeId(), "Employee ID must be positive.");
+        normalizeRequired(userAccount.getCompanyEmail(), "Company email is required.");
+        normalizeRequired(userAccount.getPasswordHash(), "Password hash is required.");
+        normalizeRequired(userAccount.getPasswordSalt(), "Password salt is required.");
+        validateRole(userAccount.getRole());
+    }
+
+    // validates role input
+    private void validateRole(Role role) {
+        if (role == null) {
+            throw new IllegalArgumentException("Role is required.");
+        }
+    }
+
+    // validates positive number input
+    private void validatePositive(int value, String message) {
+        if (value <= 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
+    // sets a nullable timestamp value
     private void setNullableTimestamp(PreparedStatement stmt, int index, LocalDateTime value) throws SQLException {
         if (value == null) {
             stmt.setNull(index, Types.TIMESTAMP);
@@ -532,16 +482,22 @@ public class UserAccountRepository {
         stmt.setTimestamp(index, Timestamp.valueOf(value));
     }
 
-    // Validates and trims a required string value.
+    // validates and trims a required string value
     private String normalizeRequired(String value, String message) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
         }
+
         return value.trim();
     }
 
-    // Trims an optional string value.
+    // trims an optional string value
     private String normalizeOptional(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    // binds prepared statement parameters
+    private interface StatementBinder {
+        void bind(PreparedStatement stmt) throws SQLException;
     }
 }

@@ -21,13 +21,15 @@ public class PasswordResetService {
     private final EmployeeRepository employeeRepository;
     private final TwoFactorService twoFactorService;
     private final EmailService emailService;
+    private final UserAccessLogService userAccessLogService;
 
     // constructors
     public PasswordResetService(PasswordResetRequestRepository passwordResetRequestRepository,
                                 UserAccountRepository userAccountRepository,
                                 EmployeeRepository employeeRepository,
                                 TwoFactorService twoFactorService,
-                                EmailService emailService) {
+                                EmailService emailService,
+                                UserAccessLogService userAccessLogService) {
 
         if (passwordResetRequestRepository == null) {
             throw new IllegalArgumentException("PasswordResetRequestRepository is required.");
@@ -49,11 +51,16 @@ public class PasswordResetService {
             throw new IllegalArgumentException("EmailService is required.");
         }
 
+        if (userAccessLogService == null) {
+            throw new IllegalArgumentException("UserAccessLogService is required.");
+        }
+
         this.passwordResetRequestRepository = passwordResetRequestRepository;
         this.userAccountRepository = userAccountRepository;
         this.employeeRepository = employeeRepository;
         this.twoFactorService = twoFactorService;
         this.emailService = emailService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     // Starts a password reset request and sends OTP to registered personal email.
@@ -80,11 +87,36 @@ public class PasswordResetService {
                 passwordResetRequestRepository.findLatestPendingByUserAccountId(account.getUserAccountId());
 
         if (existingRequest != null) {
-            passwordResetRequestRepository.markCancelled(existingRequest.getResetRequestId());
+            throw new BusinessRuleException("You already have a pending password reset request.");
         }
 
+        // Only create the reset request here; actual OTP/email will be sent after IT approval.
         PasswordResetRequest request = new PasswordResetRequest(account.getUserAccountId());
-        int resetRequestId = passwordResetRequestRepository.saveAndReturnId(request);
+        return passwordResetRequestRepository.saveAndReturnId(request);
+    }
+
+    // Returns all pending password reset requests for IT/Admin to review.
+    public java.util.List<PasswordResetRequest> listPendingRequests() {
+        return passwordResetRequestRepository.findPendingRequests();
+    }
+
+    // Called by IT/Admin to approve a pending reset request; this sends the password reset OTP.
+    public void approvePasswordReset(int resetRequestId, int approverEmployeeId) {
+        validateResetRequestId(resetRequestId);
+
+        PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
+
+        UserAccount account = userAccountRepository.findById(request.getUserAccountId());
+
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found for reset request.");
+        }
+
+        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+
+        if (personalEmail == null || personalEmail.isBlank()) {
+            throw new ValidationException("Registered personal email is required for password reset.");
+        }
 
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
@@ -92,13 +124,14 @@ public class PasswordResetService {
                 OtpPurpose.PASSWORD_RESET
         );
 
-        emailService.sendOtp(
-                personalEmail,
-                rawOtp,
-                "MotorPH Password Reset Verification"
-        );
+        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Password Reset Verification");
 
-        return resetRequestId;
+        // Log the approval action
+        try {
+            userAccessLogService.logPasswordReset(approverEmployeeId, account.getEmployeeId());
+        } catch (Exception ignored) {
+            // Logging failure should not block approval
+        }
     }
 
     // Verifies the reset OTP.

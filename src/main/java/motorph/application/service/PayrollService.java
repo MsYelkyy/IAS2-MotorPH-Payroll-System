@@ -61,8 +61,8 @@ public class PayrollService {
 
     // runs payroll for one employee
     public PayrollResult runPayrollForEmployee(int employeeId, int payrunId) {
-        validateEmployeeId(employeeId);
-        validatePayrunId(payrunId);
+        validate(employeeId, "Employee ID");
+        validate(payrunId, "Payrun ID");
 
         Payrun payrun = getPayrunOrThrow(payrunId);
         Employee employee = employeeService.getEmployeeById(employeeId);
@@ -133,22 +133,22 @@ public class PayrollService {
         return result;
     }
 
-    // gets payroll results for a payrun
-    public List<PayrollResult> getPayrollResultsByPayrun(int payrunId) {
-        validatePayrunId(payrunId);
+    // gets payroll results by payrun id
+    public List<PayrollResult> getPayrollResult(int payrunId) {
+        validate(payrunId, "Payrun ID");
         return payrollResultRepository.findByPayrunId(payrunId);
     }
 
     // gets payroll results for an employee
     public List<PayrollResult> getPayrollResultsByEmployee(int employeeId) {
-        validateEmployeeId(employeeId);
+        validate(employeeId, "Employee ID");
         return payrollResultRepository.findByEmployeeId(employeeId);
     }
 
-    // gets one payroll result
+    // gets payroll result by employee and payrun
     public PayrollResult getPayrollResult(int employeeId, int payrunId) {
-        validateEmployeeId(employeeId);
-        validatePayrunId(payrunId);
+        validate(employeeId, "Employee ID");
+        validate(payrunId, "Payrun ID");
 
         PayrollResult result = payrollResultRepository.findByEmployeeAndPayrunId(employeeId, payrunId);
 
@@ -212,17 +212,10 @@ public class PayrollService {
         return payrun;
     }
 
-    // validates employee id input
-    private void validateEmployeeId(int employeeId) {
-        if (employeeId <= 0) {
-            throw new ValidationException("Employee ID is required.");
-        }
-    }
-
-    // validates payrun id input
-    private void validatePayrunId(int payrunId) {
-        if (payrunId <= 0) {
-            throw new ValidationException("Payrun ID is required.");
+    // validates id input with context
+    private void validate(int id, String fieldName) {
+        if (id <= 0) {
+            throw new ValidationException(fieldName + " is required.");
         }
     }
 
@@ -231,6 +224,7 @@ public class PayrollService {
         if (obj == null) {
             throw new IllegalArgumentException(message);
         }
+
         return obj;
     }
 }

@@ -37,7 +37,6 @@ public class UserAccessLogService {
         validateUserAccountId(userAccountId);
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_LOGIN_SUCCESS,
                 clean(details),
@@ -53,7 +52,6 @@ public class UserAccessLogService {
         validateRequired(companyEmail, "Company email is required.");
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 null,
                 ACTION_LOGIN_FAILED,
                 buildFailedLoginDetails(companyEmail, details),
@@ -70,7 +68,6 @@ public class UserAccessLogService {
         validateRequired(viewName, "View name is required.");
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_OPEN_VIEW,
                 "Opened view: " + viewName.trim(),
@@ -90,7 +87,6 @@ public class UserAccessLogService {
         }
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_PASSWORD_RESET,
                 "Reset password for employee ID " + targetEmployeeId,
@@ -117,7 +113,6 @@ public class UserAccessLogService {
                 + clean(newStatus);
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_ACCOUNT_STATUS_CHANGED,
                 details,
@@ -133,7 +128,6 @@ public class UserAccessLogService {
         validateUserAccountId(userAccountId);
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_DATABASE_BACKUP_DOWNLOADED,
                 "Downloaded database backup.",
@@ -150,7 +144,6 @@ public class UserAccessLogService {
         validateRequired(reportName, "Report name is required.");
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 ACTION_GENERATED_REPORT,
                 "Generated report: " + reportName.trim(),
@@ -171,7 +164,6 @@ public class UserAccessLogService {
         validateRequired(action, "Action is required.");
 
         UserAccessLog log = new UserAccessLog(
-                LocalDateTime.now(),
                 userAccountId,
                 action.trim(),
                 clean(details),

@@ -157,6 +157,26 @@ public class PayrollResultRepository {
         return null;
     }
 
+    // finds payroll result by id
+    public PayrollResult find(int payrollResultId) {
+        return findById(payrollResultId);
+    }
+
+    // finds payroll result by employee and payrun
+    public PayrollResult find(int employeeId, int payrunId) {
+        return findByEmployeeAndPayrunId(employeeId, payrunId);
+    }
+
+    // finds all payroll results by employee
+    public List<PayrollResult> findAllByEmployee(int employeeId) {
+        return findByEmployeeId(employeeId);
+    }
+
+    // finds all payroll results by payrun
+    public List<PayrollResult> findAllByPayrun(int payrunId) {
+        return findByPayrunId(payrunId);
+    }
+
     // checks if payroll result already exists
     public boolean existsByEmployeeAndPayrunId(int employeeId, int payrunId) {
         String sql = """

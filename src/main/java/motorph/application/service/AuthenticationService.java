@@ -196,8 +196,7 @@ public class AuthenticationService {
         }
 
         userAccessLogService.logLoginSuccess(
-                account.getEmployeeId(),
-                account.getRole(),
+                account.getUserAccountId(),
                 "Login successful."
         );
     }
