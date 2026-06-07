@@ -30,6 +30,8 @@ public class UserAccountRepository {
                    ua.is_locked,
                    ua.is_active,
                    ua.last_login_at,
+                   ua.must_change_password,
+                   ua.temporary_password_expires_at,
                    MIN(r.role_name) AS role_name
             FROM user_account ua
             LEFT JOIN user_role ur ON ua.user_account_id = ur.user_account_id
@@ -45,7 +47,9 @@ public class UserAccountRepository {
                      ua.password_salt,
                      ua.is_locked,
                      ua.is_active,
-                     ua.last_login_at
+                     ua.last_login_at,
+                     ua.must_change_password,
+                     ua.temporary_password_expires_at
             """;
 
     // finds an active account by company email
@@ -205,9 +209,11 @@ public class UserAccountRepository {
                     password_salt,
                     is_locked,
                     is_active,
-                    last_login_at
+                    last_login_at,
+                    must_change_password,
+                    temporary_password_expires_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -222,6 +228,8 @@ public class UserAccountRepository {
                 stmt.setBoolean(6, userAccount.isLocked());
                 stmt.setBoolean(7, userAccount.isActive());
                 setNullableTimestamp(stmt, 8, userAccount.getLastLoginAt());
+                stmt.setBoolean(9, userAccount.mustChangePassword());
+                setNullableTimestamp(stmt, 10, userAccount.getTemporaryPasswordExpiresAt());
 
                 stmt.executeUpdate();
 
@@ -278,14 +286,16 @@ public class UserAccountRepository {
         });
     }
 
-    // updates the password
+    // updates the permanent password and clears temporary password state
     public void updatePassword(int userAccountId, String hash, String salt) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
         String sql = """
                 UPDATE user_account
                 SET password_hash = ?,
-                    password_salt = ?
+                    password_salt = ?,
+                    must_change_password = 0,
+                    temporary_password_expires_at = NULL
                 WHERE user_account_id = ?
                 """;
 
@@ -293,6 +303,35 @@ public class UserAccountRepository {
             stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
             stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
             stmt.setInt(3, userAccountId);
+        });
+    }
+
+    // updates the temporary password and expiration time
+    public void updateTemporaryPassword(int userAccountId, String hash, String salt, LocalDateTime expiresAt) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        if (expiresAt == null) {
+            throw new IllegalArgumentException("Temporary password expiration is required.");
+        }
+
+        if (!expiresAt.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Temporary password expiration must be in the future.");
+        }
+
+        String sql = """
+                UPDATE user_account
+                SET password_hash = ?,
+                    password_salt = ?,
+                    must_change_password = 1,
+                    temporary_password_expires_at = ?
+                WHERE user_account_id = ?
+                """;
+
+        executeAccountUpdate(sql, stmt -> {
+            stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
+            stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
+            stmt.setTimestamp(3, Timestamp.valueOf(expiresAt));
+            stmt.setInt(4, userAccountId);
         });
     }
 
@@ -332,6 +371,11 @@ public class UserAccountRepository {
         Timestamp lastLoginValue = rs.getTimestamp("last_login_at");
         LocalDateTime lastLoginAt = lastLoginValue == null ? null : lastLoginValue.toLocalDateTime();
 
+        Timestamp temporaryPasswordExpiresValue = rs.getTimestamp("temporary_password_expires_at");
+        LocalDateTime temporaryPasswordExpiresAt = temporaryPasswordExpiresValue == null
+                ? null
+                : temporaryPasswordExpiresValue.toLocalDateTime();
+
         String roleName = rs.getString("role_name");
 
         if (roleName == null || roleName.isBlank()) {
@@ -348,7 +392,9 @@ public class UserAccountRepository {
                 Role.fromValue(roleName),
                 rs.getBoolean("is_locked"),
                 rs.getBoolean("is_active"),
-                lastLoginAt
+                lastLoginAt,
+                rs.getBoolean("must_change_password"),
+                temporaryPasswordExpiresAt
         );
     }
 

@@ -9,14 +9,20 @@ import motorph.domain.model.Attendance;
 import motorph.domain.model.Employee;
 import motorph.domain.model.EmployeeBenefit;
 import motorph.domain.model.GovernmentDetails;
-import motorph.domain.model.Payrun;
+import motorph.domain.model.PayrollBenefit;
 import motorph.domain.model.PayrollBreakdown;
+import motorph.domain.model.PayrollDeduction;
+import motorph.domain.model.PayrollEarning;
 import motorph.domain.model.PayrollResult;
+import motorph.domain.model.Payrun;
 import motorph.domain.model.SalaryHistory;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
-import motorph.infrastructure.repository.PayrunRepository;
+import motorph.infrastructure.repository.PayrollBenefitRepository;
+import motorph.infrastructure.repository.PayrollDeductionRepository;
+import motorph.infrastructure.repository.PayrollEarningRepository;
 import motorph.infrastructure.repository.PayrollResultRepository;
+import motorph.infrastructure.repository.PayrunRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
 
 import java.time.LocalDateTime;
@@ -29,6 +35,9 @@ public class PayrollService {
 
     private final PayrunRepository payrunRepository;
     private final PayrollResultRepository payrollResultRepository;
+    private final PayrollEarningRepository payrollEarningRepository;
+    private final PayrollBenefitRepository payrollBenefitRepository;
+    private final PayrollDeductionRepository payrollDeductionRepository;
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
     private final GovernmentDetailsRepository governmentDetailsRepository;
@@ -40,6 +49,9 @@ public class PayrollService {
     // constructors
     public PayrollService(PayrunRepository payrunRepository,
                           PayrollResultRepository payrollResultRepository,
+                          PayrollEarningRepository payrollEarningRepository,
+                          PayrollBenefitRepository payrollBenefitRepository,
+                          PayrollDeductionRepository payrollDeductionRepository,
                           SalaryHistoryRepository salaryHistoryRepository,
                           EmployeeBenefitRepository employeeBenefitRepository,
                           GovernmentDetailsRepository governmentDetailsRepository,
@@ -50,6 +62,9 @@ public class PayrollService {
 
         this.payrunRepository = require(payrunRepository, "PayrunRepository is required.");
         this.payrollResultRepository = require(payrollResultRepository, "PayrollResultRepository is required.");
+        this.payrollEarningRepository = require(payrollEarningRepository, "PayrollEarningRepository is required.");
+        this.payrollBenefitRepository = require(payrollBenefitRepository, "PayrollBenefitRepository is required.");
+        this.payrollDeductionRepository = require(payrollDeductionRepository, "PayrollDeductionRepository is required.");
         this.salaryHistoryRepository = require(salaryHistoryRepository, "SalaryHistoryRepository is required.");
         this.employeeBenefitRepository = require(employeeBenefitRepository, "EmployeeBenefitRepository is required.");
         this.governmentDetailsRepository = require(governmentDetailsRepository, "GovernmentDetailsRepository is required.");
@@ -77,18 +92,6 @@ public class PayrollService {
                 payrun.getEndDate()
         );
 
-        double regularHoursWorked = logs.stream()
-                .mapToDouble(Attendance::getHoursWorked)
-                .sum();
-
-        double approvedOvertimeHours = overtimeService.getApprovedOvertimeHours(
-                employeeId,
-                payrun.getStartDate(),
-                payrun.getEndDate()
-        );
-
-        double totalHoursWorked = regularHoursWorked + approvedOvertimeHours;
-
         SalaryHistory salary = salaryHistoryRepository.findCurrentByEmployeeId(
                 employeeId,
                 payrun.getEndDate()
@@ -109,6 +112,18 @@ public class PayrollService {
                 payrun.getEndDate()
         );
 
+        double regularHoursWorked = logs.stream()
+                .mapToDouble(PayrollCalculator::calculatePaidRegularHours)
+                .sum();
+
+        double approvedOvertimeHours = overtimeService.getApprovedOvertimeHours(
+                employeeId,
+                payrun.getStartDate(),
+                payrun.getEndDate()
+        );
+
+        double totalHoursWorked = regularHoursWorked + approvedOvertimeHours;
+
         PayrollInputDTO input = buildPayrollInput(employee, salary, governmentDetails, benefits);
 
         PayrollBreakdown breakdown = payrollCalculator.computeDeductions(
@@ -118,6 +133,8 @@ public class PayrollService {
                 payrun.getEndDate()
         );
 
+        LocalDateTime generatedAt = LocalDateTime.now();
+
         PayrollResult result = new PayrollResult(
                 null,
                 employeeId,
@@ -126,11 +143,23 @@ public class PayrollService {
                 breakdown.getTotalEarnings(),
                 breakdown.getTotalDeductions(),
                 breakdown.getNetPay(),
-                LocalDateTime.now()
+                generatedAt
         );
 
-        payrollResultRepository.save(result);
-        return result;
+        int payrollResultId = payrollResultRepository.save(result);
+
+        savePayrollComponents(payrollResultId, breakdown);
+
+        return new PayrollResult(
+                payrollResultId,
+                employeeId,
+                payrunId,
+                totalHoursWorked,
+                breakdown.getTotalEarnings(),
+                breakdown.getTotalDeductions(),
+                breakdown.getNetPay(),
+                generatedAt
+        );
     }
 
     // gets payroll results by payrun id
@@ -157,6 +186,45 @@ public class PayrollService {
         }
 
         return result;
+    }
+
+    // saves payroll component records for reporting
+    private void savePayrollComponents(int payrollResultId, PayrollBreakdown breakdown) {
+        payrollEarningRepository.save(new PayrollEarning(null, payrollResultId, 1, breakdown.getBasicPay()));
+
+        saveEarningIfPresent(payrollResultId, 2, breakdown.getOvertimePay());
+
+        saveBenefitIfPresent(payrollResultId, 1, breakdown.getRiceSubsidy());
+        saveBenefitIfPresent(payrollResultId, 2, breakdown.getPhoneAllowance());
+        saveBenefitIfPresent(payrollResultId, 3, breakdown.getClothingAllowance());
+
+        saveDeductionIfPresent(payrollResultId, 1, breakdown.getSssDeduction(), false);
+        saveDeductionIfPresent(payrollResultId, 2, breakdown.getPhilhealthDeduction(), false);
+        saveDeductionIfPresent(payrollResultId, 3, breakdown.getPagibigDeduction(), false);
+        saveDeductionIfPresent(payrollResultId, 4, breakdown.getWithholdingTax(), true);
+        saveDeductionIfPresent(payrollResultId, 5, breakdown.getLateDeduction(), true);
+        saveDeductionIfPresent(payrollResultId, 6, breakdown.getUndertimeDeduction(), true);
+    }
+
+    // saves earning only when amount exists
+    private void saveEarningIfPresent(int payrollResultId, int earningTypeId, double amount) {
+        if (amount > 0) {
+            payrollEarningRepository.save(new PayrollEarning(null, payrollResultId, earningTypeId, amount));
+        }
+    }
+
+    // saves benefit only when amount exists
+    private void saveBenefitIfPresent(int payrollResultId, int benefitTypeId, double amount) {
+        if (amount > 0) {
+            payrollBenefitRepository.save(new PayrollBenefit(null, payrollResultId, benefitTypeId, amount));
+        }
+    }
+
+    // saves deduction only when amount exists
+    private void saveDeductionIfPresent(int payrollResultId, int deductionTypeId, double amount, boolean taxable) {
+        if (amount > 0) {
+            payrollDeductionRepository.save(new PayrollDeduction(null, payrollResultId, deductionTypeId, amount, taxable));
+        }
     }
 
     // builds payroll input from employee, salary, government details, and benefits
@@ -226,5 +294,18 @@ public class PayrollService {
         }
 
         return obj;
+    }
+
+    // runs payroll for all employees in one payrun
+    public void runPayrollForPayrun(int payrunId) {
+        validate(payrunId, "Payrun ID");
+
+        List<Employee> employees = employeeService.getAllEmployees();
+
+        for (Employee employee : employees) {
+            if (!payrollResultRepository.existsByEmployeeAndPayrunId(employee.getEmployeeId(), payrunId)) {
+                runPayrollForEmployee(employee.getEmployeeId(), payrunId);
+            }
+        }
     }
 }
