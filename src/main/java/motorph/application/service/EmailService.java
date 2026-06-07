@@ -14,7 +14,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 
 /**
- * Handles sending system email notifications such as OTP messages.
+ * Handles sending system email notifications.
  */
 public class EmailService {
 
@@ -35,7 +35,7 @@ public class EmailService {
         this.demoMode = demoMode;
     }
 
-    // Sends an OTP email.
+    // sends an OTP email
     public void sendOtp(String recipientEmail, String otpCode, String subject) {
         validateRequired(recipientEmail, "Recipient email is required.");
         validateRequired(otpCode, "OTP code is required.");
@@ -55,7 +55,25 @@ public class EmailService {
         sendEmail(cleanRecipient, cleanSubject, body);
     }
 
-    // Sends a plain text email.
+    // sends a temporary password email
+    public void sendTemporaryPassword(String recipientEmail, String temporaryPassword) {
+        validateRequired(recipientEmail, "Recipient email is required.");
+        validateRequired(temporaryPassword, "Temporary password is required.");
+
+        String cleanRecipient = recipientEmail.trim();
+        String cleanTemporaryPassword = temporaryPassword.trim();
+        String subject = "MotorPH Temporary Password";
+        String body = buildTemporaryPasswordMessage(cleanTemporaryPassword);
+
+        if (demoMode) {
+            printDemoEmail(cleanRecipient, subject, body);
+            return;
+        }
+
+        sendEmail(cleanRecipient, subject, body);
+    }
+
+    // sends a plain text email
     private void sendEmail(String recipientEmail, String subject, String body) {
         Properties properties = buildMailProperties();
 
@@ -80,7 +98,7 @@ public class EmailService {
         }
     }
 
-    // Builds Gmail SMTP properties.
+    // builds Gmail SMTP properties
     private Properties buildMailProperties() {
         Properties properties = new Properties();
 
@@ -92,14 +110,22 @@ public class EmailService {
         return properties;
     }
 
-    // Builds the OTP email message.
+    // builds the OTP email message
     private String buildOtpMessage(String otpCode) {
         return "Your MotorPH verification code is: " + otpCode + "\n\n"
                 + "This code will expire soon. Do not share this code with anyone.\n\n"
                 + "If you did not request this code, please ignore this email.";
     }
 
-    // Prints OTP email details for demo mode.
+    // builds the temporary password email message
+    private String buildTemporaryPasswordMessage(String temporaryPassword) {
+        return "Your MotorPH temporary password is: " + temporaryPassword + "\n\n"
+                + "This temporary password is only active for 5 minutes.\n"
+                + "Please log in and change your password immediately.\n\n"
+                + "If you did not request this password reset, please contact IT/Admin.";
+    }
+
+    // prints email details for demo mode
     private void printDemoEmail(String recipientEmail, String subject, String body) {
         System.out.println("----- MOTORPH DEMO EMAIL -----");
         System.out.println("From: " + senderEmail);

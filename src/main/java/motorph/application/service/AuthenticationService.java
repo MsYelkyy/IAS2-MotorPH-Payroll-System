@@ -65,6 +65,7 @@ public class AuthenticationService {
         validateAccountStatus(account);
         validateStoredCredentials(account);
         validatePassword(request.getPassword(), account);
+        validateTemporaryPassword(account);
 
         String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
 
@@ -94,6 +95,7 @@ public class AuthenticationService {
         }
 
         validateAccountStatus(account);
+        validateTemporaryPassword(account);
 
         twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
 
@@ -118,6 +120,10 @@ public class AuthenticationService {
 
     // Builds the successful login result.
     private LoginResultDTO buildSuccessResult(UserAccount account) {
+        String message = account.mustChangePassword()
+                ? "Login successful. Password change is required."
+                : "Login successful.";
+
         return new LoginResultDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
@@ -125,7 +131,7 @@ public class AuthenticationService {
                 account.getRole(),
                 true,
                 false,
-                "Login successful."
+                message
         );
     }
 
@@ -179,6 +185,14 @@ public class AuthenticationService {
         if (!matched) {
             logFailed(account.getCompanyEmail(), "Login failed because password did not match.");
             throw new AuthenticationException("Invalid email or password.");
+        }
+    }
+
+    // Validates temporary password status.
+    private void validateTemporaryPassword(UserAccount account) {
+        if (account.isTemporaryPasswordExpired()) {
+            logFailed(account.getCompanyEmail(), "Login failed because temporary password expired.");
+            throw new AuthenticationException("Temporary password has expired. Please request another password reset.");
         }
     }
 

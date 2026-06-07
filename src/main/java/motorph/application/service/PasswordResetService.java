@@ -6,68 +6,54 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
-import motorph.domain.value.OtpPurpose;
 import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
- * Handles forgot password and password reset business logic.
+ * Handles forgot password requests and IT/Admin temporary password processing.
  */
 public class PasswordResetService {
+
+    private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 5;
+    private static final int TEMPORARY_PASSWORD_LENGTH = 10;
+    private static final String TEMPORARY_PASSWORD_PREFIX = "MPH-";
+    private static final String TEMPORARY_PASSWORD_CHARACTERS =
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
     private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final UserAccountRepository userAccountRepository;
     private final EmployeeRepository employeeRepository;
-    private final TwoFactorService twoFactorService;
     private final EmailService emailService;
     private final UserAccessLogService userAccessLogService;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     // constructors
     public PasswordResetService(PasswordResetRequestRepository passwordResetRequestRepository,
                                 UserAccountRepository userAccountRepository,
                                 EmployeeRepository employeeRepository,
-                                TwoFactorService twoFactorService,
                                 EmailService emailService,
                                 UserAccessLogService userAccessLogService) {
 
-        if (passwordResetRequestRepository == null) {
-            throw new IllegalArgumentException("PasswordResetRequestRepository is required.");
-        }
-
-        if (userAccountRepository == null) {
-            throw new IllegalArgumentException("UserAccountRepository is required.");
-        }
-
-        if (employeeRepository == null) {
-            throw new IllegalArgumentException("EmployeeRepository is required.");
-        }
-
-        if (twoFactorService == null) {
-            throw new IllegalArgumentException("TwoFactorService is required.");
-        }
-
-        if (emailService == null) {
-            throw new IllegalArgumentException("EmailService is required.");
-        }
-
-        if (userAccessLogService == null) {
-            throw new IllegalArgumentException("UserAccessLogService is required.");
-        }
-
-        this.passwordResetRequestRepository = passwordResetRequestRepository;
-        this.userAccountRepository = userAccountRepository;
-        this.employeeRepository = employeeRepository;
-        this.twoFactorService = twoFactorService;
-        this.emailService = emailService;
-        this.userAccessLogService = userAccessLogService;
+        this.passwordResetRequestRepository = require(
+                passwordResetRequestRepository,
+                "PasswordResetRequestRepository is required."
+        );
+        this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
+        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.emailService = require(emailService, "EmailService is required.");
+        this.userAccessLogService = require(userAccessLogService, "UserAccessLogService is required.");
     }
 
-    // Starts a password reset request and sends OTP to registered personal email.
+    // creates a pending forgot password request
     public int requestPasswordReset(String companyEmail) {
         validateCompanyEmail(companyEmail);
 
-        UserAccount account = userAccountRepository.findByCompanyEmail(companyEmail);
+        UserAccount account = userAccountRepository.findByCompanyEmail(companyEmail.trim());
 
         if (account == null || !account.isActive()) {
             throw new EntityNotFoundException("Active user account not found.");
@@ -90,27 +76,22 @@ public class PasswordResetService {
             throw new BusinessRuleException("You already have a pending password reset request.");
         }
 
-        // Only create the reset request here; actual OTP/email will be sent after IT approval.
         PasswordResetRequest request = new PasswordResetRequest(account.getUserAccountId());
         return passwordResetRequestRepository.saveAndReturnId(request);
     }
 
-    // Returns all pending password reset requests for IT/Admin to review.
-    public java.util.List<PasswordResetRequest> listPendingRequests() {
+    // returns pending password reset requests for IT/Admin review
+    public List<PasswordResetRequest> listPendingRequests() {
         return passwordResetRequestRepository.findPendingRequests();
     }
 
-    // Called by IT/Admin to approve a pending reset request; this sends the password reset OTP.
-    public void approvePasswordReset(int resetRequestId, int approverEmployeeId) {
+    // processes a pending request and emails a temporary password
+    public void processPasswordResetRequest(int resetRequestId, int resolverEmployeeId) {
         validateResetRequestId(resetRequestId);
+        validateEmployeeId(resolverEmployeeId);
 
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
-
-        UserAccount account = userAccountRepository.findById(request.getUserAccountId());
-
-        if (account == null) {
-            throw new EntityNotFoundException("User account not found for reset request.");
-        }
+        UserAccount account = getActiveAccountOrThrow(request.getUserAccountId());
 
         String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
 
@@ -118,45 +99,40 @@ public class PasswordResetService {
             throw new ValidationException("Registered personal email is required for password reset.");
         }
 
-        String rawOtp = twoFactorService.createOtp(
+        String temporaryPassword = generateTemporaryPassword();
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(temporaryPassword, salt);
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(TEMPORARY_PASSWORD_EXPIRY_MINUTES);
+
+        userAccountRepository.updateTemporaryPassword(
                 account.getUserAccountId(),
-                resetRequestId,
-                OtpPurpose.PASSWORD_RESET
+                hash,
+                salt,
+                expiresAt
         );
 
-        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Password Reset Verification");
+        passwordResetRequestRepository.markManuallyResolved(resetRequestId, resolverEmployeeId);
 
-        // Log the approval action
-        try {
-            userAccessLogService.logPasswordReset(approverEmployeeId, account.getEmployeeId());
-        } catch (Exception ignored) {
-            // Logging failure should not block approval
-        }
+        emailService.sendTemporaryPassword(personalEmail, temporaryPassword);
+
+        logPasswordReset(resolverEmployeeId, account.getEmployeeId());
     }
 
-    // Verifies the reset OTP.
-    public void verifyResetOtp(int resetRequestId, String rawOtp) {
+    // keeps old method name as wrapper for IT/Admin approval
+    public void approvePasswordReset(int resetRequestId, int approverEmployeeId) {
+        processPasswordResetRequest(resetRequestId, approverEmployeeId);
+    }
+
+    // cancels a pending password reset request
+    public void cancelPasswordResetRequest(int resetRequestId, int cancellerEmployeeId) {
         validateResetRequestId(resetRequestId);
+        validateEmployeeId(cancellerEmployeeId);
 
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
-        twoFactorService.verifyPasswordResetOtp(request.getResetRequestId(), rawOtp);
+        passwordResetRequestRepository.markCancelled(request.getResetRequestId(), cancellerEmployeeId);
     }
 
-    // Completes password reset after OTP verification.
-    public void resetPassword(int resetRequestId, String newPassword, String confirmPassword) {
-        validateResetRequestId(resetRequestId);
-        validatePassword(newPassword, confirmPassword);
-
-        PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
-
-        String salt = PasswordHasher.generateSalt();
-        String hash = PasswordHasher.hash(newPassword, salt);
-
-        userAccountRepository.updatePassword(request.getUserAccountId(), hash, salt);
-        passwordResetRequestRepository.markCompleted(resetRequestId);
-    }
-
-    // Gets a pending reset request or throws an error.
+    // gets a pending reset request or throws an error
     private PasswordResetRequest getPendingRequestOrThrow(int resetRequestId) {
         PasswordResetRequest request = passwordResetRequestRepository.findById(resetRequestId);
 
@@ -171,36 +147,69 @@ public class PasswordResetService {
         return request;
     }
 
-    // Validates company email input.
+    // gets an active user account or throws an error
+    private UserAccount getActiveAccountOrThrow(int userAccountId) {
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null || !account.isActive()) {
+            throw new EntityNotFoundException("Active user account not found.");
+        }
+
+        if (account.isLocked()) {
+            throw new BusinessRuleException("Account is locked.");
+        }
+
+        return account;
+    }
+
+    // generates a temporary password
+    private String generateTemporaryPassword() {
+        StringBuilder password = new StringBuilder(TEMPORARY_PASSWORD_PREFIX);
+
+        for (int i = 0; i < TEMPORARY_PASSWORD_LENGTH; i++) {
+            int index = secureRandom.nextInt(TEMPORARY_PASSWORD_CHARACTERS.length());
+            password.append(TEMPORARY_PASSWORD_CHARACTERS.charAt(index));
+        }
+
+        return password.toString();
+    }
+
+    // logs password reset action without blocking the reset flow
+    private void logPasswordReset(int resolverEmployeeId, int targetEmployeeId) {
+        try {
+            userAccessLogService.logPasswordReset(resolverEmployeeId, targetEmployeeId);
+        } catch (RuntimeException ignored) {
+            // Logging failure should not block password reset processing.
+        }
+    }
+
+    // validates company email input
     private void validateCompanyEmail(String companyEmail) {
-        if (companyEmail == null || companyEmail.isBlank()) {
+        if (companyEmail == null || companyEmail.trim().isEmpty()) {
             throw new ValidationException("Company email is required.");
         }
     }
 
-    // Validates reset request id input.
+    // validates reset request id input
     private void validateResetRequestId(int resetRequestId) {
         if (resetRequestId <= 0) {
             throw new ValidationException("Reset request ID is required.");
         }
     }
 
-    // Validates password input.
-    private void validatePassword(String password, String confirmPassword) {
-        if (password == null || password.isBlank()) {
-            throw new ValidationException("New password is required.");
+    // validates employee id input
+    private void validateEmployeeId(int employeeId) {
+        if (employeeId <= 0) {
+            throw new ValidationException("Employee ID is required.");
+        }
+    }
+
+    // validates required dependency
+    private <T> T require(T value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
         }
 
-        if (confirmPassword == null || confirmPassword.isBlank()) {
-            throw new ValidationException("Confirm password is required.");
-        }
-
-        if (password.length() < 8) {
-            throw new ValidationException("New password must be at least 8 characters.");
-        }
-
-        if (!password.equals(confirmPassword)) {
-            throw new ValidationException("New password and confirm password do not match.");
-        }
+        return value;
     }
 }

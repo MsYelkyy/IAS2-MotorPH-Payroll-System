@@ -139,36 +139,6 @@ public class PasswordResetRequestRepository {
         return results;
     }
 
-    // marks a password reset request as approved
-    public void markApproved(int resetRequestId, int approvedByEmployeeId) {
-        validatePositive(resetRequestId, "Reset request ID must be positive.");
-        validatePositive(approvedByEmployeeId, "Approver employee ID must be positive.");
-
-        String sql = """
-                UPDATE password_reset_request
-                SET request_status = 'APPROVED',
-                    resolved_by_employee_id = ?
-                WHERE reset_request_id = ?
-                  AND request_status = 'PENDING'
-                """;
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, approvedByEmployeeId);
-            stmt.setInt(2, resetRequestId);
-
-            int affectedRows = stmt.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new IllegalArgumentException("Pending password reset request not found.");
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException("Failed to approve password reset request.", e);
-        }
-    }
-
     // marks a password reset request as completed
     public void markCompleted(int resetRequestId) {
         validatePositive(resetRequestId, "Reset request ID must be positive.");
@@ -178,10 +148,41 @@ public class PasswordResetRequestRepository {
                 SET request_status = 'COMPLETED',
                     completed_at = NOW()
                 WHERE reset_request_id = ?
-                  AND request_status = 'APPROVED'
+                  AND request_status = 'PENDING'
                 """;
 
         executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as completed.");
+    }
+
+    // marks a password reset request as manually resolved
+    public void markManuallyResolved(int resetRequestId, int resolvedByEmployeeId) {
+        validatePositive(resetRequestId, "Reset request ID must be positive.");
+        validatePositive(resolvedByEmployeeId, "Resolver employee ID must be positive.");
+
+        String sql = """
+                UPDATE password_reset_request
+                SET request_status = 'COMPLETED',
+                    completed_at = NOW(),
+                    resolved_by_employee_id = ?
+                WHERE reset_request_id = ?
+                  AND request_status = 'PENDING'
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, resolvedByEmployeeId);
+            stmt.setInt(2, resetRequestId);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("Pending password reset request not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to mark password reset request as manually resolved.", e);
+        }
     }
 
     // marks a password reset request as expired
@@ -192,7 +193,7 @@ public class PasswordResetRequestRepository {
                 UPDATE password_reset_request
                 SET request_status = 'EXPIRED'
                 WHERE reset_request_id = ?
-                  AND request_status IN ('PENDING', 'APPROVED')
+                  AND request_status = 'PENDING'
                 """;
 
         executeStatusUpdate(sql, resetRequestId, "Failed to mark password reset request as expired.");
@@ -209,7 +210,7 @@ public class PasswordResetRequestRepository {
                     cancelled_at = NOW(),
                     resolved_by_employee_id = ?
                 WHERE reset_request_id = ?
-                  AND request_status IN ('PENDING', 'APPROVED')
+                  AND request_status = 'PENDING'
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -221,7 +222,7 @@ public class PasswordResetRequestRepository {
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new IllegalArgumentException("Password reset request not found or already closed.");
+                throw new IllegalArgumentException("Pending password reset request not found.");
             }
 
         } catch (SQLException e) {
@@ -266,7 +267,7 @@ public class PasswordResetRequestRepository {
             int affectedRows = stmt.executeUpdate();
 
             if (affectedRows == 0) {
-                throw new IllegalArgumentException("Password reset request not found or status is not valid for update.");
+                throw new IllegalArgumentException("Pending password reset request not found.");
             }
 
         } catch (SQLException e) {

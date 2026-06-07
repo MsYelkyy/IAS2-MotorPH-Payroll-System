@@ -16,6 +16,11 @@ import java.util.List;
  */
 public class PayrollCalculator {
 
+    private static final LocalTime SCHEDULED_IN = LocalTime.of(8, 0);
+    private static final LocalTime SCHEDULED_OUT = LocalTime.of(17, 0);
+    private static final double UNPAID_LUNCH_HOURS = 1.0;
+    private static final double MAX_REGULAR_HOURS_PER_DAY = 8.0;
+
     // computes payroll breakdown for the given cutoff date
     public PayrollBreakdown computeDeductions(
             PayrollInputDTO input,
@@ -162,9 +167,6 @@ public class PayrollCalculator {
             PayrollInputDTO input,
             List<Attendance> logs) {
 
-        LocalTime scheduledIn = LocalTime.of(10, 0);
-        LocalTime scheduledOut = LocalTime.of(19, 0);
-
         double hourlyRate = input.getHourlyRate();
         double lateTotal = 0.0;
         double undertimeTotal = 0.0;
@@ -177,14 +179,30 @@ public class PayrollCalculator {
                 continue;
             }
 
-            long minutesLate = Math.max(0, Duration.between(scheduledIn, actualIn).toMinutes());
-            long minutesUndertime = Math.max(0, Duration.between(actualOut, scheduledOut).toMinutes());
+            long minutesLate = Math.max(0, Duration.between(SCHEDULED_IN, actualIn).toMinutes());
+            long minutesUndertime = Math.max(0, Duration.between(actualOut, SCHEDULED_OUT).toMinutes());
 
             lateTotal += (minutesLate / 60.0) * hourlyRate;
             undertimeTotal += (minutesUndertime / 60.0) * hourlyRate;
         }
 
         return new AttendanceDeduction(lateTotal, undertimeTotal);
+    }
+
+    // calculates paid regular hours with unpaid lunch deducted
+    public static double calculatePaidRegularHours(Attendance attendance) {
+        if (attendance == null || attendance.getTimeIn() == null || attendance.getTimeOut() == null) {
+            return 0.0;
+        }
+
+        double actualHours = Duration.between(
+                attendance.getTimeIn(),
+                attendance.getTimeOut()
+        ).toMinutes() / 60.0;
+
+        double paidHours = actualHours - UNPAID_LUNCH_HOURS;
+
+        return Math.max(0.0, Math.min(paidHours, MAX_REGULAR_HOURS_PER_DAY));
     }
 
     // calculates the employee share of SSS
