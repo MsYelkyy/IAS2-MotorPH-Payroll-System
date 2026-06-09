@@ -13,9 +13,9 @@
         <maven.compiler.release>21</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <javafx.version>21</javafx.version>
+        <javafx.version>21.0.6</javafx.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
-        <jasperreports.version>6.21.5</jasperreports.version>
+        <jasperreports.version>7.0.6</jasperreports.version>
 
         <mysql.connector.version>8.3.0</mysql.connector.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
@@ -50,6 +50,18 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
             <version>${javafx.version}</version>
         </dependency>
 

@@ -187,7 +187,7 @@ public class OvertimeService {
 
         OvertimeRequest request = getOvertimeRequestById(overtimeRequestId);
 
-        requireSupervisorOrAdmin(actorAccount, request);
+        requireActiveSupervisorOrAdmin(actorAccount, request);
 
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending overtime requests can be approved or rejected.");
@@ -196,9 +196,9 @@ public class OvertimeService {
         return request;
     }
 
-    // ensures only the assigned supervisor or admin can approve or reject
-    private void requireSupervisorOrAdmin(UserAccount actorAccount, OvertimeRequest request) {
-        if (actorAccount.getRole() == Role.ADMIN) {
+    // ensures only active supervisor or admin role can approve or reject
+    private void requireActiveSupervisorOrAdmin(UserAccount actorAccount, OvertimeRequest request) {
+        if (actorAccount.getActiveRole() == Role.ADMIN) {
             return;
         }
 
@@ -223,8 +223,16 @@ public class OvertimeService {
             throw new UnauthorizedException("Actor employee ID is invalid.");
         }
 
-        if (actorAccount.getRole() == null) {
-            throw new UnauthorizedException("Actor role is required.");
+        if (actorAccount.getRoles() == null || actorAccount.getRoles().isEmpty()) {
+            throw new UnauthorizedException("Actor must have at least one assigned role.");
+        }
+
+        if (actorAccount.getActiveRole() == null) {
+            throw new UnauthorizedException("Actor active role is required.");
+        }
+
+        if (!actorAccount.hasRole(actorAccount.getActiveRole())) {
+            throw new UnauthorizedException("Actor active role is not assigned to the account.");
         }
     }
 

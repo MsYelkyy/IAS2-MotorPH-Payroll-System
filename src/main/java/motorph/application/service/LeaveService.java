@@ -153,7 +153,7 @@ public class LeaveService {
 
         LeaveRequest request = getLeaveRequestById(leaveRequestId);
 
-        requireHrOrAdmin(actorAccount);
+        requireActiveHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
         if (request.getStatus() != RequestStatus.PENDING) {
@@ -191,7 +191,7 @@ public class LeaveService {
 
         LeaveRequest request = getLeaveRequestById(leaveRequestId);
 
-        requireHrOrAdmin(actorAccount);
+        requireActiveHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
         if (request.getStatus() != RequestStatus.PENDING) {
@@ -234,7 +234,7 @@ public class LeaveService {
 
         LeaveRequest request = getLeaveRequestById(leaveRequestId);
 
-        requireHrOrAdmin(actorAccount);
+        requireActiveHrOrAdmin(actorAccount);
         preventSelfApproval(actorAccount.getEmployeeId(), request);
 
         if (request.getStatus() != RequestStatus.APPROVED) {
@@ -282,11 +282,11 @@ public class LeaveService {
         }
     }
 
-    // ensures only HR or ADMIN can approve or reject
-    private void requireHrOrAdmin(UserAccount actorAccount) {
-        Role role = actorAccount.getRole();
+    // ensures only active HR or ADMIN role can approve or reject
+    private void requireActiveHrOrAdmin(UserAccount actorAccount) {
+        Role activeRole = actorAccount.getActiveRole();
 
-        if (role != Role.HR && role != Role.ADMIN) {
+        if (activeRole != Role.HR && activeRole != Role.ADMIN) {
             throw new UnauthorizedException("Access denied.");
         }
     }
@@ -312,8 +312,16 @@ public class LeaveService {
             throw new UnauthorizedException("Actor employee ID is invalid.");
         }
 
-        if (actorAccount.getRole() == null) {
-            throw new UnauthorizedException("Actor role is required.");
+        if (actorAccount.getRoles() == null || actorAccount.getRoles().isEmpty()) {
+            throw new UnauthorizedException("Actor must have at least one assigned role.");
+        }
+
+        if (actorAccount.getActiveRole() == null) {
+            throw new UnauthorizedException("Actor active role is required.");
+        }
+
+        if (!actorAccount.hasRole(actorAccount.getActiveRole())) {
+            throw new UnauthorizedException("Actor active role is not assigned to the account.");
         }
     }
 
