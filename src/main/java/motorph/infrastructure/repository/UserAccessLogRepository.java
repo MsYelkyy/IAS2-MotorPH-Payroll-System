@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,10 @@ public class UserAccessLogRepository {
 
     // saves a user access log record
     public void save(UserAccessLog log) {
+        if (log == null) {
+            throw new IllegalArgumentException("User access log is required.");
+        }
+
         String sql = """
                 INSERT INTO user_access_logs (
                     user_account_id,
@@ -33,7 +38,7 @@ public class UserAccessLogRepository {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, log.getUserAccountId());
+            setNullableInteger(stmt, 1, log.getUserAccountId());
             stmt.setString(2, log.getAction());
             stmt.setString(3, log.getDetails());
             stmt.setString(4, log.getIpAddress());
@@ -147,7 +152,7 @@ public class UserAccessLogRepository {
     private UserAccessLog mapRow(ResultSet rs) throws SQLException {
         return new UserAccessLog(
                 rs.getInt("log_id"),
-                rs.getInt("user_account_id"),
+                getNullableInteger(rs, "user_account_id"),
                 rs.getString("action"),
                 rs.getString("details"),
                 rs.getString("ip_address"),
@@ -178,6 +183,22 @@ public class UserAccessLogRepository {
         }
 
         return logs;
+    }
+
+    // sets a nullable integer value
+    private void setNullableInteger(PreparedStatement stmt, int index, Integer value) throws SQLException {
+        if (value == null) {
+            stmt.setNull(index, Types.INTEGER);
+            return;
+        }
+
+        stmt.setInt(index, value);
+    }
+
+    // gets a nullable integer value
+    private Integer getNullableInteger(ResultSet rs, String columnName) throws SQLException {
+        int value = rs.getInt(columnName);
+        return rs.wasNull() ? null : value;
     }
 
     // binds prepared statement parameters

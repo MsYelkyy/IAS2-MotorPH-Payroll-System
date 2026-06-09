@@ -113,7 +113,7 @@ public class PasswordResetService {
 
         passwordResetRequestRepository.markManuallyResolved(resetRequestId, resolverEmployeeId);
 
-        emailService.sendTemporaryPassword(personalEmail, temporaryPassword);
+        emailService.sendTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
 
         logPasswordReset(resolverEmployeeId, account.getEmployeeId());
     }

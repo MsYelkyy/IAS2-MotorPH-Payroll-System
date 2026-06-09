@@ -1,12 +1,15 @@
 package motorph.domain.model;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import motorph.domain.value.AccountStatus;
 import motorph.domain.value.Role;
 
 /**
- * Represents a system login account and maps to the user_account table.
+ * Represents a system login account with assigned roles.
  */
 public class UserAccount {
 
@@ -16,7 +19,8 @@ public class UserAccount {
     private String username;
     private String passwordHash;
     private String passwordSalt;
-    private Role role;
+    private List<Role> roles;
+    private Role activeRole;
     private boolean locked;
     private boolean active;
     private LocalDateTime lastLoginAt;
@@ -42,6 +46,7 @@ public class UserAccount {
                 username,
                 passwordHash,
                 passwordSalt,
+                List.of(role),
                 role,
                 locked,
                 active,
@@ -58,7 +63,39 @@ public class UserAccount {
                        String username,
                        String passwordHash,
                        String passwordSalt,
-                       Role role,
+                       List<Role> roles,
+                       boolean locked,
+                       boolean active,
+                       LocalDateTime lastLoginAt,
+                       boolean mustChangePassword,
+                       LocalDateTime temporaryPasswordExpiresAt) {
+
+        this(
+                userAccountId,
+                employeeId,
+                companyEmail,
+                username,
+                passwordHash,
+                passwordSalt,
+                roles,
+                roles == null || roles.isEmpty() ? null : roles.get(0),
+                locked,
+                active,
+                lastLoginAt,
+                mustChangePassword,
+                temporaryPasswordExpiresAt
+        );
+    }
+
+    // constructors
+    public UserAccount(Integer userAccountId,
+                       int employeeId,
+                       String companyEmail,
+                       String username,
+                       String passwordHash,
+                       String passwordSalt,
+                       List<Role> roles,
+                       Role activeRole,
                        boolean locked,
                        boolean active,
                        LocalDateTime lastLoginAt,
@@ -69,7 +106,8 @@ public class UserAccount {
         setEmployeeId(employeeId);
         setCompanyEmail(companyEmail);
         setUsername(username);
-        setRole(role);
+        setRoles(roles);
+        setActiveRole(activeRole);
         setLocked(locked);
         setActive(active);
         setLastLoginAt(lastLoginAt);
@@ -104,8 +142,16 @@ public class UserAccount {
         return passwordSalt;
     }
 
+    public List<Role> getRoles() {
+        return Collections.unmodifiableList(roles);
+    }
+
+    public Role getActiveRole() {
+        return activeRole;
+    }
+
     public Role getRole() {
-        return role;
+        return activeRole;
     }
 
     public boolean isLocked() {
@@ -126,6 +172,36 @@ public class UserAccount {
 
     public LocalDateTime getTemporaryPasswordExpiresAt() {
         return temporaryPasswordExpiresAt;
+    }
+
+    // checks if the account has the given role
+    public boolean hasRole(Role role) {
+        return role != null && roles.contains(role);
+    }
+
+    // checks if the account has more than one role
+    public boolean hasMultipleRoles() {
+        return roles.size() > 1;
+    }
+
+    // checks if the active role matches the given role
+    public boolean isUsingRole(Role role) {
+        return activeRole == role;
+    }
+
+    // checks if the account has any allowed role
+    public boolean hasAnyRole(Role... allowedRoles) {
+        if (allowedRoles == null) {
+            return false;
+        }
+
+        for (Role role : allowedRoles) {
+            if (hasRole(role)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // returns computed account status
@@ -198,12 +274,49 @@ public class UserAccount {
         this.username = requireNonBlank(username, "Username is required.");
     }
 
-    public void setRole(Role role) {
-        if (role == null) {
-            throw new IllegalArgumentException("Role is required.");
+    public void setRoles(List<Role> roles) {
+        if (roles == null || roles.isEmpty()) {
+            throw new IllegalArgumentException("At least one role is required.");
         }
 
-        this.role = role;
+        List<Role> cleanRoles = new ArrayList<>();
+
+        for (Role role : roles) {
+            if (role == null) {
+                throw new IllegalArgumentException("Role cannot be null.");
+            }
+
+            if (!cleanRoles.contains(role)) {
+                cleanRoles.add(role);
+            }
+        }
+
+        this.roles = cleanRoles;
+
+        if (activeRole == null || !this.roles.contains(activeRole)) {
+            this.activeRole = this.roles.get(0);
+        }
+    }
+
+    public void setRole(Role role) {
+        setRoles(List.of(role));
+        setActiveRole(role);
+    }
+
+    public void setActiveRole(Role activeRole) {
+        if (activeRole == null) {
+            throw new IllegalArgumentException("Active role is required.");
+        }
+
+        if (roles == null || !roles.contains(activeRole)) {
+            throw new IllegalArgumentException("Active role must be assigned to the account.");
+        }
+
+        this.activeRole = activeRole;
+    }
+
+    public void switchRole(Role role) {
+        setActiveRole(role);
     }
 
     public void setLocked(boolean locked) {
@@ -288,13 +401,15 @@ public class UserAccount {
         return value == null ? "" : value.trim();
     }
 
+    // returns the user account summary
     @Override
     public String toString() {
         return "UserAccount{"
                 + "userAccountId=" + userAccountId
                 + ", employeeId=" + employeeId
                 + ", companyEmail='" + companyEmail + '\''
-                + ", role=" + role
+                + ", roles=" + roles
+                + ", activeRole=" + activeRole
                 + ", locked=" + locked
                 + ", active=" + active
                 + ", mustChangePassword=" + mustChangePassword
