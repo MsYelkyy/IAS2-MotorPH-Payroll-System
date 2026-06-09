@@ -6,7 +6,7 @@ import javafx.scene.control.TextField;
 import motorph.application.dto.login.LoginResultDTO;
 import motorph.application.exception.AuthenticationException;
 import motorph.application.exception.ValidationException;
-import motorph.application.service.AuthenticationService;
+import motorph.application.service.LoginService;
 import motorph.application.session.UserSession;
 
 /**
@@ -23,19 +23,26 @@ public class OtpController {
     @FXML
     private Label messageLabel;
 
-    private AuthenticationService authenticationService;
+    private LoginService loginService;
     private int userAccountId;
 
     // initializes the OTP screen
     @FXML
     private void initialize() {
-        otpErrorLabel.setText("");
-        messageLabel.setText("");
+        clearErrors();
     }
 
     // receives login data from the login screen
-    public void setLoginVerificationData(AuthenticationService authenticationService, int userAccountId) {
-        this.authenticationService = authenticationService;
+    public void setLoginVerificationData(LoginService loginService, int userAccountId) {
+        if (loginService == null) {
+            throw new IllegalArgumentException("LoginService is required.");
+        }
+
+        if (userAccountId <= 0) {
+            throw new IllegalArgumentException("User account ID is required.");
+        }
+
+        this.loginService = loginService;
         this.userAccountId = userAccountId;
     }
 
@@ -44,24 +51,21 @@ public class OtpController {
     private void handleVerifyOtp() {
         clearErrors();
 
-        String rawOtp = otpField.getText();
+        String rawOtp = getText(otpField);
 
-        if (rawOtp == null || rawOtp.trim().isEmpty()) {
+        if (rawOtp.isBlank()) {
             otpErrorLabel.setText("OTP code is required.");
             return;
         }
 
         try {
-            LoginResultDTO result = authenticationService.verifyLoginOtp(userAccountId, rawOtp.trim());
+            LoginResultDTO result = loginService.verifyLoginOtp(userAccountId, rawOtp);
 
             if (result.isAuthenticated()) {
                 UserSession.getInstance().login(result);
-
                 messageLabel.setText(result.getMessage());
 
-                // TODO: Navigate to dashboard based on UserSession.getInstance().getRole()
-                // Example later:
-                // openDashboard();
+                // TODO: Navigate to dashboard based on UserSession.getInstance().getActiveRole()
             }
 
         } catch (AuthenticationException | ValidationException e) {
@@ -71,6 +75,11 @@ public class OtpController {
             messageLabel.setText("OTP verification failed. Please try again.");
             e.printStackTrace();
         }
+    }
+
+    // gets trimmed text from a text field
+    private String getText(TextField field) {
+        return field.getText() == null ? "" : field.getText().trim();
     }
 
     // clears OTP error messages

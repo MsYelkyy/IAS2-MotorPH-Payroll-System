@@ -28,26 +28,10 @@ public class AuthenticationService {
                                  EmailService emailService,
                                  UserAccessLogService userAccessLogService) {
 
-        if (userAccountRepository == null) {
-            throw new IllegalArgumentException("UserAccountRepository is required.");
-        }
-
-        if (employeeRepository == null) {
-            throw new IllegalArgumentException("EmployeeRepository is required.");
-        }
-
-        if (twoFactorService == null) {
-            throw new IllegalArgumentException("TwoFactorService is required.");
-        }
-
-        if (emailService == null) {
-            throw new IllegalArgumentException("EmailService is required.");
-        }
-
-        this.userAccountRepository = userAccountRepository;
-        this.employeeRepository = employeeRepository;
-        this.twoFactorService = twoFactorService;
-        this.emailService = emailService;
+        this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
+        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.twoFactorService = require(twoFactorService, "TwoFactorService is required.");
+        this.emailService = require(emailService, "EmailService is required.");
         this.userAccessLogService = userAccessLogService;
     }
 
@@ -55,25 +39,18 @@ public class AuthenticationService {
     public LoginResultDTO authenticate(LoginRequestDTO request) {
         validateRequest(request);
 
-        UserAccount account = userAccountRepository.findByCompanyEmail(request.getCompanyEmail());
+        String companyEmail = request.getCompanyEmail().trim();
+        UserAccount account = userAccountRepository.findByCompanyEmail(companyEmail);
 
         if (account == null) {
-            logFailed(request.getCompanyEmail(), "Login failed because email was not found.");
+            logFailed(companyEmail, "Login failed because email was not found.");
             throw new AuthenticationException("Invalid email or password.");
         }
 
-        validateAccountStatus(account);
-        validateAssignedRoles(account);
-        validateStoredCredentials(account);
+        validateAccountForLogin(account);
         validatePassword(request.getPassword(), account);
-        validateTemporaryPassword(account);
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
-
-        if (personalEmail == null || personalEmail.isBlank()) {
-            throw new ValidationException("Registered personal email is required for OTP verification.");
-        }
-
+        String personalEmail = getPersonalEmailOrThrow(account);
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
                 null,
@@ -95,16 +72,32 @@ public class AuthenticationService {
             throw new AuthenticationException("User account not found.");
         }
 
-        validateAccountStatus(account);
-        validateAssignedRoles(account);
-        validateTemporaryPassword(account);
-
+        validateAccountForLogin(account);
         twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
 
         userAccountRepository.updateLastLogin(userAccountId);
         logSuccess(account);
 
         return buildSuccessResult(account);
+    }
+
+    // validates account details required for login
+    private void validateAccountForLogin(UserAccount account) {
+        validateAccountStatus(account);
+        validateAssignedRoles(account);
+        validateStoredCredentials(account);
+        validateTemporaryPassword(account);
+    }
+
+    // gets the personal email for OTP sending
+    private String getPersonalEmailOrThrow(UserAccount account) {
+        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+
+        if (personalEmail == null || personalEmail.isBlank()) {
+            throw new ValidationException("Registered personal email is required for OTP verification.");
+        }
+
+        return personalEmail.trim();
     }
 
     // builds the OTP required login result
@@ -237,5 +230,14 @@ public class AuthenticationService {
         }
 
         userAccessLogService.logLoginFailed(companyEmail, details);
+    }
+
+    // validates required dependency
+    private <T> T require(T value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }
