@@ -2,3 +2,5 @@
 target/
 *.iml
 out/
+.tools/
+.DS_Store
