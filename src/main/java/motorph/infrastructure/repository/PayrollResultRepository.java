@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.sql.Types;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,6 +158,26 @@ public class PayrollResultRepository {
         return null;
     }
 
+    // finds payroll result by id
+    public PayrollResult find(int payrollResultId) {
+        return findById(payrollResultId);
+    }
+
+    // finds payroll result by employee and payrun
+    public PayrollResult find(int employeeId, int payrunId) {
+        return findByEmployeeAndPayrunId(employeeId, payrunId);
+    }
+
+    // finds all payroll results by employee
+    public List<PayrollResult> findAllByEmployee(int employeeId) {
+        return findByEmployeeId(employeeId);
+    }
+
+    // finds all payroll results by payrun
+    public List<PayrollResult> findAllByPayrun(int payrunId) {
+        return findByPayrunId(payrunId);
+    }
+
     // checks if payroll result already exists
     public boolean existsByEmployeeAndPayrunId(int employeeId, int payrunId) {
         String sql = """
@@ -184,23 +205,25 @@ public class PayrollResultRepository {
         return false;
     }
 
-    // saves a payroll result
-    public void save(PayrollResult payrollResult) {
+    // saves a payroll result and returns the generated id
+    public int save(PayrollResult payrollResult) {
+        validatePayrollResult(payrollResult);
+
         String sql = """
-                INSERT INTO payroll_result (
-                    employee_id,
-                    pay_run_id,
-                    total_hours_worked,
-                    gross_pay,
-                    total_deductions,
-                    net_pay,
-                    generated_at
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """;
+            INSERT INTO payroll_result (
+                employee_id,
+                pay_run_id,
+                total_hours_worked,
+                gross_pay,
+                total_deductions,
+                net_pay,
+                generated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, payrollResult.getEmployeeId());
             stmt.setInt(2, payrollResult.getPayrunId());
@@ -211,6 +234,14 @@ public class PayrollResultRepository {
             setNullableTimestamp(stmt, 7, payrollResult.getGeneratedAt());
 
             stmt.executeUpdate();
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                }
+            }
+
+            throw new RuntimeException("Failed to retrieve generated payroll result ID.");
 
         } catch (SQLException e) {
             throw new RuntimeException("Failed to save payroll result.", e);
@@ -242,5 +273,12 @@ public class PayrollResultRepository {
         }
 
         stmt.setTimestamp(index, Timestamp.valueOf(value));
+    }
+
+    // validates payroll result input
+    private void validatePayrollResult(PayrollResult payrollResult) {
+        if (payrollResult == null) {
+            throw new IllegalArgumentException("Payroll result is required.");
+        }
     }
 }

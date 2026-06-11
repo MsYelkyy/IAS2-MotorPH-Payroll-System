@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="payslip"
+              pageWidth="595"
+              pageHeight="842"
+              columnWidth="515"
+              leftMargin="40"
+              rightMargin="40"
+              topMargin="40"
+              bottomMargin="40"
+              uuid="11111111-1111-1111-1111-111111111111">
+
+	<field name="employeeId" class="java.lang.Integer"/>
+	<field name="employeeName" class="java.lang.String"/>
+	<field name="payrunId" class="java.lang.Integer"/>
+	<field name="payrollType" class="motorph.domain.value.PayrollType"/>
+	<field name="periodStartDate" class="java.time.LocalDate"/>
+	<field name="periodEndDate" class="java.time.LocalDate"/>
+	<field name="payDate" class="java.time.LocalDate"/>
+	<field name="basicPay" class="java.lang.Double"/>
+	<field name="overtimePay" class="java.lang.Double"/>
+	<field name="benefitsTotal" class="java.lang.Double"/>
+	<field name="deductionsTotal" class="java.lang.Double"/>
+	<field name="grossPay" class="java.lang.Double"/>
+	<field name="netPay" class="java.lang.Double"/>
+	<field name="generatedAt" class="java.time.LocalDateTime"/>
+
+	<title>
+		<band height="70">
+			<staticText>
+				<reportElement x="0" y="0" width="515" height="30"/>
+				<textElement textAlignment="Center">
+					<font size="18" isBold="true"/>
+				</textElement>
+				<text><![CDATA[MotorPH Payslip]]></text>
+			</staticText>
+
+			<staticText>
+				<reportElement x="0" y="35" width="515" height="20"/>
+				<textElement textAlignment="Center">
+					<font size="10"/>
+				</textElement>
+				<text><![CDATA[Test JasperReports Template]]></text>
+			</staticText>
+		</band>
+	</title>
+
+	<detail>
+		<band height="300">
+
+			<staticText>
+				<reportElement x="0" y="0" width="150" height="20"/>
+				<text><![CDATA[Employee ID:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="0" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{employeeId}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="25" width="150" height="20"/>
+				<text><![CDATA[Employee Name:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="25" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{employeeName}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="50" width="150" height="20"/>
+				<text><![CDATA[Payrun ID:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="50" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{payrunId}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="75" width="150" height="20"/>
+				<text><![CDATA[Payroll Type:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="75" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{payrollType}.toString()]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="100" width="150" height="20"/>
+				<text><![CDATA[Period Start:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="100" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{periodStartDate}.toString()]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="125" width="150" height="20"/>
+				<text><![CDATA[Period End:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="125" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{periodEndDate}.toString()]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="150" width="150" height="20"/>
+				<text><![CDATA[Pay Date:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="150" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{payDate}.toString()]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="185" width="150" height="20"/>
+				<text><![CDATA[Basic Pay:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="185" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{basicPay}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="210" width="150" height="20"/>
+				<text><![CDATA[Overtime Pay:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="210" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{overtimePay}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="235" width="150" height="20"/>
+				<text><![CDATA[Benefits Total:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="235" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{benefitsTotal}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="260" width="150" height="20"/>
+				<text><![CDATA[Deductions Total:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="260" width="300" height="20"/>
+				<textFieldExpression><![CDATA[$F{deductionsTotal}]]></textFieldExpression>
+			</textField>
+
+		</band>
+	</detail>
+
+	<summary>
+		<band height="80">
+			<staticText>
+				<reportElement x="0" y="0" width="150" height="25"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Gross Pay:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="0" width="300" height="25"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{grossPay}]]></textFieldExpression>
+			</textField>
+
+			<staticText>
+				<reportElement x="0" y="30" width="150" height="25"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Net Pay:]]></text>
+			</staticText>
+			<textField>
+				<reportElement x="170" y="30" width="300" height="25"/>
+				<textElement>
+					<font isBold="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{netPay}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+
+</jasperReport>

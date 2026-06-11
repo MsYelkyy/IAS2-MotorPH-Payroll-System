@@ -15,7 +15,6 @@ public class Attendance {
     private final LocalDate workDate;
     private final LocalTime timeIn;
     private final LocalTime timeOut;
-    private final double overtimeHours;
     private final AttendanceStatus attendanceStatus;
 
     // constructors
@@ -25,7 +24,6 @@ public class Attendance {
             LocalDate workDate,
             LocalTime timeIn,
             LocalTime timeOut,
-            double overtimeHours,
             AttendanceStatus attendanceStatus) {
 
         this.attendanceId = validateNullableId(attendanceId, "Attendance ID must be positive.");
@@ -33,7 +31,6 @@ public class Attendance {
         this.workDate = requireNonNull(workDate, "Work date is required.");
         this.timeIn = timeIn;
         this.timeOut = timeOut;
-        this.overtimeHours = validateNonNegative(overtimeHours, "Overtime hours cannot be negative.");
         this.attendanceStatus = requireNonNull(attendanceStatus, "Attendance status is required.");
     }
 
@@ -56,10 +53,6 @@ public class Attendance {
 
     public LocalTime getTimeOut() {
         return timeOut;
-    }
-
-    public double getOvertimeHours() {
-        return overtimeHours;
     }
 
     public AttendanceStatus getAttendanceStatus() {

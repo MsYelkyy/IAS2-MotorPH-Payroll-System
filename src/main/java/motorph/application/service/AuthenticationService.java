@@ -28,50 +28,29 @@ public class AuthenticationService {
                                  EmailService emailService,
                                  UserAccessLogService userAccessLogService) {
 
-        if (userAccountRepository == null) {
-            throw new IllegalArgumentException("UserAccountRepository is required.");
-        }
-
-        if (employeeRepository == null) {
-            throw new IllegalArgumentException("EmployeeRepository is required.");
-        }
-
-        if (twoFactorService == null) {
-            throw new IllegalArgumentException("TwoFactorService is required.");
-        }
-
-        if (emailService == null) {
-            throw new IllegalArgumentException("EmailService is required.");
-        }
-
-        this.userAccountRepository = userAccountRepository;
-        this.employeeRepository = employeeRepository;
-        this.twoFactorService = twoFactorService;
-        this.emailService = emailService;
+        this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
+        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.twoFactorService = require(twoFactorService, "TwoFactorService is required.");
+        this.emailService = require(emailService, "EmailService is required.");
         this.userAccessLogService = userAccessLogService;
     }
 
-    // Authenticates email and password then sends OTP.
+    // authenticates email and password then sends OTP
     public LoginResultDTO authenticate(LoginRequestDTO request) {
         validateRequest(request);
 
-        UserAccount account = userAccountRepository.findByCompanyEmail(request.getCompanyEmail());
+        String companyEmail = request.getCompanyEmail().trim();
+        UserAccount account = userAccountRepository.findByCompanyEmail(companyEmail);
 
         if (account == null) {
-            logFailed(request.getCompanyEmail(), "Login failed because email was not found.");
+            logFailed(companyEmail, "Login failed because email was not found.");
             throw new AuthenticationException("Invalid email or password.");
         }
 
-        validateAccountStatus(account);
-        validateStoredCredentials(account);
+        validateAccountForLogin(account);
         validatePassword(request.getPassword(), account);
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
-
-        if (personalEmail == null || personalEmail.isBlank()) {
-            throw new ValidationException("Registered personal email is required for OTP verification.");
-        }
-
+        String personalEmail = getPersonalEmailOrThrow(account);
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
                 null,
@@ -83,7 +62,7 @@ public class AuthenticationService {
         return buildOtpRequiredResult(account);
     }
 
-    // Verifies login OTP and completes login.
+    // verifies login OTP and completes login
     public LoginResultDTO verifyLoginOtp(int userAccountId, String rawOtp) {
         validateUserAccountId(userAccountId);
 
@@ -93,8 +72,7 @@ public class AuthenticationService {
             throw new AuthenticationException("User account not found.");
         }
 
-        validateAccountStatus(account);
-
+        validateAccountForLogin(account);
         twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
 
         userAccountRepository.updateLastLogin(userAccountId);
@@ -103,33 +81,60 @@ public class AuthenticationService {
         return buildSuccessResult(account);
     }
 
-    // Builds the OTP required login result.
+    // validates account details required for login
+    private void validateAccountForLogin(UserAccount account) {
+        validateAccountStatus(account);
+        validateAssignedRoles(account);
+        validateStoredCredentials(account);
+        validateTemporaryPassword(account);
+    }
+
+    // gets the personal email for OTP sending
+    private String getPersonalEmailOrThrow(UserAccount account) {
+        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+
+        if (personalEmail == null || personalEmail.isBlank()) {
+            throw new ValidationException("Registered personal email is required for OTP verification.");
+        }
+
+        return personalEmail.trim();
+    }
+
+    // builds the OTP required login result
     private LoginResultDTO buildOtpRequiredResult(UserAccount account) {
         return new LoginResultDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
                 account.getCompanyEmail(),
-                account.getRole(),
+                account.getRoles(),
+                account.getActiveRole(),
                 false,
                 true,
+                account.hasMultipleRoles(),
                 "OTP verification required."
         );
     }
 
-    // Builds the successful login result.
+    // builds the successful login result
     private LoginResultDTO buildSuccessResult(UserAccount account) {
+        String message = account.mustChangePassword()
+                ? "Login successful. Password change is required."
+                : "Login successful.";
+
         return new LoginResultDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
                 account.getCompanyEmail(),
-                account.getRole(),
+                account.getRoles(),
+                account.getActiveRole(),
                 true,
                 false,
-                "Login successful."
+                account.hasMultipleRoles(),
+                message
         );
     }
 
-    // Validates the login request input.
+    // validates the login request input
     private void validateRequest(LoginRequestDTO request) {
         if (request == null) {
             throw new AuthenticationException("Login request is required.");
@@ -144,7 +149,7 @@ public class AuthenticationService {
         }
     }
 
-    // Validates account status before login.
+    // validates account status before login
     private void validateAccountStatus(UserAccount account) {
         if (!account.isActive()) {
             logFailed(account.getCompanyEmail(), "Login failed because account is inactive.");
@@ -157,18 +162,27 @@ public class AuthenticationService {
         }
     }
 
-    // Validates that the stored account credentials are complete.
-    private void validateStoredCredentials(UserAccount account) {
-        if (account.getPasswordHash() == null || account.getPasswordHash().isBlank()) {
-            throw new IllegalStateException("Stored password hash is missing.");
+    // validates that the account has assigned roles
+    private void validateAssignedRoles(UserAccount account) {
+        if (account.getRoles() == null || account.getRoles().isEmpty()) {
+            logFailed(account.getCompanyEmail(), "Login failed because account has no assigned role.");
+            throw new AuthenticationException("Account has no assigned role.");
         }
 
-        if (account.getPasswordSalt() == null || account.getPasswordSalt().isBlank()) {
-            throw new IllegalStateException("Stored password salt is missing.");
+        if (account.getActiveRole() == null) {
+            logFailed(account.getCompanyEmail(), "Login failed because account has no active role.");
+            throw new AuthenticationException("Account has no active role.");
         }
     }
 
-    // Validates the entered password.
+    // validates that the stored account credentials are complete
+    private void validateStoredCredentials(UserAccount account) {
+        if (!account.hasPassword()) {
+            throw new IllegalStateException("Stored password credentials are missing.");
+        }
+    }
+
+    // validates the entered password
     private void validatePassword(String rawPassword, UserAccount account) {
         boolean matched = PasswordHasher.verify(
                 rawPassword,
@@ -182,32 +196,48 @@ public class AuthenticationService {
         }
     }
 
-    // Validates user account id input.
+    // validates temporary password status
+    private void validateTemporaryPassword(UserAccount account) {
+        if (account.isTemporaryPasswordExpired()) {
+            logFailed(account.getCompanyEmail(), "Login failed because temporary password expired.");
+            throw new AuthenticationException("Temporary password has expired. Please request another password reset.");
+        }
+    }
+
+    // validates user account id input
     private void validateUserAccountId(int userAccountId) {
         if (userAccountId <= 0) {
             throw new ValidationException("User account ID is required.");
         }
     }
 
-    // Logs a successful login attempt.
+    // logs a successful login attempt
     private void logSuccess(UserAccount account) {
         if (userAccessLogService == null) {
             return;
         }
 
         userAccessLogService.logLoginSuccess(
-                account.getEmployeeId(),
-                account.getRole(),
+                account.getUserAccountId(),
                 "Login successful."
         );
     }
 
-    // Logs a failed login attempt.
+    // logs a failed login attempt
     private void logFailed(String companyEmail, String details) {
         if (userAccessLogService == null) {
             return;
         }
 
         userAccessLogService.logLoginFailed(companyEmail, details);
+    }
+
+    // validates required dependency
+    private <T> T require(T value, String message) {
+        if (value == null) {
+            throw new IllegalArgumentException(message);
+        }
+
+        return value;
     }
 }

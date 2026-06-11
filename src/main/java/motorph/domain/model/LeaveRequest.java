@@ -2,40 +2,40 @@ package motorph.domain.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import motorph.domain.value.LeaveStatus;
+import motorph.domain.value.RequestStatus;
 
 /**
- * Represents a leave request in the system.
+ * Represents a leave request and maps to the leave_request table.
  */
 public class LeaveRequest extends Request {
 
+    private final int leaveTypeId;
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final double leaveHours;
     private final String reason;
-    private final int leaveTypeId;
 
     // constructors
     public LeaveRequest(
-            Integer requestId,
+            Integer leaveRequestId,
             int employeeId,
-            LocalDateTime requestDate,
+            int leaveTypeId,
             LocalDate startDate,
             LocalDate endDate,
             double leaveHours,
             String reason,
-            int leaveTypeId) {
+            LocalDateTime dateSubmitted) {
 
         this(
-                requestId,
+                leaveRequestId,
                 employeeId,
-                requestDate,
+                leaveTypeId,
                 startDate,
                 endDate,
                 leaveHours,
                 reason,
-                leaveTypeId,
-                LeaveStatus.PENDING,
+                RequestStatus.PENDING,
+                dateSubmitted,
                 null,
                 null,
                 null
@@ -44,38 +44,42 @@ public class LeaveRequest extends Request {
 
     // constructors
     public LeaveRequest(
-            Integer requestId,
+            Integer leaveRequestId,
             int employeeId,
-            LocalDateTime requestDate,
+            int leaveTypeId,
             LocalDate startDate,
             LocalDate endDate,
             double leaveHours,
             String reason,
-            int leaveTypeId,
-            LeaveStatus status,
-            Integer approverAccountId,
+            RequestStatus status,
+            LocalDateTime dateSubmitted,
+            Integer approvedBy,
             String remarks,
             LocalDateTime dateReviewed) {
 
         super(
-                requestId,
+                leaveRequestId,
                 employeeId,
-                requestDate,
+                dateSubmitted,
                 status,
-                approverAccountId,
+                approvedBy,
                 remarks,
                 dateReviewed
         );
 
+        this.leaveTypeId = validatePositive(leaveTypeId, "Leave type ID must be positive.");
         this.startDate = requireNonNull(startDate, "Start date is required.");
         this.endDate = requireNonNull(endDate, "End date is required.");
         validateDateRange(this.startDate, this.endDate);
         this.leaveHours = validateLeaveHours(leaveHours);
         this.reason = requireNonBlank(reason, "Reason is required.");
-        this.leaveTypeId = validatePositive(leaveTypeId, "Leave type ID must be positive.");
     }
 
     // getters
+    public int getLeaveTypeId() {
+        return leaveTypeId;
+    }
+
     public LocalDate getStartDate() {
         return startDate;
     }
@@ -92,8 +96,14 @@ public class LeaveRequest extends Request {
         return reason;
     }
 
-    public int getLeaveTypeId() {
-        return leaveTypeId;
+    // checks if the leave request covers one day
+    public boolean isSingleDay() {
+        return startDate.equals(endDate);
+    }
+
+    // checks if the leave request covers multiple days
+    public boolean isMultipleDays() {
+        return endDate.isAfter(startDate);
     }
 
     // validates the leave date range
@@ -105,9 +115,24 @@ public class LeaveRequest extends Request {
 
     // validates leave hours
     private double validateLeaveHours(double leaveHours) {
-        if (leaveHours < 0) {
-            throw new IllegalArgumentException("Leave hours cannot be negative.");
+        if (leaveHours <= 0) {
+            throw new IllegalArgumentException("Leave hours must be greater than zero.");
         }
         return leaveHours;
+    }
+
+    // returns the leave request summary
+    @Override
+    public String toString() {
+        return "LeaveRequest{"
+                + "leaveRequestId=" + getRequestId()
+                + ", employeeId=" + getEmployeeId()
+                + ", leaveTypeId=" + leaveTypeId
+                + ", startDate=" + startDate
+                + ", endDate=" + endDate
+                + ", leaveHours=" + leaveHours
+                + ", status=" + getStatus()
+                + ", approvedBy=" + getApproverAccountId()
+                + '}';
     }
 }

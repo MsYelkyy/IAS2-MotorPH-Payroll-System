@@ -3,10 +3,10 @@ package motorph.domain.model;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import motorph.domain.contract.Approvable;
-import motorph.domain.value.LeaveStatus;
+import motorph.domain.value.RequestStatus;
 
 /**
- * Represents a base request with approval details.
+ * Represents a base employee request with approval details.
  */
 public abstract class Request implements Approvable {
 
@@ -14,7 +14,7 @@ public abstract class Request implements Approvable {
     private final int employeeId;
     private final LocalDateTime requestDate;
 
-    private LeaveStatus status;
+    private RequestStatus status;
     private Integer approverAccountId;
     private String remarks;
     private LocalDateTime dateReviewed;
@@ -24,7 +24,7 @@ public abstract class Request implements Approvable {
             Integer requestId,
             int employeeId,
             LocalDateTime requestDate,
-            LeaveStatus status,
+            RequestStatus status,
             Integer approverAccountId,
             String remarks,
             LocalDateTime dateReviewed) {
@@ -51,7 +51,7 @@ public abstract class Request implements Approvable {
         return requestDate;
     }
 
-    public LeaveStatus getStatus() {
+    public RequestStatus getStatus() {
         return status;
     }
 
@@ -70,7 +70,7 @@ public abstract class Request implements Approvable {
     // approves the request
     @Override
     public void approve(int approverAccountId, String remarks) {
-        this.status = LeaveStatus.APPROVED;
+        this.status = RequestStatus.APPROVED;
         this.approverAccountId = validatePositive(approverAccountId, "Approver account ID must be positive.");
         this.remarks = clean(remarks);
         this.dateReviewed = LocalDateTime.now();
@@ -79,25 +79,36 @@ public abstract class Request implements Approvable {
     // rejects the request
     @Override
     public void reject(int approverAccountId, String remarks) {
-        this.status = LeaveStatus.REJECTED;
+        this.status = RequestStatus.REJECTED;
         this.approverAccountId = validatePositive(approverAccountId, "Approver account ID must be positive.");
         this.remarks = clean(remarks);
         this.dateReviewed = LocalDateTime.now();
     }
 
+    // cancels the request
+    public void cancel() {
+        this.status = RequestStatus.CANCELLED;
+        this.dateReviewed = LocalDateTime.now();
+    }
+
     // checks if the request is pending
     public boolean isPending() {
-        return status == LeaveStatus.PENDING;
+        return status == RequestStatus.PENDING;
     }
 
     // checks if the request is approved
     public boolean isApproved() {
-        return status == LeaveStatus.APPROVED;
+        return status == RequestStatus.APPROVED;
     }
 
     // checks if the request is rejected
     public boolean isRejected() {
-        return status == LeaveStatus.REJECTED;
+        return status == RequestStatus.REJECTED;
+    }
+
+    // checks if the request is cancelled
+    public boolean isCancelled() {
+        return status == RequestStatus.CANCELLED;
     }
 
     // validates a required positive number
