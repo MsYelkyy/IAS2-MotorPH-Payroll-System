@@ -20,7 +20,7 @@ public class LeaveCreditRepository {
         validateLeaveHours(leaveHours);
 
         String sql = """
-                SELECT remaining_credits
+                SELECT total_credits, used_credits
                 FROM leave_credit
                 WHERE employee_id = ?
                   AND leave_type_id = ?
@@ -38,7 +38,12 @@ public class LeaveCreditRepository {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("remaining_credits") >= requestedCredits;
+
+                    double totalCredits = rs.getDouble("total_credits");
+                    double usedCredits = rs.getDouble("used_credits");
+                    double remainingCredits = totalCredits - usedCredits;
+
+                    return remainingCredits >= requestedCredits;
                 }
             }
 
@@ -56,7 +61,7 @@ public class LeaveCreditRepository {
         validateYear(year);
 
         String sql = """
-                SELECT remaining_credits
+                SELECT total_credits, used_credits
                 FROM leave_credit
                 WHERE employee_id = ?
                   AND leave_type_id = ?
@@ -72,7 +77,11 @@ public class LeaveCreditRepository {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getDouble("remaining_credits");
+
+                    double totalCredits = rs.getDouble("total_credits");
+                    double usedCredits = rs.getDouble("used_credits");
+
+                    return totalCredits - usedCredits;
                 }
             }
 
@@ -92,12 +101,11 @@ public class LeaveCreditRepository {
 
         String sql = """
                 UPDATE leave_credit
-                SET used_credits = used_credits + ?,
-                    remaining_credits = remaining_credits - ?
+                SET used_credits = used_credits + ?
                 WHERE employee_id = ?
                   AND leave_type_id = ?
                   AND year = ?
-                  AND remaining_credits >= ?
+                  AND (total_credits - used_credits) >= ?
                 """;
 
         double requestedCredits = convertHoursToCredits(leaveHours);
@@ -106,11 +114,10 @@ public class LeaveCreditRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, requestedCredits);
-            stmt.setDouble(2, requestedCredits);
-            stmt.setInt(3, employeeId);
-            stmt.setInt(4, leaveTypeId);
-            stmt.setInt(5, year);
-            stmt.setDouble(6, requestedCredits);
+            stmt.setInt(2, employeeId);
+            stmt.setInt(3, leaveTypeId);
+            stmt.setInt(4, year);
+            stmt.setDouble(5, requestedCredits);
 
             int affectedRows = stmt.executeUpdate();
 
@@ -132,8 +139,7 @@ public class LeaveCreditRepository {
 
         String sql = """
                 UPDATE leave_credit
-                SET used_credits = used_credits - ?,
-                    remaining_credits = remaining_credits + ?
+                SET used_credits = used_credits - ?
                 WHERE employee_id = ?
                   AND leave_type_id = ?
                   AND year = ?
@@ -146,11 +152,10 @@ public class LeaveCreditRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setDouble(1, requestedCredits);
-            stmt.setDouble(2, requestedCredits);
-            stmt.setInt(3, employeeId);
-            stmt.setInt(4, leaveTypeId);
-            stmt.setInt(5, year);
-            stmt.setDouble(6, requestedCredits);
+            stmt.setInt(2, employeeId);
+            stmt.setInt(3, leaveTypeId);
+            stmt.setInt(4, year);
+            stmt.setDouble(5, requestedCredits);
 
             int affectedRows = stmt.executeUpdate();
 

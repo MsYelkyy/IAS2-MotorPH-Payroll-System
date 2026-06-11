@@ -1,7 +1,7 @@
 package motorph.domain.model;
 
 /**
- * Represents an employee leave credit record and maps to the leave_credit table in the database.
+ * Represents an employee leave credit record and maps to the leave_credit table.
  */
 public class LeaveCredit {
 
@@ -10,7 +10,6 @@ public class LeaveCredit {
     private int leaveTypeId;
     private double totalCredits;
     private double usedCredits;
-    private double remainingCredits;
     private int year;
 
     // constructors
@@ -20,7 +19,6 @@ public class LeaveCredit {
             int leaveTypeId,
             double totalCredits,
             double usedCredits,
-            double remainingCredits,
             int year) {
 
         setLeaveCreditId(leaveCreditId);
@@ -28,7 +26,6 @@ public class LeaveCredit {
         setLeaveTypeId(leaveTypeId);
         setTotalCredits(totalCredits);
         setUsedCredits(usedCredits);
-        setRemainingCredits(remainingCredits);
         setYear(year);
         validateCreditValues();
     }
@@ -54,17 +51,18 @@ public class LeaveCredit {
         return usedCredits;
     }
 
-    public double getRemainingCredits() {
-        return remainingCredits;
-    }
-
     public int getYear() {
         return year;
     }
 
+    // returns the remaining leave credits
+    public double getRemainingCredits() {
+        return totalCredits - usedCredits;
+    }
+
     // checks if the leave credit has remaining balance
     public boolean hasRemainingCredits() {
-        return remainingCredits > 0;
+        return getRemainingCredits() > 0;
     }
 
     // checks if the leave credit can cover the requested hours
@@ -72,7 +70,7 @@ public class LeaveCredit {
         if (requestedHours < 0) {
             throw new IllegalArgumentException("Requested hours cannot be negative.");
         }
-        return remainingCredits >= requestedHours;
+        return getRemainingCredits() >= requestedHours;
     }
 
     // uses leave credits
@@ -81,12 +79,11 @@ public class LeaveCredit {
             throw new IllegalArgumentException("Used hours cannot be negative.");
         }
 
-        if (hours > remainingCredits) {
+        if (hours > getRemainingCredits()) {
             throw new IllegalArgumentException("Used hours cannot exceed remaining credits.");
         }
 
         this.usedCredits += hours;
-        this.remainingCredits -= hours;
         validateCreditValues();
     }
 
@@ -126,13 +123,6 @@ public class LeaveCredit {
         this.usedCredits = usedCredits;
     }
 
-    public void setRemainingCredits(double remainingCredits) {
-        if (remainingCredits < 0) {
-            throw new IllegalArgumentException("Remaining credits cannot be negative.");
-        }
-        this.remainingCredits = remainingCredits;
-    }
-
     public void setYear(int year) {
         if (year <= 0) {
             throw new IllegalArgumentException("Year must be positive.");
@@ -145,13 +135,6 @@ public class LeaveCredit {
         if (usedCredits > totalCredits) {
             throw new IllegalArgumentException("Used credits cannot exceed total credits.");
         }
-
-        double expectedRemainingCredits = totalCredits - usedCredits;
-        double tolerance = 0.01;
-
-        if (Math.abs(remainingCredits - expectedRemainingCredits) > tolerance) {
-            throw new IllegalArgumentException("Remaining credits must match total credits minus used credits.");
-        }
     }
 
     // returns the leave credit summary
@@ -163,7 +146,7 @@ public class LeaveCredit {
                 + ", leaveTypeId=" + leaveTypeId
                 + ", totalCredits=" + totalCredits
                 + ", usedCredits=" + usedCredits
-                + ", remainingCredits=" + remainingCredits
+                + ", remainingCredits=" + getRemainingCredits()
                 + ", year=" + year
                 + '}';
     }

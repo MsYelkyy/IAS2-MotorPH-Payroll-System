@@ -3,97 +3,118 @@ package motorph.domain.model;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import motorph.domain.value.Role;
-
 /**
  * Represents a single user access log entry for auditing system activity.
  */
 public class UserAccessLog {
 
-    private final LocalDateTime timestamp;
-    private final Integer employeeId;
-    private final Role role;
+    private final Integer logId;
+    private final Integer userAccountId;
     private final String action;
     private final String details;
     private final String ipAddress;
     private final String deviceInfo;
+    private final LocalDateTime loggedAt;
 
     // constructors
-    public UserAccessLog(LocalDateTime timestamp,
-                         Integer employeeId,
-                         Role role,
-                         String action,
-                         String details,
-                         String ipAddress,
-                         String deviceInfo) {
+    public UserAccessLog(
+            Integer logId,
+            Integer userAccountId,
+            String action,
+            String details,
+            String ipAddress,
+            String deviceInfo,
+            LocalDateTime loggedAt) {
 
-        this.timestamp = Objects.requireNonNull(timestamp, "Timestamp is required.");
-        this.employeeId = employeeId; // nullable
-        this.role = role; // nullable
+        this.logId = validateNullableId(logId, "Log ID must be positive.");
+        this.userAccountId = validateNullableId(userAccountId, "User account ID must be positive.");
         this.action = requireNonBlank(action, "Action is required.");
         this.details = clean(details);
         this.ipAddress = clean(ipAddress);
         this.deviceInfo = clean(deviceInfo);
+        this.loggedAt = Objects.requireNonNull(loggedAt, "Logged date and time is required.");
+    }
+
+    // constructors
+    public UserAccessLog(
+            Integer userAccountId,
+            String action,
+            String details,
+            String ipAddress,
+            String deviceInfo) {
+
+        this(
+                null,
+                userAccountId,
+                action,
+                details,
+                ipAddress,
+                deviceInfo,
+                LocalDateTime.now()
+        );
     }
 
     // getters
-    public LocalDateTime getTimestamp() {
-        return timestamp;
+    public Integer getLogId() {
+        return logId;
     }
 
-    // getters
-    public Integer getEmployeeId() {
-        return employeeId;
+    public Integer getUserAccountId() {
+        return userAccountId;
     }
 
-    // getters
-    public Role getRole() {
-        return role;
-    }
-
-    // getters
     public String getAction() {
         return action;
     }
 
-    // getters
     public String getDetails() {
         return details;
     }
 
-    // getters
     public String getIpAddress() {
         return ipAddress;
     }
 
-    // getters
     public String getDeviceInfo() {
         return deviceInfo;
     }
 
-    // Validates that a required string is not blank.
-    private static String requireNonBlank(String value, String message) {
+    public LocalDateTime getLoggedAt() {
+        return loggedAt;
+    }
+
+    // validates an optional positive number
+    private Integer validateNullableId(Integer value, String message) {
+        if (value != null && value <= 0) {
+            throw new IllegalArgumentException(message);
+        }
+        return value;
+    }
+
+    // validates required text
+    private String requireNonBlank(String value, String message) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(message);
         }
         return value.trim();
     }
 
-    // Cleans optional string values.
-    private static String clean(String value) {
-        return value == null ? "" : value.trim();
+    // cleans optional text
+    private String clean(String value) {
+        return value == null ? null : value.trim();
     }
 
+    // returns the user access log summary
     @Override
     public String toString() {
-        return "UserAccessLog{" +
-                "timestamp=" + timestamp +
-                ", employeeId=" + employeeId +
-                ", role=" + role +
-                ", action='" + action + '\'' +
-                ", details='" + details + '\'' +
-                ", ipAddress='" + ipAddress + '\'' +
-                ", deviceInfo='" + deviceInfo + '\'' +
-                '}';
+        return "UserAccessLog{"
+                + "logId=" + logId
+                + ", userAccountId=" + userAccountId
+                + ", action='" + action + '\''
+                + ", details='" + details + '\''
+                + ", ipAddress='" + ipAddress + '\''
+                + ", deviceInfo='" + deviceInfo + '\''
+                + ", loggedAt=" + loggedAt
+                + '}';
     }
 }

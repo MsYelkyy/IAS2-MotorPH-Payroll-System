@@ -1,15 +1,26 @@
 package motorph.ui;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
+import motorph.ui.dialog.EmailPreviewDialog;
+import motorph.application.dto.login.LoginRequestDTO;
+import motorph.application.dto.login.LoginResultDTO;
+import motorph.application.exception.AuthenticationException;
+import motorph.application.exception.BusinessRuleException;
+import motorph.application.exception.EntityNotFoundException;
+import motorph.application.exception.ValidationException;
+import motorph.application.service.LoginService;
+import motorph.application.service.LoginServiceImpl;
 
 /**
  * Controller for the MotorPH login screen.
- * Handles user input validation and login-related UI actions.
  */
-
 public class LoginController {
 
     @FXML
@@ -27,24 +38,63 @@ public class LoginController {
     @FXML
     private Label messageLabel;
 
+    private LoginService loginService;
+
+    // initializes the login screen and required services
     @FXML
     private void initialize() {
-        usernameErrorLabel.setText("");
-        passwordErrorLabel.setText("");
-        messageLabel.setText("");
+        clearErrors();
+        loginService = new LoginServiceImpl();
     }
 
+    // handles login validation and OTP request
     @FXML
     private void handleLogin() {
-
         clearErrors();
 
-        String username = usernameField.getText().trim();
-        String password = passwordField.getText();
+        String companyEmail = getText(usernameField);
+        String password = getText(passwordField);
 
+        if (!validateLoginInput(companyEmail, password)) {
+            return;
+        }
+
+        try {
+            LoginRequestDTO request = new LoginRequestDTO(companyEmail, password);
+            LoginResultDTO result = loginService.authenticate(request);
+
+            if (result.isOtpRequired()) {
+                showEmailPreviewIfAvailable();
+                openOtpScreen(result.getUserAccountId());
+                return;
+            }
+
+            messageLabel.setText(result.getMessage());
+
+        } catch (AuthenticationException
+                 | ValidationException
+                 | BusinessRuleException
+                 | EntityNotFoundException e) {
+
+            messageLabel.setText(e.getMessage());
+
+        } catch (RuntimeException e) {
+            messageLabel.setText("Login failed. Please try again.");
+            e.printStackTrace();
+        }
+    }
+
+    // handles forgot password request
+    @FXML
+    private void handleForgotPassword() {
+        messageLabel.setText("Password reset request feature is not connected yet.");
+    }
+
+    // validates login form input
+    private boolean validateLoginInput(String companyEmail, String password) {
         boolean valid = true;
 
-        if (username.isBlank()) {
+        if (companyEmail.isBlank()) {
             usernameErrorLabel.setText("Company email is required.");
             valid = false;
         }
@@ -54,36 +104,54 @@ public class LoginController {
             valid = false;
         }
 
-        if (!valid) {
+        return valid;
+    }
+
+    // shows the latest email preview when available
+    private void showEmailPreviewIfAvailable() {
+        if (loginService == null || !loginService.hasEmailPreview()) {
             return;
         }
 
-        /*
-         * TODO:
-         * Connect AuthenticationService here.
-         *
-         * Example later:
-         *
-         * LoginResultDTO result =
-         * authenticationService.login(username, password);
-         *
-         * Then navigate based on role.
-         */
-
-        messageLabel.setText("Login service not connected yet.");
+        EmailPreviewDialog.show(loginService.getLatestEmailPreview());
     }
 
-    @FXML
-    private void handleForgotPassword() {
+    // opens the OTP verification screen
+    private void openOtpScreen(Integer userAccountId) {
+        if (userAccountId == null || userAccountId <= 0) {
+            messageLabel.setText("Invalid user account for OTP verification.");
+            return;
+        }
 
-        /*
-         * TODO:
-         * Open forgot password dialog/screen.
-         */
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/motorph/ui/otp.fxml"));
+            Parent root = loader.load();
 
-        messageLabel.setText("Please contact IT/Admin.");
+            OtpController otpController = loader.getController();
+            otpController.setLoginVerificationData(loginService, userAccountId);
+
+            Stage stage = getCurrentStage();
+            stage.setScene(new Scene(root));
+            stage.setTitle("MotorPH OTP Verification");
+            stage.show();
+
+        } catch (Exception e) {
+            messageLabel.setText("Failed to open OTP screen.");
+            e.printStackTrace();
+        }
     }
 
+    // gets the current stage
+    private Stage getCurrentStage() {
+        return (Stage) usernameField.getScene().getWindow();
+    }
+
+    // gets trimmed text from a text field
+    private String getText(TextField field) {
+        return field.getText() == null ? "" : field.getText().trim();
+    }
+
+    // clears all login error messages
     private void clearErrors() {
         usernameErrorLabel.setText("");
         passwordErrorLabel.setText("");
