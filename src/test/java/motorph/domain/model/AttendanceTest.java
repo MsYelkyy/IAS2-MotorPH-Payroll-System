@@ -1,4 +1,4 @@
-package motorph.model;
+package motorph.domain.model;
 
 
 import motorph.domain.model.Attendance;
