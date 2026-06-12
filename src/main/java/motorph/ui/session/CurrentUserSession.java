@@ -1,5 +1,6 @@
 package motorph.ui.session;
 
+import motorph.domain.value.Role;
 import motorph.application.session.UserSession;
 
 /** Provides UI-layer access to the current logged-in user's session state. */
@@ -33,6 +34,11 @@ public final class CurrentUserSession {
     // returns true when the session is in offline/preview mode (no real employee ID)
     public static boolean isOfflinePreview() {
         return UserSession.getInstance().isLoggedIn() && getEmployeeId() == 0;
+    }
+
+    // returns the current active role, or null if not set
+    public static Role getActiveRole() {
+        return UserSession.getInstance().getActiveRole();
     }
 
     // clears all current session data

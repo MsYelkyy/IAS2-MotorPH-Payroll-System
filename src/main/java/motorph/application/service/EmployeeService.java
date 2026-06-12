@@ -8,6 +8,10 @@ import motorph.domain.model.Employee;
 import motorph.domain.model.UserAccount;
 import motorph.infrastructure.repository.EmployeeRepository;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -65,9 +69,17 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // returns employee profile DTO
+    // returns employee profile DTO with resolved position, department, and supervisor names
     public EmployeeProfileDTO getEmployeeProfile(int employeeId) {
-        Employee employee = getEmployeeById(employeeId);
+        validateEmployeeId(employeeId);
+
+        EmployeeRepository.ProfileQueryResult result = employeeRepository.findProfileById(employeeId);
+
+        if (result == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        Employee employee = result.getEmployee();
 
         return new EmployeeProfileDTO(
                 employee.getEmployeeId(),
@@ -81,9 +93,12 @@ public class EmployeeService {
                 employee.getPersonalEmail(),
                 employee.getEmploymentStatus(),
                 employee.getPositionId(),
+                result.getPositionName(),
                 employee.getDepartmentId(),
+                result.getDepartmentName(),
                 employee.getHireDate(),
                 employee.getSupervisorId(),
+                result.getSupervisorName(),
                 employee.isActive(),
                 employee.getPhotoPath()
         );
@@ -127,6 +142,36 @@ public class EmployeeService {
         userAccountService.deactivateAccountByEmployeeId(employeeId);
     }
 
+    // copies the selected image file and persists the relative path for the employee's profile photo
+    public void updateOwnProfilePhoto(int employeeId, String sourcePath) {
+        getEmployeeById(employeeId);
+
+        if (sourcePath == null || sourcePath.isBlank()) {
+            throw new ValidationException("Photo path is required.");
+        }
+
+        File sourceFile = new File(sourcePath);
+        if (!sourceFile.exists() || !sourceFile.isFile()) {
+            throw new ValidationException("Selected image file does not exist.");
+        }
+
+        String extension  = resolveExtension(sourceFile.getName());
+        String relativePath = "profile-images/employee-" + employeeId + "." + extension;
+
+        File destFile = new File(relativePath);
+        if (destFile.getParentFile() != null) {
+            destFile.getParentFile().mkdirs();
+        }
+
+        try {
+            Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save profile photo.", e);
+        }
+
+        employeeRepository.updatePhotoPath(employeeId, relativePath);
+    }
+
     // updates the employee's own contact information
     public void updateOwnContactInfo(int employeeId, String phoneNumber, String address) {
         Employee employee = getEmployeeById(employeeId);
@@ -143,6 +188,15 @@ public class EmployeeService {
         employee.setAddress(address);
 
         employeeRepository.update(employee);
+    }
+
+    // extracts the lowercased file extension; defaults to png if none found
+    private String resolveExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        if (dot >= 0 && dot < filename.length() - 1) {
+            return filename.substring(dot + 1).toLowerCase();
+        }
+        return "png";
     }
 
     // converts employee to summary DTO

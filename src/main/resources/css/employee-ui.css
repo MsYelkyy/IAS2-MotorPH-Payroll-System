@@ -702,3 +702,29 @@
 .muted-event {
     -fx-background-color: #2e2e2c;
 }
+
+.profile-header-card {
+    -fx-padding: 22 24 24 24;
+}
+
+.profile-header-row {
+    -fx-padding: 6 0 0 0;
+    -fx-min-height: 130;
+    -fx-pref-height: 130;
+    -fx-alignment: center-left;
+}
+
+.profile-photo-frame {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+    -fx-padding: 0;
+}
+
+.profile-initials {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #111111;
+}

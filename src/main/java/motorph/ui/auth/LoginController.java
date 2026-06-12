@@ -23,72 +23,35 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/** Manages the auth page: login form, card navigation, global controls, and login animations. */
+/** Manages employee login page actions and navigation. */
 public class LoginController {
 
     private AuthenticationService authenticationService;
     private boolean passwordVisible = false;
 
-    // programmatic global controls inserted into the header host
     private ComboBox<String> languageCombo;
     private ComboBox<String> themeCombo;
 
-    @FXML
-    private StackPane rootPane;
+    @FXML private StackPane rootPane;
+    @FXML private VBox loginCard;
+    @FXML private VBox otpCard;
+    @FXML private VBox forgotCard;
+    @FXML private OtpController otpCardController;
+    @FXML private ForgotPasswordController forgotCardController;
+    @FXML private TextField companyEmailField;
+    @FXML private PasswordField passwordField;
+    @FXML private TextField passwordTextField;
+    @FXML private Button passwordToggleBtn;
+    @FXML private Label loginMessageLabel;
+    @FXML private HBox globalControlsHostLogin;
+    @FXML private VBox sidePanel;
+    @FXML private VBox floatingNetPayCard;
+    @FXML private VBox floatingAttendanceCard;
+    @FXML private VBox floatingLeaveCard;
+    @FXML private VBox floatingPaydayCard;
+    @FXML private VBox floatingPayslipCard;
 
-    @FXML
-    private VBox loginCard;
-
-    @FXML
-    private VBox otpCard;
-
-    @FXML
-    private VBox forgotCard;
-
-    // controllers injected by fx:include (named as {fx:id}Controller)
-    @FXML
-    private OtpController otpCardController;
-
-    @FXML
-    private ForgotPasswordController forgotCardController;
-
-    @FXML
-    private TextField companyEmailField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private TextField passwordTextField;
-
-    @FXML
-    private Button passwordToggleBtn;
-
-    @FXML
-    private Label loginMessageLabel;
-
-    @FXML
-    private HBox globalControlsHostLogin;
-
-    @FXML
-    private VBox sidePanel;
-
-    // optional floating hero cards — null when not in FXML
-    @FXML
-    private VBox floatingNetPayCard;
-
-    @FXML
-    private VBox floatingAttendanceCard;
-
-    @FXML
-    private VBox floatingLeaveCard;
-
-    @FXML
-    private VBox floatingPaydayCard;
-
-    @FXML
-    private VBox floatingPayslipCard;
-
+    // initializes login page dependencies and controls
     @FXML
     private void initialize() {
         authenticationService = EmployeeUIServiceFactory.getInstance().getAuthenticationService();
@@ -103,23 +66,24 @@ public class LoginController {
         startLoginAnimations();
     }
 
-    // called by OtpController when login succeeds — navigates to the employee shell
+    // navigates to the employee main page after successful login
     public void onLoginSuccess(LoginResultDTO result) {
         NavigationUtil.goToEmployeeApp(rootPane.getScene());
     }
 
-    // called by ForgotPasswordController when reset is complete — shows login with message
+    // returns to login after password reset
     public void onPasswordResetComplete(String successMessage) {
         showLoginCard();
         UiMessageUtil.setSuccess(loginMessageLabel, successMessage);
     }
 
-    // shows the login card and resets login form state
+    // shows the login card
     public void showLoginCard() {
         clearLoginState();
         showCard(loginCard);
     }
 
+    // handles login credential submission
     @FXML
     private void handleLogin() {
         clearLoginState();
@@ -128,6 +92,71 @@ public class LoginController {
         String password = passwordVisible
                 ? UiValidationUtil.getText(passwordTextField)
                 : UiValidationUtil.getText(passwordField);
+
+        if (!isLoginInputValid(email, password)) {
+            UiMessageUtil.setError(loginMessageLabel, "Enter your MotorPH email and password.");
+            return;
+        }
+
+        try {
+            LoginResultDTO result = authenticationService.authenticate(new LoginRequestDTO(email, password));
+            otpCardController.setPendingLoginResult(result);
+            showCard(otpCard);
+            otpCardController.showWithMessage("OTP sent to your registered email address.");
+        } catch (Exception e) {
+            UiValidationUtil.markInvalid(companyEmailField);
+            UiValidationUtil.markInvalid(passwordField);
+            UiMessageUtil.setError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
+        }
+    }
+
+    // opens the forgot password card
+    @FXML
+    private void handleForgotPassword() {
+        forgotCardController.showEmailStep();
+        showCard(forgotCard);
+    }
+
+    // toggles password visibility
+    @FXML
+    private void togglePassword() {
+        passwordVisible = !passwordVisible;
+
+        if (passwordVisible) {
+            passwordTextField.setText(passwordField.getText());
+            passwordTextField.setVisible(true);
+            passwordTextField.setManaged(true);
+            passwordField.setVisible(false);
+            passwordField.setManaged(false);
+            passwordToggleBtn.setText("Hide");
+            return;
+        }
+
+        passwordField.setText(passwordTextField.getText());
+        passwordField.setVisible(true);
+        passwordField.setManaged(true);
+        passwordTextField.setVisible(false);
+        passwordTextField.setManaged(false);
+        passwordToggleBtn.setText("Show");
+    }
+
+    // toggles the side panel
+    @FXML
+    private void toggleSidePanel() {
+        if (sidePanel == null) {
+            return;
+        }
+
+        if (sidePanel.isVisible()) {
+            AnimationUtil.slideOutToRight(sidePanel, 280, null);
+            return;
+        }
+
+        AnimationUtil.slideInFromRight(sidePanel, 280);
+    }
+
+    // validates login input fields
+    private boolean isLoginInputValid(String email, String password) {
         boolean valid = true;
 
         if (!UiValidationUtil.isMotorphEmail(email)) {
@@ -140,66 +169,10 @@ public class LoginController {
             valid = false;
         }
 
-        if (!valid) {
-            UiMessageUtil.setError(loginMessageLabel, "Enter your MotorPH email and password.");
-            return;
-        }
-
-        try {
-            LoginResultDTO result = authenticationService.authenticate(new LoginRequestDTO(email, password));
-            otpCardController.setPendingLoginResult(result);
-            showCard(otpCard);
-            otpCardController.showWithMessage("OTP sent to your registered email address.");
-        } catch (Exception e) {
-            if (isDatabaseUnavailable(e)) {
-                otpCardController.setOfflinePreviewMode(true);
-                showCard(otpCard);
-                otpCardController.showWithMessage("Database is offline. Preview mode enabled. Enter any 6-digit OTP.");
-                return;
-            }
-            UiValidationUtil.markInvalid(companyEmailField);
-            UiValidationUtil.markInvalid(passwordField);
-            UiMessageUtil.setError(loginMessageLabel, userMessage(e));
-        }
+        return valid;
     }
 
-    @FXML
-    private void handleForgotPassword() {
-        forgotCardController.showEmailStep();
-        showCard(forgotCard);
-    }
-
-    @FXML
-    private void togglePassword() {
-        passwordVisible = !passwordVisible;
-        if (passwordVisible) {
-            passwordTextField.setText(passwordField.getText());
-            passwordTextField.setVisible(true);
-            passwordTextField.setManaged(true);
-            passwordField.setVisible(false);
-            passwordField.setManaged(false);
-            passwordToggleBtn.setText("Hide");
-        } else {
-            passwordField.setText(passwordTextField.getText());
-            passwordField.setVisible(true);
-            passwordField.setManaged(true);
-            passwordTextField.setVisible(false);
-            passwordTextField.setManaged(false);
-            passwordToggleBtn.setText("Show");
-        }
-    }
-
-    @FXML
-    private void toggleSidePanel() {
-        if (sidePanel == null) return;
-        if (sidePanel.isVisible()) {
-            AnimationUtil.slideOutToRight(sidePanel, 280, null);
-        } else {
-            AnimationUtil.slideInFromRight(sidePanel, 280);
-        }
-    }
-
-    // shows only the given card in the auth card stack
+    // shows the selected auth card
     private void showCard(VBox cardToShow) {
         for (VBox card : List.of(loginCard, otpCard, forgotCard)) {
             boolean active = card == cardToShow;
@@ -208,23 +181,31 @@ public class LoginController {
         }
     }
 
-    // resets login form fields and clears validation state
+    // clears login form state
     private void clearLoginState() {
         UiValidationUtil.clearInvalid(companyEmailField);
         UiValidationUtil.clearInvalid(passwordField);
+        UiValidationUtil.clearInvalid(passwordTextField);
         UiMessageUtil.clearMessage(loginMessageLabel);
+
         passwordField.setVisible(true);
         passwordField.setManaged(true);
         passwordTextField.setVisible(false);
         passwordTextField.setManaged(false);
         passwordTextField.clear();
+
         passwordVisible = false;
-        if (passwordToggleBtn != null) passwordToggleBtn.setText("Show");
+
+        if (passwordToggleBtn != null) {
+            passwordToggleBtn.setText("Show");
+        }
     }
 
-    // builds and inserts the language/theme combo boxes into the header host
+    // builds global language and theme controls
     private void buildGlobalControls() {
-        if (globalControlsHostLogin == null) return;
+        if (globalControlsHostLogin == null) {
+            return;
+        }
 
         languageCombo = new ComboBox<>();
         languageCombo.getStyleClass().add("global-combo");
@@ -247,17 +228,22 @@ public class LoginController {
         globalControlsHostLogin.setPickOnBounds(false);
         globalControlsHostLogin.getChildren().setAll(languageCombo, themeCombo, moreBtn);
 
-        for (Node n : globalControlsHostLogin.getParent().getChildrenUnmodifiable()) {
-            if (n != globalControlsHostLogin && n instanceof javafx.scene.layout.Region r) {
-                r.setPickOnBounds(false);
+        for (Node node : globalControlsHostLogin.getParent().getChildrenUnmodifiable()) {
+            if (node != globalControlsHostLogin && node instanceof javafx.scene.layout.Region region) {
+                region.setPickOnBounds(false);
             }
         }
     }
 
-    // wires sub-controller back-references so they can call back to this controller
+    // connects included controllers to this controller
     private void wireSubControllers() {
-        if (otpCardController != null) otpCardController.setLoginController(this);
-        if (forgotCardController != null) forgotCardController.setLoginController(this);
+        if (otpCardController != null) {
+            otpCardController.setLoginController(this);
+        }
+
+        if (forgotCardController != null) {
+            forgotCardController.setLoginController(this);
+        }
     }
 
     // hides the side panel on startup
@@ -268,7 +254,7 @@ public class LoginController {
         }
     }
 
-    // plays entrance animations on the login card and hero float cards
+    // starts login animations
     private void startLoginAnimations() {
         AnimationUtil.fadeIn(loginCard, 220, 0);
         AnimationUtil.scaleIn(loginCard, 240, 0);
@@ -284,30 +270,5 @@ public class LoginController {
         AnimationUtil.fadeIn(floatingLeaveCard, 420, 100);
         AnimationUtil.fadeIn(floatingPaydayCard, 420, 100);
         AnimationUtil.fadeIn(floatingPayslipCard, 420, 100);
-    }
-
-    // extracts a user-friendly message from an exception
-    private String userMessage(Exception e) {
-        String msg = e.getMessage();
-        if (msg == null || msg.isBlank()) return "Unable to complete the request. Please try again.";
-        if (isDatabaseUnavailable(e)) return "Database connection unavailable. Start MySQL and try again.";
-        if (msg.startsWith("Failed to ")) return "Unable to complete the request. Please check the database connection.";
-        return msg;
-    }
-
-    // checks whether the exception signals a database connectivity failure
-    private boolean isDatabaseUnavailable(Exception e) {
-        Throwable current = e;
-        while (current != null) {
-            String msg = current.getMessage();
-            if (msg != null && (msg.contains("Failed to connect to the database")
-                    || msg.contains("Communications link failure")
-                    || msg.contains("Connection refused")
-                    || msg.contains("No suitable driver"))) {
-                return true;
-            }
-            current = current.getCause();
-        }
-        return false;
     }
 }

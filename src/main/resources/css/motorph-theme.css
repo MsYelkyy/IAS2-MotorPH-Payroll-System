@@ -3226,6 +3226,28 @@
 .more-button { -fx-text-fill: rgba(180,180,200,0.60); -fx-font-size: 18px; -fx-cursor: hand; }
 .more-button:hover { -fx-text-fill: #FF6060; }
 
+/* ── ComboBox popup — dark red theme ─────────────────────────────────── */
+.combo-box-popup .list-view {
+    -fx-background-color: #1A0505;
+    -fx-border-color: rgba(255,80,80,0.30);
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 14, 0.18, 0, 4);
+}
+
+.combo-box-popup .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F0F0F4;
+    -fx-padding: 8 14;
+    -fx-font-size: 13px;
+}
+
+.combo-box-popup .list-cell:hover {
+    -fx-background-color: rgba(200,20,20,0.35);
+    -fx-text-fill: #FFFFFF;
+}
+
 /* ── Date range pickers ───────────────────────────────────────────────── */
 .date-range-box { -fx-padding: 0; }
 
@@ -3447,3 +3469,36 @@
 
 /* Tile text */
 .tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
+
+.profile-photo-frame {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-background-radius: 6;
+    -fx-border-color: rgba(255,255,255,0.40);
+    -fx-border-width: 2;
+    -fx-border-radius: 6;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.profile-photo-frame .image-view {
+    -fx-background-radius: 4;
+}
+
+.root-canvas.light-mode .profile-photo-frame {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d1d5db;
+}
+
+.root-canvas.light-mode .content-card .label {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .content-card .metric-label {
+    -fx-text-fill: #374151;
+}
+
+.root-canvas.light-mode .content-card .note-text,
+.root-canvas.light-mode .content-card .muted-text {
+    -fx-text-fill: #6b7280;
+}
+

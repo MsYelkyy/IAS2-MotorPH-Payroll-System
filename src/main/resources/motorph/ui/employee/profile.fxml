@@ -15,20 +15,63 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.employee.profile.EmployeeProfileController">
 
-    <!-- Profile header: photo, full name, status, employee ID -->
-    <VBox spacing="14" styleClass="content-card">
+    <!-- Profile header card: avatar, name, and action buttons in one balanced row -->
+    <VBox spacing="18" styleClass="content-card profile-header-card">
+    <HBox alignment="CENTER_LEFT">
         <Label text="My Profile" styleClass="section-title"/>
-        <HBox spacing="20" alignment="CENTER_LEFT">
-            <StackPane prefWidth="96" prefHeight="96" styleClass="metric-card">
-                <ImageView fx:id="profilePhotoView" fitWidth="96" fitHeight="96"
-                           preserveRatio="true" visible="false" managed="false"/>
-                <Label fx:id="profilePhotoInitials" text="?" styleClass="metric-value"/>
-            </StackPane>
-            <VBox spacing="6">
+    </HBox>
+
+    <HBox spacing="26" alignment="CENTER_LEFT" styleClass="profile-header-row">
+
+            <!-- Square avatar with optional upload button beneath it -->
+            <VBox spacing="8" alignment="CENTER">
+                <StackPane fx:id="profilePhotoFrame"
+                        prefWidth="120" prefHeight="120"
+                        minWidth="120"  minHeight="120"
+                        maxWidth="120"  maxHeight="120"
+                        styleClass="profile-photo-frame">
+                    <ImageView fx:id="profilePhotoView"
+                            fitWidth="120" fitHeight="120"
+                               preserveRatio="true" smooth="true"
+                               visible="false" managed="false"/>
+                    <Label fx:id="profilePhotoInitials"
+                            text="?"
+                            visible="false"
+                            managed="false"
+                            styleClass="profile-initials"/>
+                </StackPane>
+                <Button fx:id="uploadImageButton"
+                        text="Upload Image"
+                        onAction="#handleUploadImage"
+                        styleClass="small-pill-button"
+                        visible="false" managed="false"/>
+            </VBox>
+
+            <!-- Full name, employment status, and employee ID — fills remaining space -->
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
                 <Label fx:id="profileFullNameLabel"   text="—" styleClass="metric-value"/>
                 <Label fx:id="profileStatusLabel"     text="—" styleClass="status-pill success-pill"/>
                 <Label fx:id="profileEmployeeIdLabel" text="Employee ID: —" styleClass="muted-text"/>
             </VBox>
+
+            <!-- Action buttons pinned to the right -->
+            <VBox spacing="8" alignment="CENTER">
+                <Button fx:id="editProfileButton"
+                        text="Edit Profile"
+                        onAction="#handleEditProfile"
+                        styleClass="primary-button"/>
+                <Button fx:id="saveChangesButton"
+                        text="Save Changes"
+                        onAction="#handleSaveChanges"
+                        styleClass="success-button"
+                        visible="false" managed="false"/>
+                <Button fx:id="cancelButton"
+                        text="Cancel"
+                        onAction="#handleCancel"
+                        styleClass="secondary-button"
+                        visible="false" managed="false"/>
+            </VBox>
+
         </HBox>
     </VBox>
 
@@ -40,14 +83,14 @@
                 <ColumnConstraints minWidth="160" maxWidth="200"/>
                 <ColumnConstraints hgrow="ALWAYS"/>
             </columnConstraints>
-            <Label text="First Name"    styleClass="metric-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-            <Label fx:id="profileFirstNameLabel"    text="—" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-            <Label text="Last Name"     styleClass="metric-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-            <Label fx:id="profileLastNameLabel"     text="—" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-            <Label text="Birth Date"    styleClass="metric-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-            <Label fx:id="profileBirthDateLabel"    text="—" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-            <Label text="Civil Status"  styleClass="metric-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-            <Label fx:id="profileCivilStatusLabel"  text="—" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+            <Label text="First Name"   styleClass="metric-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <Label fx:id="profileFirstNameLabel"   text="—" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+            <Label text="Last Name"    styleClass="metric-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label fx:id="profileLastNameLabel"    text="—" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+            <Label text="Birth Date"   styleClass="metric-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <Label fx:id="profileBirthDateLabel"   text="—" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+            <Label text="Civil Status" styleClass="metric-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <Label fx:id="profileCivilStatusLabel" text="—" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
         </GridPane>
     </VBox>
 
@@ -61,21 +104,22 @@
             </columnConstraints>
             <Label text="Employment Status" styleClass="metric-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
             <Label fx:id="profileEmploymentStatusLabel" text="—" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-            <Label text="Position"       styleClass="metric-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <Label text="Position"   styleClass="metric-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
             <Label fx:id="profilePositionLabel"    text="—" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-            <Label text="Department"     styleClass="metric-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+            <Label text="Department" styleClass="metric-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
             <Label fx:id="profileDepartmentLabel"  text="—" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-            <Label text="Hire Date"      styleClass="metric-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+            <Label text="Hire Date"  styleClass="metric-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
             <Label fx:id="profileHireDateLabel"    text="—" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-            <Label text="Supervisor"     styleClass="metric-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+            <Label text="Supervisor" styleClass="metric-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
             <Label fx:id="profileSupervisorLabel"  text="—" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
         </GridPane>
     </VBox>
 
-    <!-- Contact information: emails are read-only; phone and address are editable -->
+    <!-- Contact information: emails read-only; phone and address editable in edit mode -->
     <VBox spacing="14" styleClass="content-card">
         <Label text="Contact Information" styleClass="section-title"/>
-        <Label text="Company email and personal email are view-only. You may update phone and address." styleClass="note-text"/>
+        <Label text="Company and personal email are read-only. Click Edit Profile to update phone and address."
+               styleClass="note-text" wrapText="true"/>
         <GridPane hgap="16" vgap="10">
             <columnConstraints>
                 <ColumnConstraints minWidth="160" maxWidth="200"/>
@@ -87,10 +131,9 @@
             <Label fx:id="profilePersonalEmailLabel" text="—" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
         </GridPane>
         <Label text="Phone Number" styleClass="metric-label"/>
-        <TextField fx:id="profilePhoneField"   promptText="Phone number" styleClass="input-field"/>
+        <TextField fx:id="profilePhoneField"   promptText="Phone number" styleClass="input-field" disable="true"/>
         <Label text="Address" styleClass="metric-label"/>
-        <TextField fx:id="profileAddressField" promptText="Address"      styleClass="input-field"/>
-        <Button text="Save Changes" onAction="#handleSaveContactInfo" styleClass="success-button"/>
+        <TextField fx:id="profileAddressField" promptText="Address"      styleClass="input-field" disable="true"/>
         <Label fx:id="profileMessageLabel" wrapText="true" styleClass="message-label"/>
     </VBox>
 

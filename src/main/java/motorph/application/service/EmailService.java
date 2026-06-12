@@ -90,7 +90,14 @@ public class EmailService {
             Transport.send(message);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email.", e);
+            System.out.println("=================================");
+            System.out.println("EMAIL DELIVERY FAILED");
+            System.out.println("Recipient: " + recipientEmail);
+            System.out.println("Subject: " + subject);
+            System.out.println("Reason: " + e.getMessage());
+            System.out.println("=================================");
+
+            // do not block login while Mailtrap is unavailable
         }
     }
 

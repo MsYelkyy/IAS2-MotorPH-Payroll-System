@@ -2,6 +2,8 @@ package motorph.ui.employee.leave;
 
 import motorph.application.service.LeaveService;
 import motorph.domain.model.LeaveRequest;
+import motorph.domain.model.Employee;
+import motorph.domain.value.Gender;
 import motorph.domain.value.RequestStatus;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
@@ -9,12 +11,12 @@ import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,10 +39,10 @@ public class EmployeeLeaveController {
     private TextField leaveCreditsField;
 
     @FXML
-    private TextField leaveStartDateField;
+    private DatePicker leaveStartDatePicker;;
 
     @FXML
-    private TextField leaveEndDateField;
+    private DatePicker leaveEndDatePicker;
 
     @FXML
     private TextField leaveHoursField;
@@ -56,19 +58,77 @@ public class EmployeeLeaveController {
 
     @FXML
     private void initialize() {
+        System.out.println("EmployeeLeaveController initialize running");
+
         leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
+
+        loadLeaveTypesForCurrentEmployee();
+        leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
+        leaveTypeComboBox.setOnAction(e -> refreshLeaveCredits());
+
+        leaveHoursField.setEditable(false);
+        leaveStartDatePicker.setOnAction(e -> updateLeaveHours());
+        leaveEndDatePicker.setOnAction(e -> updateLeaveHours());
+
+        System.out.println("Leave types loaded: " + leaveTypeComboBox.getItems());
+    }
+
+    // loads leave types based on employee gender and employment status
+    private void loadLeaveTypesForCurrentEmployee() {
+        leaveTypeIds.clear();
+
+        int employeeId = CurrentUserSession.getEmployeeId();
+
+        if (employeeId <= 0) {
+            leaveTypeIds.put("Unpaid Leave", 7);
+            return;
+        }
+
+        Employee employee = leaveService.getEmployeeById(employeeId);
+
+        if (employee.isProbationary()) {
+            leaveTypeIds.put("Unpaid Leave", 7);
+            return;
+        }
 
         leaveTypeIds.put("Vacation Leave", 1);
         leaveTypeIds.put("Sick Leave", 2);
         leaveTypeIds.put("Emergency Leave", 3);
 
-        leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
-        leaveTypeComboBox.setOnAction(e -> refreshLeaveCredits());
+        if (employee.getGender() == Gender.FEMALE) {
+            leaveTypeIds.put("Maternity Leave", 4);
+        }
+
+        if (employee.getGender() == Gender.MALE) {
+            leaveTypeIds.put("Paternity Leave", 5);
+        }
+
+        leaveTypeIds.put("Solo Parent Leave", 6);
+        leaveTypeIds.put("Unpaid Leave", 7);
     }
 
     // stores a callback invoked when leave credits change (updates dashboard label)
     public void setOnLeaveCreditsUpdated(Consumer<String> callback) {
         this.onLeaveCreditsUpdated = callback;
+    }
+
+    // updates leave hours using service computation
+    private void updateLeaveHours() {
+        LocalDate startDate = leaveStartDatePicker.getValue();
+        LocalDate endDate = leaveEndDatePicker.getValue();
+
+        if (startDate == null || endDate == null) {
+            leaveHoursField.setText("");
+            return;
+        }
+
+        try {
+            double hours = leaveService.computeLeaveHours(startDate, endDate);
+            leaveHoursField.setText(String.format("%.1f", hours));
+        } catch (Exception e) {
+            leaveHoursField.setText("");
+            UiMessageUtil.setError(leaveMessageLabel, userMessage(e));
+        }
     }
 
     // refreshes leave credits and history for the current employee
@@ -89,11 +149,25 @@ public class EmployeeLeaveController {
 
         try {
             Integer leaveTypeId = leaveTypeIds.get(leaveTypeComboBox.getValue());
-            if (leaveTypeId == null) throw new IllegalArgumentException("Select a leave type.");
+            if (leaveTypeId == null) {
+                throw new IllegalArgumentException("Select a leave type.");
+            }
 
-            LocalDate startDate = UiValidationUtil.parseDate(leaveStartDateField);
-            LocalDate endDate   = UiValidationUtil.parseDate(leaveEndDateField);
-            double hours = UiValidationUtil.parsePositiveDouble(leaveHoursField, "Leave hours must be a positive number.");
+            LocalDate startDate = leaveStartDatePicker.getValue();
+            LocalDate endDate = leaveEndDatePicker.getValue();
+
+            if (startDate == null) {
+                throw new IllegalArgumentException("Start date is required.");
+            }
+
+            if (endDate == null) {
+                throw new IllegalArgumentException("End date is required.");
+            }
+
+            double hours = UiValidationUtil.parsePositiveDouble(
+                    leaveHoursField,
+                    "Leave hours must be a positive number."
+            );
 
             leaveService.submitLeaveRequest(
                     employeeId,
@@ -103,12 +177,10 @@ public class EmployeeLeaveController {
                     hours,
                     UiValidationUtil.getText(leaveReasonField)
             );
+
             UiMessageUtil.setSuccess(leaveMessageLabel, "Leave request submitted.");
             refresh();
-        } catch (DateTimeParseException e) {
-            UiValidationUtil.markInvalid(leaveStartDateField);
-            UiValidationUtil.markInvalid(leaveEndDateField);
-            UiMessageUtil.setError(leaveMessageLabel, "Use YYYY-MM-DD for leave dates.");
+
         } catch (Exception e) {
             UiMessageUtil.setError(leaveMessageLabel, userMessage(e));
         }
@@ -138,10 +210,16 @@ public class EmployeeLeaveController {
     // loads and displays remaining credits for the selected leave type
     private void refreshLeaveCredits() {
         String selected = leaveTypeComboBox.getValue();
-        Integer typeId  = leaveTypeIds.get(selected);
+        Integer typeId = leaveTypeIds.get(selected);
 
         if (typeId == null) {
             if (leaveCreditsField != null) leaveCreditsField.setText("Select a type");
+            return;
+        }
+
+        if (typeId == 7) {
+            if (leaveCreditsField != null) leaveCreditsField.setText("N/A");
+            if (onLeaveCreditsUpdated != null) onLeaveCreditsUpdated.accept("0");
             return;
         }
 
@@ -153,9 +231,9 @@ public class EmployeeLeaveController {
 
         try {
             double credits = leaveService.getRemainingLeaveCredits(employeeId, typeId, LocalDate.now().getYear());
-            String formatted = String.format("%.1f hours", credits);
+            String formatted = String.format("%.1f days", credits);
             if (leaveCreditsField != null) leaveCreditsField.setText(formatted);
-            if (onLeaveCreditsUpdated != null) onLeaveCreditsUpdated.accept(String.format("%.0f", credits / 8.0));
+            if (onLeaveCreditsUpdated != null) onLeaveCreditsUpdated.accept(String.format("%.0f", credits));
         } catch (Exception e) {
             if (leaveCreditsField != null) leaveCreditsField.setText("Unavailable");
         }
@@ -197,8 +275,6 @@ public class EmployeeLeaveController {
 
     // clears validation marks from all leave form fields
     private void clearLeaveInvalid() {
-        UiValidationUtil.clearInvalid(leaveStartDateField);
-        UiValidationUtil.clearInvalid(leaveEndDateField);
         UiValidationUtil.clearInvalid(leaveHoursField);
         UiValidationUtil.clearInvalid(leaveReasonField);
     }

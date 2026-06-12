@@ -52,6 +52,13 @@ public class TwoFactorService {
         );
 
         twoFactorCodeRepository.save(code);
+
+        System.out.println(
+                "[MOTORPH OTP] purpose=" + purpose
+                + " userAccountId=" + userAccountId
+                + " code=" + rawOtp
+        );
+
         return rawOtp;
     }
 

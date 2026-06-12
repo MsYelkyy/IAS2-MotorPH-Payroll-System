@@ -1,9 +1,11 @@
 package motorph.ui.employee.dashboard;
 
 import motorph.application.service.EmployeeService;
+import motorph.application.service.LeaveService;
 import motorph.application.service.PayrollService;
 import motorph.domain.model.Employee;
 import motorph.domain.model.PayrollResult;
+import motorph.domain.value.RequestStatus;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
@@ -15,6 +17,7 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 
+import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.Optional;
 
@@ -22,6 +25,7 @@ import java.util.Optional;
 public class EmployeeDashboardController {
 
     private EmployeeService employeeService;
+    private LeaveService leaveService;
     private PayrollService payrollService;
     private Runnable onNavigateToPayslip;
 
@@ -50,6 +54,7 @@ public class EmployeeDashboardController {
     private void initialize() {
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
         payrollService  = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
         seedCharts();
     }
 
@@ -61,17 +66,14 @@ public class EmployeeDashboardController {
     // refreshes all dashboard data for the current session's employee
     public void refresh() {
         int employeeId = CurrentUserSession.getEmployeeId();
-        if (employeeId <= 0) return;
 
-        try {
-            Employee employee = employeeService.getEmployeeById(employeeId);
-            if (dashboardTaskPercentLabel != null) {
-                dashboardTaskPercentLabel.setText(employee.getFirstName());
-            }
-        } catch (Exception ignored) {
+        if (employeeId <= 0) {
+            return;
         }
 
-        refreshNetPay();
+        try { refreshNetPay(); } catch (Throwable ignored) {}
+        try { refreshPendingRequests(); } catch (Throwable ignored) {}
+        try { refreshLeaveCredits(); } catch (Throwable ignored) {}
     }
 
     // updates the net pay label from the latest persisted payroll result
@@ -89,14 +91,62 @@ public class EmployeeDashboardController {
                 dashboardNetPayLabel.setText(
                         latest.map(r -> UiFormatter.formatPeso(r.getNetPay())).orElse("PHP 0.00"));
             }
-        } catch (Exception e) {
+        } catch (Throwable t) {
             if (dashboardNetPayLabel != null) dashboardNetPayLabel.setText("PHP 0.00");
+        }
+    }
+
+    // updates the pending request count for the current employee
+    private void refreshPendingRequests() {
+        int employeeId = CurrentUserSession.getEmployeeId();
+
+        try {
+            long pendingCount = leaveService.getLeaveRequestsByEmployeeId(employeeId)
+                    .stream()
+                    .filter(request -> request.getStatus() == RequestStatus.PENDING)
+                    .count();
+
+            if (dashboardTaskPercentLabel != null) {
+                dashboardTaskPercentLabel.setText(String.valueOf(pendingCount));
+            }
+        } catch (Exception e) {
+            if (dashboardTaskPercentLabel != null) {
+                dashboardTaskPercentLabel.setText("0");
+            }
         }
     }
 
     // updates the leave credits label; value is pushed from the leave controller
     public void setLeaveCreditsDisplay(String text) {
         if (dashboardLeaveCreditsLabel != null) dashboardLeaveCreditsLabel.setText(text);
+    }
+
+    // updates available vacation leave credits for the current employee
+    private void refreshLeaveCredits() {
+        int employeeId = CurrentUserSession.getEmployeeId();
+
+        if (employeeId <= 0) {
+            if (dashboardLeaveCreditsLabel != null) {
+                dashboardLeaveCreditsLabel.setText("0");
+            }
+            return;
+        }
+
+        try {
+            double credits = leaveService.getRemainingLeaveCredits(
+                    employeeId,
+                    1,
+                    LocalDate.now().getYear()
+            );
+
+            if (dashboardLeaveCreditsLabel != null) {
+                dashboardLeaveCreditsLabel.setText(String.format("%.0f", credits));
+            }
+        } catch (Throwable t) {
+            if (dashboardLeaveCreditsLabel != null) {
+                dashboardLeaveCreditsLabel.setText("0");
+            }
+        }
     }
 
     @FXML

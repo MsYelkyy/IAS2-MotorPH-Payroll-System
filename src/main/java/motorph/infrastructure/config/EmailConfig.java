@@ -36,8 +36,8 @@ public class EmailConfig {
         return new EmailConfig(
                 "sandbox.smtp.mailtrap.io",
                 2525,
-                "6b71beec94d6ae",
-                "0e77f1192040ea",
+                "23c2aceda2a08b",
+                "6e6a6792156c42",
                 "no-reply@motorph.com",
                 true,
                 true

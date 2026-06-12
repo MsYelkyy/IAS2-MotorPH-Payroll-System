@@ -138,9 +138,10 @@ public class EmployeeMainController {
         initSidePanel();
 
         ThemeManager.getInstance().applyCurrentTo(rootPane);
-        loadSidebarData();
 
+        loadSidebarData();
         showDashboard();
+
         UiMessageUtil.setSuccess(appMessageLabel, "Employee workspace is ready.");
     }
 
@@ -216,21 +217,44 @@ public class EmployeeMainController {
     // loads the current employee's name, role, and email into the sidebar
     private void loadSidebarData() {
         int employeeId = CurrentUserSession.getEmployeeId();
-        if (employeeId <= 0) return;
+
+        if (employeeId <= 0) {
+            setSidebarFallback();
+            return;
+        }
+
         try {
             Employee employee = employeeService.getEmployeeById(employeeId);
-            if (dashboardEmployeeNameLabel != null) dashboardEmployeeNameLabel.setText(employee.getFullName());
-            if (dashboardEmployeeRoleLabel != null) {
-                dashboardEmployeeRoleLabel.setText(
-                        employee.getEmploymentStatus().name() + " / Dept. " + employee.getDepartmentId());
-            }
-            if (dashboardEmailLabel != null) {
-                dashboardEmailLabel.setText(
-                        employee.getPersonalEmail() != null ? employee.getPersonalEmail() : "No recovery email");
-            }
-            if (pageTitleLabel != null) pageTitleLabel.setText("Hello, " + employee.getFirstName() + ".");
+
+            dashboardEmployeeNameLabel.setText(employee.getFullName());
+            dashboardEmployeeRoleLabel.setText(
+                    CurrentUserSession.getActiveRole() != null
+                            ? CurrentUserSession.getActiveRole().name()
+                            : "EMPLOYEE"
+            );
+            dashboardEmailLabel.setText(
+                    CurrentUserSession.getCompanyEmail() != null
+                            ? CurrentUserSession.getCompanyEmail()
+                            : "No email on file"
+            );
+
         } catch (Exception e) {
-            UiMessageUtil.setError(appMessageLabel, "Could not load employee data: " + e.getMessage());
+            setSidebarFallback();
+        }
+    }
+
+    // shows default sidebar text when employee data is unavailable
+    private void setSidebarFallback() {
+        if (dashboardEmployeeNameLabel != null) {
+            dashboardEmployeeNameLabel.setText("Employee");
+        }
+
+        if (dashboardEmployeeRoleLabel != null) {
+            dashboardEmployeeRoleLabel.setText("EMPLOYEE");
+        }
+
+        if (dashboardEmailLabel != null) {
+            dashboardEmailLabel.setText("No email on file");
         }
     }
 
