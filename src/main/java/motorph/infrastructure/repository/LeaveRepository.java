@@ -1,7 +1,7 @@
 package motorph.infrastructure.repository;
 
 import motorph.domain.model.LeaveRequest;
-import motorph.domain.value.LeaveStatus;
+import motorph.domain.value.RequestStatus;
 import motorph.infrastructure.config.DatabaseConnection;
 
 import java.sql.Connection;
@@ -10,6 +10,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,9 +30,11 @@ public class LeaveRepository {
                    lr.reason,
                    lr.leave_status_id,
                    lr.date_submitted,
+                   lr.approved_by,
                    ls.leave_status_name
             FROM leave_request lr
-            JOIN leave_status ls ON lr.leave_status_id = ls.leave_status_id
+            JOIN leave_status ls
+              ON lr.leave_status_id = ls.leave_status_id
             """;
 
     // finds all leave requests
@@ -69,20 +72,20 @@ public class LeaveRepository {
         validatePositive(employeeId, "Employee ID must be positive.");
 
         String sql = BASE_SELECT + """
-                 WHERE lr.employee_id = ?
-                 ORDER BY lr.date_submitted DESC
+                WHERE lr.employee_id = ?
+                ORDER BY lr.date_submitted DESC
                 """;
 
         return executeListQuery(sql, stmt -> stmt.setInt(1, employeeId));
     }
 
     // finds leave requests by status
-    public List<LeaveRequest> findByStatus(LeaveStatus status) {
+    public List<LeaveRequest> findByStatus(RequestStatus status) {
         validateStatus(status);
 
         String sql = BASE_SELECT + """
-                 WHERE ls.leave_status_name = ?
-                 ORDER BY lr.date_submitted DESC
+                WHERE ls.leave_status_name = ?
+                ORDER BY lr.date_submitted DESC
                 """;
 
         return executeListQuery(sql, stmt -> stmt.setString(1, status.name()));
@@ -90,7 +93,7 @@ public class LeaveRepository {
 
     // finds pending leave requests
     public List<LeaveRequest> findPending() {
-        return findByStatus(LeaveStatus.PENDING);
+        return findByStatus(RequestStatus.PENDING);
     }
 
     // finds leave requests within date range
@@ -98,9 +101,9 @@ public class LeaveRepository {
         validateDateRange(startDate, endDate);
 
         String sql = BASE_SELECT + """
-                 WHERE lr.start_date >= ?
-                   AND lr.end_date <= ?
-                 ORDER BY lr.start_date
+                WHERE lr.start_date >= ?
+                  AND lr.end_date <= ?
+                ORDER BY lr.start_date
                 """;
 
         return executeListQuery(sql, stmt -> {
@@ -117,7 +120,8 @@ public class LeaveRepository {
         String sql = """
                 SELECT COUNT(*)
                 FROM leave_request lr
-                JOIN leave_status ls ON lr.leave_status_id = ls.leave_status_id
+                JOIN leave_status ls
+                  ON lr.leave_status_id = ls.leave_status_id
                 WHERE lr.employee_id = ?
                   AND ls.leave_status_name = 'APPROVED'
                   AND lr.start_date <= ?
@@ -153,9 +157,10 @@ public class LeaveRepository {
                     leave_hours,
                     reason,
                     leave_status_id,
-                    date_submitted
+                    date_submitted,
+                    approved_by
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -170,6 +175,12 @@ public class LeaveRepository {
             stmt.setInt(7, resolveLeaveStatusId(conn, request.getStatus()));
             stmt.setTimestamp(8, Timestamp.valueOf(request.getRequestDate()));
 
+            if (request.getApproverAccountId() == null) {
+                stmt.setNull(9, Types.INTEGER);
+            } else {
+                stmt.setInt(9, request.getApproverAccountId());
+            }
+
             stmt.executeUpdate();
 
         } catch (SQLException e) {
@@ -177,18 +188,30 @@ public class LeaveRepository {
         }
     }
 
-    // updates leave request status
-    public void updateStatus(int leaveRequestId, LeaveStatus status) {
+    // updates leave request status and approver
+    public void updateStatus(int leaveRequestId, RequestStatus status, Integer approvedBy) {
         validatePositive(leaveRequestId, "Leave request ID must be positive.");
         validateStatus(status);
 
-        String sql = "UPDATE leave_request SET leave_status_id = ? WHERE leave_request_id = ?";
+        String sql = """
+                UPDATE leave_request
+                SET leave_status_id = ?,
+                    approved_by = ?
+                WHERE leave_request_id = ?
+                """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, resolveLeaveStatusId(conn, status));
-            stmt.setInt(2, leaveRequestId);
+
+            if (approvedBy == null) {
+                stmt.setNull(2, Types.INTEGER);
+            } else {
+                stmt.setInt(2, approvedBy);
+            }
+
+            stmt.setInt(3, leaveRequestId);
 
             int affectedRows = stmt.executeUpdate();
 
@@ -203,7 +226,7 @@ public class LeaveRepository {
 
     // cancels a leave request
     public void cancel(int leaveRequestId) {
-        updateStatus(leaveRequestId, LeaveStatus.CANCELLED);
+        updateStatus(leaveRequestId, RequestStatus.CANCELLED, null);
     }
 
     // executes a list query and maps all rows
@@ -234,24 +257,27 @@ public class LeaveRepository {
     private LeaveRequest mapRow(ResultSet rs) throws SQLException {
         Timestamp submittedAt = rs.getTimestamp("date_submitted");
 
+        int approvedBy = rs.getInt("approved_by");
+        Integer approverAccountId = rs.wasNull() ? null : approvedBy;
+
         return new LeaveRequest(
                 rs.getInt("leave_request_id"),
                 rs.getInt("employee_id"),
-                submittedAt.toLocalDateTime(),
+                rs.getInt("leave_type_id"),
                 rs.getDate("start_date").toLocalDate(),
                 rs.getDate("end_date").toLocalDate(),
                 rs.getDouble("leave_hours"),
                 rs.getString("reason"),
-                rs.getInt("leave_type_id"),
-                LeaveStatus.fromValue(rs.getString("leave_status_name")),
-                null,
+                RequestStatus.fromValue(rs.getString("leave_status_name")),
+                submittedAt.toLocalDateTime(),
+                approverAccountId,
                 null,
                 null
         );
     }
 
     // resolves leave status id
-    private int resolveLeaveStatusId(Connection conn, LeaveStatus status) throws SQLException {
+    private int resolveLeaveStatusId(Connection conn, RequestStatus status) throws SQLException {
         String sql = "SELECT leave_status_id FROM leave_status WHERE leave_status_name = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -299,10 +325,10 @@ public class LeaveRepository {
         }
     }
 
-    // validates leave status input
-    private void validateStatus(LeaveStatus status) {
+    // validates request status input
+    private void validateStatus(RequestStatus status) {
         if (status == null) {
-            throw new IllegalArgumentException("Leave status is required.");
+            throw new IllegalArgumentException("Request status is required.");
         }
     }
 

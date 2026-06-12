@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.employee.dashboard.EmployeeDashboardController">
+
+    <HBox spacing="18">
+
+        <!-- Metric column -->
+        <VBox spacing="14" prefWidth="220" minWidth="180">
+            <VBox spacing="6" styleClass="metric-card">
+                <Label text="TOTAL NET PAY" styleClass="metric-label"/>
+                <Label fx:id="dashboardNetPayLabel" text="PHP 0.00" styleClass="metric-value, financial-value"/>
+            </VBox>
+            <VBox spacing="6" styleClass="metric-card">
+                <Label text="ATTENDANCE RATE" styleClass="metric-label"/>
+                <Label text="98.20%" styleClass="metric-value, attendance-value"/>
+            </VBox>
+            <VBox spacing="6" styleClass="metric-card">
+                <Label text="DAYS WORKED" styleClass="metric-label"/>
+                <Label text="11 / 11" styleClass="metric-value, attendance-value"/>
+            </VBox>
+            <VBox spacing="6" styleClass="metric-card">
+                <Label text="AVAILABLE LEAVE" styleClass="metric-label"/>
+                <Label fx:id="dashboardLeaveCreditsLabel" text="—" styleClass="metric-value"/>
+                <Label text="Vacation Leave" styleClass="muted-text"/>
+            </VBox>
+            <VBox spacing="6" styleClass="metric-card">
+                <Label text="PENDING REQUESTS" styleClass="metric-label"/>
+                <Label fx:id="dashboardTaskPercentLabel" text="—" styleClass="metric-value"/>
+                <Label text="Leave Requests" styleClass="muted-text"/>
+            </VBox>
+        </VBox>
+
+        <!-- Chart / data column -->
+        <VBox spacing="14" HBox.hgrow="ALWAYS">
+
+            <HBox spacing="14">
+                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+                    <Label text="NET PAY TREND" styleClass="section-title"/>
+                    <LineChart fx:id="payrollTrendChart" animated="false" legendVisible="false"
+                               createSymbols="true" styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
+                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
+                    </LineChart>
+                </VBox>
+                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+                    <Label text="EARNINGS BREAKDOWN" styleClass="section-title"/>
+                    <BarChart fx:id="earningsBreakdownChart" animated="false" legendVisible="false"
+                              styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
+                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
+                    </BarChart>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="14">
+                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+                    <Label text="ATTENDANCE SUMMARY" styleClass="section-title"/>
+                    <BarChart fx:id="attendanceSummaryChart" animated="false" legendVisible="true"
+                              styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
+                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
+                    </BarChart>
+                </VBox>
+                <VBox spacing="12" prefWidth="390" styleClass="chart-card">
+                    <Label text="LEAVE SUMMARY" styleClass="section-title"/>
+                    <GridPane hgap="8" vgap="8" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="40"/>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
+                            <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
+                        </columnConstraints>
+                        <rowConstraints>
+                            <RowConstraints minHeight="64" vgrow="ALWAYS"/>
+                            <RowConstraints minHeight="64" vgrow="ALWAYS"/>
+                        </rowConstraints>
+                        <VBox spacing="8" styleClass="leave-tile vacation" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
+                            <Label text="Vacation Leave" styleClass="tile-title"/>
+                            <Region VBox.vgrow="ALWAYS"/>
+                            <Label text="12.5 days" styleClass="tile-value"/>
+                        </VBox>
+                        <VBox spacing="8" styleClass="leave-tile sick"      GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <Label text="Sick Leave"      styleClass="tile-title"/>
+                            <Region VBox.vgrow="ALWAYS"/>
+                            <Label text="3 days" styleClass="tile-value"/>
+                        </VBox>
+                        <VBox spacing="8" styleClass="leave-tile emergency" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                            <Label text="Emergency Leave" styleClass="tile-title"/>
+                            <Region VBox.vgrow="ALWAYS"/>
+                            <Label text="1 day" styleClass="tile-value"/>
+                        </VBox>
+                        <VBox spacing="8" styleClass="leave-tile special"   GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label text="Special Leave"   styleClass="tile-title"/>
+                            <Region VBox.vgrow="ALWAYS"/>
+                            <Label text="2 days" styleClass="tile-value"/>
+                        </VBox>
+                        <VBox spacing="8" styleClass="leave-tile maternity" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                            <Label text="Maternity Leave" styleClass="tile-title"/>
+                            <Region VBox.vgrow="ALWAYS"/>
+                            <Label text="0 day" styleClass="tile-value"/>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+            </HBox>
+
+            <HBox spacing="14">
+                <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
+                    <Label text="UPCOMING PAYDAY" styleClass="metric-label"/>
+                    <Label text="June 30, 2026"   styleClass="bottom-value, financial-value"/>
+                    <Label text="In 26 days"       styleClass="positive-text"/>
+                </VBox>
+                <VBox spacing="8" styleClass="bottom-card" HBox.hgrow="ALWAYS">
+                    <Label text="RECENT PAYSLIP"          styleClass="metric-label"/>
+                    <Label text="May 16 – May 31, 2026"   styleClass="bottom-value"/>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button text="View Payslip" onAction="#navigateToPayslip" maxWidth="Infinity" styleClass="small-pill-button"/>
+                </VBox>
+                <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
+                    <Label text="ANNOUNCEMENTS"                       styleClass="metric-label"/>
+                    <Label text="Company Meeting"                     styleClass="bottom-value"/>
+                    <Label text="June 20, 2026 • 09:00 AM"           styleClass="muted-text"/>
+                    <Label text="All employees are expected to attend." wrapText="true" styleClass="muted-text"/>
+                </VBox>
+            </HBox>
+
+        </VBox>
+    </HBox>
+
+    <Label fx:id="dashboardMessageLabel" styleClass="message-label"/>
+
+</VBox>

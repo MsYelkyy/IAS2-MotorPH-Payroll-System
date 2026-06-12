@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.employee.payslip.EmployeePayslipController">
+
+    <HBox spacing="12">
+        <TextField fx:id="payslipSearchField" promptText="Payrun ID (optional)"
+                   styleClass="input-field" HBox.hgrow="ALWAYS"/>
+        <Button text="Search" onAction="#handleSearchPayslip" styleClass="primary-button"/>
+    </HBox>
+
+    <VBox spacing="12" styleClass="content-card">
+        <Label text="Payslip Preview" styleClass="section-title"/>
+        <Label fx:id="payslipGrossPayLabel"   text="Gross Pay: PHP 0.00"  styleClass="data-line"/>
+        <Label fx:id="payslipDeductionsLabel" text="Deductions: PHP 0.00" styleClass="data-line"/>
+        <Label fx:id="payslipNetPayLabel"     text="Net Pay: PHP 0.00"    styleClass="metric-value, financial-value"/>
+        <HBox spacing="10">
+            <Button text="Preview Payslip"     onAction="#handlePreviewPayslip" styleClass="secondary-button"/>
+            <Button text="Export Text Payslip" onAction="#handleExportPayslip"  styleClass="primary-button"/>
+            <Button text="Print Payslip"       onAction="#handlePrintPayslip"   styleClass="secondary-button"/>
+        </HBox>
+        <Label fx:id="payslipMessageLabel"
+               text="Employee can only view their own persisted payroll data."
+               wrapText="true" styleClass="note-text"/>
+    </VBox>
+
+</VBox>

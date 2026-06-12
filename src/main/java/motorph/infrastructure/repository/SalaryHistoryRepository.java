@@ -1,6 +1,7 @@
 package motorph.infrastructure.repository;
 
 import motorph.domain.model.SalaryHistory;
+import motorph.domain.value.SalaryType;
 import motorph.infrastructure.config.DatabaseConnection;
 
 import java.sql.Connection;
@@ -8,6 +9,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +24,8 @@ public class SalaryHistoryRepository {
         String sql = """
                 SELECT salary_history_id,
                        employee_id,
+                       salary_type,
                        basic_salary,
-                       gross_semi_monthly,
                        hourly_rate,
                        start_date,
                        end_date
@@ -56,8 +58,8 @@ public class SalaryHistoryRepository {
         String sql = """
                 SELECT salary_history_id,
                        employee_id,
+                       salary_type,
                        basic_salary,
-                       gross_semi_monthly,
                        hourly_rate,
                        start_date,
                        end_date
@@ -89,8 +91,8 @@ public class SalaryHistoryRepository {
         String sql = """
                 SELECT salary_history_id,
                        employee_id,
+                       salary_type,
                        basic_salary,
-                       gross_semi_monthly,
                        hourly_rate,
                        start_date,
                        end_date
@@ -127,8 +129,8 @@ public class SalaryHistoryRepository {
         String sql = """
                 INSERT INTO salary_history (
                     employee_id,
+                    salary_type,
                     basic_salary,
-                    gross_semi_monthly,
                     hourly_rate,
                     start_date,
                     end_date
@@ -140,16 +142,11 @@ public class SalaryHistoryRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, salaryHistory.getEmployeeId());
-            stmt.setDouble(2, salaryHistory.getBasicSalary());
-            stmt.setDouble(3, salaryHistory.getGrossSemiMonthly());
-            stmt.setDouble(4, salaryHistory.getHourlyRate());
+            stmt.setString(2, salaryHistory.getSalaryType().name());
+            setNullableDouble(stmt, 3, salaryHistory.getBasicSalary());
+            setNullableDouble(stmt, 4, salaryHistory.getHourlyRate());
             stmt.setDate(5, Date.valueOf(salaryHistory.getStartDate()));
-
-            if (salaryHistory.getEndDate() == null) {
-                stmt.setNull(6, java.sql.Types.DATE);
-            } else {
-                stmt.setDate(6, Date.valueOf(salaryHistory.getEndDate()));
-            }
+            setNullableDate(stmt, 6, salaryHistory.getEndDate());
 
             stmt.executeUpdate();
 
@@ -163,8 +160,8 @@ public class SalaryHistoryRepository {
         String sql = """
                 UPDATE salary_history
                 SET employee_id = ?,
+                    salary_type = ?,
                     basic_salary = ?,
-                    gross_semi_monthly = ?,
                     hourly_rate = ?,
                     start_date = ?,
                     end_date = ?
@@ -175,17 +172,11 @@ public class SalaryHistoryRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setInt(1, salaryHistory.getEmployeeId());
-            stmt.setDouble(2, salaryHistory.getBasicSalary());
-            stmt.setDouble(3, salaryHistory.getGrossSemiMonthly());
-            stmt.setDouble(4, salaryHistory.getHourlyRate());
+            stmt.setString(2, salaryHistory.getSalaryType().name());
+            setNullableDouble(stmt, 3, salaryHistory.getBasicSalary());
+            setNullableDouble(stmt, 4, salaryHistory.getHourlyRate());
             stmt.setDate(5, Date.valueOf(salaryHistory.getStartDate()));
-
-            if (salaryHistory.getEndDate() == null) {
-                stmt.setNull(6, java.sql.Types.DATE);
-            } else {
-                stmt.setDate(6, Date.valueOf(salaryHistory.getEndDate()));
-            }
-
+            setNullableDate(stmt, 6, salaryHistory.getEndDate());
             stmt.setInt(7, salaryHistory.getSalaryHistoryId());
 
             stmt.executeUpdate();
@@ -202,11 +193,35 @@ public class SalaryHistoryRepository {
         return new SalaryHistory(
                 rs.getInt("salary_history_id"),
                 rs.getInt("employee_id"),
-                rs.getDouble("basic_salary"),
-                rs.getDouble("gross_semi_monthly"),
-                rs.getDouble("hourly_rate"),
+                SalaryType.fromValue(rs.getString("salary_type")),
+                getNullableDouble(rs, "basic_salary"),
+                getNullableDouble(rs, "hourly_rate"),
                 rs.getDate("start_date").toLocalDate(),
                 endDateValue == null ? null : endDateValue.toLocalDate()
         );
+    }
+
+    // sets a nullable double value
+    private void setNullableDouble(PreparedStatement stmt, int index, Double value) throws SQLException {
+        if (value == null) {
+            stmt.setNull(index, Types.DECIMAL);
+        } else {
+            stmt.setDouble(index, value);
+        }
+    }
+
+    // gets a nullable double value
+    private Double getNullableDouble(ResultSet rs, String columnName) throws SQLException {
+        double value = rs.getDouble(columnName);
+        return rs.wasNull() ? null : value;
+    }
+
+    // sets a nullable date value
+    private void setNullableDate(PreparedStatement stmt, int index, LocalDate value) throws SQLException {
+        if (value == null) {
+            stmt.setNull(index, Types.DATE);
+        } else {
+            stmt.setDate(index, Date.valueOf(value));
+        }
     }
 }
