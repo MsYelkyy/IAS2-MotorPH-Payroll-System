@@ -6,6 +6,7 @@ import motorph.ui.employee.attendance.EmployeeAttendanceController;
 import motorph.ui.employee.dashboard.EmployeeDashboardController;
 import motorph.ui.employee.leave.EmployeeLeaveController;
 import motorph.ui.employee.payslip.EmployeePayslipController;
+import motorph.ui.employee.profile.EmployeeProfileController;
 import motorph.ui.employee.settings.EmployeeSettingsController;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
@@ -53,6 +54,9 @@ public class EmployeeMainController {
     private Button dashboardNavButton;
 
     @FXML
+    private Button profileNavButton;
+
+    @FXML
     private Button attendanceNavButton;
 
     @FXML
@@ -81,6 +85,9 @@ public class EmployeeMainController {
     private VBox dashboardView;
 
     @FXML
+    private VBox profileView;
+
+    @FXML
     private VBox attendanceView;
 
     @FXML
@@ -96,6 +103,9 @@ public class EmployeeMainController {
 
     @FXML
     private EmployeeDashboardController dashboardViewController;
+
+    @FXML
+    private EmployeeProfileController profileViewController;
 
     @FXML
     private EmployeeAttendanceController attendanceViewController;
@@ -141,6 +151,12 @@ public class EmployeeMainController {
     }
 
     @FXML
+    private void showProfile() {
+        showView(profileView, profileNavButton, "My Profile", "View and update your contact information");
+        if (profileViewController != null) profileViewController.refresh();
+    }
+
+    @FXML
     private void showAttendance() {
         showView(attendanceView, attendanceNavButton, "Attendance", "Daily time-in, time-out, and attendance logs");
         if (attendanceViewController != null) attendanceViewController.refresh();
@@ -182,12 +198,12 @@ public class EmployeeMainController {
 
     // makes only the target view visible and marks the matching nav button as selected
     private void showView(VBox target, Button selectedBtn, String title, String subtitle) {
-        for (VBox view : List.of(dashboardView, attendanceView, leaveView, payslipView, settingsView)) {
+        for (VBox view : List.of(dashboardView, profileView, attendanceView, leaveView, payslipView, settingsView)) {
             boolean active = view == target;
             view.setVisible(active);
             view.setManaged(active);
         }
-        for (Button btn : List.of(dashboardNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, settingsNavButton)) {
+        for (Button btn : List.of(dashboardNavButton, profileNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, settingsNavButton)) {
             btn.getStyleClass().remove("selected-nav");
         }
         if (!selectedBtn.getStyleClass().contains("selected-nav")) {

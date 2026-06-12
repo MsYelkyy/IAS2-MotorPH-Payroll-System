@@ -36,7 +36,7 @@
 
                 <!-- Navigation -->
                 <Button fx:id="dashboardNavButton"  text="Dashboard"         onAction="#showDashboard"  maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
-                <Button                              text="Profile"            onAction="#showDashboard"  maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="profileNavButton"    text="Profile"            onAction="#showProfile"    maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="attendanceNavButton"  text="Attendance"         onAction="#showAttendance" maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="leaveNavButton"       text="Leave Requests"     onAction="#showLeave"      maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="payslipNavButton"     text="Payslip / Payroll"  onAction="#showPayslip"    maxWidth="Infinity" styleClass="nav-button"/>
@@ -78,6 +78,7 @@
                     <content>
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView"  source="dashboard.fxml"/>
+                            <fx:include fx:id="profileView"    source="profile.fxml"    visible="false" managed="false"/>
                             <fx:include fx:id="attendanceView" source="attendance.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="leaveView"      source="leave.fxml"      visible="false" managed="false"/>
                             <fx:include fx:id="payslipView"    source="payslip.fxml"    visible="false" managed="false"/>
@@ -106,7 +107,7 @@
                 <Button text="✕" onAction="#toggleSidePanel" styleClass="side-panel-close"/>
             </HBox>
             <Separator/>
-            <Button text="Profile"          onAction="#showDashboard" styleClass="side-panel-item"/>
+            <Button text="Profile"          onAction="#showProfile"   styleClass="side-panel-item"/>
             <Button text="Notifications"    onAction="#showDashboard" styleClass="side-panel-item"/>
             <Button text="Help"             onAction="#showDashboard" styleClass="side-panel-item"/>
             <Separator/>
