@@ -32,4 +32,44 @@ public final class UiMessageUtil {
         label.getStyleClass().removeAll("success-message", "error-message");
         label.setText("");
     }
+
+    // converts an exception to a user-friendly message
+    public static String toUserMessage(Exception e) {
+        String message = e.getMessage();
+
+        if (message == null || message.isBlank()) {
+            return "Unable to complete the request. Please try again.";
+        }
+
+        if (isDatabaseUnavailable(e)) {
+            return "Database connection unavailable. Start MySQL and try again.";
+        }
+
+        if (message.startsWith("Failed to ")) {
+            return "Unable to complete the request. Please check the database connection.";
+        }
+
+        return message;
+    }
+
+    // checks if the exception came from database connectivity
+    private static boolean isDatabaseUnavailable(Exception e) {
+        Throwable current = e;
+
+        while (current != null) {
+            String message = current.getMessage();
+
+            if (message != null
+                    && (message.contains("Failed to connect to the database")
+                    || message.contains("Communications link failure")
+                    || message.contains("Connection refused")
+                    || message.contains("No suitable driver"))) {
+                return true;
+            }
+
+            current = current.getCause();
+        }
+
+        return false;
+    }
 }
