@@ -166,7 +166,11 @@ public class EmployeeMainController {
     @FXML
     private void showLeave() {
         showView(leaveView, leaveNavButton, "Leave Request", "Submit leave requests and monitor credits");
-        if (leaveViewController != null) leaveViewController.refresh();
+
+        if (leaveViewController != null) {
+            leaveViewController.resetForm();
+            leaveViewController.refresh();
+        }
     }
 
     @FXML
@@ -178,7 +182,11 @@ public class EmployeeMainController {
     @FXML
     private void showSettings() {
         showView(settingsView, settingsNavButton, "Account Settings", "Manage password and recovery-account details");
-        if (settingsViewController != null) settingsViewController.refresh();
+
+        if (settingsViewController != null) {
+            settingsViewController.resetForm();
+            settingsViewController.refresh();
+        }
     }
 
     @FXML

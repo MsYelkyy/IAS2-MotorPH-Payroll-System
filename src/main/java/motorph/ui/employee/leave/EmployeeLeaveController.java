@@ -13,6 +13,7 @@ import motorph.ui.util.UiValidationUtil;
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DateCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
@@ -56,21 +57,58 @@ public class EmployeeLeaveController {
     @FXML
     private Label leaveMessageLabel;
 
+    // initializes leave form controls and event handlers
     @FXML
     private void initialize() {
-        System.out.println("EmployeeLeaveController initialize running");
-
         leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
 
         loadLeaveTypesForCurrentEmployee();
+
         leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
-        leaveTypeComboBox.setOnAction(e -> refreshLeaveCredits());
+        leaveTypeComboBox.setOnAction(e -> {
+            refreshLeaveCredits();
+            UiMessageUtil.clearMessage(leaveMessageLabel);
+        });
 
         leaveHoursField.setEditable(false);
-        leaveStartDatePicker.setOnAction(e -> updateLeaveHours());
-        leaveEndDatePicker.setOnAction(e -> updateLeaveHours());
 
-        System.out.println("Leave types loaded: " + leaveTypeComboBox.getItems());
+        leaveStartDatePicker.setEditable(false);
+        leaveEndDatePicker.setEditable(false);
+
+        leaveStartDatePicker.setDayCellFactory(dp -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+
+                if (date.isBefore(LocalDate.now())) {
+                    setDisable(true);
+                }
+            }
+        });
+
+        leaveEndDatePicker.setDayCellFactory(dp -> new DateCell() {
+            @Override
+            public void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+
+                LocalDate startDate = leaveStartDatePicker.getValue();
+
+                if (date.isBefore(LocalDate.now())
+                        || (startDate != null && date.isBefore(startDate))) {
+                    setDisable(true);
+                }
+            }
+        });
+
+        leaveStartDatePicker.setOnAction(e -> {
+            updateLeaveHours();
+            UiMessageUtil.clearMessage(leaveMessageLabel);
+        });
+
+        leaveEndDatePicker.setOnAction(e -> {
+            updateLeaveHours();
+            UiMessageUtil.clearMessage(leaveMessageLabel);
+        });
     }
 
     // loads leave types based on employee gender and employment status
@@ -124,7 +162,11 @@ public class EmployeeLeaveController {
 
         try {
             double hours = leaveService.computeLeaveHours(startDate, endDate);
+
             leaveHoursField.setText(String.format("%.1f", hours));
+
+            UiMessageUtil.clearMessage(leaveMessageLabel);
+
         } catch (Exception e) {
             leaveHoursField.setText("");
             UiMessageUtil.setError(leaveMessageLabel, userMessage(e));
@@ -204,6 +246,20 @@ public class EmployeeLeaveController {
             refresh();
         } catch (Exception e) {
             UiMessageUtil.setError(leaveMessageLabel, userMessage(e));
+        }
+    }
+
+    // clears the leave request form
+    public void resetForm() {
+        leaveTypeComboBox.getSelectionModel().clearSelection();
+        leaveCreditsField.clear();
+        leaveStartDatePicker.setValue(null);
+        leaveEndDatePicker.setValue(null);
+        leaveHoursField.clear();
+        leaveReasonField.clear();
+
+        if (leaveMessageLabel != null) {
+            leaveMessageLabel.setText("");
         }
     }
 

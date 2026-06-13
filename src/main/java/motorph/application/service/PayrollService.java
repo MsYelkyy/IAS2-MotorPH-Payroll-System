@@ -188,6 +188,12 @@ public class PayrollService {
         return result;
     }
 
+    // returns the payrun by id
+    public Payrun getPayrun(int payrunId) {
+        validate(payrunId, "Payrun ID");
+        return payrunRepository.findById(payrunId);
+    }
+
     // saves payroll component records for reporting
     private void savePayrollComponents(int payrollResultId, PayrollBreakdown breakdown) {
         payrollEarningRepository.save(new PayrollEarning(null, payrollResultId, 1, breakdown.getBasicPay()));

@@ -2,34 +2,57 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="20"
+<VBox maxHeight="Infinity" maxWidth="Infinity"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.employee.payslip.EmployeePayslipController">
 
-    <HBox spacing="12">
-        <TextField fx:id="payslipSearchField" promptText="Payrun ID (optional)"
-                   styleClass="input-field" HBox.hgrow="ALWAYS"/>
-        <Button text="Search" onAction="#handleSearchPayslip" styleClass="primary-button"/>
-    </HBox>
+    <VBox styleClass="content-card" VBox.vgrow="ALWAYS" spacing="0">
 
-    <VBox spacing="12" styleClass="content-card">
-        <Label text="Payslip Preview" styleClass="section-title"/>
-        <Label fx:id="payslipGrossPayLabel"   text="Gross Pay: PHP 0.00"  styleClass="data-line"/>
-        <Label fx:id="payslipDeductionsLabel" text="Deductions: PHP 0.00" styleClass="data-line"/>
-        <Label fx:id="payslipNetPayLabel"     text="Net Pay: PHP 0.00"    styleClass="metric-value, financial-value"/>
-        <HBox spacing="10">
-            <Button text="Preview Payslip"     onAction="#handlePreviewPayslip" styleClass="secondary-button"/>
-            <Button text="Export Text Payslip" onAction="#handleExportPayslip"  styleClass="primary-button"/>
-            <Button text="Print Payslip"       onAction="#handlePrintPayslip"   styleClass="secondary-button"/>
+        <!-- Card header -->
+        <VBox spacing="4">
+            <Label text="Payroll Summary" styleClass="section-title"/>
+            <Label text="List of your payroll records" styleClass="note-text"/>
+        </VBox>
+
+        <Region prefHeight="16"/>
+
+        <!-- Payroll summary table -->
+        <TableView fx:id="payrollTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+           styleClass="payroll-table">
+            <columns>
+                <TableColumn fx:id="colPayPeriod"  text="Pay Period"  prefWidth="230" minWidth="160"/>
+                <TableColumn fx:id="colBasicPay"   text="Basic Pay"   prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colGrossPay"   text="Gross Pay"   prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colDeductions" text="Deductions"  prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colNetPay"     text="Net Pay"     prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colAction"     text="Action"      prefWidth="160" minWidth="130"/>
+            </columns>
+            <placeholder>
+                <Label text="No payroll records found." styleClass="note-text"/>
+            </placeholder>
+        </TableView>
+
+        <Region prefHeight="14"/>
+
+        <!-- Footer: pagination left · record info centre · next right -->
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="btnPrev" text="&#8592; Previous" onAction="#handlePrevPage"
+                    styleClass="secondary-button"/>
+            <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="recordInfoLabel" text="" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="btnNext" text="Next &#8594;" onAction="#handleNextPage"
+                    styleClass="secondary-button"/>
         </HBox>
-        <Label fx:id="payslipMessageLabel"
-               text="Employee can only view their own persisted payroll data."
-               wrapText="true" styleClass="note-text"/>
+
     </VBox>
 
 </VBox>

@@ -62,6 +62,17 @@ public class EmployeeSettingsController {
         }
     }
 
+    // clears password fields and messages
+    public void resetForm() {
+        settingsOldPasswordField.clear();
+        settingsNewPasswordField.clear();
+        settingsConfirmPasswordField.clear();
+
+        if (settingsMessageLabel != null) {
+            settingsMessageLabel.setText("");
+        }
+    }
+
     @FXML
     private void handleChangePassword() {
         int accountId = CurrentUserSession.getUserAccountId();

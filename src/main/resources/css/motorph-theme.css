@@ -922,14 +922,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.34), 22, 0.20, 0, 10);
 }
 
-.metric-card:hover,
-.chart-card:hover,
-.bottom-card:hover,
-.content-card:hover {
-    -fx-border-color: rgba(59,130,246,0.28);
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.10), 24, 0.22, 0, 12);
-}
-
 .chart-card {
     -fx-min-height: 255;
 }
@@ -1724,12 +1716,6 @@
     -fx-padding: 18;
     -fx-min-height: 112;
 }
-
-.metric-card:hover {
-    -fx-border-color: rgba(59,130,246,0.48) rgba(255,255,255,0.08) rgba(255,255,255,0.08) rgba(255,255,255,0.08);
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.16), 22, 0.22, 0, 10);
-}
-
 .chart-card {
     -fx-background-color: rgba(8,16,34,0.90);
     -fx-background-radius: 14;
@@ -2549,12 +2535,6 @@
     -fx-min-height: 108;
 }
 
-.metric-card:hover {
-    -fx-background-color: rgba(255,255,255,0.88);
-    -fx-border-color: rgba(232,67,67,0.30);
-    -fx-effect: dropshadow(gaussian, rgba(232,67,67,0.14), 24, 0.12, 0, 6);
-}
-
 .chart-card {
     -fx-background-color: rgba(255,255,255,0.75);
     -fx-background-radius: 16;
@@ -2682,8 +2662,8 @@
 
 /* ── DatePicker (pay period) ──────────────────────────────────────────── */
 .period-picker {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: #D0D8E8;
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-border-color: rgba(255,255,255,0.16);
     -fx-border-width: 1;
     -fx-background-radius: 8;
     -fx-border-radius: 8;
@@ -2696,7 +2676,8 @@
 .period-picker .date-picker-display-node {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-text-fill: #2C3A4A;
+    -fx-text-fill: #FFFFFF;
+    -fx-prompt-text-fill: rgba(255,255,255,0.45);
     -fx-font-weight: 700;
     -fx-font-size: 12px;
     -fx-padding: 0 4;
@@ -2708,7 +2689,7 @@
 }
 
 .period-picker .arrow-button .arrow {
-    -fx-background-color: #E84343;
+    -fx-background-color: #FFFFFF;
 }
 
 /* DatePicker calendar popup */
@@ -3034,15 +3015,6 @@
     -fx-min-height: 0;
 }
 
-.metric-card:hover {
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 100%,
-            rgba(220,25,25,0.80),
-            rgba(170,12,12,0.88));
-    -fx-border-color: rgba(255,110,110,0.60) rgba(100,5,5,0.75) rgba(80,4,4,0.80) rgba(255,110,110,0.60);
-    -fx-effect: dropshadow(gaussian, rgba(200,0,0,0.35), 18, 0.25, 0, 6);
-}
-
 .chart-card {
     -fx-background-color:
         linear-gradient(from 0% 0% to 0% 100%,
@@ -3270,14 +3242,6 @@
     -fx-cursor: hand;
 }
 
-.period-picker .date-picker-display-node {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-text-fill: #D0D0DC;
-    -fx-font-weight: 700;
-    -fx-font-size: 12px;
-    -fx-padding: 0 4;
-}
 
 .period-picker .arrow-button            { -fx-background-color: transparent; }
 .period-picker .arrow-button .arrow     { -fx-background-color: #CC2020; }
@@ -3406,13 +3370,6 @@
     -fx-min-height: 0;
 }
 
-.metric-card:hover {
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 28%, rgba(255,140,140,0.30), transparent),
-        linear-gradient(from 0% 0% to 0% 100%, rgba(190,14,14,0.50), rgba(140,7,7,0.60));
-    -fx-border-color: rgba(255,160,160,0.50);
-}
-
 .chart-card {
     -fx-background-color:
         linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.18), transparent),
@@ -3502,3 +3459,192 @@
     -fx-text-fill: #6b7280;
 }
 
+.period-picker,
+.period-picker .text-field,
+.period-picker .date-picker-display-node {
+    -fx-background-color: rgba(255,255,255,0.06);
+    -fx-text-fill: #F0F0F4;
+    -fx-prompt-text-fill: rgba(200,200,210,0.40);
+}
+
+.period-picker {
+    -fx-border-color: rgba(255,255,255,0.12);
+}
+
+.period-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.period-picker .arrow-button .arrow {
+    -fx-background-color: #CC2020;
+}
+
+.date-picker,
+.date-picker .text-field,
+.date-picker .date-picker-display-node {
+    -fx-background-color: rgba(255,255,255,0.06);
+    -fx-text-fill: #F0F0F4;
+    -fx-prompt-text-fill: rgba(200,200,210,0.40);
+}
+
+.date-picker {
+    -fx-border-color: rgba(255,255,255,0.12);
+    -fx-border-width: 1;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-background-color: #CC2020;
+}
+
+/* ══════════════════════════════════════════════════════════════
+   PAYROLL SUMMARY TABLE
+   ══════════════════════════════════════════════════════════════ */
+
+.payroll-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-table-cell-border-color: transparent;
+}
+
+.payroll-table > .virtual-flow,
+.payroll-table > .virtual-flow > .clipped-container {
+    -fx-background-color: transparent;
+}
+
+.payroll-table .column-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.payroll-table .column-header,
+.payroll-table .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-size: 42;
+}
+
+.payroll-table .column-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(140,165,210,0.70);
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 14;
+}
+
+.payroll-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 52;
+}
+
+.payroll-table .table-row-cell:hover {
+    -fx-background-color: rgba(255,255,255,0.025);
+}
+
+.payroll-table .table-row-cell:selected,
+.payroll-table .table-row-cell:selected:hover {
+    -fx-background-color: rgba(59,130,246,0.08);
+}
+
+.payroll-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 14;
+    -fx-text-fill: rgba(200,215,240,0.82);
+    -fx-font-size: 13px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+
+.payroll-table .placeholder .label {
+    -fx-text-fill: rgba(140,165,210,0.40);
+    -fx-font-size: 13px;
+}
+
+.payroll-table .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.payroll-table .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-radius: 999;
+}
+
+.payroll-table .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+/* Net pay cells — gold text */
+.net-pay-cell {
+    -fx-text-fill: #FBBF24;
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+}
+
+/* View Payslip action button */
+.view-payslip-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(200,45,45,0.38);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(210,65,65,0.82);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+    -fx-min-height: 32;
+}
+
+.view-payslip-button:hover {
+    -fx-background-color: rgba(232,67,67,0.09);
+    -fx-border-color: rgba(232,67,67,0.65);
+    -fx-text-fill: #E84343;
+}
+
+/* Light-mode overrides for the payroll table */
+.root-canvas.light-mode .payroll-table .column-header-background {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.08) transparent;
+}
+
+.root-canvas.light-mode .payroll-table .column-header .label {
+    -fx-text-fill: rgba(50,75,115,0.60);
+}
+
+.root-canvas.light-mode .payroll-table .table-row-cell {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .payroll-table .table-row-cell:hover {
+    -fx-background-color: rgba(0,0,0,0.025);
+}
+
+.root-canvas.light-mode .payroll-table .table-cell {
+    -fx-text-fill: #1A2030;
+}
+
+.root-canvas.light-mode .net-pay-cell {
+    -fx-text-fill: #B45309;
+}
+
+.root-canvas.light-mode .view-payslip-button {
+    -fx-border-color: rgba(200,40,40,0.35);
+    -fx-text-fill: rgba(185,30,30,0.80);
+}
+
+.root-canvas.light-mode .view-payslip-button:hover {
+    -fx-background-color: rgba(200,40,40,0.07);
+    -fx-border-color: rgba(200,40,40,0.60);
+    -fx-text-fill: #C62828;
+}

@@ -197,13 +197,23 @@ public final class ThemeManager {
         }
 
         if (node instanceof TextInputControl input) {
-            Object storedPrompt = input.getProperties().get("englishPrompt");
-            if (storedPrompt == null) {
-                storedPrompt = input.getPromptText() == null ? "" : input.getPromptText();
-                input.getProperties().put("englishPrompt", storedPrompt);
+            try {
+                Object storedPrompt = input.getProperties().get("englishPrompt");
+
+                if (storedPrompt == null) {
+                    storedPrompt = input.getPromptText() == null ? "" : input.getPromptText();
+                    input.getProperties().put("englishPrompt", storedPrompt);
+                }
+
+                String english = storedPrompt.toString();
+
+                if (!input.promptTextProperty().isBound()) {
+                    input.setPromptText(filipino ? translateText(english) : english);
+                }
+
+            } catch (Exception ignored) {
+                // skip internal JavaFX controls with bound prompt text
             }
-            String english = storedPrompt.toString();
-            input.setPromptText(filipino ? translateText(english) : english);
         }
 
         if (node instanceof Parent parent) {
