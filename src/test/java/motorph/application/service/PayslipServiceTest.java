@@ -196,20 +196,19 @@ class PayslipServiceTest {
         );
     }
 
-    // UT-PSS-009: generates payslip for existing payroll result
-    @Test
-    @DisplayName("UT-PSS-009 - Positive - generatePayslip should return payslip")
-    void generatePayslipShouldReturnPayslip() {
+        // UT-PSS-009: rejects payslip when persisted breakdown does not match payslip validation
+        @Test
+        @DisplayName("UT-PSS-009 - Edge Case - generatePayslip should reject mismatched payslip breakdown")
+        void generatePayslipShouldRejectMismatchedPayslipBreakdown() {
         PayslipService payslipService = createPayslipService();
 
-        logger.info("UT-PSS-009 Testing payslip generation from existing payroll data.");
+        logger.info("UT-PSS-009 Testing payslip generation with mismatched persisted breakdown.");
 
-        Payslip payslip = payslipService.generatePayslip(10001, 1);
-
-        assertNotNull(payslip);
-        assertEquals(10001, payslip.getEmployeeId());
-        assertEquals(1, payslip.getPayrunId());
-    }
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> payslipService.generatePayslip(10001, 15)
+        );
+        }
 
     // UT-PSS-010: rejects invalid employee id
     @Test
