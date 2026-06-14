@@ -125,6 +125,11 @@ public class PasswordResetService {
         return passwordResetRequestRepository.findPendingRequests();
     }
 
+    // returns pending password reset request count
+    public int getPendingRequestCount() {
+        return listPendingRequests().size();
+    }
+
     // processes a pending request and emails a temporary password
     public void processPasswordResetRequest(int resetRequestId, int resolverEmployeeId) {
         validateResetRequestId(resetRequestId);

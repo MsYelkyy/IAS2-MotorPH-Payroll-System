@@ -1,0 +1,198 @@
+/* ══════════════════════════════════════════════════════════════════
+   IT MANAGEMENT — dashboard-specific style extensions
+   Inherits from motorph-theme.css; adds table rows, stat colors,
+   status badges, and system-status indicator.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Login-activity stat numbers ─────────────────────────────────── */
+.stat-success {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+.stat-danger {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #EF4444;
+}
+
+/* ── System-status headline ──────────────────────────────────────── */
+.system-ok-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+/* ── Table header row ────────────────────────────────────────────── */
+.table-header-row {
+    -fx-padding: 8 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.10) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── Table data rows ─────────────────────────────────────────────── */
+.table-data-row {
+    -fx-padding: 9 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-data-row:hover {
+    -fx-background-color: rgba(255,255,255,0.03);
+    -fx-background-radius: 4;
+}
+
+/* ── Status badge chip ───────────────────────────────────────────── */
+.status-badge {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(59,130,246,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #3B82F6;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+/* Account management controls */
+.switch-role-button {
+    -fx-background-color: #0B0F19;
+    -fx-background-radius: 7;
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-border-radius: 7;
+    -fx-padding: 10 14;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 900;
+}
+
+.switch-role-button:hover {
+    -fx-background-color: #151B2A;
+}
+
+.account-table {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 7;
+    -fx-background-radius: 7;
+}
+
+.account-table .column-header-background {
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-background-radius: 7 7 0 0;
+}
+
+.account-table .column-header,
+.account-table .filler {
+    -fx-background-color: transparent;
+    -fx-size: 42;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.08) transparent;
+}
+
+.account-table .column-header .label {
+    -fx-text-fill: rgba(235,240,250,0.78);
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+}
+
+.account-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-cell-size: 48;
+}
+
+.account-table .table-row-cell:hover {
+    -fx-background-color: rgba(255,255,255,0.03);
+}
+
+.account-table .table-row-cell:selected {
+    -fx-background-color: rgba(232,67,67,0.15);
+}
+
+.account-table .table-cell {
+    -fx-border-color: transparent;
+    -fx-alignment: CENTER_LEFT;
+    -fx-text-fill: rgba(240,244,252,0.88);
+    -fx-font-size: 12px;
+    -fx-padding: 0 10;
+}
+
+.account-table .placeholder .label {
+    -fx-text-fill: rgba(220,228,242,0.58);
+}
+
+/* ── Light-mode overrides ────────────────────────────────────────── */
+.root-canvas.light-mode .table-header-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.10) transparent;
+}
+
+.root-canvas.light-mode .table-data-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .table-data-row:hover {
+    -fx-background-color: rgba(0,0,0,0.03);
+}
+
+.root-canvas.light-mode .stat-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .stat-danger {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .system-ok-text {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .status-badge {
+    -fx-background-color: rgba(37,99,235,0.10);
+    -fx-text-fill: #2563EB;
+}
+
+.root-canvas.light-mode .switch-role-button {
+    -fx-background-color: #111827;
+    -fx-border-color: transparent;
+    -fx-text-fill: #FFFFFF;
+}
+
+.root-canvas.light-mode .switch-role-button:hover {
+    -fx-background-color: #1F2937;
+}
+
+.root-canvas.light-mode .account-table {
+    -fx-border-color: rgba(17,24,39,0.08);
+}
+
+.root-canvas.light-mode .account-table .column-header-background {
+    -fx-background-color: rgba(17,24,39,0.035);
+}
+
+.root-canvas.light-mode .account-table .column-header,
+.root-canvas.light-mode .account-table .filler {
+    -fx-border-color: transparent transparent rgba(17,24,39,0.08) transparent;
+}
+
+.root-canvas.light-mode .account-table .column-header .label {
+    -fx-text-fill: rgba(17,24,39,0.68);
+}
+
+.root-canvas.light-mode .account-table .table-row-cell {
+    -fx-border-color: transparent transparent rgba(17,24,39,0.06) transparent;
+}
+
+.root-canvas.light-mode .account-table .table-row-cell:hover {
+    -fx-background-color: rgba(17,24,39,0.025);
+}
+
+.root-canvas.light-mode .account-table .table-row-cell:selected {
+    -fx-background-color: rgba(232,67,67,0.10);
+}
+
+.root-canvas.light-mode .account-table .table-cell {
+    -fx-text-fill: #1A1F36;
+}
+
+.root-canvas.light-mode .account-table .placeholder .label {
+    -fx-text-fill: rgba(17,24,39,0.52);
+}

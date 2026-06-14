@@ -4,10 +4,12 @@ import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
 import motorph.application.service.EmailService;
 import motorph.application.service.EmployeeService;
+import motorph.application.service.ITUserAccountService;
 import motorph.application.service.LeaveService;
 import motorph.application.service.OvertimeService;
 import motorph.application.service.PasswordResetService;
 import motorph.application.service.PayrollService;
+import motorph.application.service.SupportTicketService;
 import motorph.application.service.TwoFactorService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
@@ -27,13 +29,12 @@ import motorph.infrastructure.repository.PayrollEarningRepository;
 import motorph.infrastructure.repository.PayrollResultRepository;
 import motorph.infrastructure.repository.PayrunRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
+import motorph.infrastructure.repository.SupportTicketRepository;
 import motorph.infrastructure.repository.TwoFactorCodeRepository;
 import motorph.infrastructure.repository.UserAccessLogRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 
-/**
- * Provides application services needed by employee UI controllers.
- */
+/** Provides application services needed by UI controllers. */
 public final class EmployeeUIServiceFactory {
 
     private static EmployeeUIServiceFactory instance;
@@ -45,18 +46,25 @@ public final class EmployeeUIServiceFactory {
     private final LeaveService leaveService;
     private final PayrollService payrollService;
     private final UserAccountService userAccountService;
+    private final ITUserAccountService itUserAccountService;
+    private final UserAccessLogService userAccessLogService;
+    private final SupportTicketService supportTicketService;
 
     // creates all service instances by wiring repositories together
     private EmployeeUIServiceFactory() {
         UserAccountRepository userAccountRepository = new UserAccountRepository();
         EmployeeRepository employeeRepository = new EmployeeRepository();
         AttendanceRepository attendanceRepository = new AttendanceRepository();
+        UserAccessLogRepository userAccessLogRepository = new UserAccessLogRepository();
+        TwoFactorCodeRepository twoFactorCodeRepository = new TwoFactorCodeRepository();
+
         EmailService emailService = new EmailService(EmailConfig.mailtrapSandbox());
         UserAccountService sharedUserAccountService = new UserAccountService(userAccountRepository, emailService);
         EmployeeService sharedEmployeeService = new EmployeeService(employeeRepository, sharedUserAccountService);
         AttendanceService sharedAttendanceService = new AttendanceService(attendanceRepository);
-        TwoFactorService twoFactorService = new TwoFactorService(new TwoFactorCodeRepository());
-        UserAccessLogService accessLogService = new UserAccessLogService(new UserAccessLogRepository());
+        TwoFactorService twoFactorService = new TwoFactorService(twoFactorCodeRepository);
+        UserAccessLogService sharedAccessLogService = new UserAccessLogService(userAccessLogRepository);
+
         OvertimeService overtimeService = new OvertimeService(
                 new OvertimeRepository(),
                 sharedAttendanceService,
@@ -64,13 +72,17 @@ public final class EmployeeUIServiceFactory {
         );
 
         this.userAccountService = sharedUserAccountService;
+        this.itUserAccountService = new ITUserAccountService(userAccountRepository, sharedEmployeeService);
         this.employeeService = sharedEmployeeService;
         this.attendanceService = sharedAttendanceService;
+        this.userAccessLogService = sharedAccessLogService;
+
         this.leaveService = new LeaveService(
                 new LeaveRepository(),
                 new LeaveCreditRepository(),
                 sharedEmployeeService
         );
+
         this.payrollService = new PayrollService(
                 new PayrunRepository(),
                 new PayrollResultRepository(),
@@ -85,20 +97,26 @@ public final class EmployeeUIServiceFactory {
                 sharedEmployeeService,
                 new PayrollCalculator()
         );
+
         this.authenticationService = new AuthenticationService(
                 userAccountRepository,
                 employeeRepository,
                 twoFactorService,
                 emailService,
-                accessLogService
+                sharedAccessLogService
         );
+
         this.passwordResetService = new PasswordResetService(
                 new PasswordResetRequestRepository(),
                 userAccountRepository,
                 employeeRepository,
                 twoFactorService,
                 emailService,
-                accessLogService
+                sharedAccessLogService
+        );
+
+        this.supportTicketService = new SupportTicketService(
+        new SupportTicketRepository()
         );
     }
 
@@ -144,5 +162,17 @@ public final class EmployeeUIServiceFactory {
 
     public UserAccountService getUserAccountService() {
         return userAccountService;
+    }
+
+    public ITUserAccountService getITUserAccountService() {
+        return itUserAccountService;
+    }
+
+    public UserAccessLogService getUserAccessLogService() {
+        return userAccessLogService;
+    }
+
+    public SupportTicketService getSupportTicketService() {
+        return supportTicketService;
     }
 }

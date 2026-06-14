@@ -215,6 +215,21 @@ public class UserAccountService {
                 .replaceAll("[^a-z0-9]", "");
     }
 
+    // returns all active unlocked accounts
+    public int getActiveAccountCount() {
+        return userAccountRepository.findAllActive().size();
+    }
+
+    // returns all locked accounts
+    public int getLockedAccountCount() {
+        return userAccountRepository.findAllLocked().size();
+    }
+
+    // returns all disabled accounts
+    public int getDisabledAccountCount() {
+        return userAccountRepository.findAllDisabled().size();
+    }
+
     // validate personal email input
     private void validatePersonalEmail(String personalEmail) {
         if (personalEmail == null || personalEmail.trim().isEmpty()) {

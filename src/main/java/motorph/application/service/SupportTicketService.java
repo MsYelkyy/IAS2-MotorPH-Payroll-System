@@ -62,6 +62,11 @@ public class SupportTicketService {
         return ticket;
     }
 
+    // returns open support ticket count
+    public int getOpenTicketCount() {
+        return getOpenTickets().size();
+    }
+    
     // returns tickets submitted by an employee
     public List<SupportTicket> getTicketsByEmployee(int employeeId) {
         validateEmployeeId(employeeId);

@@ -66,9 +66,13 @@ public class LoginController {
         startLoginAnimations();
     }
 
-    // navigates to the employee main page after successful login
+    // navigates to the correct main page after successful login
     public void onLoginSuccess(LoginResultDTO result) {
-        NavigationUtil.goToEmployeeApp(rootPane.getScene());
+        switch (result.getActiveRole()) {
+            case IT -> NavigationUtil.goToITApp(rootPane.getScene());
+            case EMPLOYEE -> NavigationUtil.goToEmployeeApp(rootPane.getScene());
+            default -> NavigationUtil.goToEmployeeApp(rootPane.getScene());
+        }
     }
 
     // returns to login after password reset
