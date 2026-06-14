@@ -103,10 +103,39 @@ public class LoginController {
         }
 
         try {
-            LoginResultDTO result = authenticationService.authenticate(new LoginRequestDTO(email, password));
+            LoginResultDTO result =
+                    authenticationService.authenticate(
+                        new LoginRequestDTO(email, password)
+                    );
+
+            if (result.isOtpRequired()) {
             otpCardController.setPendingLoginResult(result);
             showCard(otpCard);
-            otpCardController.showWithMessage("OTP sent to your registered email address.");
+            otpCardController.showWithMessage(
+                    "OTP sent to your company email address."
+            );
+            return;
+        }
+
+        if (result.getMessage().contains("Password change required")) {
+
+            // TODO:
+            // show temporary password change card here
+            UiMessageUtil.setSuccess(
+                    loginMessageLabel,
+                    "Temporary password verified. Please create a new password."
+            );
+
+            return;
+        }
+
+        UiMessageUtil.setSuccess(
+                loginMessageLabel,
+                "Login successful."
+        );
+
+        onLoginSuccess(result);
+
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
             UiValidationUtil.markInvalid(passwordField);

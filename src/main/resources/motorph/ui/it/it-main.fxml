@@ -80,6 +80,7 @@
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView" source="dashboard.fxml"/>
                             <fx:include fx:id="userAccountsView" source="user-accounts.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="passwordResetRequestsView" source="password-reset-requests.fxml" visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>

@@ -215,6 +215,38 @@ public class UserAccountService {
                 .replaceAll("[^a-z0-9]", "");
     }
 
+    // completes temporary password setup after login
+    public void completeTemporaryPasswordChange(
+            int userAccountId,
+            String newPassword,
+            String confirmPassword) {
+
+        validateUserAccountId(userAccountId);
+
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new ValidationException("New password is required.");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ValidationException("Passwords do not match.");
+        }
+
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(newPassword.trim(), salt);
+
+        userAccountRepository.updatePassword(
+                userAccountId,
+                hash,
+                salt
+        );
+    }
+
     // returns all active unlocked accounts
     public int getActiveAccountCount() {
         return userAccountRepository.findAllActive().size();

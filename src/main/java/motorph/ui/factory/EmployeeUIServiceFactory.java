@@ -4,7 +4,6 @@ import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
 import motorph.application.service.EmailService;
 import motorph.application.service.EmployeeService;
-import motorph.application.service.ITUserAccountService;
 import motorph.application.service.LeaveService;
 import motorph.application.service.OvertimeService;
 import motorph.application.service.PasswordResetService;
@@ -13,6 +12,8 @@ import motorph.application.service.SupportTicketService;
 import motorph.application.service.TwoFactorService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
+import motorph.application.service.ITUserAccountService;
+import motorph.application.service.ITPasswordResetService;
 import motorph.domain.calculator.PayrollCalculator;
 import motorph.infrastructure.config.EmailConfig;
 import motorph.infrastructure.repository.AttendanceRepository;
@@ -46,10 +47,10 @@ public final class EmployeeUIServiceFactory {
     private final LeaveService leaveService;
     private final PayrollService payrollService;
     private final UserAccountService userAccountService;
-    private final ITUserAccountService itUserAccountService;
     private final UserAccessLogService userAccessLogService;
     private final SupportTicketService supportTicketService;
-
+    private final ITUserAccountService itUserAccountService;
+    private final ITPasswordResetService itPasswordResetService;
     // creates all service instances by wiring repositories together
     private EmployeeUIServiceFactory() {
         UserAccountRepository userAccountRepository = new UserAccountRepository();
@@ -72,7 +73,6 @@ public final class EmployeeUIServiceFactory {
         );
 
         this.userAccountService = sharedUserAccountService;
-        this.itUserAccountService = new ITUserAccountService(userAccountRepository, sharedEmployeeService);
         this.employeeService = sharedEmployeeService;
         this.attendanceService = sharedAttendanceService;
         this.userAccessLogService = sharedAccessLogService;
@@ -117,6 +117,18 @@ public final class EmployeeUIServiceFactory {
 
         this.supportTicketService = new SupportTicketService(
         new SupportTicketRepository()
+        );
+
+        this.itUserAccountService = new ITUserAccountService(
+        userAccountRepository,
+        sharedEmployeeService
+        );
+        
+        this.itPasswordResetService = new ITPasswordResetService(
+            this.passwordResetService,
+            new PasswordResetRequestRepository(),
+            userAccountRepository,
+            sharedEmployeeService
         );
     }
 
@@ -164,15 +176,19 @@ public final class EmployeeUIServiceFactory {
         return userAccountService;
     }
 
-    public ITUserAccountService getITUserAccountService() {
-        return itUserAccountService;
-    }
-
     public UserAccessLogService getUserAccessLogService() {
         return userAccessLogService;
     }
 
     public SupportTicketService getSupportTicketService() {
         return supportTicketService;
+    }
+
+    public ITUserAccountService getITUserAccountService() {
+        return itUserAccountService;
+    }
+
+    public ITPasswordResetService getITPasswordResetService() {
+        return itPasswordResetService;
     }
 }

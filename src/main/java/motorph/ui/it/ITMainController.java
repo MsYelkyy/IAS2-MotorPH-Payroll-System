@@ -5,6 +5,7 @@ import motorph.domain.model.Employee;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.it.account.ITUserAccountController;
 import motorph.ui.it.dashboard.ITDashboardController;
+import motorph.ui.it.reset.PasswordResetRequestController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
@@ -51,6 +52,8 @@ public class ITMainController {
     @FXML private ITDashboardController dashboardViewController;
     @FXML private VBox                userAccountsView;
     @FXML private ITUserAccountController userAccountsViewController;
+    @FXML private VBox                passwordResetRequestsView;
+    @FXML private PasswordResetRequestController passwordResetRequestsViewController;
 
     // ── Footer ────────────────────────────────────────────────────────────────
     @FXML private Label appMessageLabel;
@@ -88,7 +91,9 @@ public class ITMainController {
     @FXML
     private void showPasswordReset() {
         setNavSelected(passwordResetNavButton);
-        setHeader("Password Reset Requests", "Review and process pending requests");
+        setHeader("Password Reset Requests", "Review and process employee password reset requests");
+        showView(passwordResetRequestsView);
+        if (passwordResetRequestsViewController != null) passwordResetRequestsViewController.refresh();
     }
 
     @FXML
@@ -144,7 +149,7 @@ public class ITMainController {
     }
 
     private void showView(VBox view) {
-        VBox[] views = { dashboardView, userAccountsView };
+        VBox[] views = { dashboardView, userAccountsView, passwordResetRequestsView };
         for (VBox current : views) {
             if (current == null) continue;
             boolean selected = current == view;

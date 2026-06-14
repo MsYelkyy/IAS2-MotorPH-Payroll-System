@@ -35,7 +35,7 @@ public class AuthenticationService {
         this.userAccessLogService = userAccessLogService;
     }
 
-    // authenticates email and password then sends OTP
+    // authenticates email and password then sends OTP when needed
     public LoginResultDTO authenticate(LoginRequestDTO request) {
         validateRequest(request);
 
@@ -50,14 +50,21 @@ public class AuthenticationService {
         validateAccountForLogin(account);
         validatePassword(request.getPassword(), account);
 
-        String personalEmail = getPersonalEmailOrThrow(account);
+        if (account.mustChangePassword()) {
+            return buildTemporaryPasswordResult(account);
+        }
+
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
                 null,
                 OtpPurpose.LOGIN_2FA
         );
 
-        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Login Verification");
+        emailService.sendOtp(
+                account.getCompanyEmail(),
+                rawOtp,
+                "MotorPH Login Verification"
+        );
 
         return buildOtpRequiredResult(account);
     }
@@ -131,6 +138,21 @@ public class AuthenticationService {
                 false,
                 account.hasMultipleRoles(),
                 message
+        );
+    }
+
+    // builds login result for temporary password users
+    private LoginResultDTO buildTemporaryPasswordResult(UserAccount account) {
+        return new LoginResultDTO(
+                account.getUserAccountId(),
+                account.getEmployeeId(),
+                account.getCompanyEmail(),
+                account.getRoles(),
+                account.getActiveRole(),
+                false,
+                false,
+                account.hasMultipleRoles(),
+                "Temporary password verified. Password change required."
         );
     }
 

@@ -196,3 +196,9 @@
 .root-canvas.light-mode .account-table .placeholder .label {
     -fx-text-fill: rgba(17,24,39,0.52);
 }
+
+.account-metric-card {
+    -fx-padding: 14 18 12 18;
+    -fx-pref-height: 95;
+    -fx-max-height: 95;
+}

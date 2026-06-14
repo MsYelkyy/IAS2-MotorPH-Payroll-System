@@ -139,6 +139,60 @@ public class PasswordResetRequestRepository {
         return results;
     }
 
+    // finds all password reset requests
+public List<PasswordResetRequest> findAll() {
+    List<PasswordResetRequest> results = new ArrayList<>();
+
+    String sql = baseSelect() + """
+            ORDER BY requested_at DESC
+            """;
+
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql);
+         ResultSet rs = stmt.executeQuery()) {
+
+        while (rs.next()) {
+            results.add(mapRow(rs));
+        }
+
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to find password reset requests.", e);
+    }
+
+    return results;
+}
+
+// finds password reset requests by status
+public List<PasswordResetRequest> findByStatus(PasswordResetStatus status) {
+    if (status == null) {
+        throw new IllegalArgumentException("Password reset status is required.");
+    }
+
+    List<PasswordResetRequest> results = new ArrayList<>();
+
+    String sql = baseSelect() + """
+            WHERE request_status = ?
+            ORDER BY requested_at DESC
+            """;
+
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+        stmt.setString(1, status.name());
+
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                results.add(mapRow(rs));
+            }
+        }
+
+    } catch (SQLException e) {
+        throw new RuntimeException("Failed to find password reset requests by status.", e);
+    }
+
+    return results;
+}
+
     // marks a password reset request as completed
     public void markCompleted(int resetRequestId) {
         validatePositive(resetRequestId, "Reset request ID must be positive.");
