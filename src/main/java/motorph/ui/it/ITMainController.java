@@ -60,12 +60,13 @@ public class ITMainController {
 
     @FXML
     private void initialize() {
+        System.out.println("ITMainController initialize called");
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
-        loadSidebarData();
         showDashboard();
+        loadSidebarData();
 
         UiMessageUtil.setSuccess(appMessageLabel, "IT Management System is ready.");
     }
@@ -158,23 +159,34 @@ public class ITMainController {
         }
     }
 
+    // loads the logged-in employee name and active role into the sidebar
     private void loadSidebarData() {
         int employeeId = CurrentUserSession.getEmployeeId();
 
+        System.out.println("Sidebar Employee ID: " + employeeId);
+        System.out.println("Sidebar Role: " + CurrentUserSession.getActiveRole());
+        System.out.println("Sidebar Email: " + CurrentUserSession.getCompanyEmail());
+
         if (employeeId <= 0) {
+            System.out.println("Employee ID is invalid.");
             setSidebarFallback();
             return;
         }
 
         try {
             Employee employee = employeeService.getEmployeeById(employeeId);
-            if (employeeNameLabel != null) employeeNameLabel.setText(employee.getFullName());
-            if (employeeRoleLabel != null) employeeRoleLabel.setText(
+
+            System.out.println("Employee found: " + employee.getFullName());
+
+            employeeNameLabel.setText(employee.getFullName());
+            employeeRoleLabel.setText(
                     "Current Role: " + (CurrentUserSession.getActiveRole() != null
                             ? CurrentUserSession.getActiveRole().name()
                             : "IT")
             );
+
         } catch (Exception e) {
+            e.printStackTrace();
             setSidebarFallback();
         }
     }
