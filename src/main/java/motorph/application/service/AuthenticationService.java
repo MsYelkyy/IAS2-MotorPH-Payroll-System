@@ -124,10 +124,6 @@ public class AuthenticationService {
 
     // builds the successful login result
     private LoginResultDTO buildSuccessResult(UserAccount account) {
-        String message = account.mustChangePassword()
-                ? "Login successful. Password change is required."
-                : "Login successful.";
-
         return new LoginResultDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
@@ -137,7 +133,7 @@ public class AuthenticationService {
                 true,
                 false,
                 account.hasMultipleRoles(),
-                message
+                "Login successful."
         );
     }
 
@@ -170,7 +166,7 @@ public class AuthenticationService {
             throw new AuthenticationException("Password is required.");
         }
     }
-
+    
     // validates account status before login
     private void validateAccountStatus(UserAccount account) {
         if (!account.isActive()) {

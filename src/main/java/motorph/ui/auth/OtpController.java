@@ -65,6 +65,7 @@ public class OtpController {
             );
 
             UserSession.getInstance().login(result);
+
             pendingLoginResult = null;
 
             if (loginController != null) {

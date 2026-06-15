@@ -2,37 +2,96 @@
 
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="20"
+<VBox spacing="20" maxWidth="Infinity" maxHeight="Infinity"
+      styleClass="attendance-root"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.employee.attendance.EmployeeAttendanceController">
 
-    <HBox spacing="14">
-        <Button text="Time In"  onAction="#handleTimeIn"  styleClass="success-button"/>
-        <Button text="Time Out" onAction="#handleTimeOut" styleClass="primary-button"/>
-    </HBox>
+    <VBox spacing="0" maxWidth="Infinity" styleClass="content-card, attendance-card">
+        <HBox alignment="CENTER_LEFT" spacing="24" styleClass="attendance-today-grid">
+            <VBox spacing="16" HBox.hgrow="ALWAYS">
+                <VBox spacing="6">
+                    <Label text="Today's Time" styleClass="attendance-card-title"/>
+                </VBox>
 
-    <VBox spacing="12" styleClass="content-card">
-        <Label text="Attendance Logs" styleClass="section-title"/>
-        <GridPane hgap="28" vgap="12">
-            <Label text="Work Date"   styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-            <Label text="Time In"     styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-            <Label text="Time Out"    styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-            <Label text="Total Hours" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-            <Label text="Status"      styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                <HBox alignment="CENTER_LEFT" spacing="8" styleClass="attendance-date-row">
+                    <Label text="Date Today:" styleClass="attendance-detail-label"/>
+                    <Label fx:id="todayDateLabel" text="-" styleClass="attendance-date-value"/>
+                </HBox>
 
-            <Label fx:id="attendanceDateLabel"   text="—" styleClass="data-line"  GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-            <Label fx:id="attendanceTimeInLabel"  text="—" styleClass="data-line"  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-            <Label fx:id="attendanceTimeOutLabel" text="—" styleClass="data-line"  GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-            <Label fx:id="attendanceHoursLabel"   text="—" styleClass="data-line"  GridPane.columnIndex="3" GridPane.rowIndex="1"/>
-            <Label fx:id="attendanceStatusLabel"  text="Pending" styleClass="status-pill" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
-        </GridPane>
+                <Region prefHeight="1" maxHeight="1" styleClass="attendance-divider"/>
+
+                <GridPane hgap="18" vgap="8" maxWidth="Infinity" styleClass="attendance-status-grid">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                        <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                        <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                    </columnConstraints>
+                    <Label text="Current Status" styleClass="attendance-detail-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                    <Label text="Time In" styleClass="attendance-detail-label" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                    <Label text="Time Out" styleClass="attendance-detail-label" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                    <Label fx:id="todayStatusLabel" text="Pending" maxWidth="Infinity" styleClass="attendance-status-value" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                    <Label fx:id="todayTimeInLabel" text="-" maxWidth="Infinity" styleClass="attendance-time-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                    <Label fx:id="todayTimeOutLabel" text="-" maxWidth="Infinity" styleClass="attendance-time-value" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                </GridPane>
+            </VBox>
+
+            <VBox alignment="CENTER" spacing="14" styleClass="attendance-action-panel">
+                <Label fx:id="attendanceMessageLabel" text="" wrapText="true"
+                       maxWidth="Infinity" styleClass="message-label, attendance-message"/>
+                <Button text="Time In" onAction="#handleTimeIn" maxWidth="Infinity"
+                        styleClass="success-button, attendance-action-button, attendance-time-in-button"/>
+                <Button text="Time Out" onAction="#handleTimeOut" maxWidth="Infinity"
+                        styleClass="primary-button, attendance-action-button, attendance-time-out-button"/>
+            </VBox>
+        </HBox>
     </VBox>
 
-    <Label fx:id="attendanceMessageLabel" wrapText="true" styleClass="message-label"/>
+    <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity"
+          styleClass="content-card, attendance-history-card"
+          VBox.vgrow="ALWAYS">
+        <VBox spacing="4">
+            <Label text="Attendance History" styleClass="section-title"/>
+            <Label text="List of your attendance records" styleClass="note-text"/>
+        </VBox>
+
+        <Region prefHeight="16"/>
+
+        <TableView fx:id="attendanceTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                   styleClass="payroll-table, attendance-table">
+            <columns>
+                <TableColumn fx:id="colAttendanceDate" text="Date" prefWidth="230" minWidth="160"/>
+                <TableColumn fx:id="colAttendanceTimeIn" text="Time In" prefWidth="150" minWidth="110"/>
+                <TableColumn fx:id="colAttendanceTimeOut" text="Time Out" prefWidth="150" minWidth="110"/>
+                <TableColumn fx:id="colAttendanceHours" text="Hours Worked" prefWidth="170" minWidth="130"/>
+                <TableColumn fx:id="colAttendanceStatus" text="Status" prefWidth="150" minWidth="120"/>
+            </columns>
+            <placeholder>
+                <Label text="No attendance records found." styleClass="note-text"/>
+            </placeholder>
+        </TableView>
+
+        <Region prefHeight="14"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="attendancePrevButton" text="&#8592; Previous" onAction="#handleAttendancePrevPage"
+                    styleClass="secondary-button"/>
+            <Label fx:id="attendancePageLabel" text="Page 1 of 1" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="attendanceRecordInfoLabel" text="" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="attendanceNextButton" text="Next &#8594;" onAction="#handleAttendanceNextPage"
+                    styleClass="secondary-button"/>
+        </HBox>
+    </VBox>
 
 </VBox>

@@ -202,3 +202,13 @@
     -fx-pref-height: 95;
     -fx-max-height: 95;
 }
+
+.root-canvas.light-mode .combo-box.input-field > .list-cell {
+    -fx-text-fill: #111827;
+    -fx-background-color: transparent;
+}
+
+.root-canvas.light-mode .combo-box.input-field {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(17,24,39,0.12);
+}

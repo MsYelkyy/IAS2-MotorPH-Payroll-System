@@ -43,8 +43,14 @@ public class ITUserAccountService {
 
         try {
             Employee employee = employeeService.getEmployeeById(account.getEmployeeId());
-            fullName = employee.getFullName();
+
+            if (employee != null) {
+                fullName = employee.getFullName();
+            }
         } catch (Exception ignored) {
+            System.err.println("Failed to fetch employee for user account ID " + account.getUserAccountId()
+                    + ": " + ignored.getMessage()
+                );
         }
 
         return new UserAccountRowDTO(

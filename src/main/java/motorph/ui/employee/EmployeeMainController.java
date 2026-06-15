@@ -8,6 +8,7 @@ import motorph.ui.employee.leave.EmployeeLeaveController;
 import motorph.ui.employee.payslip.EmployeePayslipController;
 import motorph.ui.employee.profile.EmployeeProfileController;
 import motorph.ui.employee.settings.EmployeeSettingsController;
+import motorph.ui.employee.support.EmployeeSupportTicketController;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.AnimationUtil;
@@ -66,6 +67,9 @@ public class EmployeeMainController {
     private Button payslipNavButton;
 
     @FXML
+    private Button supportTicketsNavButton;
+
+    @FXML
     private Button settingsNavButton;
 
     // ── Topbar ───────────────────────────────────────────────────────────────
@@ -97,6 +101,9 @@ public class EmployeeMainController {
     private VBox payslipView;
 
     @FXML
+    private VBox supportTicketsView;
+
+    @FXML
     private VBox settingsView;
 
     // ── Sub-controllers (injected by fx:include) ─────────────────────────────
@@ -115,6 +122,9 @@ public class EmployeeMainController {
 
     @FXML
     private EmployeePayslipController payslipViewController;
+
+    @FXML
+    private EmployeeSupportTicketController supportTicketsViewController;
 
     @FXML
     private EmployeeSettingsController settingsViewController;
@@ -180,6 +190,13 @@ public class EmployeeMainController {
     }
 
     @FXML
+    private void showSupportTickets() {
+        showView(supportTicketsView, supportTicketsNavButton, "Support Tickets",
+                "Submit a support ticket and track your requests");
+        if (supportTicketsViewController != null) supportTicketsViewController.refresh();
+    }
+
+    @FXML
     private void showSettings() {
         showView(settingsView, settingsNavButton, "Account Settings", "Manage password and recovery-account details");
 
@@ -207,12 +224,35 @@ public class EmployeeMainController {
 
     // makes only the target view visible and marks the matching nav button as selected
     private void showView(VBox target, Button selectedBtn, String title, String subtitle) {
-        for (VBox view : List.of(dashboardView, profileView, attendanceView, leaveView, payslipView, settingsView)) {
+        boolean leavingLeaveView = leaveView != null
+                && leaveView.isVisible()
+                && target != leaveView;
+        if (leavingLeaveView && leaveViewController != null) {
+            leaveViewController.resetForm();
+        }
+
+        boolean leavingProfileView = profileView != null
+                && profileView.isVisible()
+                && target != profileView;
+        if (leavingProfileView && profileViewController != null) {
+            profileViewController.cancelEditIfActive();
+        }
+
+        boolean leavingSupportTicketsView = supportTicketsView != null
+                && supportTicketsView.isVisible()
+                && target != supportTicketsView;
+        if (leavingSupportTicketsView && supportTicketsViewController != null) {
+            supportTicketsViewController.resetForm();
+        }
+
+        for (VBox view : List.of(dashboardView, profileView, attendanceView, leaveView,
+                payslipView, supportTicketsView, settingsView)) {
             boolean active = view == target;
             view.setVisible(active);
             view.setManaged(active);
         }
-        for (Button btn : List.of(dashboardNavButton, profileNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, settingsNavButton)) {
+        for (Button btn : List.of(dashboardNavButton, profileNavButton, attendanceNavButton,
+                leaveNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton)) {
             btn.getStyleClass().remove("selected-nav");
         }
         if (!selectedBtn.getStyleClass().contains("selected-nav")) {
@@ -234,17 +274,21 @@ public class EmployeeMainController {
         try {
             Employee employee = employeeService.getEmployeeById(employeeId);
 
-            dashboardEmployeeNameLabel.setText(employee.getFullName());
-            dashboardEmployeeRoleLabel.setText(
-                    CurrentUserSession.getActiveRole() != null
-                            ? CurrentUserSession.getActiveRole().name()
-                            : "EMPLOYEE"
-            );
-            dashboardEmailLabel.setText(
-                    CurrentUserSession.getCompanyEmail() != null
-                            ? CurrentUserSession.getCompanyEmail()
-                            : "No email on file"
-            );
+            String employeeName = employee.getFullName();
+            String roleText = CurrentUserSession.getActiveRole() != null
+                    ? CurrentUserSession.getActiveRole().name()
+                    : "EMPLOYEE";
+            String emailText = CurrentUserSession.getCompanyEmail() != null
+                    ? CurrentUserSession.getCompanyEmail()
+                    : "No email on file";
+
+            dashboardEmployeeNameLabel.getProperties().put("englishText", employeeName);
+            dashboardEmployeeRoleLabel.getProperties().put("englishText", roleText);
+            dashboardEmailLabel.getProperties().put("englishText", emailText);
+
+            dashboardEmployeeNameLabel.setText(employeeName);
+            dashboardEmployeeRoleLabel.setText(roleText);
+            dashboardEmailLabel.setText(emailText);
 
         } catch (Exception e) {
             setSidebarFallback();
@@ -272,14 +316,14 @@ public class EmployeeMainController {
 
         languageCombo = new ComboBox<>();
         languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setPrefWidth(140);
+        languageCombo.setPrefWidth(150);
         languageCombo.getItems().setAll("English", "Filipino");
         languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
         languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
 
         themeCombo = new ComboBox<>();
         themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setPrefWidth(120);
+        themeCombo.setPrefWidth(150);
         themeCombo.getItems().setAll("System", "Light", "Dark");
         themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
         themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));

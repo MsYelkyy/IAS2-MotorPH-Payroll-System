@@ -155,8 +155,8 @@ public class EmployeeService {
             throw new ValidationException("Selected image file does not exist.");
         }
 
-        String extension  = resolveExtension(sourceFile.getName());
-        String relativePath = "profile-images/employee-" + employeeId + "." + extension;
+        String extension = resolveExtension(sourceFile.getName());
+        String relativePath = "src/main/resources/images/profile-images/employee-" + employeeId + "." + extension;
 
         File destFile = new File(relativePath);
         if (destFile.getParentFile() != null) {
@@ -166,7 +166,7 @@ public class EmployeeService {
         try {
             Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save profile photo.", e);
+            throw new RuntimeException("Failed to save profile photo: " + e.getMessage(), e);
         }
 
         employeeRepository.updatePhotoPath(employeeId, relativePath);
@@ -174,7 +174,7 @@ public class EmployeeService {
 
     // updates the employee's own contact information
     public void updateOwnContactInfo(int employeeId, String phoneNumber, String address) {
-        Employee employee = getEmployeeById(employeeId);
+        getEmployeeById(employeeId);
 
         if (phoneNumber == null || phoneNumber.isBlank()) {
             throw new ValidationException("Phone number is required.");
@@ -184,10 +184,11 @@ public class EmployeeService {
             throw new ValidationException("Address is required.");
         }
 
-        employee.setPhoneNumber(phoneNumber);
-        employee.setAddress(address);
-
-        employeeRepository.update(employee);
+        employeeRepository.updateContactInfo(
+                employeeId,
+                phoneNumber.trim(),
+                address.trim()
+        );
     }
 
     // extracts the lowercased file extension; defaults to png if none found

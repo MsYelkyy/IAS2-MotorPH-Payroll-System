@@ -19,7 +19,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.auth.LoginController"
-           stylesheets="@../../../css/motorph-theme.css">
+           stylesheets="@../../../css/motorph-theme.css, @../../../css/dropdown-theme.css">
 
     <!-- Auth page -->
     <BorderPane styleClass="login-fullpage">
@@ -97,6 +97,9 @@
 
                         <!-- FORGOT PASSWORD (sub-controller: ForgotPasswordController) -->
                         <fx:include fx:id="forgotCard" source="forgot-password.fxml" visible="false" managed="false"/>
+
+                        <!-- FORCE CHANGE PASSWORD (sub-controller: ForceChangePasswordController) -->
+                        <fx:include fx:id="forceChangeCard" source="force-change-password.fxml" visible="false" managed="false"/>
 
                     </StackPane>
 

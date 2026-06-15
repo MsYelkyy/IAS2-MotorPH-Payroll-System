@@ -56,7 +56,7 @@ public class TwoFactorService {
         System.out.println(
                 "[MOTORPH OTP] purpose=" + purpose
                 + " userAccountId=" + userAccountId
-                + " code=" + rawOtp
+                + " code= " + rawOtp
         );
 
         return rawOtp;

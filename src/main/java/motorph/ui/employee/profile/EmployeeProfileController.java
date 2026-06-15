@@ -9,13 +9,15 @@ import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
 import javafx.fxml.FXML;
-import javafx.scene.layout.StackPane;
 import javafx.scene.Node;
+import javafx.scene.layout.StackPane;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 
 import java.io.File;
@@ -25,10 +27,13 @@ import java.time.format.DateTimeFormatter;
 public class EmployeeProfileController {
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy");
+    private static final double PHOTO_W = 174;
+    private static final double PHOTO_H = 220;
 
     private EmployeeService employeeService;
     private EmployeeProfileDTO currentProfile;
     private String pendingPhotoPath;
+    private boolean isFormattingPhone = false;
 
     // ── Photo ────────────────────────────────────────────────────────────────
 
@@ -40,7 +45,6 @@ public class EmployeeProfileController {
     // ── Header ───────────────────────────────────────────────────────────────
 
     @FXML private Label profileFullNameLabel;
-    @FXML private Label profileStatusLabel;
     @FXML private Label profileEmployeeIdLabel;
 
     // ── Mode buttons ─────────────────────────────────────────────────────────
@@ -61,13 +65,14 @@ public class EmployeeProfileController {
     @FXML private Label profileEmploymentStatusLabel;
     @FXML private Label profilePositionLabel;
     @FXML private Label profileDepartmentLabel;
-    @FXML private Label profileHireDateLabel;
     @FXML private Label profileSupervisorLabel;
 
     // ── Contact information ──────────────────────────────────────────────────
 
     @FXML private Label     profileCompanyEmailLabel;
     @FXML private Label     profilePersonalEmailLabel;
+    @FXML private Label     profilePhoneDisplayLabel;
+    @FXML private Label     profileAddressDisplayLabel;
     @FXML private TextField profilePhoneField;
     @FXML private TextField profileAddressField;
 
@@ -78,6 +83,8 @@ public class EmployeeProfileController {
     @FXML
     private void initialize() {
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        applyPhotoClip();
+        setupPhoneFormatting();
         enterViewMode();
     }
 
@@ -96,6 +103,13 @@ public class EmployeeProfileController {
             UiMessageUtil.clearMessage(profileMessageLabel);
         } catch (Exception e) {
             UiMessageUtil.setError(profileMessageLabel, UiMessageUtil.toUserMessage(e));
+        }
+    }
+
+    /** Called when the user navigates away — discards any unsaved edits silently. */
+    public void cancelEditIfActive() {
+        if (saveChangesButton != null && saveChangesButton.isVisible()) {
+            handleCancel();
         }
     }
 
@@ -129,9 +143,14 @@ public class EmployeeProfileController {
         String address = UiValidationUtil.getText(profileAddressField);
         boolean valid  = true;
 
-        if (phone.isBlank()) {
+        String digits = phone.replaceAll("[^0-9]", "");
+        if (digits.isEmpty()) {
             UiValidationUtil.markInvalid(profilePhoneField);
             valid = false;
+        } else if (digits.length() != 9) {
+            UiValidationUtil.markInvalid(profilePhoneField);
+            UiMessageUtil.setError(profileMessageLabel, "Phone number must be exactly 9 digits (e.g. 000-000-000).");
+            return;
         }
         if (address.isBlank()) {
             UiValidationUtil.markInvalid(profileAddressField);
@@ -177,32 +196,49 @@ public class EmployeeProfileController {
         }
     }
 
-    // switches to view mode: disables editable fields, shows only the edit button
+    // switches to view mode: shows display labels, hides input fields
     private void enterViewMode() {
-        setDisabled(profilePhoneField,   true);
-        setDisabled(profileAddressField, true);
+        show(profilePhoneDisplayLabel,   true);
+        show(profileAddressDisplayLabel, true);
+        show(profilePhoneField,          false);
+        show(profileAddressField,        false);
+
         show(editProfileButton,  true);
         show(saveChangesButton,  false);
         show(cancelButton,       false);
-        show(uploadImageButton,  false);
+
+        // keep managed=true so space is reserved; just hide it
+        if (uploadImageButton != null) uploadImageButton.setVisible(false);
     }
 
-    // switches to edit mode: enables editable fields, shows save/cancel/upload buttons
+    // switches to edit mode: hides display labels, shows input fields
     private void enterEditMode() {
-        setDisabled(profilePhoneField,   false);
-        setDisabled(profileAddressField, false);
+        // sync input fields from current display labels before showing them
+        if (profilePhoneField != null && profilePhoneDisplayLabel != null) {
+            String raw = profilePhoneDisplayLabel.getText();
+            profilePhoneField.setText("—".equals(raw) ? "" : raw);
+        }
+        if (profileAddressField != null && profileAddressDisplayLabel != null) {
+            String raw = profileAddressDisplayLabel.getText();
+            profileAddressField.setText("—".equals(raw) ? "" : raw);
+        }
+
+        show(profilePhoneDisplayLabel,   false);
+        show(profileAddressDisplayLabel, false);
+        show(profilePhoneField,          true);
+        show(profileAddressField,        true);
+
         show(editProfileButton,  false);
         show(saveChangesButton,  true);
         show(cancelButton,       true);
-        show(uploadImageButton,  true);
+
+        if (uploadImageButton != null) uploadImageButton.setVisible(true);
     }
 
     // fills every display label and editable fields from the profile DTO
     private void populateFields(EmployeeProfileDTO profile) {
         // header
-        set(profileFullNameLabel,   profile.getFullName());
-        set(profileStatusLabel,     profile.getEmploymentStatus() != null
-                ? profile.getEmploymentStatus().name() : "—");
+        set(profileFullNameLabel, profile.getFullName());
         set(profileEmployeeIdLabel, "Employee ID: " + profile.getEmployeeId());
 
         // personal
@@ -212,64 +248,114 @@ public class EmployeeProfileController {
                 ? profile.getBirthDate().format(DATE_FORMAT) : "—");
         set(profileCivilStatusLabel, UiFormatter.safe(profile.getCivilStatus(), "—"));
 
-        // employment — display names, not raw IDs
+        // employment
         set(profileEmploymentStatusLabel, profile.getEmploymentStatus() != null
                 ? profile.getEmploymentStatus().name() : "—");
         set(profilePositionLabel,   UiFormatter.safe(profile.getPositionName(),   "—"));
         set(profileDepartmentLabel, UiFormatter.safe(profile.getDepartmentName(), "—"));
-        set(profileHireDateLabel,   profile.getHireDate() != null
-                ? profile.getHireDate().format(DATE_FORMAT) : "—");
         set(profileSupervisorLabel, UiFormatter.safe(profile.getSupervisorName(), "—"));
 
-        // contact
+        // contact — display labels (view mode) and input fields (edit mode)
         set(profileCompanyEmailLabel,  UiFormatter.safe(CurrentUserSession.getCompanyEmail(), "—"));
         set(profilePersonalEmailLabel, UiFormatter.safe(profile.getPersonalEmail(), "—"));
 
-        if (profilePhoneField   != null) profilePhoneField.setText(UiFormatter.safe(profile.getPhoneNumber(), ""));
-        if (profileAddressField != null) profileAddressField.setText(UiFormatter.safe(profile.getAddress(), ""));
+        String phone   = UiFormatter.safe(profile.getPhoneNumber(), "");
+        String address = UiFormatter.safe(profile.getAddress(), "");
 
-        // photo
+        set(profilePhoneDisplayLabel,   phone.isBlank()   ? "—" : phone);
+        set(profileAddressDisplayLabel, address.isBlank() ? "—" : address);
+
+        // normalize phone into XXX-XXX-XXX for the editable field
+        String phoneDigits = phone.replaceAll("[^0-9]", "");
+        if (phoneDigits.length() > 9) phoneDigits = phoneDigits.substring(0, 9);
+        if (profilePhoneField != null) profilePhoneField.setText(formatPhone(phoneDigits));
+        if (profileAddressField != null) profileAddressField.setText(address);
+
+        // initials
         if (profilePhotoInitials != null) {
             profilePhotoInitials.setText(buildInitials(profile.getFirstName(), profile.getLastName()));
         }
+
         loadPhoto(profile.getPhotoPath());
     }
 
-    // loads a 2x2-style profile photo and falls back to initials when unavailable
+    // clips the photo frame so oversized scaled images never overflow the frame
+    private void applyPhotoClip() {
+        if (profilePhotoFrame == null) return;
+        Rectangle clip = new Rectangle(PHOTO_W, PHOTO_H);
+        clip.setArcWidth(10);
+        clip.setArcHeight(10);
+        profilePhotoFrame.setClip(clip);
+    }
+
+    // attaches a text-change listener that keeps the phone field in XXX-XXX-XXX format
+    private void setupPhoneFormatting() {
+        if (profilePhoneField == null) {
+            return;
+        }
+
+        profilePhoneField.setTextFormatter(new TextFormatter<>(change -> {
+            String digits = change.getControlNewText().replaceAll("[^0-9]", "");
+
+            if (!change.getText().matches("[0-9-]*")) {
+                return null;
+            }
+
+            if (digits.length() > 9) {
+                return null;
+            }
+
+            String formatted = formatPhone(digits);
+            change.setText(formatted);
+            change.setRange(0, change.getControlText().length());
+            change.setCaretPosition(formatted.length());
+            change.setAnchor(formatted.length());
+
+            return change;
+        }));
+    }
+
+    // converts a raw digit string (max 9) to XXX-XXX-XXX display format
+    private String formatPhone(String digits) {
+        if (digits.length() <= 3) return digits;
+        if (digits.length() <= 6) return digits.substring(0, 3) + "-" + digits.substring(3);
+        return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
+    }
+
+    // loads a profile photo using cover-style scaling (fills frame, crops overflow)
     private void loadPhoto(String photoPath) {
         boolean showPhoto = false;
 
         if (photoPath != null && !photoPath.isBlank()) {
             try {
                 File file = new File(photoPath);
-
                 if (file.exists()) {
-                    Image image = new Image(file.toURI().toString(), 330, 405, false, true);
+                    // load at natural size (synchronous)
+                    Image image = new Image(file.toURI().toString());
 
                     if (!image.isError() && profilePhotoView != null) {
-                        profilePhotoView.setImage(image);
-                        profilePhotoView.setFitWidth(110);
-                        profilePhotoView.setFitHeight(135);
-                        profilePhotoView.setPreserveRatio(false);
-                        profilePhotoView.setSmooth(true);
-                        profilePhotoView.setCache(true);
-                        showPhoto = true;
+                        double imgW = image.getWidth();
+                        double imgH = image.getHeight();
+
+                        if (imgW > 0 && imgH > 0) {
+                            // cover: scale so the image fills the entire frame in both axes
+                            double scale = Math.max(PHOTO_W / imgW, PHOTO_H / imgH);
+                            profilePhotoView.setImage(image);
+                            profilePhotoView.setFitWidth(imgW * scale);
+                            profilePhotoView.setFitHeight(imgH * scale);
+                            profilePhotoView.setPreserveRatio(false);
+                            profilePhotoView.setSmooth(true);
+                            showPhoto = true;
+                        }
                     }
                 }
             } catch (Exception ignored) {
-                // fall back to initials placeholder
+                // fall through to initials
             }
         }
 
-        if (profilePhotoView != null) {
-            profilePhotoView.setVisible(showPhoto);
-            profilePhotoView.setManaged(showPhoto);
-        }
-
-        if (profilePhotoInitials != null) {
-            profilePhotoInitials.setVisible(false);
-            profilePhotoInitials.setManaged(false);
-        }
+        show(profilePhotoView,     showPhoto);
+        show(profilePhotoInitials, !showPhoto);
     }
 
     // builds a 1–2 letter initials string from first and last name
@@ -280,7 +366,7 @@ public class EmployeeProfileController {
         return sb.isEmpty() ? "?" : sb.toString().toUpperCase();
     }
 
-    // sets a label's text safely, treating null as an em dash
+    // sets a label's text safely, treating null as em dash
     private void set(Label label, String text) {
         if (label != null) label.setText(text != null ? text : "—");
     }
@@ -291,10 +377,5 @@ public class EmployeeProfileController {
             node.setVisible(visible);
             node.setManaged(visible);
         }
-    }
-
-    // sets a text field's disabled state safely
-    private void setDisabled(TextField field, boolean disabled) {
-        if (field != null) field.setDisable(disabled);
     }
 }

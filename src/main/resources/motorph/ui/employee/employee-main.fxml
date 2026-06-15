@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.employee.EmployeeMainController"
-           stylesheets="@../../../css/motorph-theme.css">
+           stylesheets="@../../../css/employee-ui.css, @../../../css/motorph-theme.css, @../../../css/dropdown-theme.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -39,8 +39,9 @@
                 <Button fx:id="profileNavButton"    text="Profile"            onAction="#showProfile"    maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="attendanceNavButton"  text="Attendance"         onAction="#showAttendance" maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="leaveNavButton"       text="Leave Requests"     onAction="#showLeave"      maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="payslipNavButton"     text="Payslip / Payroll"  onAction="#showPayslip"    maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="settingsNavButton"    text="Account Settings"   onAction="#showSettings"   maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="payslipNavButton"         text="Payslip / Payroll"  onAction="#showPayslip"         maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="supportTicketsNavButton" text="Support Tickets"    onAction="#showSupportTickets"  maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="settingsNavButton"        text="Account Settings"   onAction="#showSettings"        maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
@@ -81,8 +82,9 @@
                             <fx:include fx:id="profileView"    source="profile.fxml"    visible="false" managed="false"/>
                             <fx:include fx:id="attendanceView" source="attendance.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="leaveView"      source="leave.fxml"      visible="false" managed="false"/>
-                            <fx:include fx:id="payslipView"    source="payslip.fxml"    visible="false" managed="false"/>
-                            <fx:include fx:id="settingsView"   source="settings.fxml"   visible="false" managed="false"/>
+                            <fx:include fx:id="payslipView"         source="payslip.fxml"         visible="false" managed="false"/>
+                            <fx:include fx:id="supportTicketsView" source="support-tickets.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="settingsView"       source="settings.fxml"        visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>

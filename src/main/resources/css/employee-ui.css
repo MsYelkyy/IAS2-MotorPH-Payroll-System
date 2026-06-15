@@ -687,7 +687,7 @@
 
 .success-pill {
     -fx-background-color: #0F8B8D;
-    -fx-text-fill: #111111;
+    -fx-text-fill: #ffffff;
 }
 
 .event-pill {
@@ -727,4 +727,89 @@
     -fx-background-color: transparent;
     -fx-border-color: transparent;
     -fx-text-fill: #111111;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Support ticket module
+   ══════════════════════════════════════════════════════════════════════ */
+
+.support-ticket-root {
+    -fx-min-width: 0;
+}
+
+/* The theme forces .leave-form-card to -fx-min-width:720 (for the leave screen).
+   Reset it here so the form card can shrink to its GridPane column share. */
+.support-ticket-root .leave-card,
+.support-ticket-root .leave-form-card {
+    -fx-min-width: 0;
+}
+
+/* ── Ticket list card title (reddish, matches leave-card-title) ──── */
+.ticket-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+/* ── Status column text colours ──────────────────────────────────── */
+.ticket-status-open {
+    -fx-text-fill: #FF6B6B;
+    -fx-font-weight: 900;
+}
+
+.ticket-status-resolved {
+    -fx-text-fill: #86EFAC;
+    -fx-font-weight: 900;
+}
+
+.ticket-status-cancelled {
+    -fx-text-fill: #9CA3AF;
+    -fx-font-weight: 900;
+}
+
+/* ── Info hint row at bottom of form ─────────────────────────────── */
+.ticket-info-row {
+    -fx-padding: 10 0 0 0;
+    -fx-border-color: rgba(255,255,255,0.08) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.ticket-info-icon {
+    -fx-font-size: 14px;
+    -fx-text-fill: rgba(255,210,210,0.65);
+}
+
+.ticket-info-text {
+    -fx-font-size: 12px;
+    -fx-text-fill: rgba(255,210,210,0.65);
+    -fx-wrap-text: true;
+}
+
+/* ── Light-mode overrides ─────────────────────────────────────────── */
+.root-canvas.light-mode .ticket-card-title {
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .ticket-status-open {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .ticket-status-resolved {
+    -fx-text-fill: #166534;
+}
+
+.root-canvas.light-mode .ticket-status-cancelled {
+    -fx-text-fill: #6B7280;
+}
+
+.root-canvas.light-mode .ticket-info-row {
+    -fx-border-color: rgba(17,24,39,0.10) transparent transparent transparent;
+}
+
+.root-canvas.light-mode .ticket-info-icon {
+    -fx-text-fill: #6B7280;
+}
+
+.root-canvas.light-mode .ticket-info-text {
+    -fx-text-fill: #6B7280;
 }

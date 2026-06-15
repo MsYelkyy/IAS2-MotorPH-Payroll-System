@@ -60,7 +60,7 @@ public class ITMainController {
 
     @FXML
     private void initialize() {
-        System.out.println("ITMainController initialize called");
+
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
 
         buildGlobalControls();
@@ -163,12 +163,7 @@ public class ITMainController {
     private void loadSidebarData() {
         int employeeId = CurrentUserSession.getEmployeeId();
 
-        System.out.println("Sidebar Employee ID: " + employeeId);
-        System.out.println("Sidebar Role: " + CurrentUserSession.getActiveRole());
-        System.out.println("Sidebar Email: " + CurrentUserSession.getCompanyEmail());
-
         if (employeeId <= 0) {
-            System.out.println("Employee ID is invalid.");
             setSidebarFallback();
             return;
         }
@@ -176,17 +171,19 @@ public class ITMainController {
         try {
             Employee employee = employeeService.getEmployeeById(employeeId);
 
-            System.out.println("Employee found: " + employee.getFullName());
+            String employeeName = employee.getFullName();
+            String roleText = "Current Role: "
+                    + (CurrentUserSession.getActiveRole() != null
+                    ? CurrentUserSession.getActiveRole().name()
+                    : "IT");
 
-            employeeNameLabel.setText(employee.getFullName());
-            employeeRoleLabel.setText(
-                    "Current Role: " + (CurrentUserSession.getActiveRole() != null
-                            ? CurrentUserSession.getActiveRole().name()
-                            : "IT")
-            );
+            employeeNameLabel.getProperties().put("englishText", employeeName);
+            employeeRoleLabel.getProperties().put("englishText", roleText);
+
+            employeeNameLabel.setText(employeeName);
+            employeeRoleLabel.setText(roleText);
 
         } catch (Exception e) {
-            e.printStackTrace();
             setSidebarFallback();
         }
     }
@@ -201,14 +198,14 @@ public class ITMainController {
 
         languageCombo = new ComboBox<>();
         languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setPrefWidth(140);
+        languageCombo.setPrefWidth(150);
         languageCombo.getItems().setAll("English", "Filipino");
         languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
         languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
 
         themeCombo = new ComboBox<>();
         themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setPrefWidth(120);
+        themeCombo.setPrefWidth(150);
         themeCombo.getItems().setAll("System", "Light", "Dark");
         themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
         themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));

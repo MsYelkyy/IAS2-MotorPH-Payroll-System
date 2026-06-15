@@ -36,8 +36,10 @@ public class LoginController {
     @FXML private VBox loginCard;
     @FXML private VBox otpCard;
     @FXML private VBox forgotCard;
+    @FXML private VBox forceChangeCard;
     @FXML private OtpController otpCardController;
     @FXML private ForgotPasswordController forgotCardController;
+    @FXML private ForceChangePasswordController forceChangeCardController;
     @FXML private TextField companyEmailField;
     @FXML private PasswordField passwordField;
     @FXML private TextField passwordTextField;
@@ -58,6 +60,15 @@ public class LoginController {
 
         buildGlobalControls();
         wireSubControllers();
+
+        companyEmailField.textProperty().addListener((obs, oldValue, newValue) ->
+            UiMessageUtil.clearMessage(loginMessageLabel));
+
+        passwordField.textProperty().addListener((obs, oldValue, newValue) ->
+                UiMessageUtil.clearMessage(loginMessageLabel));
+
+        passwordTextField.textProperty().addListener((obs, oldValue, newValue) ->
+                UiMessageUtil.clearMessage(loginMessageLabel));
         initSidePanel();
 
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -81,6 +92,12 @@ public class LoginController {
         UiMessageUtil.setSuccess(loginMessageLabel, successMessage);
     }
 
+    // returns to login after forced password change and shows a confirmation message
+    public void onForceChangePasswordComplete(String successMessage) {
+        showLoginCard();
+        UiMessageUtil.setSuccess(loginMessageLabel, successMessage);
+    }
+
     // shows the login card
     public void showLoginCard() {
         clearLoginState();
@@ -90,55 +107,61 @@ public class LoginController {
     // handles login credential submission
     @FXML
     private void handleLogin() {
-        clearLoginState();
+        clearLoginValidationOnly();
 
         String email = UiValidationUtil.getText(companyEmailField);
         String password = passwordVisible
                 ? UiValidationUtil.getText(passwordTextField)
                 : UiValidationUtil.getText(passwordField);
 
-        if (!isLoginInputValid(email, password)) {
-            UiMessageUtil.setError(loginMessageLabel, "Enter your MotorPH email and password.");
+        if (email.isBlank()) {
+            UiValidationUtil.markInvalid(companyEmailField);
+            UiMessageUtil.setError(loginMessageLabel, "Please enter your company email.");
+            return;
+        }
+
+        if (password.isBlank()) {
+            UiValidationUtil.markInvalid(
+                    passwordVisible ? passwordTextField : passwordField
+            );
+            UiMessageUtil.setError(loginMessageLabel, "Please enter your password.");
+            return;
+        }
+
+        if (!UiValidationUtil.isMotorphEmail(email)) {
+            UiValidationUtil.markInvalid(companyEmailField);
+            UiMessageUtil.setError(loginMessageLabel, "Please enter a valid MotorPH email.");
             return;
         }
 
         try {
-            LoginResultDTO result =
-                    authenticationService.authenticate(
-                        new LoginRequestDTO(email, password)
-                    );
+            LoginResultDTO result = authenticationService.authenticate(
+                    new LoginRequestDTO(email, password)
+            );
 
             if (result.isOtpRequired()) {
-            otpCardController.setPendingLoginResult(result);
-            showCard(otpCard);
-            otpCardController.showWithMessage(
-                    "OTP sent to your company email address."
-            );
-            return;
-        }
+                otpCardController.setPendingLoginResult(result);
+                showCard(otpCard);
+                otpCardController.showWithMessage(
+                        "OTP sent to your company email address."
+                );
+                return;
+            }
 
-        if (result.getMessage().contains("Password change required")) {
+            if (result.getMessage().contains("Password change required")) {
+                forceChangeCardController.setPendingResult(result);
+                showCard(forceChangeCard);
+                return;
+            }
 
-            // TODO:
-            // show temporary password change card here
-            UiMessageUtil.setSuccess(
-                    loginMessageLabel,
-                    "Temporary password verified. Please create a new password."
-            );
-
-            return;
-        }
-
-        UiMessageUtil.setSuccess(
-                loginMessageLabel,
-                "Login successful."
-        );
-
-        onLoginSuccess(result);
+            UiMessageUtil.setSuccess(loginMessageLabel, "Login successful.");
+            onLoginSuccess(result);
 
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
-            UiValidationUtil.markInvalid(passwordField);
+            UiValidationUtil.markInvalid(
+                    passwordVisible ? passwordTextField : passwordField
+            );
             UiMessageUtil.setError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
@@ -207,11 +230,19 @@ public class LoginController {
 
     // shows the selected auth card
     private void showCard(VBox cardToShow) {
-        for (VBox card : List.of(loginCard, otpCard, forgotCard)) {
+        for (VBox card : List.of(loginCard, otpCard, forgotCard, forceChangeCard)) {
             boolean active = card == cardToShow;
             card.setVisible(active);
             card.setManaged(active);
         }
+    }
+
+    // clears login validation without clearing typed credentials
+    private void clearLoginValidationOnly() {
+        UiValidationUtil.clearInvalid(companyEmailField);
+        UiValidationUtil.clearInvalid(passwordField);
+        UiValidationUtil.clearInvalid(passwordTextField);
+        UiMessageUtil.clearMessage(loginMessageLabel);
     }
 
     // clears login form state
@@ -221,11 +252,14 @@ public class LoginController {
         UiValidationUtil.clearInvalid(passwordTextField);
         UiMessageUtil.clearMessage(loginMessageLabel);
 
+        companyEmailField.clear();
+        passwordField.clear();
+        passwordTextField.clear();
+
         passwordField.setVisible(true);
         passwordField.setManaged(true);
         passwordTextField.setVisible(false);
         passwordTextField.setManaged(false);
-        passwordTextField.clear();
 
         passwordVisible = false;
 
@@ -242,14 +276,18 @@ public class LoginController {
 
         languageCombo = new ComboBox<>();
         languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setPrefWidth(140);
+        languageCombo.setMinWidth(150);
+        languageCombo.setPrefWidth(150);
+        languageCombo.setMaxWidth(150);
         languageCombo.getItems().setAll("English", "Filipino");
         languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
         languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
 
         themeCombo = new ComboBox<>();
         themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setPrefWidth(120);
+        themeCombo.setMinWidth(150);
+        themeCombo.setPrefWidth(150);
+        themeCombo.setMaxWidth(150);
         themeCombo.getItems().setAll("System", "Light", "Dark");
         themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
         themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));
@@ -276,6 +314,10 @@ public class LoginController {
 
         if (forgotCardController != null) {
             forgotCardController.setLoginController(this);
+        }
+
+        if (forceChangeCardController != null) {
+            forceChangeCardController.setLoginController(this);
         }
     }
 

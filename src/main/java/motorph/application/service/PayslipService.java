@@ -21,7 +21,6 @@ import motorph.infrastructure.reporting.JasperReportGenerator;
 import net.sf.jasperreports.engine.JasperPrint;
 
 import java.util.List;
-import java.util.Map;
 import java.util.HashMap;
 
 /**
