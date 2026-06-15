@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.employee.attendance.EmployeeAttendanceController">
+
+    <HBox spacing="14">
+        <Button text="Time In"  onAction="#handleTimeIn"  styleClass="success-button"/>
+        <Button text="Time Out" onAction="#handleTimeOut" styleClass="primary-button"/>
+    </HBox>
+
+    <VBox spacing="12" styleClass="content-card">
+        <Label text="Attendance Logs" styleClass="section-title"/>
+        <GridPane hgap="28" vgap="12">
+            <Label text="Work Date"   styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+            <Label text="Time In"     styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+            <Label text="Time Out"    styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+            <Label text="Total Hours" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+            <Label text="Status"      styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+
+            <Label fx:id="attendanceDateLabel"   text="—" styleClass="data-line"  GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+            <Label fx:id="attendanceTimeInLabel"  text="—" styleClass="data-line"  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+            <Label fx:id="attendanceTimeOutLabel" text="—" styleClass="data-line"  GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+            <Label fx:id="attendanceHoursLabel"   text="—" styleClass="data-line"  GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+            <Label fx:id="attendanceStatusLabel"  text="Pending" styleClass="status-pill" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+        </GridPane>
+    </VBox>
+
+    <Label fx:id="attendanceMessageLabel" wrapText="true" styleClass="message-label"/>
+
+</VBox>

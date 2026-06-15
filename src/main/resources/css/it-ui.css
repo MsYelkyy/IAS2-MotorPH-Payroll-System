@@ -1,0 +1,85 @@
+/* ══════════════════════════════════════════════════════════════════
+   IT MANAGEMENT — dashboard-specific style extensions
+   Inherits from motorph-theme.css; adds table rows, stat colors,
+   status badges, and system-status indicator.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Login-activity stat numbers ─────────────────────────────────── */
+.stat-success {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+.stat-danger {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #EF4444;
+}
+
+/* ── System-status headline ──────────────────────────────────────── */
+.system-ok-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+/* ── Table header row ────────────────────────────────────────────── */
+.table-header-row {
+    -fx-padding: 8 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.10) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── Table data rows ─────────────────────────────────────────────── */
+.table-data-row {
+    -fx-padding: 9 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-data-row:hover {
+    -fx-background-color: rgba(255,255,255,0.03);
+    -fx-background-radius: 4;
+}
+
+/* ── Status badge chip ───────────────────────────────────────────── */
+.status-badge {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(59,130,246,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #3B82F6;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+/* ── Light-mode overrides ────────────────────────────────────────── */
+.root-canvas.light-mode .table-header-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.10) transparent;
+}
+
+.root-canvas.light-mode .table-data-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .table-data-row:hover {
+    -fx-background-color: rgba(0,0,0,0.03);
+}
+
+.root-canvas.light-mode .stat-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .stat-danger {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .system-ok-text {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .status-badge {
+    -fx-background-color: rgba(37,99,235,0.10);
+    -fx-text-fill: #2563EB;
+}

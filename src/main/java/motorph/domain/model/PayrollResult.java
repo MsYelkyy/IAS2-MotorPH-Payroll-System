@@ -3,7 +3,7 @@ package motorph.domain.model;
 import java.time.LocalDateTime;
 
 /**
- * Represents a generated payroll result and maps to the payroll_result table in the database.
+ * Represents a generated payroll result and maps to the payroll_result table.
  */
 public class PayrollResult {
 
@@ -152,6 +152,7 @@ public class PayrollResult {
                 + "payrollResultId=" + payrollResultId
                 + ", employeeId=" + employeeId
                 + ", payrunId=" + payrunId
+                + ", totalHoursWorked=" + totalHoursWorked
                 + ", grossPay=" + grossPay
                 + ", totalDeductions=" + totalDeductions
                 + ", netPay=" + netPay

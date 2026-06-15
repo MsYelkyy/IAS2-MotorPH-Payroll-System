@@ -3,12 +3,9 @@ package motorph.domain.model;
 /**
  * Represents a deduction applied to a payroll result and maps to the payroll_deduction table in the database.
  */
-public class PayrollDeduction {
+public class PayrollDeduction extends PayrollComponent {
 
-    private Integer payrollDeductionId;
-    private int payrollResultId;
     private int deductionTypeId;
-    private double amount;
     private boolean taxable;
 
     // constructors
@@ -19,28 +16,18 @@ public class PayrollDeduction {
             double amount,
             boolean taxable) {
 
-        setPayrollDeductionId(payrollDeductionId);
-        setPayrollResultId(payrollResultId);
+        super(payrollDeductionId, payrollResultId, amount);
         setDeductionTypeId(deductionTypeId);
-        setAmount(amount);
         setTaxable(taxable);
     }
 
     // getters
     public Integer getPayrollDeductionId() {
-        return payrollDeductionId;
-    }
-
-    public int getPayrollResultId() {
-        return payrollResultId;
+        return getPayrollComponentId();
     }
 
     public int getDeductionTypeId() {
         return deductionTypeId;
-    }
-
-    public double getAmount() {
-        return amount;
     }
 
     public boolean isTaxable() {
@@ -48,32 +35,11 @@ public class PayrollDeduction {
     }
 
     // setters
-    public void setPayrollDeductionId(Integer payrollDeductionId) {
-        if (payrollDeductionId != null && payrollDeductionId <= 0) {
-            throw new IllegalArgumentException("Payroll deduction ID must be positive.");
-        }
-        this.payrollDeductionId = payrollDeductionId;
-    }
-
-    public void setPayrollResultId(int payrollResultId) {
-        if (payrollResultId <= 0) {
-            throw new IllegalArgumentException("Payroll result ID must be positive.");
-        }
-        this.payrollResultId = payrollResultId;
-    }
-
     public void setDeductionTypeId(int deductionTypeId) {
         if (deductionTypeId <= 0) {
             throw new IllegalArgumentException("Deduction type ID must be positive.");
         }
         this.deductionTypeId = deductionTypeId;
-    }
-
-    public void setAmount(double amount) {
-        if (amount < 0) {
-            throw new IllegalArgumentException("Deduction amount cannot be negative.");
-        }
-        this.amount = amount;
     }
 
     public void setTaxable(boolean taxable) {
@@ -84,10 +50,10 @@ public class PayrollDeduction {
     @Override
     public String toString() {
         return "PayrollDeduction{"
-                + "payrollDeductionId=" + payrollDeductionId
-                + ", payrollResultId=" + payrollResultId
+                + "payrollDeductionId=" + getPayrollDeductionId()
+                + ", payrollResultId=" + getPayrollResultId()
                 + ", deductionTypeId=" + deductionTypeId
-                + ", amount=" + amount
+                + ", amount=" + getAmount()
                 + ", taxable=" + taxable
                 + '}';
     }

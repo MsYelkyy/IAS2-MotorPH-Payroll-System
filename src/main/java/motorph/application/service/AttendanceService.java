@@ -26,26 +26,26 @@ public class AttendanceService {
         this.attendanceRepository = attendanceRepository;
     }
 
-    // Returns attendance records of one employee.
+    // returns attendance records of one employee
     public List<Attendance> getAttendanceByEmployeeId(int employeeId) {
         validateEmployeeId(employeeId);
         return attendanceRepository.findByEmployeeId(employeeId);
     }
 
-    // Returns attendance records within a date range.
+    // returns attendance records within a date range
     public List<Attendance> getAttendanceByDateRange(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
         return attendanceRepository.findByDateRange(startDate, endDate);
     }
 
-    // Returns attendance records of one employee within a date range.
+    // returns attendance records of one employee within a date range
     public List<Attendance> getAttendanceByEmployeeAndDateRange(int employeeId, LocalDate startDate, LocalDate endDate) {
         validateEmployeeId(employeeId);
         validateDateRange(startDate, endDate);
         return attendanceRepository.findByEmployeeAndDateRange(employeeId, startDate, endDate);
     }
 
-    // Returns one employee attendance record for a work date.
+    // returns one employee attendance record for a work date
     public Attendance getAttendanceForDate(int employeeId, LocalDate workDate) {
         validateEmployeeId(employeeId);
 
@@ -62,12 +62,12 @@ public class AttendanceService {
         return attendance;
     }
 
-    // Records employee time in for the current date.
+    // records employee time in for the current date
     public void timeIn(int employeeId) {
         timeIn(employeeId, LocalDate.now(), LocalTime.now(), AttendanceStatus.PRESENT);
     }
 
-    // Records employee time in using the provided date, time, and status.
+    // records employee time in using the provided date, time, and status
     public void timeIn(int employeeId, LocalDate workDate, LocalTime timeIn, AttendanceStatus attendanceStatus) {
         validateEmployeeId(employeeId);
 
@@ -90,12 +90,12 @@ public class AttendanceService {
         attendanceRepository.timeIn(employeeId, workDate, timeIn, attendanceStatus);
     }
 
-    // Records employee time out for the current date.
+    // records employee time out for the current date
     public void timeOut(int employeeId) {
         timeOut(employeeId, LocalDate.now(), LocalTime.now());
     }
 
-    // Records employee time out using the provided date and time.
+    // records employee time out using the provided date and time
     public void timeOut(int employeeId, LocalDate workDate, LocalTime timeOut) {
         validateEmployeeId(employeeId);
 
@@ -114,7 +114,7 @@ public class AttendanceService {
         }
 
         if (attendance.getTimeIn() == null) {
-            throw new IllegalStateException("Attendance record is missing time in.");
+            throw new BusinessRuleException("Attendance record is missing time in.");
         }
 
         if (attendance.getTimeOut() != null) {
@@ -128,42 +128,38 @@ public class AttendanceService {
         attendanceRepository.timeOut(employeeId, workDate, timeOut);
     }
 
-    // Updates overtime hours and attendance status of an attendance record.
-    public void updateOvertimeAndStatus(int attendanceId, double overtimeHours, AttendanceStatus attendanceStatus) {
+    // updates attendance status
+    public void updateStatus(int attendanceId, AttendanceStatus attendanceStatus) {
         validateAttendanceId(attendanceId);
-
-        if (overtimeHours < 0) {
-            throw new ValidationException("Overtime hours cannot be negative.");
-        }
 
         if (attendanceStatus == null) {
             throw new ValidationException("Attendance status is required.");
         }
 
-        attendanceRepository.updateOvertimeAndStatus(attendanceId, overtimeHours, attendanceStatus);
+        attendanceRepository.updateStatus(attendanceId, attendanceStatus);
     }
 
-    // Deletes one attendance record.
+    // deletes one attendance record
     public void deleteAttendance(int attendanceId) {
         validateAttendanceId(attendanceId);
         attendanceRepository.delete(attendanceId);
     }
 
-    // Validates employee id input.
+    // validates employee id input
     private void validateEmployeeId(int employeeId) {
         if (employeeId <= 0) {
             throw new ValidationException("Employee ID is required.");
         }
     }
 
-    // Validates attendance id input.
+    // validates attendance id input
     private void validateAttendanceId(int attendanceId) {
         if (attendanceId <= 0) {
             throw new ValidationException("Attendance ID is required.");
         }
     }
 
-    // Validates a date range input.
+    // validates a date range input
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if (startDate == null) {
             throw new ValidationException("Start date is required.");

@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.leave.AdminLeaveController"
+      VBox.vgrow="ALWAYS">
+
+    <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
+        <Button fx:id="backButton" text="Back" onAction="#handleBack"
+                visible="false" managed="false" styleClass="secondary-button"/>
+        <TextField fx:id="employeeSearchField" prefWidth="260"
+                   promptText="Search employee by name or ID" styleClass="input-field"/>
+        <ComboBox fx:id="statusFilterCombo" promptText="Status"
+                  prefWidth="150" styleClass="input-field"/>
+        <ComboBox fx:id="leaveTypeFilterCombo" promptText="Leave Type"
+                  prefWidth="180" styleClass="input-field"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="moduleMessageLabel" styleClass="muted-text"/>
+    </HBox>
+
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <VBox fx:id="listPanel" styleClass="content-card" spacing="12">
+            <TableView fx:id="leaveTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="leaveIdColumn" text="ID" prefWidth="70" minWidth="60"/>
+                    <TableColumn fx:id="leaveEmployeeColumn" text="Employee" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="leaveTypeColumn" text="Leave Type" prefWidth="170" minWidth="130"/>
+                    <TableColumn fx:id="leavePeriodColumn" text="Period" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="leaveHoursColumn" text="Hrs" prefWidth="80" minWidth="70"/>
+                    <TableColumn fx:id="leaveStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="leaveSubmittedColumn" text="Submitted" prefWidth="150" minWidth="120"/>
+                    <TableColumn fx:id="leaveActionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="No leave requests match the current filters." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <VBox fx:id="detailPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="16">
+
+            <HBox spacing="0">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="EMPLOYEE" styleClass="field-label"/>
+                    <Label fx:id="detailEmployeeLabel" styleClass="section-title"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="LEAVE TYPE" styleClass="field-label"/>
+                    <Label fx:id="detailLeaveTypeLabel" styleClass="section-title"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="STATUS" styleClass="field-label"/>
+                    <Label fx:id="detailStatusLabel" styleClass="section-title"/>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <HBox spacing="32">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <HBox><Label text="Request ID" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailIdLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Period" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailPeriodLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Leave Hours" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailHoursLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reason" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailReasonLabel" styleClass="data-line" HBox.hgrow="ALWAYS" wrapText="true"/></HBox>
+                </VBox>
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <HBox><Label text="Date Submitted" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailSubmittedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reviewed By" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailApproverLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reviewed On" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailReviewedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Remarks" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailRemarksLabel" styleClass="data-line" HBox.hgrow="ALWAYS" wrapText="true"/></HBox>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <Label fx:id="detailSelfNoteLabel"
+                   text="You cannot action your own leave request."
+                   styleClass="muted-text"
+                   visible="false" managed="false"/>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="approveButton" text="Approve" onAction="#handleApprove"
+                        styleClass="primary-button"/>
+                <Button fx:id="rejectButton" text="Reject" onAction="#handleReject"
+                        styleClass="danger-outline-button"/>
+                <Button fx:id="reverseToRejectButton" text="Override to Rejected"
+                        onAction="#handleReverseToReject" styleClass="danger-outline-button"
+                        visible="false" managed="false"/>
+                <Button fx:id="reverseToCancelButton" text="Override to Cancelled"
+                        onAction="#handleReverseToCancel" styleClass="secondary-button"
+                        visible="false" managed="false"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="viewCreditsButton" text="View Credits"
+                        onAction="#handleViewCredits" styleClass="secondary-button"/>
+            </HBox>
+
+        </VBox>
+
+        <VBox fx:id="creditsPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="12">
+            <Label fx:id="creditsHeaderLabel" styleClass="section-title"/>
+
+            <TableView fx:id="creditTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="creditTypeColumn" text="Leave Type" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="creditTotalColumn" text="Total" prefWidth="140" minWidth="110"/>
+                    <TableColumn fx:id="creditUsedColumn" text="Used" prefWidth="140" minWidth="110"/>
+                    <TableColumn fx:id="creditRemainingColumn" text="Remaining" prefWidth="160" minWidth="120"/>
+                </columns>
+                <placeholder>
+                    <Label text="No leave credit records found for this employee." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+    </StackPane>
+
+</VBox>

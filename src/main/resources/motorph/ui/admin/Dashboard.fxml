@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.dashboard.AdminDashboardController">
+
+    <!-- ── Row 1: HR / People metrics ────────────────────────────────────── -->
+    <Label text="PEOPLE" styleClass="section-title"/>
+    <HBox spacing="14">
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE EMPLOYEES"     styleClass="metric-label"/>
+            <Label fx:id="totalActiveEmployeesLabel" text="—" styleClass="metric-value"/>
+            <Label text="Currently employed"   styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL EMPLOYEES"      styleClass="metric-label"/>
+            <Label fx:id="totalAllEmployeesLabel"    text="—" styleClass="metric-value"/>
+            <Label text="Including inactive"   styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ON LEAVE TODAY"       styleClass="metric-label"/>
+            <Label fx:id="onLeaveTodayLabel"         text="—" styleClass="metric-value"/>
+            <Label text="Approved leave today" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="PENDING LEAVE"        styleClass="metric-label"/>
+            <Label fx:id="pendingLeaveLabel"         text="—" styleClass="metric-value"/>
+            <Label text="Awaiting approval"    styleClass="muted-text"/>
+        </VBox>
+
+    </HBox>
+
+    <!-- ── Row 2: Finance / Payroll summary ──────────────────────────────── -->
+    <Label text="LATEST PAYROLL RUN" styleClass="section-title"/>
+    <HBox spacing="14">
+
+        <VBox spacing="6" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="PERIOD"               styleClass="metric-label"/>
+            <Label fx:id="latestPayrunPeriodLabel"   text="—" styleClass="metric-value" style="-fx-font-size:16px;"/>
+            <Label text="Pay period covered"   styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL GROSS PAY"      styleClass="metric-label"/>
+            <Label fx:id="latestPayrunGrossPayLabel" text="—" styleClass="metric-value" style="-fx-font-size:18px;"/>
+            <Label text="Before deductions"    styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL NET PAY"        styleClass="metric-label"/>
+            <Label fx:id="latestPayrunNetPayLabel"   text="—" styleClass="metric-value" style="-fx-font-size:18px;"/>
+            <Label text="Employees take-home"  styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="EMPLOYEES PROCESSED"  styleClass="metric-label"/>
+            <Label fx:id="latestPayrunHeadcountLabel" text="—" styleClass="metric-value"/>
+            <Label text="In this pay run"       styleClass="muted-text"/>
+        </VBox>
+
+    </HBox>
+
+    <!-- ── Row 3: IT / Security metrics ──────────────────────────────────── -->
+    <Label text="ACCOUNTS &amp; SECURITY" styleClass="section-title"/>
+    <HBox spacing="14">
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE ACCOUNTS"      styleClass="metric-label"/>
+            <Label fx:id="activeAccountsLabel"       text="—" styleClass="metric-value"/>
+            <Label text="Unlocked active users" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="LOCKED ACCOUNTS"      styleClass="metric-label"/>
+            <Label fx:id="lockedAccountsLabel"       text="—" styleClass="metric-value"/>
+            <Label text="Accounts locked"      styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="DISABLED ACCOUNTS"    styleClass="metric-label"/>
+            <Label fx:id="disabledAccountsLabel"     text="—" styleClass="metric-value"/>
+            <Label text="Inactive accounts"    styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="12" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="LOGIN ACTIVITY"       styleClass="metric-label"/>
+            <HBox spacing="24">
+                <VBox spacing="4">
+                    <Label fx:id="successLoginsLabel" text="—" styleClass="stat-success"/>
+                    <Label text="Successful"  styleClass="positive-text"/>
+                </VBox>
+                <VBox spacing="4">
+                    <Label fx:id="failedLoginsLabel"  text="—" styleClass="stat-danger"/>
+                    <Label text="Failed"      styleClass="muted-text"/>
+                </VBox>
+            </HBox>
+        </VBox>
+
+    </HBox>
+
+    <!-- ── Row 4: Quick-access module tiles ──────────────────────────────── -->
+    <Label text="QUICK ACCESS" styleClass="section-title"/>
+    <HBox spacing="12">
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileEmployees"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="👥" styleClass="module-tile-icon"/>
+                <Label text="Employees" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Manage workforce" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTilePayroll"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="💰" styleClass="module-tile-icon"/>
+                <Label text="Payroll" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Process pay runs" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileReports"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="📊" styleClass="module-tile-icon"/>
+                <Label text="Reports" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Generate reports" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileLeaveOvertime"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="📅" styleClass="module-tile-icon"/>
+                <Label text="Leave &amp; OT" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Approve requests" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileUserMgmt"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="🔑" styleClass="module-tile-icon"/>
+                <Label text="User Mgmt" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Accounts &amp; access" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileRoleMgmt"
+              HBox.hgrow="ALWAYS" maxHeight="72" prefHeight="72">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="🛡" styleClass="module-tile-icon"/>
+                <Label text="Role Mgmt" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Permissions" styleClass="module-tile-sub"/>
+        </VBox>
+
+    </HBox>
+
+    <Separator/>
+
+    <!-- ── Row 5: Recent system activity ─────────────────────────────────── -->
+    <VBox spacing="10" styleClass="chart-card">
+
+        <HBox alignment="CENTER_LEFT">
+            <Label text="RECENT SYSTEM ACTIVITY" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Table header -->
+        <HBox styleClass="table-header-row" spacing="0">
+            <Label text="ACTION"    styleClass="table-head" prefWidth="200"/>
+            <Label text="DETAILS"   styleClass="table-head" HBox.hgrow="ALWAYS"/>
+            <Label text="TIMESTAMP" styleClass="table-head" prefWidth="160"/>
+        </HBox>
+
+        <!-- Populated programmatically by AdminDashboardController -->
+        <VBox fx:id="activityRows" spacing="0"/>
+
+    </VBox>
+
+</VBox>

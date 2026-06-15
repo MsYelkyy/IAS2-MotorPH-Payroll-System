@@ -26,7 +26,7 @@ public class AttendanceRepository {
         List<Attendance> attendances = new ArrayList<>();
 
         String sql = """
-                SELECT attendance_id, employee_id, work_date, time_in, time_out, overtime_hours, attendance_status
+                SELECT attendance_id, employee_id, work_date, time_in, time_out, attendance_status
                 FROM attendance
                 WHERE employee_id = ?
                 ORDER BY work_date DESC
@@ -55,7 +55,7 @@ public class AttendanceRepository {
         List<Attendance> attendances = new ArrayList<>();
 
         String sql = """
-                SELECT attendance_id, employee_id, work_date, time_in, time_out, overtime_hours, attendance_status
+                SELECT attendance_id, employee_id, work_date, time_in, time_out, attendance_status
                 FROM attendance
                 WHERE work_date BETWEEN ? AND ?
                 ORDER BY work_date DESC, employee_id
@@ -85,7 +85,7 @@ public class AttendanceRepository {
         List<Attendance> attendances = new ArrayList<>();
 
         String sql = """
-                SELECT attendance_id, employee_id, work_date, time_in, time_out, overtime_hours, attendance_status
+                SELECT attendance_id, employee_id, work_date, time_in, time_out, attendance_status
                 FROM attendance
                 WHERE employee_id = ? AND work_date BETWEEN ? AND ?
                 ORDER BY work_date DESC
@@ -114,7 +114,7 @@ public class AttendanceRepository {
     // finds today's attendance of employee
     public Attendance findToday(int employeeId, LocalDate workDate) {
         String sql = """
-                SELECT attendance_id, employee_id, work_date, time_in, time_out, overtime_hours, attendance_status
+                SELECT attendance_id, employee_id, work_date, time_in, time_out, attendance_status
                 FROM attendance
                 WHERE employee_id = ? AND work_date = ?
                 """;
@@ -169,10 +169,9 @@ public class AttendanceRepository {
                     work_date,
                     time_in,
                     time_out,
-                    overtime_hours,
                     attendance_status
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -182,8 +181,7 @@ public class AttendanceRepository {
             stmt.setDate(2, Date.valueOf(workDate));
             stmt.setTime(3, Time.valueOf(timeIn));
             stmt.setNull(4, Types.TIME);
-            stmt.setDouble(5, 0.0);
-            stmt.setString(6, attendanceStatus.name());
+            stmt.setString(5, attendanceStatus.name());
 
             stmt.executeUpdate();
 
@@ -214,25 +212,24 @@ public class AttendanceRepository {
         }
     }
 
-    // updates overtime hours and attendance status
-    public void updateOvertimeAndStatus(int attendanceId, double overtimeHours, AttendanceStatus attendanceStatus) {
+    // updates attendance status
+    public void updateStatus(int attendanceId, AttendanceStatus attendanceStatus) {
         String sql = """
                 UPDATE attendance
-                SET overtime_hours = ?, attendance_status = ?
+                SET attendance_status = ?
                 WHERE attendance_id = ?
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setDouble(1, overtimeHours);
-            stmt.setString(2, attendanceStatus.name());
-            stmt.setInt(3, attendanceId);
+            stmt.setString(1, attendanceStatus.name());
+            stmt.setInt(2, attendanceId);
 
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update overtime hours and attendance status.", e);
+            throw new RuntimeException("Failed to update attendance status.", e);
         }
     }
 
@@ -262,7 +259,6 @@ public class AttendanceRepository {
                 rs.getDate("work_date").toLocalDate(),
                 timeInValue == null ? null : timeInValue.toLocalTime(),
                 timeOutValue == null ? null : timeOutValue.toLocalTime(),
-                rs.getDouble("overtime_hours"),
                 AttendanceStatus.fromValue(rs.getString("attendance_status"))
         );
     }
