@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport name="audit_report" language="java" pageWidth="595" pageHeight="842" columnWidth="535" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="b1c2d3e4-2222-4444-9555-bcde23456789">
+    <parameter name="REPORT_TITLE" class="java.lang.String"/>
+    <parameter name="START_DATE" class="java.time.LocalDate"/>
+    <parameter name="END_DATE" class="java.time.LocalDate"/>
+
+
+    <field name="logId" class="java.lang.Integer"/>
+    <field name="userAccountId" class="java.lang.Integer"/>
+    <field name="companyEmail" class="java.lang.String"/>
+    <field name="employeeName" class="java.lang.String"/>
+    <field name="action" class="java.lang.String"/>
+    <field name="details" class="java.lang.String"/>
+    <field name="ipAddress" class="java.lang.String"/>
+    <field name="deviceInfo" class="java.lang.String"/>
+    <field name="loggedAt" class="java.time.LocalDateTime"/>
+
+
+    <variable name="recordCount" calculation="Count" class="java.lang.Integer">
+        <expression><![CDATA[$F{logId}]]></expression>
+    </variable>
+
+
+    <title height="170">
+        <element kind="image" uuid="11111111-aaaa-4111-8111-111111111111" x="0" y="12" width="115" height="98">
+            <expression><![CDATA[getClass().getResourceAsStream("/motorph/images/motorphlg.png")]]></expression>
+        </element>
+
+
+        <element kind="staticText" uuid="22222222-aaaa-4222-8222-222222222222" x="110" y="15" width="180" height="28" forecolor="#12345A" fontSize="22.0" italic="true" bold="true">
+            <text><![CDATA[MotorPH]]></text>
+        </element>
+
+
+        <element kind="staticText" uuid="33333333-aaaa-4333-8333-333333333333" x="110" y="53" width="415" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+            <text><![CDATA[7 Jupiter Avenue cor. F. Sandoval Jr., Bagong Nayon, Quezon City]]></text>
+        </element>
+
+
+        <element kind="staticText" uuid="44444444-aaaa-4444-8444-444444444444" x="110" y="72" width="415" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+            <text><![CDATA[Phone: (028) 911-5071 / (028) 911-5072 / (028) 911-5073]]></text>
+        </element>
+
+
+        <element kind="staticText" uuid="55555555-aaaa-4555-8555-555555555555" x="110" y="90" width="334" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+            <text><![CDATA[Email: corporate@motorph.com]]></text>
+        </element>
+
+
+        <element kind="line" uuid="66666666-aaaa-4666-8666-666666666666" x="0" y="120" width="535" height="1" forecolor="#12345A"/>
+
+
+        <element kind="staticText" uuid="77777777-aaaa-4777-8777-777777777777" x="0" y="127" width="535" height="24" forecolor="#001F4E" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <text><![CDATA[AUDIT TRAIL REPORT]]></text>
+        </element>
+
+
+        <element kind="textField" uuid="88888888-aaaa-4888-8888-888888888888" x="0" y="153" width="535" height="12" forecolor="#000000" fontSize="8.0" bold="true" hTextAlign="Center">
+            <expression><![CDATA[($P{START_DATE} == null || $P{END_DATE} == null)
+                   ? "Period Covered: All Dates"
+                   : "Period Covered: " + $P{START_DATE} + " to " + $P{END_DATE}]]></expression>
+        </element>
+    </title>
+
+
+    <columnHeader height="32">
+        <element kind="rectangle" uuid="99999999-aaaa-4999-8999-999999999999" x="0" y="0" width="535" height="32" backcolor="#0B2D52">
+            <pen lineWidth="0.0"/>
+        </element>
+
+
+        <element kind="staticText" uuid="aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa" x="0" y="0" width="35" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[Log ID]]></text></element>
+        <element kind="staticText" uuid="bbbbbbbb-aaaa-4bbb-8bbb-bbbbbbbbbbbb" x="35" y="0" width="80" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[User Email]]></text></element>
+        <element kind="staticText" uuid="cccccccc-aaaa-4ccc-8ccc-cccccccccccc" x="115" y="0" width="75" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[Employee]]></text></element>
+        <element kind="staticText" uuid="dddddddd-aaaa-4ddd-8ddd-dddddddddddd" x="190" y="0" width="80" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[Action]]></text></element>
+        <element kind="staticText" uuid="eeeeeeee-aaaa-4eee-8eee-eeeeeeeeeeee" x="270" y="0" width="135" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[Details]]></text></element>
+        <element kind="staticText" uuid="ffffffff-aaaa-4fff-8fff-ffffffffffff" x="405" y="0" width="55" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[IP Address]]></text></element>
+        <element kind="staticText" uuid="12121212-aaaa-4121-8121-121212121212" x="460" y="0" width="75" height="32" forecolor="#FFFFFF" fontSize="6.5" bold="true" hTextAlign="Center" vTextAlign="Middle"><text><![CDATA[Logged At]]></text></element>
+    </columnHeader>
+
+
+    <detail>
+        <band height="28">
+            <element kind="line" uuid="13131313-aaaa-4131-8131-131313131313" x="0" y="27" width="535" height="1" forecolor="#DDDDDD"/>
+
+
+            <element kind="textField" uuid="14141414-aaaa-4141-8141-141414141414" x="0" y="0" width="35" height="27" fontSize="6.5" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{logId}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="15151515-aaaa-4151-8151-151515151515" x="35" y="0" width="80" height="27" fontSize="6.0" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{companyEmail} == null ? "-" : $F{companyEmail}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="16161616-aaaa-4161-8161-161616161616" x="115" y="0" width="75" height="27" fontSize="6.0" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{employeeName} == null ? "-" : $F{employeeName}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="17171717-aaaa-4171-8171-171717171717" x="190" y="0" width="80" height="27" fontSize="6.0" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{action} == null ? "-" : $F{action}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="18181818-aaaa-4181-8181-181818181818" x="270" y="0" width="135" height="27" fontSize="6.0" hTextAlign="Left" vTextAlign="Middle">
+                <expression><![CDATA[$F{details} == null ? "-" : $F{details}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="19191919-aaaa-4191-8191-191919191919" x="405" y="0" width="55" height="27" fontSize="6.0" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{ipAddress} == null || $F{ipAddress}.isBlank() ? "-" : $F{ipAddress}]]></expression>
+            </element>
+
+
+            <element kind="textField" uuid="20202020-aaaa-4202-8202-202020202020" x="460" y="0" width="75" height="27" fontSize="6.0" hTextAlign="Center" vTextAlign="Middle">
+                <expression><![CDATA[$F{loggedAt} == null ? "-" : $F{loggedAt}.toString()]]></expression>
+            </element>
+        </band>
+    </detail>
+
+
+    <summary height="32">
+        <element kind="rectangle" uuid="21212121-aaaa-4212-8212-212121212121" x="0" y="0" width="535" height="30" backcolor="#0B2D52">
+            <pen lineWidth="0.0"/>
+        </element>
+
+
+        <element kind="staticText" uuid="22222222-aaaa-4222-8222-222222222222" x="10" y="0" width="250" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" vTextAlign="Middle">
+            <text><![CDATA[TOTAL AUDIT RECORDS]]></text>
+        </element>
+
+
+        <element kind="textField" uuid="23232323-aaaa-4232-8232-232323232323" x="420" y="0" width="115" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+            <expression><![CDATA[$V{recordCount}]]></expression>
+        </element>
+    </summary>
+</jasperReport>
+
