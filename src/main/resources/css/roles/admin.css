@@ -1,0 +1,438 @@
+/* ══════════════════════════════════════════════════
+   ROLE — ADMIN
+   Source: admin-ui.css (verbatim)
+   ══════════════════════════════════════════════════ */
+
+/* ── Stat numbers ────────────────────────────────────────────────── */
+.stat-success {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+.stat-danger {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #EF4444;
+}
+
+.stat-warning {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #F59E0B;
+}
+
+/* ── System-status headline ──────────────────────────────────────── */
+.system-ok-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+/* ── Quick-access module tiles ───────────────────────────────────── */
+.module-tile {
+    -fx-padding: 14 12;
+    -fx-background-color: rgba(255,255,255,0.04);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.module-tile:hover {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-border-color: rgba(255,255,255,0.14);
+}
+
+.module-tile-icon {
+    -fx-font-size: 20px;
+    -fx-min-width: 32;
+}
+
+.module-tile-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+.module-tile-sub {
+    -fx-font-size: 11px;
+    -fx-text-fill: rgba(255,255,255,0.45);
+}
+
+/* ── Table header row ────────────────────────────────────────────── */
+.table-header-row {
+    -fx-padding: 10 0;
+    -fx-background-color: rgba(255,255,255,0.025);
+    -fx-background-radius: 8 8 0 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.12) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* ── Table header cell label ─────────────────────────────────────── */
+.table-head {
+    -fx-padding: 0 0 0 12;
+}
+
+/* ── Table data rows ─────────────────────────────────────────────── */
+.table-data-row {
+    -fx-padding: 0;
+    -fx-min-height: 46;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.table-data-row:hover {
+    -fx-background-color: rgba(59,130,246,0.07);
+    -fx-background-radius: 5;
+}
+
+/* ── Table data cell ─────────────────────────────────────────────── */
+.table-cell {
+    -fx-padding: 0 0 0 12;
+}
+
+/* ── Table row action buttons (View / Edit / Payslip) ────────────── */
+.table-action-button {
+    -fx-padding: 0 10;
+    -fx-min-height: 28;
+    -fx-background-color: rgba(59,130,246,0.10);
+    -fx-border-color: rgba(59,130,246,0.28);
+    -fx-border-width: 1;
+    -fx-text-fill: #3B82F6;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-font-weight: 800;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.table-action-button:hover {
+    -fx-background-color: rgba(59,130,246,0.22);
+    -fx-border-color: rgba(59,130,246,0.55);
+    -fx-text-fill: #93C5FD;
+}
+
+.root-canvas.light-mode .table-action-button {
+    -fx-background-color: rgba(37,99,235,0.07);
+    -fx-border-color: rgba(37,99,235,0.22);
+    -fx-text-fill: #2563EB;
+}
+
+.root-canvas.light-mode .table-action-button:hover {
+    -fx-background-color: rgba(37,99,235,0.14);
+    -fx-border-color: rgba(37,99,235,0.42);
+}
+
+/* ── Status badge chip ───────────────────────────────────────────── */
+.status-badge {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(59,130,246,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #3B82F6;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+/* ── Activity feed row ───────────────────────────────────────────── */
+.activity-row {
+    -fx-padding: 8 0;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.activity-action {
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 2 6;
+    -fx-background-radius: 4;
+    -fx-background-color: rgba(59,130,246,0.14);
+    -fx-text-fill: #93C5FD;
+}
+
+/* ── Inactive status badge ───────────────────────────────────────── */
+.status-badge-inactive {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(156,163,175,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+/* ── Module toolbar ──────────────────────────────────────────────── */
+.module-toolbar {
+    -fx-padding: 0 0 14 0;
+}
+
+/* ── Payslip section heading ─────────────────────────────────────── */
+.section-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(130,158,210,0.75);
+    -fx-padding: 0 0 4 0;
+}
+
+/* ── Responsive: lift the hardcoded min-width so layout fills any screen width ── */
+.content-area {
+    -fx-min-width: 0;
+}
+
+/* ── Opaque background for the modal/form panel only ── */
+.modal-panel {
+    -fx-background-color: #0A0D16;
+}
+
+.admin-add-form-panel {
+    -fx-background-color: #111827;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(239,68,68,0.48);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.72), 34, 0.24, 0, 14);
+    -fx-padding: 28 32 26 32;
+}
+
+.modal-panel.admin-add-form-panel {
+    -fx-background-color: #111827;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(239,68,68,0.48);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-opacity: 1;
+}
+
+.admin-form-actions {
+    -fx-padding: 10 0 0 0;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.admin-form-button {
+    -fx-min-width: 116;
+    -fx-pref-width: 116;
+    -fx-min-height: 40;
+}
+
+.admin-add-form-panel .input-field,
+.admin-add-form-panel .combo-box.input-field,
+.admin-add-form-panel .date-picker,
+.admin-add-form-panel .date-picker .text-field,
+.admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #1F2937;
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(226,232,240,0.56);
+}
+
+.admin-add-dialog {
+    -fx-background-color: #0A0D16;
+}
+
+.root-canvas.light-mode .modal-panel {
+    -fx-background-color: #ffffff;
+}
+
+.root-canvas.light-mode .admin-add-form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(220,38,38,0.30);
+}
+
+.root-canvas.light-mode .modal-panel.admin-add-form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(220,38,38,0.30);
+}
+
+.root-canvas.light-mode .admin-add-form-panel .input-field,
+.root-canvas.light-mode .admin-add-form-panel .combo-box.input-field,
+.root-canvas.light-mode .admin-add-form-panel .date-picker,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .text-field,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #D8DEE9;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #7B8794;
+}
+
+.root-canvas.light-mode .admin-add-dialog {
+    -fx-background-color: #FFFFFF;
+}
+
+/* ── Light-mode overrides ────────────────────────────────────────── */
+.root-canvas.light-mode .table-header-row {
+    -fx-background-color: rgba(0,0,0,0.02);
+    -fx-border-color: transparent transparent rgba(0,0,0,0.10) transparent;
+}
+
+.root-canvas.light-mode .table-data-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .table-data-row:hover {
+    -fx-background-color: rgba(59,130,246,0.06);
+}
+
+.root-canvas.light-mode .activity-row {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .module-tile {
+    -fx-background-color: rgba(0,0,0,0.03);
+    -fx-border-color: rgba(0,0,0,0.10);
+}
+
+.root-canvas.light-mode .module-tile:hover {
+    -fx-background-color: rgba(0,0,0,0.07);
+    -fx-border-color: rgba(0,0,0,0.16);
+}
+
+.root-canvas.light-mode .module-tile-sub {
+    -fx-text-fill: rgba(0,0,0,0.45);
+}
+
+.root-canvas.light-mode .stat-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .stat-danger {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .stat-warning {
+    -fx-text-fill: #D97706;
+}
+
+.root-canvas.light-mode .system-ok-text {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .activity-action {
+    -fx-background-color: rgba(59,130,246,0.10);
+    -fx-text-fill: #2563EB;
+}
+
+.root-canvas.light-mode .status-badge-inactive {
+    -fx-background-color: rgba(107,114,128,0.12);
+    -fx-text-fill: #6B7280;
+}
+
+.root-canvas.light-mode .section-label {
+    -fx-text-fill: #6B7280;
+}
+
+
+/* ══ ADMIN SHELL — Metallic Red/Silver ═══════════════════════════════
+   Sidebar, topbar, footerbar, and navigation for the Admin role.
+   Identical to the IT shell; kept separate so each role file is
+   independently complete and can diverge if needed.
+   ════════════════════════════════════════════════════════════════════ */
+
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #141418, #111114 60%, #161618);
+    -fx-padding: 22 14 18 14;
+    -fx-pref-width: 220;
+    -fx-min-width: 220;
+    -fx-border-color: transparent rgba(255,40,40,0.20) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar .separator .line {
+    -fx-border-color: rgba(255,255,255,0.08);
+}
+
+.sidebar-card {
+    -fx-background-color: linear-gradient(to bottom, rgba(180,15,15,0.22), rgba(120,5,5,0.30));
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,60,60,0.28);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
+}
+
+.sidebar-card-kicker { -fx-text-fill: #FF6060; -fx-font-size: 9px;  -fx-font-weight: 900; }
+.sidebar-card-title  { -fx-text-fill: #F0F0F4; -fx-font-size: 13px; -fx-font-weight: 900; }
+.sidebar-card-copy   { -fx-text-fill: rgba(200,200,210,0.55); -fx-font-size: 11px; }
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: rgba(190,190,200,0.60);
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-width: 0 0 0 2;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-radius: 0 8 8 0;
+    -fx-padding: 10 14 10 16;
+    -fx-cursor: hand;
+    -fx-pref-width: 192;
+    -fx-min-width: 192;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255,40,40,0.10);
+    -fx-border-color: transparent transparent transparent rgba(255,80,80,0.40);
+    -fx-text-fill: rgba(230,230,240,0.85);
+}
+
+.selected-nav {
+    -fx-background-color: linear-gradient(to right, rgba(180,15,15,0.30), rgba(140,10,10,0.15));
+    -fx-border-color: transparent transparent transparent #CC2020;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 0 8 8 0;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 900;
+}
+
+.selected-nav:hover {
+    -fx-background-color: linear-gradient(to right, rgba(200,20,20,0.36), rgba(160,12,12,0.20));
+}
+
+.topbar {
+    -fx-background-color: linear-gradient(to bottom, #2A2A2E, #222226 55%, #1E1E22);
+    -fx-border-color: transparent transparent rgba(255,60,60,0.28) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 14 22 12 22;
+}
+
+.topbar-title    { -fx-font-size: 15px; -fx-font-weight: 900; -fx-text-fill: #E8E8EC; }
+.topbar-subtitle { -fx-font-size: 11px; -fx-text-fill: rgba(160,175,200,0.65); }
+
+.footerbar {
+    -fx-background-color: linear-gradient(to bottom, #1E1E22, #242428);
+    -fx-border-color: rgba(255,60,60,0.22) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 8 22 10 22;
+}
+
+.footer-text { -fx-font-size: 10px; -fx-text-fill: rgba(160,175,200,0.45); }
+
+/* Light-mode shell overrides */
+.root-canvas.light-mode .sidebar {
+    -fx-background-color: #1A1F36;
+    -fx-border-color: transparent rgba(0,0,0,0.10) transparent transparent;
+}
+
+.root-canvas.light-mode .sidebar-card {
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-border-color: rgba(255,255,255,0.14);
+}
+
+.root-canvas.light-mode .sidebar-card-kicker { -fx-text-fill: #991b1b; }
+.root-canvas.light-mode .sidebar-card-copy   { -fx-text-fill: rgba(220,225,240,0.70); }
+
+.root-canvas.light-mode .sidebar-title,
+.root-canvas.light-mode .sidebar-card-title,
+.root-canvas.light-mode .nav-button { -fx-text-fill: #ffffff; }
+
+.root-canvas.light-mode .nav-button:hover,
+.root-canvas.light-mode .selected-nav {
+    -fx-background-color: rgba(59,130,246,0.28);
+    -fx-text-fill: #0d1117;
+}
+
+.root-canvas.light-mode .topbar,
+.root-canvas.light-mode .footerbar { -fx-background-color: rgba(246,248,251,0.86); }

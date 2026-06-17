@@ -54,17 +54,15 @@ public class AuthenticationService {
             return buildTemporaryPasswordResult(account);
         }
 
+        String personalEmail = getPersonalEmailOrThrow(account);
+
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
                 null,
                 OtpPurpose.LOGIN_2FA
         );
 
-        emailService.sendOtp(
-                account.getCompanyEmail(),
-                rawOtp,
-                "MotorPH Login Verification"
-        );
+        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Login Verification");
 
         return buildOtpRequiredResult(account);
     }
@@ -124,6 +122,10 @@ public class AuthenticationService {
 
     // builds the successful login result
     private LoginResultDTO buildSuccessResult(UserAccount account) {
+        String message = account.mustChangePassword()
+                ? "Login successful. Password change is required."
+                : "Login successful.";
+
         return new LoginResultDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
@@ -133,7 +135,7 @@ public class AuthenticationService {
                 true,
                 false,
                 account.hasMultipleRoles(),
-                "Login successful."
+                message
         );
     }
 

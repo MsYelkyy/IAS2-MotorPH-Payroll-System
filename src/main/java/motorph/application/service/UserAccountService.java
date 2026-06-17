@@ -247,22 +247,51 @@ public class UserAccountService {
         );
     }
 
+    // returns a user account by its ID
+    public UserAccount getById(int userAccountId) {
+        validateUserAccountId(userAccountId);
+        UserAccount account = userAccountRepository.findById(userAccountId);
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+        return account;
+    }
+
+    public List<UserAccount> findAll() {
+        return userAccountRepository.findAll();
+    }
+
     // returns all active unlocked accounts
+    public List<UserAccount> findAllActive() {
+        return userAccountRepository.findAllActive();
+    }
+
+    // returns all locked accounts
+    public List<UserAccount> findAllLocked() {
+        return userAccountRepository.findAllLocked();
+    }
+
+    // returns all disabled accounts
+    public List<UserAccount> findAllDisabled() {
+        return userAccountRepository.findAllDisabled();
+    }
+
+        // returns active unlocked account count
     public int getActiveAccountCount() {
         return userAccountRepository.findAllActive().size();
     }
 
-    // returns all locked accounts
+    // returns locked account count
     public int getLockedAccountCount() {
         return userAccountRepository.findAllLocked().size();
     }
 
-    // returns all disabled accounts
+    // returns disabled account count
     public int getDisabledAccountCount() {
         return userAccountRepository.findAllDisabled().size();
     }
 
-    // validate personal email input
+    // validates personal email input
     private void validatePersonalEmail(String personalEmail) {
         if (personalEmail == null || personalEmail.trim().isEmpty()) {
             throw new ValidationException("Personal email is required.");

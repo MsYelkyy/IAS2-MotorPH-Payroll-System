@@ -38,6 +38,8 @@ public class PasswordResetRequestController {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
 
+    private static final int PAGE_SIZE = 7;
+
     private static final String STATUS_ALL = "All";
     private static final String STATUS_PENDING = "Pending";
     private static final String STATUS_COMPLETED = "Completed";
@@ -45,15 +47,22 @@ public class PasswordResetRequestController {
 
     private ITPasswordResetService passwordResetService;
 
-    private final ObservableList<PasswordResetRequestRowDTO> allRows = FXCollections.observableArrayList();
+    private final ObservableList<PasswordResetRequestRowDTO> allRows      = FXCollections.observableArrayList();
     private final ObservableList<PasswordResetRequestRowDTO> filteredRows = FXCollections.observableArrayList();
+    private final ObservableList<PasswordResetRequestRowDTO> pagedRows    = FXCollections.observableArrayList();
+
+    private int currentPage = 1;
 
     @FXML private Label pendingRequestsLabel;
     @FXML private Label completedRequestsLabel;
     @FXML private Label cancelledRequestsLabel;
     @FXML private Label totalRequestsLabel;
     @FXML private Label messageLabel;
-    @FXML private Label recordCountLabel;
+
+    @FXML private Button resetsPrevButton;
+    @FXML private Button resetsNextButton;
+    @FXML private Label  resetsPageLabel;
+    @FXML private Label  resetsRecordInfoLabel;
 
     @FXML private TextField searchField;
     @FXML private ComboBox<String> statusFilterCombo;
@@ -92,7 +101,8 @@ public class PasswordResetRequestController {
             allRows.clear();
             filteredRows.clear();
             clearSummaryCards();
-            updateRecordCount();
+            currentPage = 1;
+            renderPage();
             UiMessageUtil.setError(messageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
@@ -106,7 +116,7 @@ public class PasswordResetRequestController {
     }
 
     private void configureTable() {
-        requestsTable.setItems(filteredRows);
+        requestsTable.setItems(pagedRows);
         requestsTable.setPlaceholder(new Label("No password reset requests found."));
         requestsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
@@ -140,7 +150,8 @@ public class PasswordResetRequestController {
                 .filter(row -> matchesQuery(row, query))
                 .collect(Collectors.toList()));
 
-        updateRecordCount();
+        currentPage = 1;
+        renderPage();
     }
 
     private boolean matchesQuery(PasswordResetRequestRowDTO row, String query) {
@@ -187,11 +198,38 @@ public class PasswordResetRequestController {
         totalRequestsLabel.setText("0");
     }
 
-    private void updateRecordCount() {
-        int count = filteredRows.size();
-        int from = count == 0 ? 0 : 1;
-        int to = count;
-        recordCountLabel.setText("Showing " + from + " to " + to + " of " + count + " requests");
+    private void renderPage() {
+        int total      = filteredRows.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        currentPage    = Math.max(1, Math.min(currentPage, totalPages));
+
+        int from = (currentPage - 1) * PAGE_SIZE;
+        int to   = Math.min(from + PAGE_SIZE, total);
+
+        pagedRows.setAll(filteredRows.subList(from, to));
+        resetsPageLabel.setText("Page " + currentPage + " of " + totalPages);
+        resetsRecordInfoLabel.setText(total == 0
+                ? "No requests found."
+                : "Showing " + (from + 1) + " to " + to + " of " + total + " requests");
+        resetsPrevButton.setDisable(currentPage <= 1);
+        resetsNextButton.setDisable(currentPage >= totalPages);
+    }
+
+    @FXML
+    private void handleResetsPrevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage();
+        }
+    }
+
+    @FXML
+    private void handleResetsNextPage() {
+        int totalPages = Math.max(1, (int) Math.ceil((double) filteredRows.size() / PAGE_SIZE));
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderPage();
+        }
     }
 
     private void processRequest(PasswordResetRequestRowDTO row) {

@@ -3,6 +3,7 @@ package motorph.application.dto.employee;
 import java.time.LocalDate;
 
 import motorph.domain.value.EmploymentStatus;
+import motorph.domain.value.Gender;
 
 /**
  * Carries complete employee profile details for display and update use cases.
@@ -13,6 +14,7 @@ public class EmployeeProfileDTO {
     private final String fullName;
     private final String firstName;
     private final String lastName;
+    private final Gender gender;
     private final LocalDate birthDate;
     private final String address;
     private final String civilStatus;
@@ -34,6 +36,7 @@ public class EmployeeProfileDTO {
                               String fullName,
                               String firstName,
                               String lastName,
+                              Gender gender,
                               LocalDate birthDate,
                               String address,
                               String civilStatus,
@@ -53,6 +56,7 @@ public class EmployeeProfileDTO {
         this.fullName = fullName;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.gender = gender;
         this.birthDate = birthDate;
         this.address = address;
         this.civilStatus = civilStatus;
@@ -85,6 +89,10 @@ public class EmployeeProfileDTO {
 
     public String getLastName() {
         return lastName;
+    }
+
+    public Gender getGender() {
+        return gender;
     }
 
     public LocalDate getBirthDate() {

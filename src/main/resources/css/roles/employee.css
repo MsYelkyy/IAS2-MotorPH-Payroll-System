@@ -1,28 +1,27 @@
-@font-face {
-    font-family: "Inter";
-    src: url("../fonts/Roboto.ttf");
-}
+﻿/* ══════════════════════════════════════════════════
+   ROLE — EMPLOYEE
+   Source: employee-ui.css lines 10-731
+   Lines 1-9 (@font-face + .root) intentionally skipped:
+   base.css owns .root; employee's #111111 text-fill
+   would override base.css #ffffff if included here.
+   ══════════════════════════════════════════════════ */
 
-.root {
-    -fx-font-family: "Inter";
-    -fx-text-fill: #111111;
-}
 
-/* ── Root canvas ─────────────────────────────────────────────── */
+/* â”€â”€ Root canvas â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .root-canvas {
     -fx-background-color: #1c1b18;
     -fx-padding: 12;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   LOGIN PAGE — layered dark left | clean light right
-   ═══════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   LOGIN PAGE â€” layered dark left | clean light right
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .login-fullpage {
     -fx-background-color: #0d0d0b;
 }
 
-/* ── LEFT: Layered brand panel ───────────────────────────────── */
+/* â”€â”€ LEFT: Layered brand panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-brand-panel {
     -fx-background-color: #0d0d0b;
     -fx-pref-width: 520;
@@ -30,7 +29,7 @@
     -fx-max-width: 560;
 }
 
-/* Decorative depth circles — layered via CSS translate */
+/* Decorative depth circles â€” layered via CSS translate */
 .deco-circle-1 {
     -fx-fill: rgba(15,139,141,0.07);
     -fx-translate-x: 110;
@@ -129,7 +128,7 @@
     -fx-padding: 0 0 18 0;
 }
 
-/* ── RIGHT: Clean light form panel ──────────────────────────── */
+/* â”€â”€ RIGHT: Clean light form panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-form-panel {
     -fx-background-color: #f2f1ec;
 }
@@ -167,7 +166,7 @@
     -fx-text-fill: #0A6668;
 }
 
-/* Form content — no card box, sits directly on panel */
+/* Form content â€” no card box, sits directly on panel */
 .form-card {
     -fx-padding: 0;
     -fx-max-width: 330;
@@ -185,7 +184,7 @@
     -fx-text-fill: #9a9a94;
 }
 
-/* Sign In — interactive: dark→lime-green on hover */
+/* Sign In â€” interactive: darkâ†’lime-green on hover */
 .signin-button {
     -fx-min-height: 46;
     -fx-background-radius: 10;
@@ -236,9 +235,9 @@
     -fx-alignment: CENTER;
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    SHARED FORM ELEMENTS (used by both login and app shell)
-   ═══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .input-field {
     -fx-min-height: 46;
@@ -340,9 +339,9 @@
     -fx-text-fill: #111111;
 }
 
-/* ═══════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    APP SHELL
-   ═══════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
 .app-shell {
     -fx-background-color: #ebe9e3;
@@ -357,7 +356,7 @@
     -fx-padding: 0;
 }
 
-/* ── Sidebar ─────────────────────────────────────────────────── */
+/* â”€â”€ Sidebar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .sidebar {
     -fx-padding: 24 18 22 18;
     -fx-background-color: #101010;
@@ -378,30 +377,33 @@
     -fx-border-color: #222220;
 }
 
-.sidebar-card {
-    -fx-padding: 14 16 16 16;
-    -fx-background-color: radial-gradient(center 50% 30%, radius 90%, #f4edc5, #bfc0bd 54%, #606162);
-    -fx-background-radius: 16;
+.root-canvas .sidebar-card {
+    -fx-background-color: linear-gradient(to bottom, rgba(180,15,15,0.22), rgba(120,5,5,0.30));
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,60,60,0.28);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
 }
 
 .sidebar-card-kicker {
     -fx-font-size: 9px;
     -fx-font-weight: 900;
-    -fx-text-fill: #1a1a18;
+    -fx-text-fill: #FF6060;
 }
 
 .sidebar-card-title {
     -fx-font-size: 13px;
     -fx-font-weight: 900;
-    -fx-text-fill: #111111;
+    -fx-text-fill: #F0F0F4;
 }
 
 .sidebar-card-copy {
     -fx-font-size: 11px;
-    -fx-text-fill: #2e2e2c;
+    -fx-text-fill: rgba(200,200,210,0.55);
 }
 
-/* ── Navigation ──────────────────────────────────────────────── */
+/* â”€â”€ Navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .nav-button {
     -fx-min-height: 40;
     -fx-alignment: CENTER_LEFT;
@@ -428,7 +430,7 @@
     -fx-border-color: rgba(15,139,141,0.16);
 }
 
-/* ── Topbar ──────────────────────────────────────────────────── */
+/* â”€â”€ Topbar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .topbar {
     -fx-padding: 22 26 14 26;
     -fx-background-color: transparent;
@@ -449,7 +451,7 @@
     -fx-padding: 2 0 0 1;
 }
 
-/* ── Content ─────────────────────────────────────────────────── */
+/* â”€â”€ Content â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .content-area {
     -fx-padding: 18 24 4 24;
 }
@@ -459,7 +461,7 @@
     -fx-background-color: transparent;
 }
 
-/* ── Card base ───────────────────────────────────────────────── */
+/* â”€â”€ Card base â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .profile-card,
 .ring-card,
 .task-card,
@@ -569,7 +571,7 @@
     -fx-background-color: #f7f6f2;
 }
 
-/* ── Dashboard typography ────────────────────────────────────── */
+/* â”€â”€ Dashboard typography â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .section-title {
     -fx-font-size: 17px;
     -fx-font-weight: 900;
@@ -612,7 +614,7 @@
     -fx-text-fill: #7a7974;
 }
 
-/* ── App shell buttons ───────────────────────────────────────── */
+/* â”€â”€ App shell buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .primary-button,
 .success-button,
 .secondary-button,
@@ -639,16 +641,19 @@
 }
 
 .secondary-button {
-    -fx-min-height: 44;
-    -fx-font-size: 13px;
-    -fx-background-color: #e4e2dc;
-    -fx-text-fill: #111111;
-    -fx-border-color: #ccc9c2;
+    -fx-min-height: 40;
+    -fx-background-color: linear-gradient(to bottom, rgba(50,50,58,0.90), rgba(35,35,42,0.95));
+    -fx-text-fill: #C8C8D4;
+    -fx-border-color: rgba(180,180,200,0.22);
     -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-weight: 700;
 }
 
 .secondary-button:hover {
-    -fx-background-color: #d8d6cf;
+    -fx-background-color: linear-gradient(to bottom, rgba(65,65,74,0.95), rgba(50,50,58,1.0));
+    -fx-text-fill: #FFFFFF;
 }
 
 .danger-outline-button {
@@ -677,7 +682,7 @@
     -fx-background-color: #282826;
 }
 
-/* ── Status & event pills ────────────────────────────────────── */
+/* â”€â”€ Status & event pills â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .status-pill {
     -fx-padding: 5 14 5 14;
     -fx-background-radius: 999;
@@ -729,87 +734,108 @@
     -fx-text-fill: #111111;
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   Support ticket module
-   ══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════
+   COMPONENT OVERRIDES — EMPLOYEE CREAM DESIGN
+   dark.css sets dark defaults for all components.
+   The employee portal uses a cream/earth-tone design
+   so these rules override back to light values.
+   They load after dark.css and before utilities.css,
+   so the cascade is: dark → (these) → popup-only.
+   ══════════════════════════════════════════════════ */
 
-.support-ticket-root {
-    -fx-min-width: 0;
+/* ComboBox closed field */
+.combo-box,
+.combo-box.input-field,
+.global-combo,
+.period-selector,
+.leave-status-filter {
+    -fx-background-color: #f7f6f2;
+    -fx-border-color: #d0cec8;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #111111;
+    -fx-prompt-text-fill: #9a9a94;
 }
 
-/* The theme forces .leave-form-card to -fx-min-width:720 (for the leave screen).
-   Reset it here so the form card can shrink to its GridPane column share. */
-.support-ticket-root .leave-card,
-.support-ticket-root .leave-form-card {
-    -fx-min-width: 0;
+.combo-box > .list-cell,
+.combo-box.input-field > .list-cell,
+.global-combo > .list-cell,
+.period-selector > .list-cell,
+.leave-status-filter > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #111111;
 }
 
-/* ── Ticket list card title (reddish, matches leave-card-title) ──── */
-.ticket-card-title {
-    -fx-font-size: 16px;
+.combo-box .arrow,
+.global-combo .arrow,
+.period-selector .arrow,
+.leave-status-filter .arrow {
+    -fx-background-color: #7a7974;
+}
+
+/* TextArea */
+.text-area,
+.text-area .content {
+    -fx-background-color: #f7f6f2;
+    -fx-text-fill: #111111;
+    -fx-prompt-text-fill: #9a9a94;
+}
+
+.text-area {
+    -fx-border-color: #d0cec8;
+    -fx-border-width: 1.5;
+}
+
+/* DatePicker and period-picker closed field */
+.date-picker,
+.period-picker,
+.date-picker .text-field,
+.period-picker .text-field,
+.date-picker .date-picker-display-node,
+.period-picker .date-picker-display-node {
+    -fx-background-color: #f7f6f2;
+    -fx-text-fill: #111111;
+    -fx-prompt-text-fill: #9a9a94;
+}
+
+.date-picker,
+.period-picker {
+    -fx-border-color: #d0cec8;
+    -fx-border-width: 1.5;
+}
+
+.date-picker .arrow-button .arrow,
+.period-picker .arrow-button .arrow {
+    -fx-background-color: #0F8B8D;
+}
+
+/* TableView — light text on transparent (cream card background shows through) */
+.table-view .column-header .label {
+    -fx-text-fill: #7a7974;
     -fx-font-weight: 900;
-    -fx-text-fill: #FF6666;
 }
 
-/* ── Status column text colours ──────────────────────────────────── */
-.ticket-status-open {
-    -fx-text-fill: #FF6B6B;
-    -fx-font-weight: 900;
+.table-view .column-header-background {
+    -fx-border-color: transparent transparent rgba(17,17,17,0.09) transparent;
 }
 
-.ticket-status-resolved {
-    -fx-text-fill: #86EFAC;
-    -fx-font-weight: 900;
+.table-view .table-row-cell {
+    -fx-border-color: transparent transparent rgba(17,17,17,0.06) transparent;
 }
 
-.ticket-status-cancelled {
-    -fx-text-fill: #9CA3AF;
-    -fx-font-weight: 900;
+.table-view .table-row-cell:hover {
+    -fx-background-color: rgba(17,17,17,0.035);
 }
 
-/* ── Info hint row at bottom of form ─────────────────────────────── */
-.ticket-info-row {
-    -fx-padding: 10 0 0 0;
-    -fx-border-color: rgba(255,255,255,0.08) transparent transparent transparent;
-    -fx-border-width: 1 0 0 0;
+.table-view .table-row-cell:selected,
+.table-view .table-row-cell:selected:hover {
+    -fx-background-color: rgba(15,139,141,0.10);
 }
 
-.ticket-info-icon {
-    -fx-font-size: 14px;
-    -fx-text-fill: rgba(255,210,210,0.65);
+.table-view .table-cell {
+    -fx-text-fill: #111111;
 }
 
-.ticket-info-text {
-    -fx-font-size: 12px;
-    -fx-text-fill: rgba(255,210,210,0.65);
-    -fx-wrap-text: true;
+.table-view .placeholder .label {
+    -fx-text-fill: #7a7974;
 }
 
-/* ── Light-mode overrides ─────────────────────────────────────────── */
-.root-canvas.light-mode .ticket-card-title {
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .ticket-status-open {
-    -fx-text-fill: #DC2626;
-}
-
-.root-canvas.light-mode .ticket-status-resolved {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .ticket-status-cancelled {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .ticket-info-row {
-    -fx-border-color: rgba(17,24,39,0.10) transparent transparent transparent;
-}
-
-.root-canvas.light-mode .ticket-info-icon {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .ticket-info-text {
-    -fx-text-fill: #6B7280;
-}

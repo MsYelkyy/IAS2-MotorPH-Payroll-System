@@ -38,6 +38,8 @@ public class ITUserAccountController {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
 
+    private static final int PAGE_SIZE = 7;
+
     private static final String STATUS_ALL = "All";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_LOCKED = "Locked";
@@ -46,14 +48,22 @@ public class ITUserAccountController {
     private ITUserAccountService itUserAccountService;
     private UserAccountService userAccountService;
 
-    private final ObservableList<UserAccountRowDTO> allRows = FXCollections.observableArrayList();
+    private final ObservableList<UserAccountRowDTO> allRows      = FXCollections.observableArrayList();
     private final ObservableList<UserAccountRowDTO> filteredRows = FXCollections.observableArrayList();
+    private final ObservableList<UserAccountRowDTO> pagedRows    = FXCollections.observableArrayList();
+
+    private int currentPage = 1;
 
     @FXML private Label totalAccountsLabel;
     @FXML private Label activeAccountsLabel;
     @FXML private Label lockedAccountsLabel;
     @FXML private Label disabledAccountsLabel;
     @FXML private Label messageLabel;
+
+    @FXML private Button accountsPrevButton;
+    @FXML private Button accountsNextButton;
+    @FXML private Label  accountsPageLabel;
+    @FXML private Label  accountsRecordInfoLabel;
 
     @FXML private TextField searchField;
     @FXML private ComboBox<String> statusFilterCombo;
@@ -108,7 +118,7 @@ public class ITUserAccountController {
     }
 
     private void configureTable() {
-        accountsTable.setItems(filteredRows);
+        accountsTable.setItems(pagedRows);
         accountsTable.setPlaceholder(new Label("No user accounts found."));
         accountsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
@@ -140,6 +150,9 @@ public class ITUserAccountController {
                 .filter(row -> matchesStatus(row, status))
                 .filter(row -> matchesQuery(row, query))
                 .collect(Collectors.toList()));
+
+        currentPage = 1;
+        renderPage();
     }
 
     private boolean matchesStatus(UserAccountRowDTO row, String status) {
@@ -168,6 +181,40 @@ public class ITUserAccountController {
                 displayStatus(row));
 
         return normal(searchable).contains(query);
+    }
+
+    private void renderPage() {
+        int total      = filteredRows.size();
+        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
+        currentPage    = Math.max(1, Math.min(currentPage, totalPages));
+
+        int from = (currentPage - 1) * PAGE_SIZE;
+        int to   = Math.min(from + PAGE_SIZE, total);
+
+        pagedRows.setAll(filteredRows.subList(from, to));
+        accountsPageLabel.setText("Page " + currentPage + " of " + totalPages);
+        accountsRecordInfoLabel.setText(total == 0
+                ? "No accounts found."
+                : "Showing " + (from + 1) + " to " + to + " of " + total + " accounts");
+        accountsPrevButton.setDisable(currentPage <= 1);
+        accountsNextButton.setDisable(currentPage >= totalPages);
+    }
+
+    @FXML
+    private void handleAccountsPrevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage();
+        }
+    }
+
+    @FXML
+    private void handleAccountsNextPage() {
+        int totalPages = Math.max(1, (int) Math.ceil((double) filteredRows.size() / PAGE_SIZE));
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderPage();
+        }
     }
 
     private void updateSummaryCards() {

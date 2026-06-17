@@ -3,6 +3,8 @@ package motorph.ui.session;
 import motorph.domain.value.Role;
 import motorph.application.session.UserSession;
 
+import java.util.List;
+
 /** Provides UI-layer access to the current logged-in user's session state. */
 public final class CurrentUserSession {
 
@@ -39,6 +41,22 @@ public final class CurrentUserSession {
     // returns the current active role, or null if not set
     public static Role getActiveRole() {
         return UserSession.getInstance().getActiveRole();
+    }
+
+    public static List<Role> getRoles() {
+        return UserSession.getInstance().getRoles();
+    }
+
+    public static boolean hasRole(Role role) {
+        return UserSession.getInstance().hasRole(role);
+    }
+
+    public static boolean hasMultipleRoles() {
+        return UserSession.getInstance().hasMultipleRoles();
+    }
+
+    public static void switchRole(Role role) {
+        UserSession.getInstance().switchRole(role);
     }
 
     // clears all current session data

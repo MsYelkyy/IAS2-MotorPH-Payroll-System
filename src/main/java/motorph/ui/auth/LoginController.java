@@ -2,6 +2,7 @@ package motorph.ui.auth;
 
 import motorph.application.dto.login.LoginRequestDTO;
 import motorph.application.dto.login.LoginResultDTO;
+import motorph.domain.value.Role;
 import motorph.application.service.AuthenticationService;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.util.AnimationUtil;
@@ -62,13 +63,14 @@ public class LoginController {
         wireSubControllers();
 
         companyEmailField.textProperty().addListener((obs, oldValue, newValue) ->
-            UiMessageUtil.clearMessage(loginMessageLabel));
+                UiMessageUtil.clearMessage(loginMessageLabel));
 
         passwordField.textProperty().addListener((obs, oldValue, newValue) ->
                 UiMessageUtil.clearMessage(loginMessageLabel));
 
         passwordTextField.textProperty().addListener((obs, oldValue, newValue) ->
                 UiMessageUtil.clearMessage(loginMessageLabel));
+
         initSidePanel();
 
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -77,13 +79,26 @@ public class LoginController {
         startLoginAnimations();
     }
 
-    // navigates to the correct main page after successful login
+    // navigates to the highest role workspace after successful login
     public void onLoginSuccess(LoginResultDTO result) {
-        switch (result.getActiveRole()) {
-            case IT -> NavigationUtil.goToITApp(rootPane.getScene());
-            case EMPLOYEE -> NavigationUtil.goToEmployeeApp(rootPane.getScene());
-            default -> NavigationUtil.goToEmployeeApp(rootPane.getScene());
+        List<Role> roles = result.getRoles();
+
+        if (roles.contains(Role.ADMIN)) {
+            NavigationUtil.goToAdminApp(rootPane.getScene());
+            return;
         }
+
+        if (roles.contains(Role.HR)) {
+            NavigationUtil.goToAdminApp(rootPane.getScene());
+            return;
+        }
+
+        if (roles.contains(Role.IT)) {
+            NavigationUtil.goToITApp(rootPane.getScene());
+            return;
+        }
+
+        NavigationUtil.goToEmployeeApp(rootPane.getScene());
     }
 
     // returns to login after password reset
@@ -121,9 +136,7 @@ public class LoginController {
         }
 
         if (password.isBlank()) {
-            UiValidationUtil.markInvalid(
-                    passwordVisible ? passwordTextField : passwordField
-            );
+            UiValidationUtil.markInvalid(passwordVisible ? passwordTextField : passwordField);
             UiMessageUtil.setError(loginMessageLabel, "Please enter your password.");
             return;
         }
@@ -142,9 +155,7 @@ public class LoginController {
             if (result.isOtpRequired()) {
                 otpCardController.setPendingLoginResult(result);
                 showCard(otpCard);
-                otpCardController.showWithMessage(
-                        "OTP sent to your company email address."
-                );
+                otpCardController.showWithMessage("OTP sent to your company email address.");
                 return;
             }
 
@@ -159,9 +170,7 @@ public class LoginController {
 
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
-            UiValidationUtil.markInvalid(
-                    passwordVisible ? passwordTextField : passwordField
-            );
+            UiValidationUtil.markInvalid(passwordVisible ? passwordTextField : passwordField);
             UiMessageUtil.setError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }

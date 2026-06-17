@@ -2,12 +2,15 @@ package motorph.ui.factory;
 
 import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
+import motorph.application.service.DatabaseBackupService;
 import motorph.application.service.EmailService;
 import motorph.application.service.EmployeeService;
 import motorph.application.service.LeaveService;
 import motorph.application.service.OvertimeService;
 import motorph.application.service.PasswordResetService;
 import motorph.application.service.PayrollService;
+import motorph.application.service.PermissionService;
+import motorph.application.service.SalaryBenefitService;
 import motorph.application.service.SupportTicketService;
 import motorph.application.service.TwoFactorService;
 import motorph.application.service.UserAccessLogService;
@@ -24,16 +27,24 @@ import motorph.infrastructure.repository.LeaveCreditRepository;
 import motorph.infrastructure.repository.LeaveRepository;
 import motorph.infrastructure.repository.OvertimeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
+import motorph.infrastructure.repository.PermissionRepository;
 import motorph.infrastructure.repository.PayrollBenefitRepository;
 import motorph.infrastructure.repository.PayrollDeductionRepository;
 import motorph.infrastructure.repository.PayrollEarningRepository;
 import motorph.infrastructure.repository.PayrollResultRepository;
 import motorph.infrastructure.repository.PayrunRepository;
+import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.PositionRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
 import motorph.infrastructure.repository.SupportTicketRepository;
 import motorph.infrastructure.repository.TwoFactorCodeRepository;
 import motorph.infrastructure.repository.UserAccessLogRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
+import motorph.application.service.SystemConfigService;
+import motorph.infrastructure.repository.PhilHealthRateRepository;
+import motorph.infrastructure.repository.SssRateRepository;
+import motorph.infrastructure.repository.PagIbigRateRepository;
+import motorph.infrastructure.repository.WithholdingTaxBracketRepository;
 
 /** Provides application services needed by UI controllers. */
 public final class EmployeeUIServiceFactory {
@@ -51,6 +62,11 @@ public final class EmployeeUIServiceFactory {
     private final SupportTicketService supportTicketService;
     private final ITUserAccountService itUserAccountService;
     private final ITPasswordResetService itPasswordResetService;
+    private final SalaryBenefitService salaryBenefitService;
+    private final PermissionService permissionService;
+    private final SystemConfigService systemConfigService;
+    private final DatabaseBackupService databaseBackupService;
+
     // creates all service instances by wiring repositories together
     private EmployeeUIServiceFactory() {
         UserAccountRepository userAccountRepository = new UserAccountRepository();
@@ -61,7 +77,12 @@ public final class EmployeeUIServiceFactory {
 
         EmailService emailService = new EmailService(EmailConfig.mailtrapSandbox());
         UserAccountService sharedUserAccountService = new UserAccountService(userAccountRepository, emailService);
-        EmployeeService sharedEmployeeService = new EmployeeService(employeeRepository, sharedUserAccountService);
+        EmployeeService sharedEmployeeService = new EmployeeService(
+                employeeRepository,
+                sharedUserAccountService,
+                new DepartmentRepository(),
+                new PositionRepository()
+        );
         AttendanceService sharedAttendanceService = new AttendanceService(attendanceRepository);
         TwoFactorService twoFactorService = new TwoFactorService(twoFactorCodeRepository);
         UserAccessLogService sharedAccessLogService = new UserAccessLogService(userAccessLogRepository);
@@ -120,15 +141,30 @@ public final class EmployeeUIServiceFactory {
         );
 
         this.itUserAccountService = new ITUserAccountService(
-        userAccountRepository,
-        sharedEmployeeService
+                userAccountRepository,
+                sharedEmployeeService
         );
-        
+
         this.itPasswordResetService = new ITPasswordResetService(
-            this.passwordResetService,
-            new PasswordResetRequestRepository(),
-            userAccountRepository,
-            sharedEmployeeService
+                this.passwordResetService,
+                new PasswordResetRequestRepository(),
+                userAccountRepository,
+                sharedEmployeeService
+        );
+
+        this.salaryBenefitService = new SalaryBenefitService(
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository()
+        );
+
+        this.permissionService = new PermissionService(new PermissionRepository());
+        this.databaseBackupService = new DatabaseBackupService(sharedAccessLogService);
+        this.systemConfigService = new SystemConfigService(
+                new PhilHealthRateRepository(),
+                new SssRateRepository(),
+                new PagIbigRateRepository(),
+                new WithholdingTaxBracketRepository(),
+                sharedAccessLogService
         );
     }
 
@@ -191,4 +227,21 @@ public final class EmployeeUIServiceFactory {
     public ITPasswordResetService getITPasswordResetService() {
         return itPasswordResetService;
     }
+
+    public SalaryBenefitService getSalaryBenefitService() {
+        return salaryBenefitService;
+    }
+
+    public PermissionService getPermissionService() {
+        return permissionService;
+    }
+
+    public SystemConfigService getSystemConfigService() {
+        return systemConfigService;
+    }
+
+    public DatabaseBackupService getDatabaseBackupService() {
+        return databaseBackupService;
+    }
+    
 }

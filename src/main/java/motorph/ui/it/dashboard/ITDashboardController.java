@@ -6,7 +6,9 @@ import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.SupportTicket;
+import motorph.domain.value.RoutingTeam;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.it.ITMainController;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -17,6 +19,7 @@ import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /** Displays IT dashboard metrics, login-activity stats, and summary tables. */
 public class ITDashboardController {
@@ -28,6 +31,7 @@ public class ITDashboardController {
     private PasswordResetService passwordResetService;
     private UserAccessLogService userAccessLogService;
     private SupportTicketService supportTicketService;
+    private ITMainController     mainController;
 
     // ── Account metric labels ─────────────────────────────────────────────────
     @FXML private Label activeAccountsLabel;
@@ -50,6 +54,10 @@ public class ITDashboardController {
         passwordResetService = EmployeeUIServiceFactory.getInstance().getPasswordResetService();
         userAccessLogService = EmployeeUIServiceFactory.getInstance().getUserAccessLogService();
         supportTicketService = EmployeeUIServiceFactory.getInstance().getSupportTicketService();
+    }
+
+    public void setMainController(ITMainController mainController) {
+        this.mainController = mainController;
     }
 
     // called by ITMainController on navigation to refresh all sections
@@ -129,7 +137,8 @@ public class ITDashboardController {
         if (recentTicketsRows == null) return;
         recentTicketsRows.getChildren().clear();
         try {
-            List<SupportTicket> tickets = supportTicketService.getOpenTickets();
+            List<SupportTicket> tickets = supportTicketService
+                    .getTicketsByRoutingTeam(RoutingTeam.IT);
             tickets.stream()
                    .limit(5)
                    .map(this::buildTicketRow)
@@ -188,12 +197,12 @@ public class ITDashboardController {
 
     @FXML
     private void viewAllResets() {
-        // navigation to Password Reset Requests is delegated to ITMainController
+        if (mainController != null) mainController.navigateToPasswordReset();
     }
 
     @FXML
     private void viewAllTickets() {
-        // navigation to Support Tickets is delegated to ITMainController
+        if (mainController != null) mainController.navigateToSupportTickets();
     }
 
     // ── Utilities ─────────────────────────────────────────────────────────────

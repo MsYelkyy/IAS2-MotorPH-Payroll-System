@@ -22,6 +22,11 @@ public final class NavigationUtil {
         replaceRoot(scene, "/motorph/ui/it/it-main.fxml");
     }
 
+    // replaces the scene root with the admin main shell
+    public static void goToAdminApp(Scene scene) {
+        replaceRoot(scene, "/motorph/ui/admin/admin-main.fxml");
+    }
+
     // replaces the scene root with the auth login page
     public static void goToLogin(Scene scene) {
         replaceRoot(scene, "/motorph/ui/auth/login.fxml");

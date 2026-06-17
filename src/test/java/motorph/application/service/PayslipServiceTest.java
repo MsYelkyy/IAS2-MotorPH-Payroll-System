@@ -4,6 +4,7 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Payslip;
 import motorph.infrastructure.config.EmailConfig;
+import motorph.infrastructure.repository.DepartmentRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PayrollBenefitRepository;
 import motorph.infrastructure.repository.PayrollDeductionRepository;
@@ -11,6 +12,7 @@ import motorph.infrastructure.repository.PayrollEarningRepository;
 import motorph.infrastructure.repository.PayrollOvertimeRepository;
 import motorph.infrastructure.repository.PayrollResultRepository;
 import motorph.infrastructure.repository.PayrunRepository;
+import motorph.infrastructure.repository.PositionRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 import motorph.infrastructure.reporting.JasperReportGenerator;
 import org.junit.jupiter.api.DisplayName;
@@ -308,13 +310,15 @@ class PayslipServiceTest {
         );
     }
 
-    // creates employee service with real dependencies
-    private EmployeeService createEmployeeService() {
+        // creates employee service with real dependencies
+        private EmployeeService createEmployeeService() {
         return new EmployeeService(
                 new EmployeeRepository(),
-                createUserAccountService()
+                createUserAccountService(),
+                new DepartmentRepository(),
+                new PositionRepository()
         );
-    }
+        }
 
     // creates user account service dependency
     private UserAccountService createUserAccountService() {

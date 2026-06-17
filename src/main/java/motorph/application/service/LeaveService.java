@@ -1,10 +1,14 @@
 package motorph.application.service;
 
+import motorph.application.dto.employee.EmployeeSummaryDTO;
+import motorph.application.dto.leave.LeaveCreditRowDTO;
+import motorph.application.dto.leave.LeaveRequestRowDTO;
 import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.UnauthorizedException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Employee;
+import motorph.domain.model.LeaveCredit;
 import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.EmploymentStatus;
@@ -18,6 +22,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Handles business logic for leave requests and leave approval actions.
@@ -313,6 +319,67 @@ public class LeaveService {
                 .filter(request -> !today.isBefore(request.getStartDate())
                         && !today.isAfter(request.getEndDate()))
                 .count();
+    }
+
+    // returns all leave requests as display rows with employee names and leave type names resolved
+    public List<LeaveRequestRowDTO> getLeaveRequestRows() {
+        List<LeaveRequest> requests = leaveRepository.findAll();
+
+        Map<Integer, String> nameMap = employeeService.getAllEmployeeSummaries().stream()
+                .collect(Collectors.toMap(
+                        EmployeeSummaryDTO::getEmployeeId,
+                        EmployeeSummaryDTO::getFullName,
+                        (a, b) -> a
+                ));
+
+        return requests.stream()
+                .map(r -> new LeaveRequestRowDTO(
+                        r.getRequestId(),
+                        r.getEmployeeId(),
+                        nameMap.getOrDefault(r.getEmployeeId(), "Employee #" + r.getEmployeeId()),
+                        resolveLeaveTypeName(r.getLeaveTypeId()),
+                        r.getStartDate(),
+                        r.getEndDate(),
+                        r.getLeaveHours(),
+                        r.getReason(),
+                        r.getStatus(),
+                        r.getRequestDate(),
+                        r.getApproverAccountId(),
+                        r.getRemarks(),
+                        r.getDateReviewed()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // returns leave credit rows for an employee in the current year
+    public List<LeaveCreditRowDTO> getLeaveCreditsForEmployee(int employeeId) {
+        validateEmployeeId(employeeId);
+        int year = LocalDate.now().getYear();
+
+        return leaveCreditRepository.findByEmployeeId(employeeId, year).stream()
+                .map(c -> new LeaveCreditRowDTO(
+                        c.getLeaveTypeId(),
+                        resolveLeaveTypeName(c.getLeaveTypeId()),
+                        c.getTotalCredits(),
+                        c.getUsedCredits(),
+                        c.getRemainingCredits(),
+                        c.getYear()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // resolves a leave type ID to its display name
+    public static String resolveLeaveTypeName(int leaveTypeId) {
+        return switch (leaveTypeId) {
+            case 1 -> "Vacation Leave";
+            case 2 -> "Sick Leave";
+            case 3 -> "Emergency Leave";
+            case 4 -> "Maternity Leave";
+            case 5 -> "Paternity Leave";
+            case 6 -> "Solo Parent Leave";
+            case 7 -> "Unpaid Leave";
+            default -> "Leave Type " + leaveTypeId;
+        };
     }
 
     // validates if employee is allowed to file leave

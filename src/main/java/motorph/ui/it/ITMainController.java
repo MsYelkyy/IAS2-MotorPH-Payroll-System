@@ -1,31 +1,37 @@
 package motorph.ui.it;
 
 import motorph.application.service.EmployeeService;
-import motorph.domain.model.Employee;
+import motorph.domain.value.Role;
+import motorph.ui.admin.reports.AdminReportsController;
+import motorph.ui.admin.roles.AdminRolesController;
+import motorph.ui.admin.systemconfig.AdminSystemConfigController;
+import motorph.ui.common.GlobalControlsHelper;
+import motorph.ui.common.NavigationHelper;
+import motorph.ui.common.RoleSwitchHelper;
+import motorph.ui.common.SidebarHelper;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.it.accesslogs.ITAccessLogsController;
 import motorph.ui.it.account.ITUserAccountController;
 import motorph.ui.it.dashboard.ITDashboardController;
 import motorph.ui.it.reset.PasswordResetRequestController;
+import motorph.ui.it.ticket.ITSupportTicketController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
-/** Manages the IT app shell: sidebar navigation, employee card, and global controls. */
+/** Manages the IT app shell: sidebar navigation, identity card, and global controls. */
 public class ITMainController {
 
     private EmployeeService employeeService;
-
-    private ComboBox<String> languageCombo;
-    private ComboBox<String> themeCombo;
 
     // ── Root ──────────────────────────────────────────────────────────────────
     @FXML private StackPane rootPane;
@@ -36,11 +42,14 @@ public class ITMainController {
 
     // ── Navigation buttons ────────────────────────────────────────────────────
     @FXML private Button dashboardNavButton;
-    @FXML private Button userAccountsNavButton;
-    @FXML private Button passwordResetNavButton;
+    @FXML private Button reportsNavButton;
+    @FXML private Button userManagementNavButton;
+    @FXML private Button roleManagementNavButton;
     @FXML private Button accessLogsNavButton;
+    @FXML private Button passwordResetNavButton;
     @FXML private Button supportTicketsNavButton;
     @FXML private Button settingsNavButton;
+    @FXML private Button switchRoleButton;
 
     // ── Topbar ────────────────────────────────────────────────────────────────
     @FXML private Label pageTitleLabel;
@@ -48,25 +57,50 @@ public class ITMainController {
     @FXML private HBox  globalControlsHost;
 
     // ── Dashboard sub-view ────────────────────────────────────────────────────
-    @FXML private VBox                dashboardView;
+    @FXML private VBox                  dashboardView;
     @FXML private ITDashboardController dashboardViewController;
-    @FXML private VBox                userAccountsView;
-    @FXML private ITUserAccountController userAccountsViewController;
-    @FXML private VBox                passwordResetRequestsView;
+
+    // ── Reports sub-view (reuses AdminReportsController) ─────────────────────
+    @FXML private VBox                   reportsView;
+    @FXML private AdminReportsController reportsViewController;
+
+    // ── User Management sub-view ──────────────────────────────────────────────
+    @FXML private VBox                    userManagementView;
+    @FXML private ITUserAccountController userManagementViewController;
+
+    // ── Role Management sub-view (reuses AdminRolesController) ───────────────
+    @FXML private VBox                 roleManagementView;
+    @FXML private AdminRolesController roleManagementViewController;
+
+    // ── User Access Logs sub-view ─────────────────────────────────────────────
+    @FXML private VBox                   accessLogsView;
+    @FXML private ITAccessLogsController accessLogsViewController;
+
+    // ── Password Reset Requests sub-view ──────────────────────────────────────
+    @FXML private VBox                          passwordResetRequestsView;
     @FXML private PasswordResetRequestController passwordResetRequestsViewController;
+
+    // ── Support Tickets sub-view ──────────────────────────────────────────────
+    @FXML private VBox                    supportTicketsView;
+    @FXML private ITSupportTicketController supportTicketsViewController;
+
+    // ── System Settings sub-view (reuses AdminSystemConfigController) ─────────
+    @FXML private VBox                        systemSettingsView;
+    @FXML private AdminSystemConfigController systemSettingsViewController;
 
     // ── Footer ────────────────────────────────────────────────────────────────
     @FXML private Label appMessageLabel;
 
     @FXML
     private void initialize() {
-
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
+        wireDashboard();
         showDashboard();
         loadSidebarData();
+        configureSwitchRoleButton();
 
         UiMessageUtil.setSuccess(appMessageLabel, "IT Management System is ready.");
     }
@@ -82,11 +116,35 @@ public class ITMainController {
     }
 
     @FXML
-    private void showUserAccounts() {
-        setNavSelected(userAccountsNavButton);
-        setHeader("User Accounts", "Manage system access and account status");
-        showView(userAccountsView);
-        if (userAccountsViewController != null) userAccountsViewController.refresh();
+    private void showReports() {
+        setNavSelected(reportsNavButton);
+        setHeader("Reports", "Generate and preview organization reports");
+        showView(reportsView);
+        if (reportsViewController != null) reportsViewController.refresh();
+    }
+
+    @FXML
+    private void showUserManagement() {
+        setNavSelected(userManagementNavButton);
+        setHeader("User Management", "Manage system access and account status");
+        showView(userManagementView);
+        if (userManagementViewController != null) userManagementViewController.refresh();
+    }
+
+    @FXML
+    private void showRoleManagement() {
+        setNavSelected(roleManagementNavButton);
+        setHeader("Role Management", "Configure role permissions");
+        showView(roleManagementView);
+        if (roleManagementViewController != null) roleManagementViewController.refresh();
+    }
+
+    @FXML
+    private void showAccessLogs() {
+        setNavSelected(accessLogsNavButton);
+        setHeader("User Access Logs", "Monitor login and access activity");
+        showView(accessLogsView);
+        if (accessLogsViewController != null) accessLogsViewController.refresh();
     }
 
     @FXML
@@ -98,29 +156,38 @@ public class ITMainController {
     }
 
     @FXML
-    private void showAccessLogs() {
-        setNavSelected(accessLogsNavButton);
-        setHeader("User Access Logs", "Monitor login and access activity");
-    }
-
-    @FXML
     private void showSupportTickets() {
         setNavSelected(supportTicketsNavButton);
-        setHeader("Support Tickets", "View and manage support requests");
+        setHeader("Support Tickets", "Manage and respond to employee support requests");
+        showView(supportTicketsView);
+        if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
 
     @FXML
     private void showSettings() {
         setNavSelected(settingsNavButton);
         setHeader("System Settings", "Configure system preferences");
+        showView(systemSettingsView);
+        if (systemSettingsViewController != null) systemSettingsViewController.refresh();
+    }
+
+    // ── Public navigation entry points (called by sub-controllers) ───────────
+
+    /** Called by ITDashboardController's "View All" button. */
+    public void navigateToSupportTickets() {
+        showSupportTickets();
+    }
+
+    /** Called by ITDashboardController's "View All" button for resets. */
+    public void navigateToPasswordReset() {
+        showPasswordReset();
     }
 
     // ── Auth handlers ─────────────────────────────────────────────────────────
 
     @FXML
     private void handleSwitchRole() {
-        CurrentUserSession.clear();
-        NavigationUtil.goToLogin(rootPane.getScene());
+        RoleSwitchHelper.switchTo(Role.EMPLOYEE, rootPane.getScene(), appMessageLabel, "No employee role available.");
     }
 
     @FXML
@@ -132,26 +199,23 @@ public class ITMainController {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void setNavSelected(Button selected) {
-        Button[] buttons = {
-            dashboardNavButton, userAccountsNavButton, passwordResetNavButton,
-            accessLogsNavButton, supportTicketsNavButton, settingsNavButton
-        };
-        for (Button btn : buttons) {
-            if (btn != null) btn.getStyleClass().remove("selected-nav");
-        }
-        if (selected != null && !selected.getStyleClass().contains("selected-nav")) {
-            selected.getStyleClass().add("selected-nav");
-        }
+        NavigationHelper.setNavSelected(selected,
+                dashboardNavButton, reportsNavButton, userManagementNavButton,
+                roleManagementNavButton, accessLogsNavButton,
+                passwordResetNavButton, supportTicketsNavButton, settingsNavButton);
     }
 
     private void setHeader(String title, String subtitle) {
-        if (pageTitleLabel    != null) pageTitleLabel.setText(title);
-        if (pageSubtitleLabel != null) pageSubtitleLabel.setText(subtitle);
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
     }
 
-    private void showView(VBox view) {
-        VBox[] views = { dashboardView, userAccountsView, passwordResetRequestsView };
-        for (VBox current : views) {
+    private void showView(Node view) {
+        Node[] views = {
+            dashboardView, reportsView, userManagementView,
+            roleManagementView, accessLogsView,
+            passwordResetRequestsView, supportTicketsView, systemSettingsView
+        };
+        for (Node current : views) {
             if (current == null) continue;
             boolean selected = current == view;
             current.setVisible(selected);
@@ -159,58 +223,24 @@ public class ITMainController {
         }
     }
 
-    // loads the logged-in employee name and active role into the sidebar
-    private void loadSidebarData() {
-        int employeeId = CurrentUserSession.getEmployeeId();
-
-        if (employeeId <= 0) {
-            setSidebarFallback();
-            return;
-        }
-
-        try {
-            Employee employee = employeeService.getEmployeeById(employeeId);
-
-            String employeeName = employee.getFullName();
-            String roleText = "Current Role: "
-                    + (CurrentUserSession.getActiveRole() != null
-                    ? CurrentUserSession.getActiveRole().name()
-                    : "IT");
-
-            employeeNameLabel.getProperties().put("englishText", employeeName);
-            employeeRoleLabel.getProperties().put("englishText", roleText);
-
-            employeeNameLabel.setText(employeeName);
-            employeeRoleLabel.setText(roleText);
-
-        } catch (Exception e) {
-            setSidebarFallback();
+    private void wireDashboard() {
+        if (dashboardViewController != null) {
+            dashboardViewController.setMainController(this);
         }
     }
 
-    private void setSidebarFallback() {
-        if (employeeNameLabel != null) employeeNameLabel.setText("IT User");
-        if (employeeRoleLabel != null) employeeRoleLabel.setText("Current Role: IT");
+    private void loadSidebarData() {
+        SidebarHelper.load(employeeNameLabel, employeeRoleLabel, null,
+                "IT User", "IT", "", employeeService);
+    }
+
+    private void configureSwitchRoleButton() {
+        boolean show = CurrentUserSession.hasMultipleRoles();
+        switchRoleButton.setVisible(show);
+        switchRoleButton.setManaged(show);
     }
 
     private void buildGlobalControls() {
-        if (globalControlsHost == null) return;
-
-        languageCombo = new ComboBox<>();
-        languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setPrefWidth(150);
-        languageCombo.getItems().setAll("English", "Filipino");
-        languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
-        languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
-
-        themeCombo = new ComboBox<>();
-        themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setPrefWidth(150);
-        themeCombo.getItems().setAll("System", "Light", "Dark");
-        themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
-        themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));
-
-        globalControlsHost.setPickOnBounds(false);
-        globalControlsHost.getChildren().setAll(languageCombo, themeCombo);
+        GlobalControlsHelper.build(globalControlsHost, rootPane, null);
     }
 }

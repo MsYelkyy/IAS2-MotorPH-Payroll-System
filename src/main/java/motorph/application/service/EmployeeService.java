@@ -4,9 +4,13 @@ import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.employee.EmployeeSummaryDTO;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
+import motorph.domain.model.Department;
 import motorph.domain.model.Employee;
+import motorph.domain.model.Position;
 import motorph.domain.model.UserAccount;
+import motorph.infrastructure.repository.DepartmentRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.PositionRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,10 +26,14 @@ public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final UserAccountService userAccountService;
+    private final DepartmentRepository departmentRepository;
+    private final PositionRepository positionRepository;
 
     // constructors
     public EmployeeService(EmployeeRepository employeeRepository,
-                           UserAccountService userAccountService) {
+                           UserAccountService userAccountService,
+                           DepartmentRepository departmentRepository,
+                           PositionRepository positionRepository) {
         if (employeeRepository == null) {
             throw new IllegalArgumentException("EmployeeRepository is required.");
         }
@@ -36,6 +44,8 @@ public class EmployeeService {
 
         this.employeeRepository = employeeRepository;
         this.userAccountService = userAccountService;
+        this.departmentRepository = departmentRepository != null ? departmentRepository : new DepartmentRepository();
+        this.positionRepository   = positionRepository   != null ? positionRepository   : new PositionRepository();
     }
 
     // returns an active employee by id
@@ -61,6 +71,21 @@ public class EmployeeService {
         return employeeRepository.findAllWithInactive();
     }
 
+    // returns all active departments
+    public List<Department> getAllDepartments() {
+        return departmentRepository.findAllActive();
+    }
+
+    // returns all positions
+    public List<Position> getAllPositions() {
+        return positionRepository.findAll();
+    }
+
+    // returns all positions for a given department
+    public List<Position> getPositionsByDepartment(int departmentId) {
+        return positionRepository.findByDepartmentId(departmentId);
+    }
+
     // returns all employees as summary DTOs
     public List<EmployeeSummaryDTO> getAllEmployeeSummaries() {
         return employeeRepository.findAllWithInactive()
@@ -69,7 +94,7 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // returns employee profile DTO with resolved position, department, and supervisor names
+    // returns employee profile DTO for an active employee (used by employee portal)
     public EmployeeProfileDTO getEmployeeProfile(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -79,13 +104,30 @@ public class EmployeeService {
             throw new EntityNotFoundException("Employee not found.");
         }
 
-        Employee employee = result.getEmployee();
+        return toProfileDTO(result);
+    }
 
+    // returns employee profile DTO for any employee including inactive (used by admin)
+    public EmployeeProfileDTO getEmployeeProfileAdmin(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        EmployeeRepository.ProfileQueryResult result = employeeRepository.findProfileByIdAny(employeeId);
+
+        if (result == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        return toProfileDTO(result);
+    }
+
+    private EmployeeProfileDTO toProfileDTO(EmployeeRepository.ProfileQueryResult result) {
+        Employee employee = result.getEmployee();
         return new EmployeeProfileDTO(
                 employee.getEmployeeId(),
                 employee.getFullName(),
                 employee.getFirstName(),
                 employee.getLastName(),
+                employee.getGender(),
                 employee.getBirthDate(),
                 employee.getAddress(),
                 employee.getCivilStatus(),

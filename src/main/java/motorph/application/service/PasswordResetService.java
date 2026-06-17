@@ -6,6 +6,7 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
+import motorph.domain.value.OtpPurpose;
 import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
@@ -52,7 +53,7 @@ public class PasswordResetService {
         this.userAccessLogService = require(userAccessLogService, "UserAccessLogService is required.");
     }
 
-    // creates a pending forgot password request for IT processing
+    // creates a pending forgot password request
     public int requestPasswordReset(String companyEmail) {
         validateCompanyEmail(companyEmail);
 
@@ -66,6 +67,12 @@ public class PasswordResetService {
             throw new BusinessRuleException("Account is locked.");
         }
 
+        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+
+        if (personalEmail == null || personalEmail.isBlank()) {
+            throw new ValidationException("Registered personal email is required for password reset.");
+        }
+
         PasswordResetRequest existingRequest =
                 passwordResetRequestRepository.findLatestPendingByUserAccountId(account.getUserAccountId());
 
@@ -74,7 +81,12 @@ public class PasswordResetService {
         }
 
         PasswordResetRequest request = new PasswordResetRequest(account.getUserAccountId());
-        return passwordResetRequestRepository.saveAndReturnId(request);
+        int requestId = passwordResetRequestRepository.saveAndReturnId(request);
+
+        String rawOtp = twoFactorService.createOtp(account.getUserAccountId(), requestId, OtpPurpose.PASSWORD_RESET);
+        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Password Reset");
+
+        return requestId;
     }
 
     // verifies the OTP for a self-service password reset
@@ -136,13 +148,6 @@ public class PasswordResetService {
         String salt = PasswordHasher.generateSalt();
         String hash = PasswordHasher.hash(temporaryPassword, salt);
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(TEMPORARY_PASSWORD_EXPIRY_MINUTES);
-
-        System.out.println("=================================");
-        System.out.println("[MOTORPH TEMP PASSWORD]");
-        System.out.println("Company Email: " + account.getCompanyEmail());
-        System.out.println("Temporary Password: " + temporaryPassword);
-        System.out.println("Expires At: " + expiresAt);
-        System.out.println("=================================");
 
         userAccountRepository.updateTemporaryPassword(
                 account.getUserAccountId(),

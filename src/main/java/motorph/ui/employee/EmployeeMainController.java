@@ -1,7 +1,6 @@
 package motorph.ui.employee;
 
 import motorph.application.service.EmployeeService;
-import motorph.domain.model.Employee;
 import motorph.ui.employee.attendance.EmployeeAttendanceController;
 import motorph.ui.employee.dashboard.EmployeeDashboardController;
 import motorph.ui.employee.leave.EmployeeLeaveController;
@@ -9,6 +8,10 @@ import motorph.ui.employee.payslip.EmployeePayslipController;
 import motorph.ui.employee.profile.EmployeeProfileController;
 import motorph.ui.employee.settings.EmployeeSettingsController;
 import motorph.ui.employee.support.EmployeeSupportTicketController;
+import motorph.ui.common.GlobalControlsHelper;
+import motorph.ui.common.NavigationHelper;
+import motorph.ui.common.RoleSwitchHelper;
+import motorph.ui.common.SidebarHelper;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.AnimationUtil;
@@ -18,7 +21,6 @@ import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -26,14 +28,10 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/** Manages the employee app shell: sidebar navigation, view switching, and global controls. */
+/** Manages the Employee app shell. */
 public class EmployeeMainController {
 
     private EmployeeService employeeService;
-
-    // programmatic global controls inserted into the topbar host
-    private ComboBox<String> languageCombo;
-    private ComboBox<String> themeCombo;
 
     @FXML
     private StackPane rootPane;
@@ -45,9 +43,6 @@ public class EmployeeMainController {
 
     @FXML
     private Label dashboardEmployeeRoleLabel;
-
-    @FXML
-    private Label dashboardEmailLabel;
 
     // ── Navigation buttons ───────────────────────────────────────────────────
 
@@ -71,6 +66,9 @@ public class EmployeeMainController {
 
     @FXML
     private Button settingsNavButton;
+
+    @FXML
+    private Button switchRoleButton;
 
     // ── Topbar ───────────────────────────────────────────────────────────────
 
@@ -150,6 +148,7 @@ public class EmployeeMainController {
         ThemeManager.getInstance().applyCurrentTo(rootPane);
 
         loadSidebarData();
+        configureSwitchRoleButton();
         showDashboard();
 
         UiMessageUtil.setSuccess(appMessageLabel, "Employee workspace is ready.");
@@ -206,6 +205,12 @@ public class EmployeeMainController {
         }
     }
 
+    // switches to the first non-active secondary role (IT before ADMIN)
+    @FXML
+    private void handleSwitchRole() {
+        RoleSwitchHelper.switchToNextAvailable(rootPane.getScene(), appMessageLabel);
+    }
+
     @FXML
     private void handleLogout() {
         CurrentUserSession.clear();
@@ -251,89 +256,28 @@ public class EmployeeMainController {
             view.setVisible(active);
             view.setManaged(active);
         }
-        for (Button btn : List.of(dashboardNavButton, profileNavButton, attendanceNavButton,
-                leaveNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton)) {
-            btn.getStyleClass().remove("selected-nav");
-        }
-        if (!selectedBtn.getStyleClass().contains("selected-nav")) {
-            selectedBtn.getStyleClass().add("selected-nav");
-        }
-        if (pageTitleLabel    != null) pageTitleLabel.setText(title);
-        if (pageSubtitleLabel != null) pageSubtitleLabel.setText(subtitle);
+        NavigationHelper.setNavSelected(selectedBtn,
+                dashboardNavButton, profileNavButton, attendanceNavButton,
+                leaveNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton);
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
     }
 
     // loads the current employee's name, role, and email into the sidebar
     private void loadSidebarData() {
-        int employeeId = CurrentUserSession.getEmployeeId();
-
-        if (employeeId <= 0) {
-            setSidebarFallback();
-            return;
-        }
-
-        try {
-            Employee employee = employeeService.getEmployeeById(employeeId);
-
-            String employeeName = employee.getFullName();
-            String roleText = CurrentUserSession.getActiveRole() != null
-                    ? CurrentUserSession.getActiveRole().name()
-                    : "EMPLOYEE";
-            String emailText = CurrentUserSession.getCompanyEmail() != null
-                    ? CurrentUserSession.getCompanyEmail()
-                    : "No email on file";
-
-            dashboardEmployeeNameLabel.getProperties().put("englishText", employeeName);
-            dashboardEmployeeRoleLabel.getProperties().put("englishText", roleText);
-            dashboardEmailLabel.getProperties().put("englishText", emailText);
-
-            dashboardEmployeeNameLabel.setText(employeeName);
-            dashboardEmployeeRoleLabel.setText(roleText);
-            dashboardEmailLabel.setText(emailText);
-
-        } catch (Exception e) {
-            setSidebarFallback();
-        }
+        SidebarHelper.load(dashboardEmployeeNameLabel, dashboardEmployeeRoleLabel, null,
+                "Employee", "EMPLOYEE", "", employeeService);
     }
 
-    // shows default sidebar text when employee data is unavailable
-    private void setSidebarFallback() {
-        if (dashboardEmployeeNameLabel != null) {
-            dashboardEmployeeNameLabel.setText("Employee");
-        }
-
-        if (dashboardEmployeeRoleLabel != null) {
-            dashboardEmployeeRoleLabel.setText("EMPLOYEE");
-        }
-
-        if (dashboardEmailLabel != null) {
-            dashboardEmailLabel.setText("No email on file");
-        }
+    // configures switch role button visibility
+    private void configureSwitchRoleButton() {
+        boolean show = CurrentUserSession.hasMultipleRoles();
+        switchRoleButton.setVisible(show);
+        switchRoleButton.setManaged(show);
     }
 
-    // builds and inserts language/theme combos into the topbar global controls host
+    // builds and inserts language/theme combos and the overflow button into the topbar host
     private void buildGlobalControls() {
-        if (globalControlsHostApp == null) return;
-
-        languageCombo = new ComboBox<>();
-        languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setPrefWidth(150);
-        languageCombo.getItems().setAll("English", "Filipino");
-        languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
-        languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
-
-        themeCombo = new ComboBox<>();
-        themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setPrefWidth(150);
-        themeCombo.getItems().setAll("System", "Light", "Dark");
-        themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
-        themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));
-
-        Button moreBtn = new Button("⋮");
-        moreBtn.getStyleClass().add("more-button");
-        moreBtn.setOnAction(e -> toggleSidePanel());
-
-        globalControlsHostApp.setPickOnBounds(false);
-        globalControlsHostApp.getChildren().setAll(languageCombo, themeCombo, moreBtn);
+        GlobalControlsHelper.build(globalControlsHostApp, rootPane, this::toggleSidePanel);
     }
 
     // wires cross-controller callbacks between sub-controllers and this shell

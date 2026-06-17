@@ -357,8 +357,17 @@ public class EmployeeRepository {
         }
     }
 
-    // finds employee profile with joined position, department, and supervisor names
+    // finds employee profile with joined position, department, and supervisor names (active only)
     public ProfileQueryResult findProfileById(int employeeId) {
+        return findProfileQuery(employeeId, true);
+    }
+
+    // finds employee profile including inactive employees (for admin use)
+    public ProfileQueryResult findProfileByIdAny(int employeeId) {
+        return findProfileQuery(employeeId, false);
+    }
+
+    private ProfileQueryResult findProfileQuery(int employeeId, boolean activeOnly) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
         String sql = """
@@ -386,8 +395,8 @@ public class EmployeeRepository {
                 LEFT JOIN department d ON e.department_id = d.department_id
                 LEFT JOIN employee sup ON e.supervisor_id = sup.employee_id
                 WHERE e.employee_id = ?
-                  AND e.is_active = 1
-                """;
+                """
+                + (activeOnly ? "  AND e.is_active = 1" : "");
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

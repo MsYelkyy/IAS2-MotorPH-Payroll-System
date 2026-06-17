@@ -1,0 +1,274 @@
+﻿/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE PROFILE
+   Styles for the profile header, photo frame,
+   section cards, data rows, edit button, and
+   profile-scoped input overrides. Includes
+   dark-mode defaults and light-mode overrides.
+
+   Source: motorph-theme.css lines 4122-4386
+   ══════════════════════════════════════════════════ */
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   EMPLOYEE PROFILE MODULE
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+
+/* â”€â”€ Profile header section (no card, sits on the canvas) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-header-section {
+    -fx-padding: 4 0 12 0;
+}
+
+/* â”€â”€ Profile photo frame â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-photo-frame {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+/* â”€â”€ Initials fallback label â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-initials {
+    -fx-font-size: 48px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-alignment: center;
+}
+
+/* â”€â”€ Name & ID in header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-name-large {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #F0F0F4;
+}
+
+.profile-id-icon-label {
+    -fx-font-size: 14px;
+}
+
+.profile-id-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(200,200,215,0.70);
+}
+
+/* â”€â”€ Upload Image button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.upload-image-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,80,80,0.50);
+    -fx-border-width: 1;
+    -fx-text-fill: #FF7070;
+    -fx-background-radius: 7;
+    -fx-border-radius: 7;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-padding: 7 12;
+    -fx-cursor: hand;
+    -fx-min-height: 34;
+}
+
+.upload-image-button:hover {
+    -fx-background-color: rgba(255,80,80,0.12);
+    -fx-border-color: rgba(255,80,80,0.75);
+    -fx-text-fill: #FF9090;
+}
+
+/* â”€â”€ Section cards (dark metallic, same family as content-card) â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-section-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.14), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(155,10,10,0.38), rgba(105,4,4,0.48));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,100,100,0.30);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 0;
+}
+
+/* â”€â”€ Section header row (icon + red title) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-section-header {
+    -fx-padding: 16 22 12 22;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.profile-section-icon {
+    -fx-font-size: 16px;
+    -fx-text-fill: #FF6666;
+}
+
+.profile-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+/* â”€â”€ Data rows inside section cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-data-row {
+    -fx-padding: 13 22;
+    -fx-min-height: 44;
+}
+
+.profile-field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255,195,195,0.62);
+}
+
+.profile-field-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 400;
+    -fx-text-fill: rgba(245,230,230,0.90);
+}
+
+/* â”€â”€ Separator between rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-row-divider {
+    -fx-padding: 0;
+}
+
+.profile-row-divider .line {
+    -fx-border-color: rgba(255,255,255,0.07);
+    -fx-border-width: 0.5;
+}
+
+/* â”€â”€ Note row at the bottom of contact card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-note-row {
+    -fx-padding: 10 22 14 22;
+}
+
+.profile-note-icon {
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(255,190,190,0.55);
+}
+
+/* â”€â”€ Edit Profile button (red outline at page bottom) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+.profile-edit-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 1.5;
+    -fx-text-fill: #FF7070;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-padding: 10 22;
+    -fx-cursor: hand;
+    -fx-min-height: 44;
+}
+
+.profile-edit-button:hover {
+    -fx-background-color: rgba(255,80,80,0.11);
+    -fx-border-color: rgba(255,80,80,0.80);
+    -fx-text-fill: #FF9090;
+}
+
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   LIGHT MODE OVERRIDES FOR PROFILE MODULE
+   â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+.root-canvas.light-mode .profile-photo-frame {
+    -fx-background-color: #f3f4f6;
+    -fx-border-color: rgba(185,28,28,0.30);
+}
+
+.root-canvas.light-mode .profile-initials {
+    -fx-text-fill: #9CA3AF;
+}
+
+.root-canvas.light-mode .profile-name-large {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .profile-id-value {
+    -fx-text-fill: #5A6A82;
+}
+
+.root-canvas.light-mode .upload-image-button {
+    -fx-border-color: rgba(185,28,28,0.45);
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .upload-image-button:hover {
+    -fx-background-color: rgba(185,28,28,0.07);
+    -fx-border-color: rgba(185,28,28,0.65);
+    -fx-text-fill: #991B1B;
+}
+
+.root-canvas.light-mode .profile-section-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.07);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.08, 0, 4);
+}
+
+.root-canvas.light-mode .profile-section-header {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.07) transparent;
+}
+
+.root-canvas.light-mode .profile-section-icon {
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .profile-section-title {
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .profile-field-label {
+    -fx-text-fill: #6B7280;
+}
+
+.root-canvas.light-mode .profile-field-value {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .profile-row-divider .line {
+    -fx-border-color: rgba(0,0,0,0.07);
+}
+
+.root-canvas.light-mode .profile-note-icon {
+    -fx-text-fill: #9CA3AF;
+}
+
+.root-canvas.light-mode .profile-note-row .note-text {
+    -fx-text-fill: #6B7280;
+}
+
+.root-canvas.light-mode .profile-edit-button {
+    -fx-border-color: rgba(185,28,28,0.50);
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .profile-edit-button:hover {
+    -fx-background-color: rgba(185,28,28,0.07);
+    -fx-border-color: rgba(185,28,28,0.72);
+    -fx-text-fill: #991B1B;
+}
+
+/* Input fields inside profile section cards keep consistent dark styling */
+.profile-section-card .input-field {
+    -fx-background-color: rgba(255,255,255,0.07);
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-text-fill: #F0F0F4;
+    -fx-prompt-text-fill: rgba(200,200,210,0.42);
+}
+
+.profile-section-card .input-field:focused {
+    -fx-border-color: #CC2020;
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(200,0,0,0.22), 10, 0.16, 0, 0);
+}
+
+.root-canvas.light-mode .profile-section-card .input-field {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #D8E0EE;
+    -fx-text-fill: #1A1F36;
+    -fx-prompt-text-fill: #A8B4C8;
+}
+
+.root-canvas.light-mode .profile-section-card .input-field:focused {
+    -fx-border-color: #E84343;
+    -fx-background-color: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(232,67,67,0.16), 10, 0.16, 0, 0);
+}

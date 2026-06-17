@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.it.ITMainController"
-           stylesheets="@../../../css/motorph-theme.css, @../../../css/it-ui.css, @../../../css/dropdown-theme.css">
+           stylesheets="@../../../css/motorph-theme.css, @../../../css/it-ui.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -35,24 +35,27 @@
                 <Separator/>
 
                 <!-- Navigation -->
-                <Button fx:id="dashboardNavButton"      text="Dashboard"                onAction="#showDashboard"      maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
-                <Button fx:id="userAccountsNavButton"   text="User Accounts"            onAction="#showUserAccounts"   maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="passwordResetNavButton"  text="Password Reset Requests"  onAction="#showPasswordReset"  maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="accessLogsNavButton"     text="User Access Logs"         onAction="#showAccessLogs"     maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="dashboardNavButton"      text="Dashboard"       onAction="#showDashboard"      maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
+                <Button fx:id="reportsNavButton"        text="Reports"         onAction="#showReports"        maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="userManagementNavButton" text="User Management" onAction="#showUserManagement" maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="roleManagementNavButton" text="Role Management" onAction="#showRoleManagement" maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="accessLogsNavButton"     text="User Access Logs"         onAction="#showAccessLogs"    maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="passwordResetNavButton"  text="Password Reset Requests"  onAction="#showPasswordReset" maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="supportTicketsNavButton" text="Support Tickets"          onAction="#showSupportTickets" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="settingsNavButton"       text="System Settings"          onAction="#showSettings"       maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="settingsNavButton"       text="System Settings"          onAction="#showSettings"      maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <!-- Employee identity card -->
                 <VBox spacing="6" styleClass="sidebar-card">
-                    <Label text="EMPLOYEE" styleClass="sidebar-card-kicker"/>
+                    <Label text="LOGGED IN AS" styleClass="sidebar-card-kicker"/>
                     <Label fx:id="employeeNameLabel" text="-" wrapText="true" styleClass="sidebar-card-title"/>
-                    <Label fx:id="employeeRoleLabel" text="Current Role: -"   styleClass="sidebar-card-copy"/>
+                    <Label fx:id="employeeRoleLabel" text="IT"                styleClass="sidebar-card-copy"/>
                 </VBox>
 
-                <Button text="Switch Role" onAction="#handleSwitchRole" maxWidth="Infinity" styleClass="switch-role-button"/>
-                <Button text="Logout"      onAction="#handleLogout"     maxWidth="Infinity" styleClass="danger-outline-button"/>
+                <Button fx:id="switchRoleButton" text="Switch Role" onAction="#handleSwitchRole"
+                        visible="false" managed="false" maxWidth="Infinity" styleClass="secondary-button"/>
+                <Button text="Logout" onAction="#handleLogout" maxWidth="Infinity" styleClass="danger-outline-button"/>
 
             </VBox>
         </left>
@@ -73,14 +76,19 @@
                 </HBox>
 
                 <!-- Scrollable content -->
-                <ScrollPane fitToWidth="true" fitToHeight="true"
-                            hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED"
+                <ScrollPane fitToWidth="true" fitToHeight="false"
+                            hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                             styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
                     <content>
                         <StackPane styleClass="content-area">
-                            <fx:include fx:id="dashboardView" source="dashboard.fxml"/>
-                            <fx:include fx:id="userAccountsView" source="user-accounts.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="dashboardView"      source="dashboard.fxml"/>
+                            <fx:include fx:id="reportsView"        source="reports.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="userManagementView" source="user-accounts.fxml"    visible="false" managed="false"/>
+                            <fx:include fx:id="roleManagementView" source="role-management.fxml"  visible="false" managed="false"/>
+                            <fx:include fx:id="accessLogsView"          source="user-access-logs.fxml"      visible="false" managed="false"/>
                             <fx:include fx:id="passwordResetRequestsView" source="password-reset-requests.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="supportTicketsView"     source="support-tickets.fxml"       visible="false" managed="false"/>
+                            <fx:include fx:id="systemSettingsView"     source="system-settings.fxml"       visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>

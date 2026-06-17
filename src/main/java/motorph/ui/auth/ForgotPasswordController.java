@@ -13,11 +13,12 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/** Handles forgot password requests for IT-assisted password reset. */
+/** Handles the three-step password reset flow: email → OTP → new password. */
 public class ForgotPasswordController {
 
     private PasswordResetService passwordResetService;
     private LoginController loginController;
+    private int pendingResetRequestId;
 
     @FXML
     private VBox forgotEmailCard;
@@ -61,6 +62,7 @@ public class ForgotPasswordController {
 
     // resets state and shows the email entry step
     public void showEmailStep() {
+        pendingResetRequestId = 0;
         resetEmailField.clear();
         resetOtpField.clear();
         newPasswordField.clear();
@@ -72,7 +74,6 @@ public class ForgotPasswordController {
     @FXML
     private void handleSendResetOtp() {
         clearAllMessages();
-
         String email = UiValidationUtil.getText(resetEmailField);
 
         if (!UiValidationUtil.isMotorphEmail(email)) {
@@ -82,40 +83,79 @@ public class ForgotPasswordController {
         }
 
         try {
-            passwordResetService.requestPasswordReset(email);
-            UiMessageUtil.setSuccess(
-                    forgotEmailMessageLabel,
-                    "Password reset request submitted. Please wait for IT to process your request."
-            );
-            resetEmailField.clear();
+            pendingResetRequestId = passwordResetService.requestPasswordReset(email);
         } catch (Exception e) {
             if (isDatabaseUnavailable(e)) {
                 UiValidationUtil.clearInvalid(resetEmailField);
                 UiMessageUtil.setError(forgotEmailMessageLabel, "Password reset needs MySQL. Start the database and try again.");
                 return;
             }
-
             UiValidationUtil.markInvalid(resetEmailField);
             UiMessageUtil.setError(forgotEmailMessageLabel, userMessage(e));
+            return;
         }
+
+        showStep(forgotOtpCard);
+        UiMessageUtil.setSuccess(forgotOtpMessageLabel, "Reset OTP sent to your registered email address.");
     }
 
     @FXML
     private void handleVerifyResetOtp() {
-        UiMessageUtil.setError(
-                forgotEmailMessageLabel,
-                "Password reset requests must be processed by IT."
-        );
-        showStep(forgotEmailCard);
+        UiValidationUtil.clearInvalid(resetOtpField);
+
+        if (pendingResetRequestId <= 0) {
+            UiMessageUtil.setError(forgotOtpMessageLabel, "Please request a reset OTP first.");
+            showStep(forgotEmailCard);
+            return;
+        }
+
+        try {
+            passwordResetService.verifyResetOtp(pendingResetRequestId, UiValidationUtil.getText(resetOtpField));
+        } catch (Exception e) {
+            UiValidationUtil.markInvalid(resetOtpField);
+            UiMessageUtil.setError(forgotOtpMessageLabel, userMessage(e));
+            return;
+        }
+
+        showStep(forgotNewPasswordCard);
+        UiMessageUtil.setSuccess(forgotNewPasswordMessageLabel, "OTP verified. Enter your new password.");
     }
 
     @FXML
     private void handleCompleteReset() {
-        UiMessageUtil.setError(
-                forgotEmailMessageLabel,
-                "Password reset requests must be processed by IT."
-        );
-        showStep(forgotEmailCard);
+        UiValidationUtil.clearInvalid(newPasswordField);
+        UiValidationUtil.clearInvalid(confirmPasswordField);
+
+        String newPassword = UiValidationUtil.getText(newPasswordField);
+        String confirmPassword = UiValidationUtil.getText(confirmPasswordField);
+        boolean valid = true;
+
+        if (newPassword.length() < 8) {
+            UiValidationUtil.markInvalid(newPasswordField);
+            valid = false;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            UiValidationUtil.markInvalid(confirmPasswordField);
+            valid = false;
+        }
+
+        if (!valid) {
+            UiMessageUtil.setError(forgotNewPasswordMessageLabel, "Password must be 8+ characters and match confirmation.");
+            return;
+        }
+
+        try {
+            passwordResetService.resetPassword(pendingResetRequestId, newPassword, confirmPassword);
+        } catch (Exception e) {
+            UiMessageUtil.setError(forgotNewPasswordMessageLabel, userMessage(e));
+            return;
+        }
+
+        pendingResetRequestId = 0;
+        if (loginController != null) {
+            loginController.onPasswordResetComplete("Password updated successfully. You can now sign in.");
+        }
     }
 
     @FXML
@@ -183,10 +223,8 @@ public class ForgotPasswordController {
                     || msg.contains("No suitable driver"))) {
                 return true;
             }
-
             current = current.getCause();
         }
-
         return false;
     }
 }

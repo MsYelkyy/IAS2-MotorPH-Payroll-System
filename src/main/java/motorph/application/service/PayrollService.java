@@ -1,6 +1,10 @@
 package motorph.application.service;
 
+import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
+import motorph.application.dto.payroll.PayrollSummaryDTO;
+import motorph.application.dto.payroll.PayrunCreateDTO;
+import motorph.application.dto.payroll.PayslipDTO;
 import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
@@ -26,6 +30,7 @@ import motorph.infrastructure.repository.PayrunRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -275,6 +280,106 @@ public class PayrollService {
         );
     }
 
+    // creates a new payrun; rejects duplicate periods
+    public Payrun createPayrun(PayrunCreateDTO dto) {
+        if (dto == null) {
+            throw new ValidationException("Payrun create data is required.");
+        }
+        if (dto.getStartDate() == null || dto.getEndDate() == null || dto.getPayDate() == null) {
+            throw new ValidationException("Start date, end date, and pay date are required.");
+        }
+        if (payrunRepository.existsByPeriod(dto.getStartDate(), dto.getEndDate())) {
+            throw new BusinessRuleException("A payrun already exists for this period.");
+        }
+        Payrun payrun = new Payrun(null, dto.getStartDate(), dto.getEndDate(),
+                dto.getPayDate(), dto.getPayrollType());
+        int id = payrunRepository.saveAndReturnId(payrun);
+        return payrunRepository.findById(id);
+    }
+
+    // returns payroll summaries for a payrun enriched with employee full names
+    public List<PayrollSummaryDTO> getPayrollSummaries(int payrunId) {
+        validate(payrunId, "Payrun ID");
+        Payrun payrun = getPayrunOrThrow(payrunId);
+        List<PayrollResult> results = payrollResultRepository.findByPayrunId(payrunId);
+        List<PayrollSummaryDTO> summaries = new ArrayList<>();
+        for (PayrollResult r : results) {
+            String name = resolveEmployeeName(r.getEmployeeId());
+            summaries.add(new PayrollSummaryDTO(
+                    r.getPayrollResultId(),
+                    r.getEmployeeId(),
+                    r.getPayrunId(),
+                    name,
+                    payrun.getPayDate(),
+                    payrun.getStartDate(),
+                    payrun.getEndDate(),
+                    r.getGrossPay(),
+                    r.getTotalDeductions(),
+                    r.getNetPay()
+            ));
+        }
+        return summaries;
+    }
+
+    // assembles a full payslip DTO from persisted payroll components
+    public PayslipDTO buildPayslip(int employeeId, int payrunId) {
+        validate(employeeId, "Employee ID");
+        validate(payrunId, "Payrun ID");
+
+        PayrollResult result = payrollResultRepository.findByEmployeeAndPayrunId(employeeId, payrunId);
+        if (result == null) {
+            throw new EntityNotFoundException("Payroll result not found.");
+        }
+
+        Payrun payrun = getPayrunOrThrow(payrunId);
+        EmployeeProfileDTO profile = employeeService.getEmployeeProfileAdmin(employeeId);
+        if (profile == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        GovernmentDetails govt = governmentDetailsRepository.findByEmployeeId(employeeId);
+
+        int rid = result.getPayrollResultId();
+        List<PayrollEarning>   earnings   = payrollEarningRepository.findByPayrollResultId(rid);
+        List<PayrollBenefit>   benefits   = payrollBenefitRepository.findByPayrollResultId(rid);
+        List<PayrollDeduction> deductions = payrollDeductionRepository.findByPayrollResultId(rid);
+
+        double basicPay      = extractEarning(earnings, 1);
+        double rice          = extractBenefit(benefits, 1);
+        double phone         = extractBenefit(benefits, 2);
+        double clothing      = extractBenefit(benefits, 3);
+        double totalComp     = basicPay + extractEarning(earnings, 2) + rice + phone + clothing;
+
+        double sssDeduction  = extractDeduction(deductions, 1);
+        double phDeduction   = extractDeduction(deductions, 2);
+        double pagibigDed    = extractDeduction(deductions, 3);
+        double taxDeduction  = extractDeduction(deductions, 4);
+        double lateDeduction = extractDeduction(deductions, 5);
+        double undertimeDed  = extractDeduction(deductions, 6);
+
+        String tin     = govt != null ? govt.getTinNumber()        : "—";
+        String sss     = govt != null ? govt.getSssNumber()        : "—";
+        String philh   = govt != null ? govt.getPhilhealthNumber() : "—";
+        String pagibig = govt != null ? govt.getPagibigNumber()    : "—";
+        String supervisor = profile.getSupervisorName() != null ? profile.getSupervisorName() : "—";
+
+        return new PayslipDTO(
+                employeeId,
+                profile.getFullName(),
+                profile.getPositionName(),
+                supervisor,
+                payrun.getPayDate(),
+                payrun.getStartDate(),
+                payrun.getEndDate(),
+                tin, sss, philh, pagibig,
+                basicPay, rice, phone, clothing, totalComp,
+                lateDeduction, undertimeDed, 0.0,
+                sssDeduction, phDeduction, pagibigDed, taxDeduction,
+                result.getTotalDeductions(), result.getNetPay(),
+                0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        );
+    }
+
     // returns the payrun or throws when not found
     private Payrun getPayrunOrThrow(int payrunId) {
         Payrun payrun = payrunRepository.findById(payrunId);
@@ -284,6 +389,34 @@ public class PayrollService {
         }
 
         return payrun;
+    }
+
+    // resolves an employee's full name; falls back to id on error
+    private String resolveEmployeeName(int employeeId) {
+        try {
+            EmployeeProfileDTO profile = employeeService.getEmployeeProfileAdmin(employeeId);
+            return profile != null ? profile.getFullName() : "Employee #" + employeeId;
+        } catch (Exception e) {
+            return "Employee #" + employeeId;
+        }
+    }
+
+    // sums earning amounts matching a type id
+    private double extractEarning(List<PayrollEarning> list, int typeId) {
+        return list.stream().filter(e -> e.getEarningTypeId() == typeId)
+                .mapToDouble(PayrollEarning::getAmount).sum();
+    }
+
+    // sums benefit amounts matching a type id
+    private double extractBenefit(List<PayrollBenefit> list, int typeId) {
+        return list.stream().filter(b -> b.getBenefitTypeId() == typeId)
+                .mapToDouble(PayrollBenefit::getAmount).sum();
+    }
+
+    // sums deduction amounts matching a type id
+    private double extractDeduction(List<PayrollDeduction> list, int typeId) {
+        return list.stream().filter(d -> d.getDeductionTypeId() == typeId)
+                .mapToDouble(PayrollDeduction::getAmount).sum();
     }
 
     // validates id input with context
@@ -300,6 +433,16 @@ public class PayrollService {
         }
 
         return obj;
+    }
+
+    // returns all payruns ordered by most recent first
+    public List<Payrun> getAllPayruns() {
+        return payrunRepository.findAll();
+    }
+
+    // returns only payruns with generated payroll results
+    public List<Payrun> getPayrunsWithPayrollData() {
+        return payrunRepository.findAllWithPayrollResults();
     }
 
     // runs payroll for all employees in one payrun

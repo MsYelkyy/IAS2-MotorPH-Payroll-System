@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  Reuses AdminSystemConfigController directly — no duplicate backend.
+  Gives IT access to PhilHealth, SSS, Pag-IBIG, withholding tax rates, and OTP settings.
+-->
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.systemconfig.AdminSystemConfigController"
+      VBox.vgrow="ALWAYS">
+
+    <!-- Toolbar -->
+    <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
+        <Button fx:id="backButton"         text="← Back"             onAction="#handleBack"   visible="false" managed="false"/>
+        <Label  fx:id="toolbarTitleLabel"  text="System Configuration" styleClass="section-title"/>
+        <Label  fx:id="moduleMessageLabel" styleClass="muted-text"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="addRateButton"  text="+ Add Rate" onAction="#handleAddRate"  visible="false" managed="false" styleClass="primary-button"/>
+        <Button fx:id="editRateButton" text="Edit"       onAction="#handleEditRate" visible="false" managed="false" styleClass="secondary-button"/>
+    </HBox>
+
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <!-- Panel 1: Category list -->
+        <VBox fx:id="categoryListPanel" styleClass="content-card" spacing="0">
+            <HBox styleClass="table-header-row">
+                <Label text="CATEGORY"    styleClass="table-head" minWidth="220" prefWidth="220"/>
+                <Label text="DESCRIPTION" styleClass="table-head" minWidth="420" prefWidth="420"/>
+                <Label text=""            styleClass="table-head" HBox.hgrow="ALWAYS"/>
+                <Label text="ACTIONS"     styleClass="table-head" minWidth="90" prefWidth="90"/>
+            </HBox>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="workspace-scroll">
+                <VBox fx:id="categoryRows"/>
+            </ScrollPane>
+        </VBox>
+
+        <!-- Panel 2: Rate table -->
+        <VBox fx:id="rateTablePanel" visible="false" managed="false" styleClass="content-card" spacing="0">
+            <HBox fx:id="rateTableHeader" styleClass="table-header-row"/>
+            <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="workspace-scroll">
+                <VBox fx:id="rateRows"/>
+            </ScrollPane>
+        </VBox>
+
+        <!-- Modal backdrop -->
+        <Region fx:id="formBackdrop" visible="false" managed="false"
+                style="-fx-background-color: rgba(0,0,0,0.46);"/>
+
+        <!-- Panel 3: Add / Edit form -->
+        <VBox fx:id="rateFormPanel" visible="false" managed="false"
+              spacing="16" styleClass="content-card modal-panel" maxWidth="520"
+              StackPane.alignment="TOP_CENTER" style="-fx-translate-y: 8;">
+            <Label fx:id="formTitleLabel" text="Add Rate" styleClass="section-title"/>
+            <GridPane fx:id="formGrid" hgap="12" vgap="12"/>
+            <Label fx:id="formErrorLabel" styleClass="error-message"/>
+            <HBox spacing="10" styleClass="admin-form-actions">
+                <Button text="Cancel" onAction="#handleBack"
+                        styleClass="secondary-button admin-form-button"/>
+                <Button text="Save"   onAction="#saveForm"
+                        styleClass="primary-button admin-form-button"/>
+            </HBox>
+        </VBox>
+
+        <!-- Panel 4: OTP info (read-only) -->
+        <VBox fx:id="otpInfoPanel" visible="false" managed="false"
+              spacing="20" style="-fx-padding: 24;">
+            <Label text="OTP Configuration" styleClass="section-label"/>
+            <VBox spacing="8">
+                <Label fx:id="otpLengthLabel"   text="OTP Length: —"         styleClass="muted-text"/>
+                <Label fx:id="otpExpiryLabel"   text="OTP Expiry: — minutes" styleClass="muted-text"/>
+                <Label fx:id="otpAttemptsLabel" text="Max Attempts: —"        styleClass="muted-text"/>
+                <Label text="Supported Purposes: LOGIN_2FA, PASSWORD_RESET"   styleClass="muted-text"/>
+            </VBox>
+            <Label text="OTP settings are system-defined. Contact a developer to modify."
+                   styleClass="muted-text" wrapText="true"/>
+        </VBox>
+
+    </StackPane>
+
+</VBox>

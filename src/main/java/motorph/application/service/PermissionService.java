@@ -2,10 +2,12 @@ package motorph.application.service;
 
 import motorph.application.session.UserSession;
 import motorph.application.dto.permission.MenuPermissionDTO;
+import motorph.domain.model.Permission;
 import motorph.domain.value.PermissionKey;
 import motorph.domain.value.Role;
 import motorph.infrastructure.repository.PermissionRepository;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -120,6 +122,24 @@ public class PermissionService {
         if (permissionKey == null || permissionKey.trim().isEmpty()) {
             throw new IllegalArgumentException("Permission key is required.");
         }
+    }
+
+    // returns all permissions assigned to a specific role (for admin role editor)
+    public Set<Permission> getPermissionsByRole(Role role) {
+        if (role == null) throw new IllegalArgumentException("Role is required.");
+        return permissionRepository.findPermissionsByRole(role);
+    }
+
+    // returns all permissions defined in the system (for admin role editor)
+    public List<Permission> getAllPermissions() {
+        return permissionRepository.findAllPermissions();
+    }
+
+    // replaces the full permission set for a role (admin-only operation)
+    public void updateRolePermissions(Role role, Set<PermissionKey> permissionKeys) {
+        if (role == null) throw new IllegalArgumentException("Role is required.");
+        if (permissionKeys == null) throw new IllegalArgumentException("Permission keys are required.");
+        permissionRepository.updateRolePermissions(role, permissionKeys);
     }
 
     // checks if the active role has the permission key
