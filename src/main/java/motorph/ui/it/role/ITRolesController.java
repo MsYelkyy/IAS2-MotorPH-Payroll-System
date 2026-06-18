@@ -1,4 +1,4 @@
-package motorph.ui.admin.roles;
+package motorph.ui.it.role;
 
 import motorph.application.service.PermissionService;
 import motorph.domain.model.Permission;
@@ -23,8 +23,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Manages the Roles & Permissions sub-view: role selector, permission matrix, and save. */
-public class AdminRolesController {
+/** IT-owned Roles & Permissions controller: role selector, permission matrix, and save. */
+public class ITRolesController {
 
     private PermissionService permissionService;
 
@@ -52,7 +52,7 @@ public class AdminRolesController {
         selectRole(Role.ADMIN, roleAdminBtn);
     }
 
-    /** Called by AdminMainController each time role management nav is activated. */
+    /** Called by the host shell each time role management nav is activated. */
     public void refresh() {
         loadAllPermissions();
         if (selectedRole != null) {

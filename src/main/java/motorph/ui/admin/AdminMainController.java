@@ -8,12 +8,12 @@ import motorph.ui.admin.leave.AdminLeaveController;
 import motorph.ui.admin.employee.AdminEmployeeController;
 import motorph.ui.admin.payroll.AdminPayrollController;
 import motorph.ui.admin.reports.AdminReportsController;
-import motorph.ui.admin.roles.AdminRolesController;
 import motorph.ui.admin.salary.AdminSalaryController;
 import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.admin.useraccount.AdminUserAccountController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.it.accesslogs.ITAccessLogsController;
+import motorph.ui.it.role.ITRolesController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
@@ -82,8 +82,8 @@ public class AdminMainController {
     @FXML private AdminUserAccountController  userAccountViewController;
 
     // ── Roles & Permissions sub-view ─────────────────────────────────────────
-    @FXML private HBox                   rolesView;
-    @FXML private AdminRolesController   rolesViewController;
+    @FXML private VBox                   rolesView;
+    @FXML private ITRolesController      rolesViewController;
 
     // ── Access Logs sub-view ──────────────────────────────────────────────────
     @FXML private VBox                        accessLogsView;

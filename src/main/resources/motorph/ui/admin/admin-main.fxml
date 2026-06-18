@@ -89,7 +89,7 @@
                             <fx:include fx:id="payrollView"    source="payroll/AdminPayroll.fxml"  visible="false" managed="false"/>
                             <fx:include fx:id="salaryView"       source="salary/AdminSalary.fxml"                    visible="false" managed="false"/>
                             <fx:include fx:id="userAccountView" source="useraccount/AdminUserAccount.fxml"          visible="false" managed="false"/>
-                            <fx:include fx:id="rolesView"       source="roles/AdminRoles.fxml"                      visible="false" managed="false"/>
+                            <fx:include fx:id="rolesView"       source="../it/role-management.fxml"                 visible="false" managed="false"/>
                             <fx:include fx:id="accessLogsView"  source="../it/user-access-logs.fxml"                visible="false" managed="false"/>
                             <fx:include fx:id="reportsView"     source="reports/AdminReports.fxml"                  visible="false" managed="false"/>
                             <fx:include fx:id="leaveView"       source="leave/AdminLeave.fxml"                      visible="false" managed="false"/>

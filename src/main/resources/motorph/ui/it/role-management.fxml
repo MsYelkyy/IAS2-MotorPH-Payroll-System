@@ -9,13 +9,13 @@
 <?import javafx.scene.layout.VBox?>
 
 <!--
-  Reuses AdminRolesController directly — no duplicate backend.
-  Root is VBox so it fits the IT main controller's showView(VBox) pattern.
+  IT-owned Role Management view. Root is VBox so it fits the showView(VBox)
+  pattern used by both the IT and Admin shells.
 -->
 <VBox spacing="16"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.admin.roles.AdminRolesController"
+      fx:controller="motorph.ui.it.role.ITRolesController"
       VBox.vgrow="ALWAYS">
 
     <HBox spacing="16" alignment="TOP_LEFT" VBox.vgrow="ALWAYS">
