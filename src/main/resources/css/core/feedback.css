@@ -18,6 +18,12 @@
     -fx-font-size: 12px;
 }
 
+.positive-text {
+    -fx-text-fill: #86EFAC;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
 .light-mode .error-message,
 .light-mode .error-text,
 .light-mode .danger-text,
@@ -43,4 +49,9 @@
 .root-canvas.light-mode .success-message,
 .root-canvas.light-mode .content-card .success-message {
     -fx-text-fill: #166534;
+}
+
+.root-canvas.light-mode .positive-text,
+.root-canvas.light-mode .content-card .positive-text {
+    -fx-text-fill: #16A34A;
 }

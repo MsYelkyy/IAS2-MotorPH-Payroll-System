@@ -442,12 +442,6 @@
     -fx-text-fill: #ffffff;
 }
 
-.positive-text {
-    -fx-font-size: 13px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #22C55E;
-}
-
 .bottom-value {
     -fx-font-size: 20px;
     -fx-font-weight: 900;
@@ -1761,12 +1755,6 @@
     -fx-text-fill: #EEF3FF;
 }
 
-.positive-text {
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #22C55E;
-}
-
 .field-label {
     -fx-font-size: 11px;
     -fx-font-weight: 900;
@@ -2348,7 +2336,6 @@
 .data-line     { -fx-font-size: 13px; -fx-text-fill: #2C3A4A; }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: #A0AABB; }
 .bottom-value  { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
-.positive-text { -fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #E84343; }
 .stat-label, .table-head { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: #A0AABB; }
 .field-label   { -fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #5A6A82; }
 
@@ -2502,7 +2489,6 @@
 .data-line      { -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #3A4A60; }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: #A8B4C8; }
 .bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
-.positive-text  { -fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #16A34A; }
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: #A8B4C8; }
 .field-label    { -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #5A6A82; }
 .page-title     { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
@@ -2975,7 +2961,6 @@
 .bottom-value   { -fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: rgba(255,190,190,0.65); }
 .field-label    { -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #6A6A82; }
-.positive-text  { -fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #86EFAC; }
 
 /* ── Messages ─────────────────────────────────────────────────────────── */
 
@@ -3319,7 +3304,6 @@
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: rgba(255,200,200,0.58); }
 .bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: rgba(255,200,200,0.62); }
-.positive-text  { -fx-text-fill: #86EFAC; -fx-font-weight: 800; -fx-font-size: 12px; }
 
 /* Tile text */
 .tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
