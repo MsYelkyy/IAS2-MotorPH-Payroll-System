@@ -2463,8 +2463,6 @@
 }
 
 /* ── Dashboard typography overhaul ───────────────────────────────────── */
-.metric-label   { -fx-font-size: 9px;  -fx-font-weight: 900; -fx-text-fill: #A8B4C8; letter-spacing: 1px; }
-.data-line      { -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #3A4A60; }
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: #A8B4C8; }
 .field-label    { -fx-font-size: 11px; -fx-font-weight: 800; -fx-text-fill: #5A6A82; }
 .page-title     { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
