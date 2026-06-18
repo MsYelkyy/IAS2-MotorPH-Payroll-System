@@ -17,15 +17,11 @@
 .table-header-row {
     -fx-padding: 8 0;
     -fx-border-color: transparent transparent rgba(255,255,255,0.10) transparent;
-    -fx-border-width: 0 0 1 0;
 }
 
 /* ── Table data rows ─────────────────────────────────────────────── */
 .table-data-row {
     -fx-padding: 9 0;
-    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-alignment: CENTER_LEFT;
 }
 
 .table-data-row:hover {
@@ -124,14 +120,6 @@
 }
 
 /* ── Light-mode overrides ────────────────────────────────────────── */
-.root-canvas.light-mode .table-header-row {
-    -fx-border-color: transparent transparent rgba(0,0,0,0.10) transparent;
-}
-
-.root-canvas.light-mode .table-data-row {
-    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
-}
-
 .root-canvas.light-mode .table-data-row:hover {
     -fx-background-color: rgba(0,0,0,0.03);
 }

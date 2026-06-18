@@ -68,16 +68,12 @@
     -fx-background-color: rgba(255,255,255,0.025);
     -fx-background-radius: 8 8 0 0;
     -fx-border-color: transparent transparent rgba(255,255,255,0.12) transparent;
-    -fx-border-width: 0 0 1 0;
 }
 
 /* ── Table data rows ─────────────────────────────────────────────── */
 .table-data-row {
     -fx-padding: 0;
     -fx-min-height: 46;
-    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
-    -fx-border-width: 0 0 1 0;
-    -fx-alignment: CENTER_LEFT;
 }
 
 .table-data-row:hover {
@@ -124,11 +120,6 @@
 /* ── Light-mode overrides ────────────────────────────────────────── */
 .root-canvas.light-mode .table-header-row {
     -fx-background-color: rgba(0,0,0,0.02);
-    -fx-border-color: transparent transparent rgba(0,0,0,0.10) transparent;
-}
-
-.root-canvas.light-mode .table-data-row {
-    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
 }
 
 .root-canvas.light-mode .table-data-row:hover {
