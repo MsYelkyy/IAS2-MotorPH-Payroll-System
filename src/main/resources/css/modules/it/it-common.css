@@ -4,14 +4,13 @@
    dashboard-exclusive .stat-success / .stat-danger / .system-ok-text
    rules, which moved to modules/it/dashboard.css).
 
-   IT-only: loaded after motorph-theme.css in it-ui.css's original
-   cascade slot. Values and source order unchanged. Light-mode rules
-   travel with their dark counterparts.
+   IT-only: loaded after motorph-theme.css and shared-components.css
+   in the cascade. Contains IT-specific table styles, badge variants,
+   account-table, switch-role-button, and metric-card height fix.
 
-   NOTE: the ".admin-*" / ".modal-panel" / ".module-toolbar" /
-   ".section-label" / ".table-*" names here are IT's OWN copies
-   (Admin uses separate copies in admin-ui.css). Not deduplicated
-   yet — that is a later cross-role phase.
+   Shared classes (status-badge, table-action-button, section-label,
+   modal-panel, admin-add-form-panel block, etc.) have been promoted
+   to modules/shared/shared-components.css (Phase 1 consolidation).
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── Table header row ────────────────────────────────────────────── */
@@ -32,16 +31,6 @@
 .table-data-row:hover {
     -fx-background-color: rgba(255,255,255,0.03);
     -fx-background-radius: 4;
-}
-
-/* ── Status badge chip ───────────────────────────────────────────── */
-.status-badge {
-    -fx-padding: 2 8;
-    -fx-background-color: rgba(59,130,246,0.16);
-    -fx-background-radius: 4;
-    -fx-text-fill: #3B82F6;
-    -fx-font-size: 10px;
-    -fx-font-weight: 900;
 }
 
 /* ── Status badge colour variants ────────────────────────────────────── */
@@ -254,149 +243,4 @@
 .root-canvas.light-mode .status-badge-neutral {
     -fx-background-color: rgba(107,114,128,0.12);
     -fx-text-fill: #6B7280;
-}
-
-
-/* ══ System Config / shared Admin classes ═══════════════════════════════
-   AdminSystemConfigController is reused by IT system-settings.
-   These classes mirror admin-ui.css so button and table styling
-   match the Admin module when loaded under the IT stylesheet.
-   ════════════════════════════════════════════════════════════════════ */
-
-/* ── Module toolbar (spacing below toolbar row) ──────────────────────── */
-.module-toolbar {
-    -fx-padding: 0 0 14 0;
-}
-
-/* ── Responsive: allow content-area to shrink on small screens ───────── */
-.content-area {
-    -fx-min-width: 0;
-}
-
-/* ── Table header cell padding ───────────────────────────────────────── */
-.table-head {
-    -fx-padding: 0 0 0 12;
-}
-
-/* ── Table data cell padding ─────────────────────────────────────────── */
-.table-cell {
-    -fx-padding: 0 0 0 12;
-}
-
-/* ── Row action buttons (View / Edit) ────────────────────────────────── */
-.table-action-button {
-    -fx-padding: 0 10;
-    -fx-min-height: 28;
-    -fx-background-color: rgba(59,130,246,0.10);
-    -fx-border-color: rgba(59,130,246,0.28);
-    -fx-border-width: 1;
-    -fx-text-fill: #3B82F6;
-    -fx-background-radius: 6;
-    -fx-border-radius: 6;
-    -fx-font-weight: 800;
-    -fx-font-size: 11px;
-    -fx-cursor: hand;
-    -fx-effect: none;
-}
-
-.table-action-button:hover {
-    -fx-background-color: rgba(59,130,246,0.22);
-    -fx-border-color: rgba(59,130,246,0.55);
-    -fx-text-fill: #93C5FD;
-}
-
-.root-canvas.light-mode .table-action-button {
-    -fx-background-color: rgba(37,99,235,0.07);
-    -fx-border-color: rgba(37,99,235,0.22);
-    -fx-text-fill: #2563EB;
-}
-
-.root-canvas.light-mode .table-action-button:hover {
-    -fx-background-color: rgba(37,99,235,0.14);
-    -fx-border-color: rgba(37,99,235,0.42);
-}
-
-/* ── Section label (used by OTP info panel) ──────────────────────────── */
-.section-label {
-    -fx-font-size: 10px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(130,158,210,0.75);
-    -fx-padding: 0 0 4 0;
-}
-
-.root-canvas.light-mode .section-label {
-    -fx-text-fill: #6B7280;
-}
-
-/* ── Modal / form overlay panel ──────────────────────────────────────── */
-.modal-panel {
-    -fx-background-color: #0A0D16;
-}
-
-.root-canvas.light-mode .modal-panel {
-    -fx-background-color: #ffffff;
-}
-
-/* ── Add-rate form panel (distinct border to indicate add mode) ───────── */
-.admin-add-form-panel {
-    -fx-background-color: #111827;
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(239,68,68,0.48);
-    -fx-border-radius: 10;
-    -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.72), 34, 0.24, 0, 14);
-    -fx-padding: 28 32 26 32;
-}
-
-.modal-panel.admin-add-form-panel {
-    -fx-background-color: #111827;
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(239,68,68,0.48);
-    -fx-border-radius: 10;
-    -fx-border-width: 1;
-    -fx-opacity: 1;
-}
-
-.admin-add-form-panel .input-field,
-.admin-add-form-panel .combo-box.input-field,
-.admin-add-form-panel .date-picker,
-.admin-add-form-panel .date-picker .text-field,
-.admin-add-form-panel .date-picker .date-picker-display-node {
-    -fx-background-color: #1F2937;
-    -fx-border-color: rgba(255,255,255,0.18);
-    -fx-text-fill: #F8FAFC;
-    -fx-prompt-text-fill: rgba(226,232,240,0.56);
-}
-
-.root-canvas.light-mode .admin-add-form-panel {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: rgba(220,38,38,0.30);
-}
-
-.root-canvas.light-mode .modal-panel.admin-add-form-panel {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: rgba(220,38,38,0.30);
-}
-
-.root-canvas.light-mode .admin-add-form-panel .input-field,
-.root-canvas.light-mode .admin-add-form-panel .combo-box.input-field,
-.root-canvas.light-mode .admin-add-form-panel .date-picker,
-.root-canvas.light-mode .admin-add-form-panel .date-picker .text-field,
-.root-canvas.light-mode .admin-add-form-panel .date-picker .date-picker-display-node {
-    -fx-background-color: #F8FAFC;
-    -fx-border-color: #D8DEE9;
-    -fx-text-fill: #111827;
-    -fx-prompt-text-fill: #7B8794;
-}
-
-/* ── Form action button row ──────────────────────────────────────────── */
-.admin-form-actions {
-    -fx-padding: 10 0 0 0;
-    -fx-alignment: CENTER_RIGHT;
-}
-
-.admin-form-button {
-    -fx-min-width: 116;
-    -fx-pref-width: 116;
-    -fx-min-height: 40;
 }

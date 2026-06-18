@@ -1,0 +1,163 @@
+/* ══════════════════════════════════════════════════════════════════
+   SHARED COMPONENTS — cross-role shell classes
+   Used by both Admin (admin-main.fxml) and IT (it-main.fxml).
+   Loaded after motorph-theme.css, before role-specific stylesheets.
+
+   Source: promoted from admin-ui.css and modules/it/it-common.css
+   (Phase 1 consolidation — all rules here were byte-identical in
+   both role files before promotion).
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Module toolbar (spacing below toolbar row) ──────────────────── */
+.module-toolbar {
+    -fx-padding: 0 0 14 0;
+}
+
+/* ── Table header cell padding ───────────────────────────────────── */
+.table-head {
+    -fx-padding: 0 0 0 12;
+}
+
+/* ── Table data cell padding ─────────────────────────────────────── */
+.table-cell {
+    -fx-padding: 0 0 0 12;
+}
+
+/* ── Row action buttons (View / Edit / Payslip) ──────────────────── */
+.table-action-button {
+    -fx-padding: 0 10;
+    -fx-min-height: 28;
+    -fx-background-color: rgba(59,130,246,0.10);
+    -fx-border-color: rgba(59,130,246,0.28);
+    -fx-border-width: 1;
+    -fx-text-fill: #3B82F6;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-font-weight: 800;
+    -fx-font-size: 11px;
+    -fx-cursor: hand;
+    -fx-effect: none;
+}
+
+.table-action-button:hover {
+    -fx-background-color: rgba(59,130,246,0.22);
+    -fx-border-color: rgba(59,130,246,0.55);
+    -fx-text-fill: #93C5FD;
+}
+
+.root-canvas.light-mode .table-action-button {
+    -fx-background-color: rgba(37,99,235,0.07);
+    -fx-border-color: rgba(37,99,235,0.22);
+    -fx-text-fill: #2563EB;
+}
+
+.root-canvas.light-mode .table-action-button:hover {
+    -fx-background-color: rgba(37,99,235,0.14);
+    -fx-border-color: rgba(37,99,235,0.42);
+}
+
+/* ── Status badge chip ───────────────────────────────────────────── */
+.status-badge {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(59,130,246,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #3B82F6;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+/* ── Section label (payslip heading / OTP info panel) ────────────── */
+.section-label {
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(130,158,210,0.75);
+    -fx-padding: 0 0 4 0;
+}
+
+.root-canvas.light-mode .section-label {
+    -fx-text-fill: #6B7280;
+}
+
+/* ── Modal / form overlay panel ──────────────────────────────────── */
+/* Light-mode closed control text. Popup cells are styled in core/utilities.css. */
+.root-canvas.light-mode .combo-box.input-field > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .date-picker .text-field,
+.root-canvas.light-mode .date-picker .date-picker-display-node {
+    -fx-text-fill: #111827;
+}
+
+.modal-panel {
+    -fx-background-color: #0A0D16;
+}
+
+.root-canvas.light-mode .modal-panel {
+    -fx-background-color: #ffffff;
+}
+
+/* ── Add-rate / add-record form panel (red border = add mode) ─────── */
+.admin-add-form-panel {
+    -fx-background-color: #111827;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(239,68,68,0.48);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.72), 34, 0.24, 0, 14);
+    -fx-padding: 28 32 26 32;
+}
+
+.modal-panel.admin-add-form-panel {
+    -fx-background-color: #111827;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(239,68,68,0.48);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-opacity: 1;
+}
+
+.admin-add-form-panel .input-field,
+.admin-add-form-panel .combo-box.input-field,
+.admin-add-form-panel .date-picker,
+.admin-add-form-panel .date-picker .text-field,
+.admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #1F2937;
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(226,232,240,0.56);
+}
+
+.root-canvas.light-mode .admin-add-form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(220,38,38,0.30);
+}
+
+.root-canvas.light-mode .modal-panel.admin-add-form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(220,38,38,0.30);
+}
+
+.root-canvas.light-mode .admin-add-form-panel .input-field,
+.root-canvas.light-mode .admin-add-form-panel .combo-box.input-field,
+.root-canvas.light-mode .admin-add-form-panel .date-picker,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .text-field,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #D8DEE9;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #7B8794;
+}
+
+/* ── Form action button row ──────────────────────────────────────── */
+.admin-form-actions {
+    -fx-padding: 10 0 0 0;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.admin-form-button {
+    -fx-min-width: 116;
+    -fx-pref-width: 116;
+    -fx-min-height: 40;
+}
