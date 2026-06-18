@@ -2,7 +2,6 @@ package motorph.ui.it;
 
 import motorph.application.service.EmployeeService;
 import motorph.domain.value.Role;
-import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
@@ -48,7 +47,6 @@ public class ITMainController {
     @FXML private Button accessLogsNavButton;
     @FXML private Button passwordResetNavButton;
     @FXML private Button supportTicketsNavButton;
-    @FXML private Button settingsNavButton;
     @FXML private Button switchRoleButton;
 
     // ── Topbar ────────────────────────────────────────────────────────────────
@@ -83,10 +81,6 @@ public class ITMainController {
     // ── Support Tickets sub-view ──────────────────────────────────────────────
     @FXML private VBox                    supportTicketsView;
     @FXML private ITSupportTicketController supportTicketsViewController;
-
-    // ── System Settings sub-view (reuses AdminSystemConfigController) ─────────
-    @FXML private VBox                        systemSettingsView;
-    @FXML private AdminSystemConfigController systemSettingsViewController;
 
     // ── Footer ────────────────────────────────────────────────────────────────
     @FXML private Label appMessageLabel;
@@ -163,14 +157,6 @@ public class ITMainController {
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
 
-    @FXML
-    private void showSettings() {
-        setNavSelected(settingsNavButton);
-        setHeader("System Settings", "Configure system preferences");
-        showView(systemSettingsView);
-        if (systemSettingsViewController != null) systemSettingsViewController.refresh();
-    }
-
     // ── Public navigation entry points (called by sub-controllers) ───────────
 
     /** Called by ITDashboardController's "View All" button. */
@@ -202,7 +188,7 @@ public class ITMainController {
         NavigationHelper.setNavSelected(selected,
                 dashboardNavButton, reportsNavButton, userManagementNavButton,
                 roleManagementNavButton, accessLogsNavButton,
-                passwordResetNavButton, supportTicketsNavButton, settingsNavButton);
+                passwordResetNavButton, supportTicketsNavButton);
     }
 
     private void setHeader(String title, String subtitle) {
@@ -213,7 +199,7 @@ public class ITMainController {
         Node[] views = {
             dashboardView, reportsView, userManagementView,
             roleManagementView, accessLogsView,
-            passwordResetRequestsView, supportTicketsView, systemSettingsView
+            passwordResetRequestsView, supportTicketsView
         };
         for (Node current : views) {
             if (current == null) continue;

@@ -42,7 +42,6 @@
                 <Button fx:id="accessLogsNavButton"     text="User Access Logs"         onAction="#showAccessLogs"    maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="passwordResetNavButton"  text="Password Reset Requests"  onAction="#showPasswordReset" maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="supportTicketsNavButton" text="Support Tickets"          onAction="#showSupportTickets" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="settingsNavButton"       text="System Settings"          onAction="#showSettings"      maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
@@ -88,7 +87,6 @@
                             <fx:include fx:id="accessLogsView"          source="user-access-logs.fxml"      visible="false" managed="false"/>
                             <fx:include fx:id="passwordResetRequestsView" source="password-reset-requests.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="supportTicketsView"     source="support-tickets.fxml"       visible="false" managed="false"/>
-                            <fx:include fx:id="systemSettingsView"     source="system-settings.fxml"       visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>
