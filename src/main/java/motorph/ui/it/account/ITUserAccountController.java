@@ -11,72 +11,95 @@ import motorph.ui.util.UiMessageUtil;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-/** Controller for the IT User Account Management screen. */
+/**
+ * IT-owned User Access Management screen.
+ *
+ * <p>Follows the Admin User Account pattern (toolbar, account table with status
+ * badges, "Manage" action, master-detail panel with role assignment and
+ * lock/enable controls). Reads through {@link ITUserAccountService}
+ * (DTO-based, so the UI does not depend on the domain model) and issues
+ * commands through the shared {@link UserAccountService}. No backend changes.</p>
+ */
 public class ITUserAccountController {
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
-
-    private static final int PAGE_SIZE = 7;
 
     private static final String STATUS_ALL = "All";
     private static final String STATUS_ACTIVE = "Active";
     private static final String STATUS_LOCKED = "Locked";
     private static final String STATUS_DISABLED = "Disabled";
 
+    private static final String TEXT_ACTIVE = "ACTIVE";
+    private static final String TEXT_LOCKED = "LOCKED";
+    private static final String TEXT_DISABLED = "DISABLED";
+
     private ITUserAccountService itUserAccountService;
     private UserAccountService userAccountService;
 
-    private final ObservableList<UserAccountRowDTO> allRows      = FXCollections.observableArrayList();
-    private final ObservableList<UserAccountRowDTO> filteredRows = FXCollections.observableArrayList();
-    private final ObservableList<UserAccountRowDTO> pagedRows    = FXCollections.observableArrayList();
+    // ── State ───────────────────────────────────────────────────────────────
+    private List<UserAccountRowDTO> allRows = new ArrayList<>();
+    private UserAccountRowDTO selectedAccount;
+    private final ObservableList<UserAccountRowDTO> accountItems = FXCollections.observableArrayList();
+    private FilteredList<UserAccountRowDTO> filteredAccounts;
 
-    private int currentPage = 1;
-
-    @FXML private Label totalAccountsLabel;
-    @FXML private Label activeAccountsLabel;
-    @FXML private Label lockedAccountsLabel;
-    @FXML private Label disabledAccountsLabel;
-    @FXML private Label messageLabel;
-
-    @FXML private Button accountsPrevButton;
-    @FXML private Button accountsNextButton;
-    @FXML private Label  accountsPageLabel;
-    @FXML private Label  accountsRecordInfoLabel;
-
+    // ── Toolbar ─────────────────────────────────────────────────────────────
     @FXML private TextField searchField;
-    @FXML private ComboBox<String> statusFilterCombo;
+    @FXML private ComboBox<String> filterCombo;
+    @FXML private Label moduleMessageLabel;
 
-    @FXML private TableView<UserAccountRowDTO> accountsTable;
+    // ── List ────────────────────────────────────────────────────────────────
+    @FXML private TableView<UserAccountRowDTO> accountTable;
+    @FXML private TableColumn<UserAccountRowDTO, String> accountIdColumn;
     @FXML private TableColumn<UserAccountRowDTO, String> employeeIdColumn;
-    @FXML private TableColumn<UserAccountRowDTO, String> fullNameColumn;
-    @FXML private TableColumn<UserAccountRowDTO, String> companyEmailColumn;
+    @FXML private TableColumn<UserAccountRowDTO, String> emailColumn;
     @FXML private TableColumn<UserAccountRowDTO, String> rolesColumn;
-    @FXML private TableColumn<UserAccountRowDTO, String> currentRoleColumn;
     @FXML private TableColumn<UserAccountRowDTO, String> statusColumn;
-    @FXML private TableColumn<UserAccountRowDTO, String> lastLoginColumn;
-    @FXML private TableColumn<UserAccountRowDTO, UserAccountRowDTO> actionsColumn;
+    @FXML private TableColumn<UserAccountRowDTO, Void> actionColumn;
+
+    // ── Detail panel ────────────────────────────────────────────────────────
+    @FXML private VBox detailPanel;
+    @FXML private Label detailEmailLabel;
+    @FXML private Label detailEmployeeIdLabel;
+    @FXML private Label detailStatusLabel;
+    @FXML private Label detailLockedLabel;
+    @FXML private Label detailLastLoginLabel;
+    @FXML private Label detailRolesLabel;
+
+    @FXML private CheckBox roleAdminCheck;
+    @FXML private CheckBox roleHrCheck;
+    @FXML private CheckBox roleFinanceCheck;
+    @FXML private CheckBox roleItCheck;
+    @FXML private CheckBox roleEmployeeCheck;
+
+    @FXML private Button lockButton;
+    @FXML private Button enableButton;
 
     @FXML
     private void initialize() {
@@ -84,82 +107,49 @@ public class ITUserAccountController {
         itUserAccountService = factory.getITUserAccountService();
         userAccountService = factory.getUserAccountService();
 
-        configureFilters();
-        configureTable();
-        refresh();
+        filterCombo.getItems().setAll(STATUS_ALL, STATUS_ACTIVE, STATUS_LOCKED, STATUS_DISABLED);
+        filterCombo.setValue(STATUS_ALL);
+        filterCombo.setOnAction(e -> applyFilter());
+        searchField.textProperty().addListener((obs, old, text) -> applyFilter());
+
+        setupAccountTable();
+        loadAccounts();
     }
 
-    @FXML
-    private void handleRefresh() {
-        refresh();
-    }
-
+    /** Called by ITMainController each time the User Management nav item is activated. */
     public void refresh() {
+        loadAccounts();
+        closeDetail();
+        UiMessageUtil.clearMessage(moduleMessageLabel);
+    }
+
+    // ── Data loading ──────────────────────────────────────────────────────────
+
+    private void loadAccounts() {
         try {
-            List<UserAccountRowDTO> rows = itUserAccountService.getUserAccountRows();
-            allRows.setAll(rows);
-            updateSummaryCards();
-            applyFilters();
-            UiMessageUtil.setSuccess(messageLabel, "User accounts refreshed.");
+            allRows = itUserAccountService.getUserAccountRows();
+            accountItems.setAll(allRows);
+            applyFilter();
+            UiMessageUtil.setSuccess(moduleMessageLabel, "User accounts refreshed.");
         } catch (Exception e) {
-            allRows.clear();
-            filteredRows.clear();
-            updateSummaryCards();
-            UiMessageUtil.setError(messageLabel, UiMessageUtil.toUserMessage(e));
+            allRows = new ArrayList<>();
+            accountItems.clear();
+            applyFilter();
+            UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
 
-    private void configureFilters() {
-        statusFilterCombo.getItems().setAll(STATUS_ALL, STATUS_ACTIVE, STATUS_LOCKED, STATUS_DISABLED);
-        statusFilterCombo.setValue(STATUS_ALL);
-
-        searchField.textProperty().addListener((obs, oldValue, newValue) -> applyFilters());
-        statusFilterCombo.valueProperty().addListener((obs, oldValue, newValue) -> applyFilters());
+    private void applyFilter() {
+        if (filteredAccounts == null) return;
+        String keyword = normal(searchField.getText());
+        String filter = filterCombo.getValue();
+        filteredAccounts.setPredicate(row ->
+                matchesFilter(row, filter) && matchesSearch(row, keyword));
     }
 
-    private void configureTable() {
-        accountsTable.setItems(pagedRows);
-        accountsTable.setPlaceholder(new Label("No user accounts found."));
-        accountsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-
-        employeeIdColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(String.valueOf(data.getValue().getEmployeeId())));
-        fullNameColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(nullSafe(data.getValue().getFullName())));
-        companyEmailColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(nullSafe(data.getValue().getCompanyEmail())));
-        rolesColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(formatRoles(data.getValue().getRoles())));
-        currentRoleColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(formatRole(data.getValue().getActiveRole())));
-        statusColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(displayStatus(data.getValue())));
-        lastLoginColumn.setCellValueFactory(data ->
-                new SimpleStringProperty(formatDate(data.getValue().getLastLoginAt())));
-
-        actionsColumn.setCellValueFactory(data ->
-                new javafx.beans.property.SimpleObjectProperty<>(data.getValue()));
-        actionsColumn.setCellFactory(column -> new ActionCell());
-    }
-
-    private void applyFilters() {
-        String query = normal(searchField.getText());
-        String status = statusFilterCombo.getValue();
-
-        filteredRows.setAll(allRows.stream()
-                .filter(row -> matchesStatus(row, status))
-                .filter(row -> matchesQuery(row, query))
-                .collect(Collectors.toList()));
-
-        currentPage = 1;
-        renderPage();
-    }
-
-    private boolean matchesStatus(UserAccountRowDTO row, String status) {
-        if (status == null || STATUS_ALL.equals(status)) {
-            return true;
-        }
-        return switch (status) {
+    private boolean matchesFilter(UserAccountRowDTO row, String filter) {
+        if (filter == null || STATUS_ALL.equals(filter)) return true;
+        return switch (filter) {
             case STATUS_ACTIVE -> isActiveUnlocked(row);
             case STATUS_LOCKED -> isLocked(row);
             case STATUS_DISABLED -> isDisabled(row);
@@ -167,117 +157,241 @@ public class ITUserAccountController {
         };
     }
 
-    private boolean matchesQuery(UserAccountRowDTO row, String query) {
-        if (query.isBlank()) {
-            return true;
-        }
-
-        String searchable = String.join(" ",
+    private boolean matchesSearch(UserAccountRowDTO row, String keyword) {
+        if (keyword == null || keyword.isBlank()) return true;
+        String haystack = String.join(" ",
                 String.valueOf(row.getEmployeeId()),
                 nullSafe(row.getFullName()),
                 nullSafe(row.getCompanyEmail()),
-                formatRoles(row.getRoles()),
-                formatRole(row.getActiveRole()),
-                displayStatus(row));
-
-        return normal(searchable).contains(query);
+                rolesText(row),
+                statusText(row));
+        return normal(haystack).contains(keyword);
     }
 
-    private void renderPage() {
-        int total      = filteredRows.size();
-        int totalPages = Math.max(1, (int) Math.ceil((double) total / PAGE_SIZE));
-        currentPage    = Math.max(1, Math.min(currentPage, totalPages));
+    // ── Table rendering ─────────────────────────────────────────────────────
 
-        int from = (currentPage - 1) * PAGE_SIZE;
-        int to   = Math.min(from + PAGE_SIZE, total);
+    private void setupAccountTable() {
+        accountTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
-        pagedRows.setAll(filteredRows.subList(from, to));
-        accountsPageLabel.setText("Page " + currentPage + " of " + totalPages);
-        accountsRecordInfoLabel.setText(total == 0
-                ? "No accounts found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " accounts");
-        accountsPrevButton.setDisable(currentPage <= 1);
-        accountsNextButton.setDisable(currentPage >= totalPages);
+        accountIdColumn.setCellValueFactory(d ->
+                new SimpleStringProperty(String.valueOf(d.getValue().getUserAccountId())));
+        employeeIdColumn.setCellValueFactory(d ->
+                new SimpleStringProperty(String.valueOf(d.getValue().getEmployeeId())));
+        emailColumn.setCellValueFactory(d ->
+                new SimpleStringProperty(nullSafe(d.getValue().getCompanyEmail())));
+        rolesColumn.setCellValueFactory(d ->
+                new SimpleStringProperty(rolesText(d.getValue())));
+        statusColumn.setCellValueFactory(d ->
+                new SimpleStringProperty(statusText(d.getValue())));
+        statusColumn.setCellFactory(column -> statusCell());
+
+        actionColumn.setSortable(false);
+        actionColumn.setCellFactory(column -> new TableCell<>() {
+            private final Button manageButton = new Button("Manage");
+
+            {
+                manageButton.getStyleClass().add("table-action-button");
+                manageButton.setOnAction(event -> {
+                    UserAccountRowDTO row = getTableRow() == null ? null : getTableRow().getItem();
+                    if (row != null) {
+                        selectAccount(row);
+                    }
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setAlignment(Pos.CENTER_LEFT);
+                setGraphic(empty ? null : manageButton);
+            }
+        });
+
+        accountTable.setRowFactory(table -> new TableRow<>() {
+            @Override
+            protected void updateItem(UserAccountRowDTO row, boolean empty) {
+                super.updateItem(row, empty);
+                boolean selected = !empty
+                        && row != null
+                        && selectedAccount != null
+                        && row.getUserAccountId() == selectedAccount.getUserAccountId();
+                setStyle(selected ? "-fx-background-color: rgba(59,130,246,0.10);" : "");
+            }
+        });
+
+        filteredAccounts = new FilteredList<>(accountItems, row -> true);
+        SortedList<UserAccountRowDTO> sorted = new SortedList<>(filteredAccounts);
+        sorted.comparatorProperty().bind(accountTable.comparatorProperty());
+        accountTable.setItems(sorted);
+    }
+
+    private TableCell<UserAccountRowDTO, String> statusCell() {
+        return new TableCell<>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+                getStyleClass().removeAll("status-badge", "status-badge-warning", "status-badge-neutral");
+                if (empty || status == null) {
+                    setText(null);
+                    return;
+                }
+                setText(status);
+                getStyleClass().add(switch (status) {
+                    case TEXT_DISABLED -> "status-badge-neutral";
+                    case TEXT_LOCKED -> "status-badge-warning";
+                    default -> "status-badge";
+                });
+            }
+        };
+    }
+
+    private String statusText(UserAccountRowDTO row) {
+        if (isDisabled(row)) return TEXT_DISABLED;
+        if (isLocked(row)) return TEXT_LOCKED;
+        return TEXT_ACTIVE;
+    }
+
+    private String rolesText(UserAccountRowDTO row) {
+        List<Role> roles = row.getRoles();
+        if (roles == null || roles.isEmpty()) return "—";
+        return roles.stream().map(Role::name).collect(Collectors.joining(", "));
+    }
+
+    // ── Detail panel ──────────────────────────────────────────────────────────
+
+    private void selectAccount(UserAccountRowDTO row) {
+        selectedAccount = row;
+        accountTable.refresh();
+        loadDetailPanel(row);
+        setVisible(detailPanel, true);
+    }
+
+    private void loadDetailPanel(UserAccountRowDTO row) {
+        detailEmailLabel.setText(nullSafe(row.getCompanyEmail()));
+        detailEmployeeIdLabel.setText(String.valueOf(row.getEmployeeId()));
+        detailStatusLabel.setText(statusText(row));
+        detailLockedLabel.setText(isLocked(row) ? "Yes" : "No");
+        detailLastLoginLabel.setText(formatDate(row.getLastLoginAt()));
+        detailRolesLabel.setText(rolesText(row));
+
+        Set<Role> current = row.getRoles() != null ? Set.copyOf(row.getRoles()) : Set.of();
+        roleAdminCheck.setSelected(current.contains(Role.ADMIN));
+        roleHrCheck.setSelected(current.contains(Role.HR));
+        roleFinanceCheck.setSelected(current.contains(Role.FINANCE));
+        roleItCheck.setSelected(current.contains(Role.IT));
+        roleEmployeeCheck.setSelected(current.contains(Role.EMPLOYEE));
+
+        boolean locked = isLocked(row);
+        lockButton.setText(locked ? "Unlock Account" : "Lock Account");
+        lockButton.getStyleClass().removeAll("danger-outline-button", "secondary-button");
+        lockButton.getStyleClass().add(locked ? "secondary-button" : "danger-outline-button");
+
+        boolean disabled = isDisabled(row);
+        enableButton.setText(disabled ? "Enable Account" : "Disable Account");
+        enableButton.getStyleClass().removeAll("danger-outline-button", "secondary-button");
+        enableButton.getStyleClass().add(disabled ? "secondary-button" : "danger-outline-button");
     }
 
     @FXML
-    private void handleAccountsPrevPage() {
-        if (currentPage > 1) {
-            currentPage--;
-            renderPage();
+    private void handleToggleLock() {
+        if (selectedAccount == null) return;
+        int id = selectedAccount.getUserAccountId();
+        try {
+            if (isLocked(selectedAccount)) {
+                userAccountService.unlockAccount(id);
+                UiMessageUtil.setSuccess(moduleMessageLabel, "Account unlocked.");
+            } else {
+                userAccountService.lockAccount(id);
+                UiMessageUtil.setSuccess(moduleMessageLabel, "Account locked.");
+            }
+            reloadAndReselect(id);
+        } catch (Exception e) {
+            UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
 
     @FXML
-    private void handleAccountsNextPage() {
-        int totalPages = Math.max(1, (int) Math.ceil((double) filteredRows.size() / PAGE_SIZE));
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderPage();
+    private void handleToggleEnable() {
+        if (selectedAccount == null) return;
+        int id = selectedAccount.getUserAccountId();
+        boolean disabled = isDisabled(selectedAccount);
+        String action = disabled ? "enable" : "disable";
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm");
+        confirm.setHeaderText("Are you sure you want to " + action + " this account?");
+        confirm.setContentText(nullSafe(selectedAccount.getCompanyEmail()));
+        if (accountTable.getScene() != null) {
+            confirm.initOwner(accountTable.getScene().getWindow());
         }
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    if (disabled) {
+                        userAccountService.enableAccount(id);
+                        UiMessageUtil.setSuccess(moduleMessageLabel, "Account enabled.");
+                    } else {
+                        userAccountService.disableAccount(id);
+                        UiMessageUtil.setSuccess(moduleMessageLabel, "Account disabled.");
+                    }
+                    reloadAndReselect(id);
+                } catch (Exception e) {
+                    UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
+                }
+            }
+        });
     }
 
-    private void updateSummaryCards() {
-        long active = allRows.stream().filter(this::isActiveUnlocked).count();
-        long locked = allRows.stream().filter(this::isLocked).count();
-        long disabled = allRows.stream().filter(this::isDisabled).count();
+    @FXML
+    private void handleSaveRoles() {
+        if (selectedAccount == null) return;
 
-        totalAccountsLabel.setText(String.valueOf(allRows.size()));
-        activeAccountsLabel.setText(String.valueOf(active));
-        lockedAccountsLabel.setText(String.valueOf(locked));
-        disabledAccountsLabel.setText(String.valueOf(disabled));
-    }
+        List<Role> roles = new ArrayList<>();
+        if (roleAdminCheck.isSelected())    roles.add(Role.ADMIN);
+        if (roleHrCheck.isSelected())       roles.add(Role.HR);
+        if (roleFinanceCheck.isSelected())  roles.add(Role.FINANCE);
+        if (roleItCheck.isSelected())       roles.add(Role.IT);
+        if (roleEmployeeCheck.isSelected()) roles.add(Role.EMPLOYEE);
 
-    private void lockAccount(UserAccountRowDTO row) {
-        performAccountAction(row, "Lock Account",
-                "Lock the account for " + row.getFullName() + "?",
-                () -> userAccountService.lockAccount(row.getUserAccountId()));
-    }
-
-    private void unlockAccount(UserAccountRowDTO row) {
-        performAccountAction(row, "Unlock Account",
-                "Unlock the account for " + row.getFullName() + "?",
-                () -> userAccountService.unlockAccount(row.getUserAccountId()));
-    }
-
-    private void disableAccount(UserAccountRowDTO row) {
-        performAccountAction(row, "Disable Account",
-                "Disable the account for " + row.getFullName() + "?",
-                () -> userAccountService.disableAccount(row.getUserAccountId()));
-    }
-
-    private void enableAccount(UserAccountRowDTO row) {
-        performAccountAction(row, "Enable Account",
-                "Enable the account for " + row.getFullName() + "?",
-                () -> userAccountService.enableAccount(row.getUserAccountId()));
-    }
-
-    private void performAccountAction(UserAccountRowDTO row, String title, String message, Runnable action) {
-        if (!confirm(title, message)) {
+        if (roles.isEmpty()) {
+            UiMessageUtil.setError(moduleMessageLabel, "At least one role must be assigned.");
             return;
         }
 
+        int id = selectedAccount.getUserAccountId();
         try {
-            action.run();
-            refresh();
-            UiMessageUtil.setSuccess(messageLabel, title + " completed for " + row.getFullName() + ".");
+            userAccountService.updateRoles(id, roles);
+            UiMessageUtil.setSuccess(moduleMessageLabel,
+                    "Roles updated for " + nullSafe(selectedAccount.getCompanyEmail()));
+            reloadAndReselect(id);
         } catch (Exception e) {
-            UiMessageUtil.setError(messageLabel, UiMessageUtil.toUserMessage(e));
+            UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
 
-    private boolean confirm(String title, String message) {
-        ButtonType confirm = new ButtonType(title, ButtonBar.ButtonData.OK_DONE);
-        ButtonType cancel = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, confirm, cancel);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        if (accountsTable.getScene() != null) {
-            alert.initOwner(accountsTable.getScene().getWindow());
-        }
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == confirm;
+    @FXML
+    private void handleCloseDetail() {
+        closeDetail();
     }
+
+    private void closeDetail() {
+        selectedAccount = null;
+        if (accountTable != null) {
+            accountTable.refresh();
+        }
+        setVisible(detailPanel, false);
+    }
+
+    /** Reload list after a command and re-open the detail panel on the same account. */
+    private void reloadAndReselect(int userAccountId) {
+        loadAccounts();
+        allRows.stream()
+                .filter(r -> r.getUserAccountId() == userAccountId)
+                .findFirst()
+                .ifPresentOrElse(this::selectAccount, this::closeDetail);
+    }
+
+    // ── Status helpers (AccountStatus-aware; preserved from prior IT logic) ────
 
     private boolean isActiveUnlocked(UserAccountRowDTO row) {
         return row.isActive() && !row.isLocked() && row.getAccountStatus() == AccountStatus.ACTIVE;
@@ -291,31 +405,8 @@ public class ITUserAccountController {
         return !row.isActive() || row.getAccountStatus() == AccountStatus.DISABLED;
     }
 
-    private String displayStatus(UserAccountRowDTO row) {
-        if (isDisabled(row)) {
-            return STATUS_DISABLED;
-        }
-        if (isLocked(row)) {
-            return STATUS_LOCKED;
-        }
-        return STATUS_ACTIVE;
-    }
-
-    private String formatRoles(List<Role> roles) {
-        if (roles == null || roles.isEmpty()) {
-            return "-";
-        }
-        return roles.stream()
-                .map(this::formatRole)
-                .collect(Collectors.joining(", "));
-    }
-
-    private String formatRole(Role role) {
-        return role != null ? role.name() : "-";
-    }
-
     private String formatDate(LocalDateTime dateTime) {
-        return dateTime != null ? dateTime.format(DATE_FMT) : "-";
+        return dateTime != null ? dateTime.format(DATE_FMT) : "Never";
     }
 
     private String nullSafe(String value) {
@@ -326,40 +417,10 @@ public class ITUserAccountController {
         return nullSafe(value).trim().toLowerCase(Locale.ROOT);
     }
 
-    private final class ActionCell extends TableCell<UserAccountRowDTO, UserAccountRowDTO> {
-        private final HBox actions = new HBox(8);
-
-        private ActionCell() {
-            actions.setAlignment(Pos.CENTER_LEFT);
-        }
-
-        @Override
-        protected void updateItem(UserAccountRowDTO row, boolean empty) {
-            super.updateItem(row, empty);
-
-            if (empty || row == null) {
-                setGraphic(null);
-                return;
-            }
-
-            actions.getChildren().clear();
-            if (ITUserAccountController.this.isDisabled(row)) {
-                actions.getChildren().add(actionButton("Enable", () -> enableAccount(row), "small-pill-button"));
-            } else if (ITUserAccountController.this.isLocked(row)) {
-                actions.getChildren().add(actionButton("Unlock", () -> unlockAccount(row), "small-pill-button"));
-            } else {
-                actions.getChildren().add(actionButton("Lock", () -> lockAccount(row), "small-pill-button"));
-                actions.getChildren().add(actionButton("Disable", () -> disableAccount(row), "danger-outline-button"));
-            }
-
-            setGraphic(actions);
-        }
-
-        private Button actionButton(String text, Runnable action, String styleClass) {
-            Button button = new Button(text);
-            button.getStyleClass().add(styleClass);
-            button.setOnAction(event -> action.run());
-            return button;
+    private void setVisible(Node node, boolean visible) {
+        if (node != null) {
+            node.setVisible(visible);
+            node.setManaged(visible);
         }
     }
 }

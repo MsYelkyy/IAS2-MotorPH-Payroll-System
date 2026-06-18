@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
@@ -10,100 +11,103 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="18"
+<!--
+  IT-owned User Access Management.
+  Mirrors the Admin User Account pattern (toolbar + master-detail + role
+  assignment) but stays under it/ and uses ITUserAccountController.
+-->
+<VBox spacing="16"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.it.account.ITUserAccountController">
 
-    <HBox spacing="14">
-        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="TOTAL ACCOUNTS" styleClass="metric-label"/>
-            <Label fx:id="totalAccountsLabel" text="0" styleClass="metric-value"/>
-            <Label text="All user accounts" styleClass="muted-text"/>
-        </VBox>
-
-        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="ACTIVE ACCOUNTS" styleClass="metric-label"/>
-            <Label fx:id="activeAccountsLabel" text="0" styleClass="metric-value"/>
-            <Label text="Unlocked active users" styleClass="muted-text"/>
-        </VBox>
-
-        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="LOCKED ACCOUNTS" styleClass="metric-label"/>
-            <Label fx:id="lockedAccountsLabel" text="0" styleClass="metric-value"/>
-            <Label text="Temporarily locked" styleClass="muted-text"/>
-        </VBox>
-
-        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="DISABLED ACCOUNTS" styleClass="metric-label"/>
-            <Label fx:id="disabledAccountsLabel" text="0" styleClass="metric-value"/>
-            <Label text="Disabled accounts" styleClass="muted-text"/>
-        </VBox>
+    <!-- Toolbar -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <TextField fx:id="searchField" promptText="Search by email or employee ID..."
+                   styleClass="input-field" prefWidth="320" maxWidth="480" HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="filterCombo" promptText="Filter" styleClass="input-field" prefWidth="130"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Label fx:id="moduleMessageLabel" styleClass="muted-text" wrapText="true" maxWidth="300"/>
     </HBox>
 
-    <VBox spacing="12" styleClass="content-card">
-        <HBox alignment="BOTTOM_LEFT" spacing="12">
-            <VBox spacing="6" HBox.hgrow="ALWAYS">
-                <Label text="Search" styleClass="metric-label"/>
-                <TextField fx:id="searchField"
-                           promptText="Search by employee name, company email, role, or status"
-                           maxWidth="Infinity"
-                           styleClass="input-field"/>
-            </VBox>
+    <!-- Main content: list + optional detail panel -->
+    <HBox spacing="16" alignment="TOP_LEFT" VBox.vgrow="ALWAYS">
 
-            <VBox spacing="6">
-                <Label text="Status" styleClass="metric-label"/>
-                <ComboBox fx:id="statusFilterCombo" prefWidth="170" styleClass="input-field"/>
-            </VBox>
-
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button text="Refresh" onAction="#handleRefresh" styleClass="primary-button"/>
-        </HBox>
-
-        <Label fx:id="messageLabel" wrapText="true" styleClass="message-label"/>
-    </VBox>
-
-    <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity"
-          styleClass="content-card, attendance-history-card"
-          VBox.vgrow="ALWAYS">
-
-        <VBox spacing="4">
-            <Label text="User Accounts" styleClass="section-title"/>
-            <Label text="List of all employee user accounts" styleClass="note-text"/>
+        <!-- Account list -->
+        <VBox styleClass="content-card" spacing="0" HBox.hgrow="ALWAYS">
+            <TableView fx:id="accountTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="accountIdColumn" text="ID" prefWidth="70" minWidth="60"/>
+                    <TableColumn fx:id="employeeIdColumn" text="Emp ID" prefWidth="90" minWidth="70"/>
+                    <TableColumn fx:id="emailColumn" text="Company Email" prefWidth="260" minWidth="190"/>
+                    <TableColumn fx:id="rolesColumn" text="Roles" prefWidth="180" minWidth="130"/>
+                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="actionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="No user accounts found." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
         </VBox>
 
-        <Region prefHeight="16"/>
+        <!-- Detail panel (shown when a row is managed) -->
+        <VBox fx:id="detailPanel" styleClass="content-card" prefWidth="300" minWidth="300"
+              spacing="10" visible="false" managed="false">
 
-        <TableView fx:id="accountsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                   styleClass="payroll-table, attendance-table">
-            <columns>
-                <TableColumn fx:id="employeeIdColumn"  text="Employee ID"   prefWidth="95"  minWidth="70"/>
-                <TableColumn fx:id="fullNameColumn"    text="Full Name"     prefWidth="150" minWidth="110"/>
-                <TableColumn fx:id="companyEmailColumn" text="Company Email" prefWidth="210" minWidth="140"/>
-                <TableColumn fx:id="rolesColumn"       text="Roles"         prefWidth="150" minWidth="100"/>
-                <TableColumn fx:id="currentRoleColumn" text="Current Role"  prefWidth="110" minWidth="80"/>
-                <TableColumn fx:id="statusColumn"      text="Status"        prefWidth="95"  minWidth="70"/>
-                <TableColumn fx:id="lastLoginColumn"   text="Last Login"    prefWidth="165" minWidth="120"/>
-                <TableColumn fx:id="actionsColumn"     text="Actions"       prefWidth="160" minWidth="120"/>
-            </columns>
-            <placeholder>
-                <Label text="No user accounts found." styleClass="note-text"/>
-            </placeholder>
-        </TableView>
+            <Label text="ACCOUNT DETAILS" styleClass="section-title"/>
 
-        <Region prefHeight="14"/>
+            <VBox spacing="8" VBox.vgrow="ALWAYS">
+                <VBox spacing="2">
+                    <Label text="COMPANY EMAIL" styleClass="field-label"/>
+                    <Label fx:id="detailEmailLabel" text="—" styleClass="data-line" wrapText="true"/>
+                </VBox>
+                <VBox spacing="2">
+                    <Label text="EMPLOYEE ID" styleClass="field-label"/>
+                    <Label fx:id="detailEmployeeIdLabel" text="—" styleClass="data-line"/>
+                </VBox>
+                <VBox spacing="2">
+                    <Label text="STATUS" styleClass="field-label"/>
+                    <Label fx:id="detailStatusLabel" text="—" styleClass="data-line"/>
+                </VBox>
+                <VBox spacing="2">
+                    <Label text="LOCKED" styleClass="field-label"/>
+                    <Label fx:id="detailLockedLabel" text="—" styleClass="data-line"/>
+                </VBox>
+                <VBox spacing="2">
+                    <Label text="LAST LOGIN" styleClass="field-label"/>
+                    <Label fx:id="detailLastLoginLabel" text="—" styleClass="data-line"/>
+                </VBox>
+                <VBox spacing="2">
+                    <Label text="CURRENT ROLES" styleClass="field-label"/>
+                    <Label fx:id="detailRolesLabel" text="—" styleClass="data-line" wrapText="true"/>
+                </VBox>
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="accountsPrevButton" text="&#8592; Previous" onAction="#handleAccountsPrevPage"
-                    styleClass="secondary-button"/>
-            <Label fx:id="accountsPageLabel" text="Page 1 of 1" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="accountsRecordInfoLabel" text="" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="accountsNextButton" text="Next &#8594;" onAction="#handleAccountsNextPage"
-                    styleClass="secondary-button"/>
-        </HBox>
+                <!-- Role assignment -->
+                <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
+                    <Label text="ASSIGN ROLES" styleClass="field-label"/>
+                    <CheckBox fx:id="roleAdminCheck"    text="ADMIN"    styleClass="data-line"/>
+                    <CheckBox fx:id="roleHrCheck"       text="HR"       styleClass="data-line"/>
+                    <CheckBox fx:id="roleFinanceCheck"  text="FINANCE"  styleClass="data-line"/>
+                    <CheckBox fx:id="roleItCheck"       text="IT"       styleClass="data-line"/>
+                    <CheckBox fx:id="roleEmployeeCheck" text="EMPLOYEE" styleClass="data-line"/>
+                    <Button text="Save Roles" onAction="#handleSaveRoles"
+                            styleClass="primary-button" maxWidth="Infinity"
+                            style="-fx-padding: 6 12;"/>
+                </VBox>
+            </VBox>
 
-    </VBox>
+            <!-- Status action buttons -->
+            <VBox spacing="8">
+                <Button fx:id="lockButton" text="Lock Account" onAction="#handleToggleLock"
+                        styleClass="danger-outline-button" maxWidth="Infinity"/>
+                <Button fx:id="enableButton" text="Disable Account" onAction="#handleToggleEnable"
+                        styleClass="danger-outline-button" maxWidth="Infinity"/>
+                <Button text="Close" onAction="#handleCloseDetail"
+                        styleClass="secondary-button" maxWidth="Infinity"/>
+            </VBox>
+        </VBox>
+
+    </HBox>
 
 </VBox>
