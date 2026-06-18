@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.employee.EmployeeMainController"
-           stylesheets="@../../../css/roles/employee.css, @../../../css/motorph-theme.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/motorph-theme.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
