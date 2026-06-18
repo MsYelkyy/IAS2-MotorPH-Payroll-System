@@ -1,0 +1,199 @@
+/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE PROFILE
+   Profile-exclusive selectors extracted from
+   motorph-theme.css with exact winning values.
+   Loaded AFTER motorph-theme.css so these win their
+   ties; values are identical, so appearance is
+   unchanged. Light-mode is preserved by motorph-theme's
+   higher-specificity .root-canvas.light-mode rules
+   (NOT copied here).
+
+   Source lines in motorph-theme.css:
+     .profile-header-section             L4127
+     .profile-photo-frame                L4132 (winner, not stale L3421)
+     .profile-photo-frame .image-view    L3431
+     .profile-initials                   L4143
+     .profile-name-large                 L4151
+     .profile-id-value                   L4161
+     .upload-image-button (+:hover)      L4168 / L4182
+     .profile-section-card               L4189
+     .profile-section-header             L4202
+     .profile-section-icon               L4208
+     .profile-section-title              L4213
+     .profile-data-row                   L4220
+     .profile-field-label                L4225
+     .profile-field-value                L4231
+     .profile-row-divider (+ .line)      L4238 / L4242
+     .profile-note-row                   L4248
+     .profile-note-icon                  L4252
+     .profile-edit-button (+:hover)      L4258 / L4272
+     .profile-section-card .input-field
+       (+:focused)                       L4361 / L4368
+   ══════════════════════════════════════════════════ */
+
+
+/* ── Profile header section (no card, sits on the canvas) ────────────── */
+.profile-header-section {
+    -fx-padding: 4 0 12 0;
+}
+
+/* ── Profile photo frame ──────────────────────────────────────────────── */
+.profile-photo-frame {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.profile-photo-frame .image-view {
+    -fx-background-radius: 4;
+}
+
+/* ── Initials fallback label ──────────────────────────────────────────── */
+.profile-initials {
+    -fx-font-size: 48px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(255,255,255,0.75);
+    -fx-alignment: center;
+}
+
+/* ── Name & ID in header ──────────────────────────────────────────────── */
+.profile-name-large {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #F0F0F4;
+}
+
+.profile-id-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(200,200,215,0.70);
+}
+
+/* ── Upload Image button ──────────────────────────────────────────────── */
+.upload-image-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,80,80,0.50);
+    -fx-border-width: 1;
+    -fx-text-fill: #FF7070;
+    -fx-background-radius: 7;
+    -fx-border-radius: 7;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-padding: 7 12;
+    -fx-cursor: hand;
+    -fx-min-height: 34;
+}
+
+.upload-image-button:hover {
+    -fx-background-color: rgba(255,80,80,0.12);
+    -fx-border-color: rgba(255,80,80,0.75);
+    -fx-text-fill: #FF9090;
+}
+
+/* ── Section cards (dark metallic, same family as content-card) ───────── */
+.profile-section-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.14), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(155,10,10,0.38), rgba(105,4,4,0.48));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,100,100,0.30);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 0;
+}
+
+/* ── Section header row (icon + red title) ────────────────────────────── */
+.profile-section-header {
+    -fx-padding: 16 22 12 22;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.profile-section-icon {
+    -fx-font-size: 16px;
+    -fx-text-fill: #FF6666;
+}
+
+.profile-section-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+/* ── Data rows inside section cards ──────────────────────────────────── */
+.profile-data-row {
+    -fx-padding: 13 22;
+    -fx-min-height: 44;
+}
+
+.profile-field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255,195,195,0.62);
+}
+
+.profile-field-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 400;
+    -fx-text-fill: rgba(245,230,230,0.90);
+}
+
+/* ── Separator between rows ───────────────────────────────────────────── */
+.profile-row-divider {
+    -fx-padding: 0;
+}
+
+.profile-row-divider .line {
+    -fx-border-color: rgba(255,255,255,0.07);
+    -fx-border-width: 0.5;
+}
+
+/* ── Note row at the bottom of contact card ───────────────────────────── */
+.profile-note-row {
+    -fx-padding: 10 22 14 22;
+}
+
+.profile-note-icon {
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(255,190,190,0.55);
+}
+
+/* ── Edit Profile button (red outline at page bottom) ────────────────── */
+.profile-edit-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 1.5;
+    -fx-text-fill: #FF7070;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-padding: 10 22;
+    -fx-cursor: hand;
+    -fx-min-height: 44;
+}
+
+.profile-edit-button:hover {
+    -fx-background-color: rgba(255,80,80,0.11);
+    -fx-border-color: rgba(255,80,80,0.80);
+    -fx-text-fill: #FF9090;
+}
+
+/* ── Input fields inside profile section cards (edit mode) ────────────── */
+.profile-section-card .input-field {
+    -fx-background-color: rgba(255,255,255,0.07);
+    -fx-border-color: rgba(255,255,255,0.14);
+    -fx-text-fill: #F0F0F4;
+    -fx-prompt-text-fill: rgba(200,200,210,0.42);
+}
+
+.profile-section-card .input-field:focused {
+    -fx-border-color: #CC2020;
+    -fx-background-color: rgba(255,255,255,0.10);
+    -fx-effect: dropshadow(gaussian, rgba(200,0,0,0.22), 10, 0.16, 0, 0);
+}

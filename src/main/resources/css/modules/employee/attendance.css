@@ -1,12 +1,24 @@
-﻿/* ══════════════════════════════════════════════════
-   MODULE — ATTENDANCE
-   Styles for the attendance card, time-in/out
-   buttons, action panel, and attendance table.
-   Includes dark-mode defaults and light-mode
-   overrides (.root-canvas.light-mode prefix).
+/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE ATTENDANCE
+   Attendance-exclusive selectors extracted from
+   motorph-theme.css with exact winning values, in
+   source order. Loaded AFTER motorph-theme.css so
+   these win their ties; values are identical, so
+   appearance is unchanged. Light-mode is preserved by
+   motorph-theme's higher-specificity
+   .root-canvas.light-mode .attendance-* rules (NOT
+   copied here).
 
-   Source: motorph-theme.css lines 3643-3813
+   NOT moved (shared / global):
+     .attendance-table          (used by IT + Admin)
+     .attendance-history-card   (used by IT + Admin; no rule)
+     content-card, message-label, success-button,
+     primary-button, secondary-button, section-title,
+     note-text, payroll-table
+
+   Source lines in motorph-theme.css: L3644–3763
    ══════════════════════════════════════════════════ */
+
 
 /* Attendance screen refinements */
 .attendance-root {
@@ -16,8 +28,8 @@
 .attendance-card {
     -fx-padding: 22 24;
     -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.14), transparent),
-        linear-gradient(from 0% 0% to 0% 100%, rgba(155,10,10,0.38), rgba(105,4,4,0.48));
+        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
+        rgba(23,26,31,0.78);
     -fx-background-radius: 16;
     -fx-border-color: rgba(255,120,120,0.22);
     -fx-border-width: 1;
@@ -128,53 +140,4 @@
         linear-gradient(from 0% 0% to 100% 0%, rgba(220,50,50,0.26), transparent),
         linear-gradient(to bottom, rgba(66,67,74,0.98), rgba(34,35,41,0.99));
     -fx-border-color: rgba(255,110,110,0.34);
-}
-
-.attendance-table .column-header .label,
-.attendance-table .table-cell {
-    -fx-alignment: CENTER;
-    -fx-text-alignment: CENTER;
-}
-
-.root-canvas.light-mode .attendance-card {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: rgba(153,27,27,0.14);
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.14, 0, 5);
-}
-
-.root-canvas.light-mode .attendance-card .attendance-card-title {
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .attendance-card .attendance-detail-label {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .attendance-card .attendance-date-value,
-.root-canvas.light-mode .attendance-card .attendance-time-value {
-    -fx-text-fill: #111827;
-}
-
-.root-canvas.light-mode .attendance-card .attendance-status-value {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .attendance-divider {
-    -fx-background-color: rgba(153,27,27,0.12);
-}
-
-.root-canvas.light-mode .attendance-action-panel {
-    -fx-border-color: transparent transparent transparent rgba(153,27,27,0.10);
-}
-
-.root-canvas.light-mode .attendance-card .attendance-message {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .attendance-card .attendance-message.success-message {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .attendance-card .attendance-message.error-message {
-    -fx-text-fill: #B91C1C;
 }

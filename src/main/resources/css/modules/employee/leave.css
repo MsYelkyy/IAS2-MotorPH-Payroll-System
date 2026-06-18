@@ -1,0 +1,116 @@
+/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE LEAVE
+   Leave-exclusive selectors extracted from
+   motorph-theme.css with exact winning values, in
+   source order. Loaded AFTER motorph-theme.css so
+   these win their ties; values are identical, so
+   appearance is unchanged. Light-mode is preserved by
+   motorph-theme's higher-specificity
+   .root-canvas.light-mode .leave-* rules (NOT copied).
+
+   NOT moved (shared with Support Tickets, stay global):
+     .leave-card, .leave-card-title, .leave-form-card
+       (+ .leave-form-card .X compounds),
+     .leave-reason-area (+ .content),
+     .required-asterisk, .field-error, .character-counter
+
+   NOT moved (leave-only but grouped with .leave-form-card
+   in motorph, can't split without editing the theme):
+     .leave-credits-card, .leave-history-card base rules,
+     the combined .leave-history-card .section-title rule
+
+   Source lines in motorph-theme.css: L3815–3988
+   ══════════════════════════════════════════════════ */
+
+
+.leave-root {
+    -fx-min-width: 760;
+}
+
+.leave-history-card .note-text {
+    -fx-text-fill: rgba(255,220,220,0.72);
+}
+
+.leave-credits-row {
+    -fx-min-height: 96;
+    -fx-pref-height: 100;
+}
+
+.leave-credit-tile {
+    -fx-padding: 12 18;
+    -fx-alignment: CENTER;
+    -fx-background-color: transparent;
+}
+
+.leave-credit-divider {
+    -fx-pref-width: 1;
+    -fx-max-width: 1;
+    -fx-min-height: 72;
+    -fx-background-color: rgba(255,95,95,0.16);
+}
+
+.leave-credit-value {
+    -fx-font-size: 25px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+}
+
+.leave-form-grid {
+    -fx-min-height: 154;
+}
+
+.leave-status-filter {
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-background-color: #111827;
+    -fx-border-color: rgba(255,255,255,0.13);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(235,238,245,0.58);
+    -fx-padding: 0 12;
+}
+
+.leave-history-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.leave-status-pending {
+    -fx-text-fill: #FBBF24;
+    -fx-font-weight: 900;
+}
+
+.leave-status-approved {
+    -fx-text-fill: #86EFAC;
+    -fx-font-weight: 900;
+}
+
+.leave-status-rejected,
+.leave-status-cancelled {
+    -fx-text-fill: #FF8A8A;
+    -fx-font-weight: 900;
+}
+
+.leave-cancel-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,95,95,0.48);
+    -fx-border-width: 1;
+    -fx-text-fill: #FF7777;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-weight: 900;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+    -fx-min-height: 30;
+}
+
+.leave-cancel-button:hover {
+    -fx-background-color: rgba(232,67,67,0.10);
+    -fx-border-color: rgba(255,105,105,0.72);
+    -fx-text-fill: #FFFFFF;
+}
+
+/* dark/default status-filter dropdown cell (light variant stays in theme) */
+.leave-status-filter > .list-cell {
+    -fx-text-fill: #F8FAFC;
+    -fx-padding: 0 6 0 0;
+}
