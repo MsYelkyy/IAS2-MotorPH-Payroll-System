@@ -2,7 +2,6 @@ package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
 import motorph.domain.value.Role;
-import motorph.ui.admin.accesslogs.AdminAccessLogsController;
 import motorph.ui.admin.databasetools.AdminDatabaseToolsController;
 import motorph.ui.admin.dashboard.AdminDashboardController;
 import motorph.ui.admin.leave.AdminLeaveController;
@@ -14,6 +13,7 @@ import motorph.ui.admin.salary.AdminSalaryController;
 import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.admin.useraccount.AdminUserAccountController;
 import motorph.ui.common.GlobalControlsHelper;
+import motorph.ui.it.accesslogs.ITAccessLogsController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
@@ -87,7 +87,7 @@ public class AdminMainController {
 
     // ── Access Logs sub-view ──────────────────────────────────────────────────
     @FXML private VBox                        accessLogsView;
-    @FXML private AdminAccessLogsController   accessLogsViewController;
+    @FXML private ITAccessLogsController      accessLogsViewController;
 
     // ── Reports sub-view ─────────────────────────────────────────────────────
     @FXML private VBox                   reportsView;
