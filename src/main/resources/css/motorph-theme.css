@@ -430,12 +430,6 @@
     -fx-min-height: 150;
 }
 
-.section-title {
-    -fx-font-size: 13px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
 .metric-value {
     -fx-font-size: 27px;
     -fx-font-weight: 900;
@@ -1732,12 +1726,6 @@
     -fx-text-fill: rgba(110,140,190,0.72);
 }
 
-.section-title {
-    -fx-font-size: 13px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #EEF3FF;
-}
-
 .data-line {
     -fx-font-size: 13px;
     -fx-text-fill: #C0D0E8;
@@ -2332,7 +2320,6 @@
 .metric-value  { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
 .financial-value { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #E84343; }
 .metric-label  { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: #A0AABB; }
-.section-title { -fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
 .data-line     { -fx-font-size: 13px; -fx-text-fill: #2C3A4A; }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: #A0AABB; }
 .bottom-value  { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
@@ -2485,7 +2472,6 @@
 .metric-value   { -fx-font-size: 30px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
 .financial-value { -fx-font-size: 30px; -fx-font-weight: 900; -fx-text-fill: #E84343; }
 .metric-label   { -fx-font-size: 9px;  -fx-font-weight: 900; -fx-text-fill: #A8B4C8; letter-spacing: 1px; }
-.section-title  { -fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
 .data-line      { -fx-font-size: 13px; -fx-font-weight: 400; -fx-text-fill: #3A4A60; }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: #A8B4C8; }
 .bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
@@ -2955,7 +2941,6 @@
 .metric-value   { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .financial-value { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #FBBF24; }
 .metric-label   { -fx-font-size: 9px;  -fx-font-weight: 900; -fx-text-fill: rgba(255,200,200,0.75); }
-.section-title  { -fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .data-line      { -fx-font-size: 13px; -fx-text-fill: rgba(240,220,220,0.85); }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: rgba(255,200,200,0.60); }
 .bottom-value   { -fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
@@ -3299,7 +3284,6 @@
 
 /* General card typography on translucent dark-red */
 .metric-label   { -fx-font-size: 9px;  -fx-font-weight: 900; -fx-text-fill: rgba(255,210,210,0.70); }
-.section-title  { -fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .data-line      { -fx-font-size: 13px; -fx-text-fill: rgba(245,225,225,0.82); }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: rgba(255,200,200,0.58); }
 .bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
