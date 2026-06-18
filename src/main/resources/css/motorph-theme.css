@@ -311,19 +311,6 @@
     -fx-padding: 0 14 0 0;
 }
 
-.message-label,
-.error-message {
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #3B82F6;
-}
-
-.success-message {
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #22C55E;
-}
-
 .app-shell {
     -fx-border-color: rgba(59,130,246,0.16);
     -fx-border-width: 1.5;
@@ -909,18 +896,6 @@
 .light-mode .inline-link,
 .light-mode .more-button {
     -fx-text-fill: #991b1b;
-}
-
-/* Messages */
-.light-mode .error-message,
-.light-mode .error-text,
-.light-mode .danger-text,
-.light-mode .warning-text {
-    -fx-text-fill: #991b1b;
-}
-
-.light-mode .success-message {
-    -fx-text-fill: #166534;
 }
 
 /* Tables */
@@ -1965,18 +1940,6 @@
 }
 
 /* ── Error & success messages ────────────────────────────────────── */
-.error-message {
-    -fx-text-fill: #3B82F6;
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-}
-
-.success-message {
-    -fx-text-fill: #22C55E;
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-}
-
 .invalid-field {
     -fx-border-color: #3B82F6;
     -fx-background-color: rgba(59,130,246,0.06);
@@ -2390,8 +2353,6 @@
 .field-label   { -fx-font-size: 11px; -fx-font-weight: 900; -fx-text-fill: #5A6A82; }
 
 /* ── Message labels ───────────────────────────────────────────────────── */
-.success-message { -fx-text-fill: #16A34A; -fx-font-size: 12px; -fx-font-weight: 800; }
-.error-message   { -fx-text-fill: #E84343; -fx-font-size: 12px; -fx-font-weight: 800; }
 
 /* ── Selectors & controls (light bg) ─────────────────────────────────── */
 .period-selector,
@@ -2730,8 +2691,6 @@
 }
 
 /* ── Success/error message colors ─────────────────────────────────────── */
-.success-message { -fx-text-fill: #16A34A; -fx-font-weight: 800; -fx-font-size: 12px; }
-.error-message   { -fx-text-fill: #E84343; -fx-font-weight: 800; -fx-font-size: 12px; }
 
 /* ── Input fields on light form ───────────────────────────────────────── */
 .input-field, .combo-box.input-field {
@@ -3019,8 +2978,6 @@
 .positive-text  { -fx-font-size: 12px; -fx-font-weight: 800; -fx-text-fill: #86EFAC; }
 
 /* ── Messages ─────────────────────────────────────────────────────────── */
-.success-message { -fx-text-fill: #86EFAC; -fx-font-weight: 800; -fx-font-size: 12px; }
-.error-message   { -fx-text-fill: #FCA5A5; -fx-font-weight: 800; -fx-font-size: 12px; }
 
 /* ── Inputs — dark with red focus ────────────────────────────────────── */
 .input-field, .combo-box.input-field {
