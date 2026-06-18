@@ -35,8 +35,8 @@ public class JasperReportGenerator {
                     parameters,
                     dataSource
             );
-        } catch (JRException e) {
-            throw new RuntimeException("Failed to generate Jasper report.", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 

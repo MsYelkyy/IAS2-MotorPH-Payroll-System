@@ -1,29 +1,74 @@
 package motorph.app;
 
 import javafx.application.Application;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
+import motorph.application.service.report.AttendanceReportService;
+import motorph.application.service.report.PayrollReportService;
+import motorph.infrastructure.repository.report.AttendanceReportRepository;
+import motorph.infrastructure.repository.report.PayrollReportRepository;
+import motorph.infrastructure.reporting.JasperReportGenerator;
+
+import java.time.LocalDate;
 
 /**
- * Main entry point of the MotorPH JavaFX application.
- * This class launches the first screen of the system.
+ * Main entry point used temporarily for testing organization payroll report generation.
  */
 public class Main extends Application {
 
     @Override
-    public void start(Stage stage) throws Exception {
-        FXMLLoader loader = new FXMLLoader(
-                Main.class.getResource("/motorph/ui/login.fxml")
+    public void start(Stage stage) {
+        PayrollReportService payrollReportService = new PayrollReportService(
+                new PayrollReportRepository(),
+                new JasperReportGenerator()
+        );
+        AttendanceReportService attendanceReportService = new AttendanceReportService(
+                new AttendanceReportRepository(),
+                new JasperReportGenerator()
         );
 
-        Scene scene = new Scene(loader.load());
+        payrollReportService.previewOrganizationPayrollReport(
+                null,
+                null,
+                null,
+                LocalDate.of(2024, 6, 3),
+                LocalDate.of(2024, 12, 31)
+        );
 
-        stage.setTitle("MotorPH Payroll System");
-        stage.setScene(scene);
-        stage.setResizable(false);
-        stage.centerOnScreen();
-        stage.show();
+
+
+        payrollReportService.previewPayrollSummaryReport(
+                null,
+                null,
+                LocalDate.of(2024, 6, 3),
+                LocalDate.of(2024, 12, 31)
+        );
+
+
+
+        payrollReportService.previewDepartmentPayrollReport(
+                2,
+                null,
+                LocalDate.of(2024, 6, 3),
+                LocalDate.of(2024, 12, 31)
+        );
+
+        payrollReportService.previewDepartmentPayrollReport(
+                4,
+                null,
+                LocalDate.of(2024, 6, 3),
+                LocalDate.of(2024, 12, 31)
+        );
+
+        attendanceReportService.previewEmployeeTimecardReport(
+                10001,
+                LocalDate.of(2024, 12, 1),
+                LocalDate.of(2024, 12, 31)
+        );
+
+
+
+        payrollReportService.previewPayslipReport(10001, 11);
+        payrollReportService.previewPayslipReport(10001, 12);
     }
 
     public static void main(String[] args) {
