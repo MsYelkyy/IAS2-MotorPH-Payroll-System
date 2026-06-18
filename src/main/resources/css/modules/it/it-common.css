@@ -1,28 +1,18 @@
 /* ══════════════════════════════════════════════════════════════════
-   IT MANAGEMENT — dashboard-specific style extensions
-   Inherits from motorph-theme.css; adds table rows, stat colors,
-   status badges, and system-status indicator.
+   MODULE — IT COMMON (cross-IT-screen styles)
+   Relocated verbatim from it-ui.css (everything except the
+   dashboard-exclusive .stat-success / .stat-danger / .system-ok-text
+   rules, which moved to modules/it/dashboard.css).
+
+   IT-only: loaded after motorph-theme.css in it-ui.css's original
+   cascade slot. Values and source order unchanged. Light-mode rules
+   travel with their dark counterparts.
+
+   NOTE: the ".admin-*" / ".modal-panel" / ".module-toolbar" /
+   ".section-label" / ".table-*" names here are IT's OWN copies
+   (Admin uses separate copies in admin-ui.css). Not deduplicated
+   yet — that is a later cross-role phase.
    ══════════════════════════════════════════════════════════════════ */
-
-/* ── Login-activity stat numbers ─────────────────────────────────── */
-.stat-success {
-    -fx-font-size: 30px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #22C55E;
-}
-
-.stat-danger {
-    -fx-font-size: 30px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #EF4444;
-}
-
-/* ── System-status headline ──────────────────────────────────────── */
-.system-ok-text {
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #22C55E;
-}
 
 /* ── Table header row ────────────────────────────────────────────── */
 .table-header-row {
@@ -154,18 +144,6 @@
     -fx-background-color: rgba(0,0,0,0.03);
 }
 
-.root-canvas.light-mode .stat-success {
-    -fx-text-fill: #16A34A;
-}
-
-.root-canvas.light-mode .stat-danger {
-    -fx-text-fill: #DC2626;
-}
-
-.root-canvas.light-mode .system-ok-text {
-    -fx-text-fill: #16A34A;
-}
-
 .root-canvas.light-mode .status-badge {
     -fx-background-color: rgba(37,99,235,0.10);
     -fx-text-fill: #2563EB;
@@ -239,6 +217,12 @@
 .root-canvas.light-mode .combo-box.input-field {
     -fx-background-color: #FFFFFF;
     -fx-border-color: rgba(17,24,39,0.12);
+}
+
+/* Light-mode: DatePicker display text — match combo filter controls */
+.root-canvas.light-mode .date-picker .text-field,
+.root-canvas.light-mode .date-picker .date-picker-display-node {
+    -fx-text-fill: #111827;
 }
 
 .root-canvas.light-mode .status-badge-warning {

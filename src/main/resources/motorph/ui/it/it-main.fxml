@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.it.ITMainController"
-           stylesheets="@../../../css/motorph-theme.css, @../../../css/it-ui.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/motorph-theme.css, @../../../css/modules/it/it-common.css, @../../../css/modules/it/dashboard.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
