@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.admin.AdminMainController"
-           stylesheets="@../../../css/motorph-theme.css, @../../../css/admin-ui.css, @../../../css/modules/it/user-access-logs.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/motorph-theme.css, @../../../css/admin-ui.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -88,7 +88,7 @@
                             <fx:include fx:id="employeeView"   source="employee/AdminEmployee.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="payrollView"    source="payroll/AdminPayroll.fxml"  visible="false" managed="false"/>
                             <fx:include fx:id="salaryView"       source="salary/AdminSalary.fxml"                    visible="false" managed="false"/>
-                            <fx:include fx:id="userAccountView" source="useraccount/AdminUserAccount.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="userAccountView" source="../it/user-accounts.fxml"                   visible="false" managed="false"/>
                             <fx:include fx:id="rolesView"       source="../it/role-management.fxml"                 visible="false" managed="false"/>
                             <fx:include fx:id="accessLogsView"  source="../it/user-access-logs.fxml"                visible="false" managed="false"/>
                             <fx:include fx:id="reportsView"     source="reports/AdminReports.fxml"                  visible="false" managed="false"/>

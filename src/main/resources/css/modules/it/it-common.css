@@ -65,13 +65,8 @@
     -fx-text-fill: #9CA3AF;
 }
 
-/* Account table: keep plain row selection neutral. The light-blue highlight is
-   reserved for the account currently open in the detail panel, which the row
-   factory paints inline (inline style wins over this rule). */
-.accounts-table .table-row-cell:selected,
-.accounts-table .table-row-cell:selected:hover {
-    -fx-background-color: transparent;
-}
+/* NOTE: .accounts-table styling moved to modules/it/user-accounts.css so the
+   IT-owned User Management view renders correctly when hosted from Admin. */
 
 /* Account management controls */
 .switch-role-button {

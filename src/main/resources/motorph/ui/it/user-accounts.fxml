@@ -17,6 +17,7 @@
   assignment) but stays under it/ and uses ITUserAccountController.
 -->
 <VBox spacing="16"
+      styleClass="user-accounts-view"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.it.account.ITUserAccountController">

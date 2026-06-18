@@ -10,9 +10,9 @@ import motorph.ui.admin.payroll.AdminPayrollController;
 import motorph.ui.admin.reports.AdminReportsController;
 import motorph.ui.admin.salary.AdminSalaryController;
 import motorph.ui.admin.systemconfig.AdminSystemConfigController;
-import motorph.ui.admin.useraccount.AdminUserAccountController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.it.accesslogs.ITAccessLogsController;
+import motorph.ui.it.account.ITUserAccountController;
 import motorph.ui.it.role.ITRolesController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
@@ -79,7 +79,7 @@ public class AdminMainController {
 
     // ── User Account Management sub-view ──────────────────────────────────────
     @FXML private VBox                        userAccountView;
-    @FXML private AdminUserAccountController  userAccountViewController;
+    @FXML private ITUserAccountController     userAccountViewController;
 
     // ── Roles & Permissions sub-view ─────────────────────────────────────────
     @FXML private VBox                   rolesView;
