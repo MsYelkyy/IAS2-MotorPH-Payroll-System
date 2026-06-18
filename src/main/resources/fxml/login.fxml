@@ -14,6 +14,7 @@
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -82,7 +83,7 @@
                         <VBox fx:id="loginCard" spacing="18" styleClass="form-card">
                             <VBox spacing="4">
                                 <Label text="Welcome Back" styleClass="form-heading"/>
-                                <Label text="Sign in to continue to your employee workspace." styleClass="form-subheading"/>
+                                <Label text="Sign in to continue to the HR workspace." styleClass="form-subheading"/>
                             </VBox>
                             <VBox spacing="7">
                                 <Label text="Company Email" styleClass="field-label"/>
@@ -106,7 +107,7 @@
                                 <Label text="🛡" styleClass="security-icon"/>
                                 <Label text="Protected by Two-Factor Authentication" styleClass="form-security-note"/>
                             </HBox>
-                            <Label text="HR Demo Account: hr.demo@motorph.com / HrDemo@2026!" wrapText="true" styleClass="muted-text"/>
+                            <Label text="Use your MotorPH company account. A verification code is required after password validation." wrapText="true" styleClass="muted-text"/>
                             <Label fx:id="loginMessageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
                         </VBox>
 
@@ -207,21 +208,22 @@
                 <Separator/>
 
                 <!-- Navigation -->
-                <Button fx:id="dashboardNavButton" text="Dashboard"       onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
-                <Button                             text="Profile"         onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="attendanceNavButton" text="Attendance"      onAction="#showAttendance" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="leaveNavButton"      text="Leave Requests"  onAction="#showLeave"     maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="payslipNavButton"    text="Payslip / Payroll" onAction="#showPayslip" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="settingsNavButton"   text="Account Settings" onAction="#showSettings" maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="dashboardNavButton" text="Dashboard"       onAction="#showDashboard"      maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
+                <Button fx:id="profileNavButton"   text="Profile"         onAction="#showProfile"        maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="attendanceNavButton" text="Attendance"      onAction="#showAttendance"     maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="leaveNavButton"      text="Leave Requests"  onAction="#showLeave"          maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="payslipNavButton"    text="Payslip / Payroll" onAction="#showPayslip"      maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="supportTicketsNavButton" text="Support Tickets" onAction="#showSupportTickets" maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="settingsNavButton"   text="Account Settings" onAction="#showSettings"      maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
                 <!-- Employee identity card -->
                 <VBox spacing="6" styleClass="sidebar-card">
                     <Label text="EMPLOYEE" styleClass="sidebar-card-kicker"/>
-                    <Label fx:id="dashboardEmployeeNameLabel" text="Harty Joy Villegas" wrapText="true" styleClass="sidebar-card-title"/>
-                    <Label fx:id="dashboardEmployeeRoleLabel" text="Operations" styleClass="sidebar-card-copy"/>
-                    <Label fx:id="dashboardEmailLabel" text="harty.villegas@motorph.com" wrapText="true" styleClass="sidebar-card-copy"/>
+                    <Label fx:id="dashboardEmployeeNameLabel" text="Andrea Mae Villanueva" wrapText="true" styleClass="sidebar-card-title"/>
+                    <Label fx:id="dashboardEmployeeRoleLabel" text="HR" styleClass="sidebar-card-copy"/>
+                    <Label fx:id="dashboardEmailLabel" text="andrea.villanueva@motorph.com" wrapText="true" styleClass="sidebar-card-copy"/>
                 </VBox>
 
                 <Button text="Logout" onAction="#handleLogout" maxWidth="Infinity" styleClass="danger-outline-button"/>
@@ -234,16 +236,12 @@
                 <!-- Topbar -->
                 <HBox alignment="CENTER_LEFT" spacing="18" styleClass="topbar">
                     <VBox spacing="2">
-                        <Label fx:id="pageTitleLabel" text="Hello, Harty." styleClass="page-title"/>
+                        <Label fx:id="pageTitleLabel" text="Dashboard" styleClass="page-title"/>
                         <Label fx:id="pageSubtitleLabel" text="EMPLOYEE WORKSPACE" styleClass="page-subtitle"/>
                     </VBox>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <HBox spacing="6" alignment="CENTER_LEFT" styleClass="date-range-box">
-                        <DatePicker styleClass="period-picker" promptText="From"/>
-                        <Label text="→" styleClass="period-range-sep"/>
-                        <DatePicker styleClass="period-picker" promptText="To"/>
-                    </HBox>
                     <Label text="Active Session" styleClass="status-pill success-pill"/>
+                    <HBox fx:id="globalControlsHostApp" alignment="CENTER_RIGHT" spacing="6" HBox.hgrow="NEVER"/>
                 </HBox>
 
                 <!-- Scrollable workspace -->
@@ -254,12 +252,10 @@
                             <!-- ── DASHBOARD ──────────────────────────── -->
                             <VBox fx:id="dashboardView" spacing="18">
                                 <HBox spacing="18">
-
-                                    <!-- Metric column -->
                                     <VBox spacing="14" prefWidth="220" minWidth="180">
                                         <VBox spacing="6" styleClass="metric-card">
                                             <Label text="TOTAL NET PAY" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardNetPayLabel" text="PHP 0.00" styleClass="metric-value, financial-value"/>
+                                            <Label fx:id="dashboardNetPayLabel" text="₱16,355.44" styleClass="metric-value, financial-value"/>
                                         </VBox>
                                         <VBox spacing="6" styleClass="metric-card">
                                             <Label text="ATTENDANCE RATE" styleClass="metric-label"/>
@@ -271,19 +267,17 @@
                                         </VBox>
                                         <VBox spacing="6" styleClass="metric-card">
                                             <Label text="AVAILABLE LEAVE" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardLeaveCreditsLabel" text="12.5 days" styleClass="metric-value"/>
+                                            <Label fx:id="dashboardLeaveCreditsLabel" text="5" styleClass="metric-value"/>
                                             <Label text="Vacation Leave" styleClass="muted-text"/>
                                         </VBox>
                                         <VBox spacing="6" styleClass="metric-card">
                                             <Label text="PENDING REQUESTS" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardTaskPercentLabel" text="2" styleClass="metric-value"/>
+                                            <Label fx:id="dashboardTaskPercentLabel" text="1" styleClass="metric-value"/>
                                             <Label text="Leave Requests" styleClass="muted-text"/>
                                         </VBox>
                                     </VBox>
 
-                                    <!-- Chart / data column -->
                                     <VBox spacing="14" HBox.hgrow="ALWAYS">
-
                                         <HBox spacing="14">
                                             <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
                                                 <Label text="NET PAY TREND" styleClass="section-title"/>
@@ -369,77 +363,406 @@
                                                 <Label text="All employees are expected to attend." wrapText="true" styleClass="muted-text"/>
                                             </VBox>
                                         </HBox>
-
                                     </VBox>
+                                </HBox>
+                            </VBox>
+
+                            <!-- ── PROFILE ────────────────────────────── -->
+                            <VBox fx:id="profileView" spacing="16" visible="false" managed="false">
+                                <HBox spacing="28" alignment="CENTER_LEFT" styleClass="profile-header-section">
+                                    <VBox spacing="10" alignment="CENTER" minWidth="174" maxWidth="174">
+                                        <StackPane prefWidth="174" prefHeight="220" minWidth="174" minHeight="220" maxWidth="174" maxHeight="220" styleClass="profile-photo-frame">
+                                            <ImageView fitWidth="174" fitHeight="220" preserveRatio="false" smooth="true">
+                                                <image>
+                                                    <Image url="@../images/profile-images/employee-10006.jpg"/>
+                                                </image>
+                                            </ImageView>
+                                        </StackPane>
+                                    </VBox>
+                                    <VBox spacing="10" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+                                        <Label text="Andrea Mae Villanueva" styleClass="profile-name-large" wrapText="true"/>
+                                        <Label text="Employee ID: 10006" styleClass="profile-id-value"/>
+                                    </VBox>
+                                </HBox>
+
+                                <VBox spacing="0" styleClass="profile-section-card">
+                                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+                                        <Label text="&#128100;" styleClass="profile-section-icon"/>
+                                        <Label text="Personal Information" styleClass="profile-section-title"/>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="First Name" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="Andrea Mae" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Last Name" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="Villanueva" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Birth Date" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="February 14, 1988" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Civil Status" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="SINGLE" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                </VBox>
+
+                                <VBox spacing="0" styleClass="profile-section-card">
+                                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+                                        <Label text="&#128188;" styleClass="profile-section-icon"/>
+                                        <Label text="Employment Details" styleClass="profile-section-title"/>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Employment Status" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="REGULAR" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Position" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="HR Manager" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Department" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="Human Resources" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Supervisor" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="Antonio Lim" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                </VBox>
+
+                                <VBox spacing="0" styleClass="profile-section-card">
+                                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+                                        <Label text="&#9993;" styleClass="profile-section-icon"/>
+                                        <Label text="Contact Information" styleClass="profile-section-title"/>
+                                    </HBox>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Company Email" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="andrea.villanueva@motorph.com" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Personal Email" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="andrea.villanueva@gmail.com" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Phone Number" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="918-621-602" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <Separator styleClass="profile-row-divider"/>
+                                    <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+                                        <Label text="Address" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+                                        <Label text="17-85 Stracke Via Suite 042, Poblacion, Las Pinas 4783 Dinagat Islands" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+                                    </HBox>
+                                    <HBox spacing="6" alignment="CENTER_LEFT" styleClass="profile-note-row">
+                                        <Label text="&#9432;" styleClass="profile-note-icon"/>
+                                        <Label text="Only phone number and address can be updated." styleClass="note-text" wrapText="true" HBox.hgrow="ALWAYS"/>
+                                    </HBox>
+                                </VBox>
+
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Button text="Edit Profile" onAction="#showSuccessMessage" styleClass="profile-edit-button"/>
                                 </HBox>
                             </VBox>
 
                             <!-- ── ATTENDANCE ──────────────────────────── -->
                             <VBox fx:id="attendanceView" spacing="20" visible="false" managed="false">
-                                <HBox spacing="14">
-                                    <Button text="Time In"  onAction="#handleTimeIn"  styleClass="success-button"/>
-                                    <Button text="Time Out" onAction="#handleTimeOut" styleClass="primary-button"/>
-                                </HBox>
-                                <VBox spacing="12" styleClass="content-card">
-                                    <Label text="Attendance Logs" styleClass="section-title"/>
-                                    <GridPane hgap="28" vgap="12">
-                                        <Label text="Work Date"   styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                                        <Label text="Time In"     styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                                        <Label text="Time Out"    styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-                                        <Label text="Total Hours" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-                                        <Label text="Status"      styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
-                                        <Label fx:id="attendanceDateLabel"   text="2026-06-04" styleClass="data-line"  GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceTimeInLabel"  text="—"          styleClass="data-line"  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceTimeOutLabel" text="—"          styleClass="data-line"  GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceHoursLabel"   text="—"          styleClass="data-line"  GridPane.columnIndex="3" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceStatusLabel"  text="Pending"    styleClass="status-pill" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                                <VBox spacing="0" maxWidth="Infinity" styleClass="content-card, attendance-card">
+                                    <HBox alignment="CENTER_LEFT" spacing="24" styleClass="attendance-today-grid">
+                                        <VBox spacing="16" HBox.hgrow="ALWAYS">
+                                            <Label text="Today's Time" styleClass="attendance-card-title"/>
+                                            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="attendance-date-row">
+                                                <Label text="Date Today:" styleClass="attendance-detail-label"/>
+                                                <Label text="June 16, 2026 (Tuesday)" styleClass="attendance-date-value"/>
+                                            </HBox>
+                                            <Region prefHeight="1" maxHeight="1" styleClass="attendance-divider"/>
+                                            <GridPane hgap="18" vgap="8" maxWidth="Infinity" styleClass="attendance-status-grid">
+                                                <columnConstraints>
+                                                    <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                                                    <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                                                    <ColumnConstraints percentWidth="33.333" hgrow="ALWAYS"/>
+                                                </columnConstraints>
+                                                <Label text="Current Status" styleClass="attendance-detail-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                                <Label text="Time In" styleClass="attendance-detail-label" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                                <Label text="Time Out" styleClass="attendance-detail-label" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                                <Label text="Pending" maxWidth="Infinity" styleClass="attendance-status-value" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                                <Label text="-" maxWidth="Infinity" styleClass="attendance-time-value" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                                <Label text="-" maxWidth="Infinity" styleClass="attendance-time-value" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                            </GridPane>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="14" styleClass="attendance-action-panel">
+                                            <Button text="Time In" onAction="#showSuccessMessage" maxWidth="Infinity" styleClass="success-button, attendance-action-button, attendance-time-in-button"/>
+                                            <Button text="Time Out" onAction="#showSuccessMessage" maxWidth="Infinity" styleClass="primary-button, attendance-action-button, attendance-time-out-button"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+                                <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity" styleClass="content-card, attendance-history-card" VBox.vgrow="ALWAYS">
+                                    <VBox spacing="4">
+                                        <Label text="Attendance History" styleClass="section-title"/>
+                                        <Label text="List of your attendance records" styleClass="note-text"/>
+                                    </VBox>
+                                    <Region prefHeight="16"/>
+                                    <GridPane hgap="18" vgap="0" styleClass="payroll-table, attendance-table">
+                                        <Label text="Date" styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                        <Label text="Time In" styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                        <Label text="Time Out" styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                        <Label text="Hours Worked" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                                        <Label text="Status" styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                                        <Label text="June 14, 2026 (Sun)" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                        <Label text="09:18 PM" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                        <Label text="09:18 PM" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                        <Label text="0.00" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                                        <Label text="PRESENT" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                                        <Label text="December 31, 2024 (Tue)" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                        <Label text="08:57 AM" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                        <Label text="06:26 PM" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                                        <Label text="9.48" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                                        <Label text="PRESENT" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="2"/>
+                                        <Label text="December 30, 2024 (Mon)" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                        <Label text="09:14 AM" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                        <Label text="06:00 PM" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                                        <Label text="8.77" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+                                        <Label text="PRESENT" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="3"/>
+                                        <Label text="December 27, 2024 (Fri)" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                                        <Label text="10:43 AM" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                        <Label text="08:02 PM" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
+                                        <Label text="9.32" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+                                        <Label text="PRESENT" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="4"/>
+                                        <Label text="December 26, 2024 (Thu)" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                                        <Label text="09:04 AM" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                        <Label text="07:36 PM" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
+                                        <Label text="10.53" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+                                        <Label text="PRESENT" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="5"/>
                                     </GridPane>
+                                    <Region prefHeight="14"/>
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <Button text="&#8592; Previous" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                        <Label text="Page 1 of 16" styleClass="note-text"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Label text="Showing 1 to 10 of 153 records" styleClass="note-text"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Next &#8594;" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                    </HBox>
                                 </VBox>
                             </VBox>
 
                             <!-- ── LEAVE ──────────────────────────────── -->
                             <VBox fx:id="leaveView" spacing="20" visible="false" managed="false">
-                                <GridPane hgap="18" vgap="16" styleClass="content-card">
-                                    <Label text="Leave Request" styleClass="section-title" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
-                                    <Label text="Leave Type"        styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                                    <ComboBox fx:id="leaveTypeComboBox" promptText="Select leave type" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                    <Label text="Available Credits" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                                    <TextField fx:id="leaveCreditsField" text="Select a type" editable="false" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                                    <Label text="Start Date"        styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                                    <TextField fx:id="leaveStartDateField" promptText="YYYY-MM-DD" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                                    <Label text="End Date"          styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
-                                    <TextField fx:id="leaveEndDateField" promptText="YYYY-MM-DD" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-                                    <Label text="Leave Hours"       styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-                                    <TextField fx:id="leaveHoursField" promptText="8" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                                    <Label text="Reason"            styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
-                                    <TextField fx:id="leaveReasonField" promptText="Reason for leave" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-                                    <Button text="Submit Leave Request" onAction="#handleSubmitLeaveRequest" styleClass="primary-button" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                                <VBox spacing="18" styleClass="content-card">
+                                    <Label text="Available Credits" styleClass="attendance-card-title"/>
+                                    <GridPane hgap="0" vgap="10" styleClass="leave-credits-grid">
+                                        <columnConstraints>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                            <ColumnConstraints percentWidth="16.66"/>
+                                        </columnConstraints>
+                                        <VBox alignment="CENTER" spacing="8" styleClass="leave-credit-cell" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                            <Label text="Vacation Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="5.00" styleClass="leave-credit-value"/>
+                                            <Label text="credits available" styleClass="note-text"/>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="8" styleClass="leave-credit-cell" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                            <Label text="Sick Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="5.00" styleClass="leave-credit-value"/>
+                                            <Label text="credits available" styleClass="note-text"/>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="8" styleClass="leave-credit-cell" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                            <Label text="Emergency Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="3.00" styleClass="leave-credit-value"/>
+                                            <Label text="credits available" styleClass="note-text"/>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="8" styleClass="leave-credit-cell" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                            <Label text="Maternity Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="105.00" styleClass="leave-credit-value"/>
+                                            <Label text="credits available" styleClass="note-text"/>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="8" styleClass="leave-credit-cell" GridPane.columnIndex="4" GridPane.rowIndex="0">
+                                            <Label text="Solo Parent Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="7.00" styleClass="leave-credit-value"/>
+                                            <Label text="credits available" styleClass="note-text"/>
+                                        </VBox>
+                                        <VBox alignment="CENTER" spacing="8" GridPane.columnIndex="5" GridPane.rowIndex="0">
+                                            <Label text="Unpaid Leave" styleClass="attendance-detail-label"/>
+                                            <Label text="N/A" styleClass="leave-credit-value"/>
+                                            <Label text="unpaid" styleClass="note-text"/>
+                                        </VBox>
+                                    </GridPane>
+                                </VBox>
+
+                                <GridPane hgap="22" vgap="12" styleClass="content-card">
+                                    <Label text="New Leave Request" styleClass="section-title" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="3"/>
+                                    <Label text="Leave Type  *" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <Label text="From Date  *" styleClass="field-label" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                    <Label text="To Date  *" styleClass="field-label" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                    <ComboBox fx:id="leaveTypeComboBox" promptText="Select leave type" styleClass="input-field" maxWidth="Infinity" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                    <DatePicker promptText="Select from date" styleClass="input-field" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                    <DatePicker promptText="Select to date" styleClass="input-field" maxWidth="Infinity" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                                    <Label text="Total Hours" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                    <Label text="Reason  *" styleClass="field-label" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                    <Label text="0 / 255" styleClass="field-label" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                                    <TextField fx:id="leaveHoursField" promptText="Auto-computed" editable="false" styleClass="input-field" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                                    <TextField fx:id="leaveReasonField" promptText="Reason for leave" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="4" GridPane.columnSpan="2"/>
+                                    <HBox spacing="12" GridPane.columnIndex="0" GridPane.rowIndex="5" GridPane.columnSpan="2">
+                                        <Button text="Submit Leave Request" onAction="#showSuccessMessage" styleClass="primary-button"/>
+                                        <Button text="Clear" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                    </HBox>
                                 </GridPane>
-                                <VBox spacing="10" styleClass="content-card">
-                                    <Label text="Leave History" styleClass="section-title"/>
-                                    <Label fx:id="leaveHistoryLabel" text="Pending requests can be cancelled. Approved requests consume leave credits." styleClass="note-text"/>
-                                    <Button text="Cancel Latest Pending Request" onAction="#handleCancelLatestLeaveRequest" styleClass="secondary-button"/>
+
+                                <VBox spacing="14" styleClass="content-card">
+                                    <HBox alignment="CENTER_LEFT" spacing="12">
+                                        <VBox spacing="4">
+                                            <Label text="Leave Request History" styleClass="section-title"/>
+                                            <Label text="Pending requests can be cancelled. Approved requests consume leave credits." styleClass="note-text"/>
+                                        </VBox>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <ComboBox fx:id="leaveStatusFilterComboBox" value="All Status" styleClass="global-combo"/>
+                                    </HBox>
+                                    <GridPane hgap="18" vgap="0" styleClass="payroll-table">
+                                        <Label text="Request ID" styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                        <Label text="Leave Type" styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                        <Label text="From" styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                        <Label text="To" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                                        <Label text="Total Hours" styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                                        <Label text="Status" styleClass="table-head" GridPane.columnIndex="5" GridPane.rowIndex="0"/>
+                                        <Label text="Date Requested" styleClass="table-head" GridPane.columnIndex="6" GridPane.rowIndex="0"/>
+                                        <Label text="Action" styleClass="table-head" GridPane.columnIndex="7" GridPane.rowIndex="0"/>
+                                        <Label text="LR-0003" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                        <Label text="Solo Parent Leave" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                        <Label text="Jun 15, 2026" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                        <Label text="Jun 15, 2026" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                                        <Label text="8.00" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                                        <Label text="CANCELLED" styleClass="data-line" GridPane.columnIndex="5" GridPane.rowIndex="1"/>
+                                        <Label text="Jun 14, 2026 09:19 PM" styleClass="data-line" GridPane.columnIndex="6" GridPane.rowIndex="1"/>
+                                        <Label text="-" styleClass="data-line" GridPane.columnIndex="7" GridPane.rowIndex="1"/>
+                                        <Label text="LR-0001" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                        <Label text="Vacation Leave" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                        <Label text="Jul 1, 2026" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                                        <Label text="Jul 3, 2026" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                                        <Label text="27.00" styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="2"/>
+                                        <Label text="PENDING" styleClass="data-line" GridPane.columnIndex="5" GridPane.rowIndex="2"/>
+                                        <Label text="Jun 12, 2026 11:19 PM" styleClass="data-line" GridPane.columnIndex="6" GridPane.rowIndex="2"/>
+                                        <Button text="Cancel" onAction="#showSuccessMessage" styleClass="danger-outline-button" GridPane.columnIndex="7" GridPane.rowIndex="2"/>
+                                    </GridPane>
+                                    <Label fx:id="leaveHistoryLabel" styleClass="note-text"/>
                                 </VBox>
                             </VBox>
 
-                            <!-- ── PAYSLIP ─────────────────────────────── -->
+                            <!-- ── PAYSLIP / PAYROLL ──────────────────── -->
                             <VBox fx:id="payslipView" spacing="20" visible="false" managed="false">
-                                <HBox spacing="12">
-                                    <TextField fx:id="payslipSearchField" promptText="Payrun ID (optional)" styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                                    <Button text="Search" onAction="#handleSearchPayslip" styleClass="primary-button"/>
-                                </HBox>
-                                <VBox spacing="12" styleClass="content-card">
-                                    <Label text="Payslip Preview" styleClass="section-title"/>
-                                    <Label fx:id="payslipGrossPayLabel"    text="Gross Pay: PHP 0.00"   styleClass="data-line"/>
-                                    <Label fx:id="payslipDeductionsLabel"  text="Deductions: PHP 0.00"  styleClass="data-line"/>
-                                    <Label fx:id="payslipNetPayLabel"      text="Net Pay: PHP 0.00"     styleClass="metric-value, financial-value"/>
-                                    <HBox spacing="10">
-                                        <Button text="Preview Payslip"    onAction="#handlePreviewPayslip" styleClass="secondary-button"/>
-                                        <Button text="Export Text Payslip" onAction="#handleExportPayslip" styleClass="primary-button"/>
-                                        <Button text="Print Payslip"      onAction="#handlePrintPayslip"  styleClass="secondary-button"/>
+                                <VBox spacing="14" styleClass="content-card">
+                                    <VBox spacing="4">
+                                        <Label text="Payroll Summary" styleClass="section-title"/>
+                                        <Label text="List of your payroll records" styleClass="note-text"/>
+                                    </VBox>
+                                    <GridPane hgap="18" vgap="0" styleClass="payroll-table">
+                                        <Label text="Pay Period" styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                        <Label text="Basic Pay" styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                        <Label text="Gross Pay" styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                        <Label text="Deductions" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                                        <Label text="Net Pay" styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                                        <Label text="Action" styleClass="table-head" GridPane.columnIndex="5" GridPane.rowIndex="0"/>
+                                        <Label text="December 16 - December 31, 2024" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                        <Label text="&#8369;9,979.56" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                                        <Label text="&#8369;16,355.44" styleClass="data-line, payroll-net-value" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                                        <Button text="View Payslip" onAction="#handlePreviewPayslip" styleClass="danger-outline-button" GridPane.columnIndex="5" GridPane.rowIndex="1"/>
+                                        <Label text="December 1 - December 15, 2024" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                        <Label text="&#8369;29,835.00" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                        <Label text="&#8369;29,835.00" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="2"/>
+                                        <Label text="&#8369;2,946.99" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="2"/>
+                                        <Label text="&#8369;26,888.01" styleClass="data-line, payroll-net-value" GridPane.columnIndex="4" GridPane.rowIndex="2"/>
+                                        <Button text="View Payslip" onAction="#handlePreviewPayslip" styleClass="danger-outline-button" GridPane.columnIndex="5" GridPane.rowIndex="2"/>
+                                        <Label text="November 16 - November 30, 2024" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="3"/>
+                                        <Label text="&#8369;10,389.22" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="3"/>
+                                        <Label text="&#8369;15,945.78" styleClass="data-line, payroll-net-value" GridPane.columnIndex="4" GridPane.rowIndex="3"/>
+                                        <Button text="View Payslip" onAction="#handlePreviewPayslip" styleClass="danger-outline-button" GridPane.columnIndex="5" GridPane.rowIndex="3"/>
+                                        <Label text="November 1 - November 15, 2024" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                                        <Label text="&#8369;29,835.00" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                        <Label text="&#8369;29,835.00" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="4"/>
+                                        <Label text="&#8369;4,415.27" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="4"/>
+                                        <Label text="&#8369;25,419.73" styleClass="data-line, payroll-net-value" GridPane.columnIndex="4" GridPane.rowIndex="4"/>
+                                        <Button text="View Payslip" onAction="#handlePreviewPayslip" styleClass="danger-outline-button" GridPane.columnIndex="5" GridPane.rowIndex="4"/>
+                                        <Label text="October 16 - October 31, 2024" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                        <Label text="&#8369;26,335.00" styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="5"/>
+                                        <Label text="&#8369;11,797.92" styleClass="data-line" GridPane.columnIndex="3" GridPane.rowIndex="5"/>
+                                        <Label text="&#8369;14,537.08" styleClass="data-line, payroll-net-value" GridPane.columnIndex="4" GridPane.rowIndex="5"/>
+                                        <Button text="View Payslip" onAction="#handlePreviewPayslip" styleClass="danger-outline-button" GridPane.columnIndex="5" GridPane.rowIndex="5"/>
+                                    </GridPane>
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <Button text="&#8592; Previous" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                        <Label text="Page 1 of 2" styleClass="note-text"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Label text="Showing 1 to 10 of 14 records" styleClass="note-text"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Next &#8594;" onAction="#showSuccessMessage" styleClass="secondary-button"/>
                                     </HBox>
-                                    <Label fx:id="payslipMessageLabel" text="Employee can only view their own persisted payroll data." styleClass="note-text"/>
                                 </VBox>
+                            </VBox>
+
+                            <!-- ── SUPPORT TICKETS ────────────────────── -->
+                            <VBox fx:id="supportTicketsView" visible="false" managed="false">
+                                <HBox spacing="20">
+                                    <VBox spacing="18" styleClass="support-ticket-list-card" HBox.hgrow="ALWAYS">
+                                        <Label text="My Tickets" styleClass="attendance-card-title"/>
+                                        <GridPane hgap="24" vgap="0" styleClass="payroll-table">
+                                            <Label text="Ticket ID" styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                            <Label text="Category" styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                            <Label text="Title" styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
+                                            <Label text="Status" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
+                                            <Label text="Date Created" styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
+                                            <Label text="#1" styleClass="data-line" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                            <Label text="PAYROLL" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                            <Label text="Payroll Calculation Inaccu..." styleClass="data-line" GridPane.columnIndex="2" GridPane.rowIndex="1"/>
+                                            <Label text="OPEN" styleClass="data-line, payroll-net-value" GridPane.columnIndex="3" GridPane.rowIndex="1"/>
+                                            <Label text="Jun 16, 2026 05:26 ..." styleClass="data-line" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
+                                        </GridPane>
+                                        <Region VBox.vgrow="ALWAYS"/>
+                                        <HBox alignment="CENTER_LEFT" spacing="10">
+                                            <Button text="&#8592; Previous" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                            <Label text="Page 1 of 1" styleClass="note-text"/>
+                                            <Region HBox.hgrow="ALWAYS"/>
+                                            <Label text="Showing 1 to 1 of 1 tickets" styleClass="note-text"/>
+                                            <Region HBox.hgrow="ALWAYS"/>
+                                            <Button text="Next &#8594;" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                        </HBox>
+                                    </VBox>
+                                    <VBox spacing="18" styleClass="support-ticket-form-card" prefWidth="430">
+                                        <Label text="Create New Ticket" styleClass="section-title"/>
+                                        <Label text="Category  *" styleClass="field-label"/>
+                                        <ComboBox promptText="Select a category" maxWidth="Infinity" styleClass="input-field"/>
+                                        <Label text="Title  *" styleClass="field-label"/>
+                                        <TextField promptText="Brief summary of your concern" styleClass="input-field"/>
+                                        <HBox alignment="CENTER_LEFT">
+                                            <Label text="Message  *" styleClass="field-label"/>
+                                            <Region HBox.hgrow="ALWAYS"/>
+                                            <Label text="0 / 1000" styleClass="field-label"/>
+                                        </HBox>
+                                        <TextArea promptText="Describe your concern in detail..." prefHeight="300" wrapText="true" styleClass="input-field"/>
+                                        <HBox spacing="12">
+                                            <Button text="Submit Ticket" onAction="#showSuccessMessage" styleClass="primary-button"/>
+                                            <Button text="Clear" onAction="#showSuccessMessage" styleClass="secondary-button"/>
+                                        </HBox>
+                                        <Separator/>
+                                        <HBox spacing="6" alignment="CENTER_LEFT">
+                                        <Label text="&#9432;" styleClass="profile-note-icon"/>
+                                            <Label text="Our team will review your ticket and respond as soon as possible." wrapText="true" styleClass="note-text"/>
+                                        </HBox>
+                                    </VBox>
+                                </HBox>
                             </VBox>
 
                             <!-- ── SETTINGS ───────────────────────────── -->
@@ -447,9 +770,9 @@
                                 <VBox spacing="14" styleClass="content-card">
                                     <Label text="Account Settings" styleClass="section-title"/>
                                     <Label text="Email is view-only and remains the login identity." styleClass="note-text"/>
-                                    <TextField fx:id="settingsEmailField" text="harty.villegas@motorph.com" editable="false" styleClass="input-field"/>
-                                    <TextField fx:id="settingsRecoveryEmailField" promptText="Recovery email" editable="false" styleClass="input-field"/>
-                                    <PasswordField fx:id="settingsOldPasswordField"     promptText="Old password"          styleClass="input-field"/>
+                                    <TextField fx:id="settingsEmailField" text="andrea.villanueva@motorph.com" editable="false" styleClass="input-field"/>
+                                    <TextField fx:id="settingsRecoveryEmailField" text="andrea.villanueva@gmail.com" editable="false" styleClass="input-field"/>
+                                    <PasswordField fx:id="settingsOldPasswordField"     promptText="Current password"      styleClass="input-field"/>
                                     <PasswordField fx:id="settingsNewPasswordField"     promptText="New password"          styleClass="input-field"/>
                                     <PasswordField fx:id="settingsConfirmPasswordField" promptText="Confirm new password"  styleClass="input-field"/>
                                     <Button text="Change Password" onAction="#handleChangePassword" styleClass="success-button"/>
@@ -464,7 +787,6 @@
                 <HBox alignment="CENTER_LEFT" spacing="12" styleClass="footerbar">
                     <Label fx:id="appMessageLabel" text="Welcome to your employee workspace." styleClass="success-message"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <HBox fx:id="globalControlsHostApp" alignment="CENTER_RIGHT" spacing="6" HBox.hgrow="NEVER"/>
                 </HBox>
 
             </VBox>
@@ -479,7 +801,7 @@
                 <Button text="✕" onAction="#toggleSidePanel" styleClass="side-panel-close"/>
             </HBox>
             <Separator/>
-            <Button text="Profile"          onAction="#showDashboard" styleClass="side-panel-item"/>
+            <Button text="Profile"          onAction="#showProfile"   styleClass="side-panel-item"/>
             <Button text="Notifications"    onAction="#showDashboard" styleClass="side-panel-item"/>
             <Button text="Help"             onAction="#showDashboard" styleClass="side-panel-item"/>
             <Separator/>

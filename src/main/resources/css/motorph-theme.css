@@ -3447,3 +3447,288 @@
 
 /* Tile text */
 .tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
+
+/* ── HR workspace refinements ─────────────────────────────────────────── */
+.hr-table {
+    -fx-padding: 4 0 0 0;
+    -fx-hgap: 18;
+    -fx-vgap: 10;
+}
+
+.hr-table .label {
+    -fx-min-height: 24;
+}
+
+.success-value {
+    -fx-text-fill: #86EFAC;
+}
+
+.root-canvas.light-mode .success-value {
+    -fx-text-fill: #15803D;
+}
+
+.root-canvas.light-mode .hr-table .data-line {
+    -fx-text-fill: #243244;
+}
+
+/* -- Joyce employee workspace module styles ----------------------------- */
+.profile-header-section {
+    -fx-padding: 4 0 12 0;
+}
+
+.profile-photo-frame {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 2;
+    -fx-border-radius: 10;
+    -fx-padding: 0;
+    -fx-alignment: center;
+}
+
+.profile-name-large {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #F0F0F4;
+}
+
+.profile-id-value {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(200,200,215,0.70);
+}
+
+.profile-section-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.14), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(155,10,10,0.38), rgba(105,4,4,0.48));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,100,100,0.30);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 0;
+}
+
+.profile-section-header {
+    -fx-padding: 16 22 12 22;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.profile-section-icon {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+.profile-section-title,
+.attendance-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+.profile-data-row {
+    -fx-padding: 13 22;
+    -fx-min-height: 44;
+}
+
+.profile-field-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(255,195,195,0.62);
+}
+
+.profile-field-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 400;
+    -fx-text-fill: rgba(245,230,230,0.90);
+}
+
+.profile-row-divider .line {
+    -fx-border-color: rgba(255,255,255,0.07);
+    -fx-border-width: 0.5;
+}
+
+.profile-note-row {
+    -fx-padding: 10 22 14 22;
+}
+
+.profile-note-icon {
+    -fx-font-size: 13px;
+    -fx-text-fill: rgba(255,190,190,0.55);
+}
+
+.profile-edit-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(255,80,80,0.55);
+    -fx-border-width: 1.5;
+    -fx-text-fill: #FF7070;
+    -fx-background-radius: 9;
+    -fx-border-radius: 9;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-padding: 10 22;
+    -fx-cursor: hand;
+    -fx-min-height: 44;
+}
+
+.profile-edit-button:hover {
+    -fx-background-color: rgba(255,80,80,0.11);
+    -fx-border-color: rgba(255,80,80,0.80);
+    -fx-text-fill: #FF9090;
+}
+
+.attendance-card {
+    -fx-padding: 22 24;
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
+        rgba(23,26,31,0.78);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255,120,120,0.22);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.24), 18, 0.20, 0, 9);
+}
+
+.attendance-today-grid {
+    -fx-min-height: 168;
+}
+
+.attendance-detail-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(255,210,210,0.72);
+}
+
+.attendance-date-row {
+    -fx-min-height: 28;
+}
+
+.attendance-date-value,
+.attendance-time-value {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+}
+
+.attendance-status-value {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #73F6A2;
+}
+
+.attendance-divider {
+    -fx-background-color: rgba(255,95,95,0.16);
+}
+
+.attendance-action-panel {
+    -fx-min-width: 256;
+    -fx-pref-width: 256;
+    -fx-max-width: 256;
+    -fx-padding: 0 0 0 24;
+    -fx-border-color: transparent transparent transparent rgba(255,80,80,0.14);
+    -fx-border-width: 0 0 0 1;
+}
+
+.attendance-action-button {
+    -fx-min-width: 220;
+    -fx-pref-width: 220;
+    -fx-max-width: 220;
+    -fx-min-height: 54;
+    -fx-pref-height: 54;
+    -fx-max-height: 54;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #FFFFFF;
+}
+
+.attendance-time-in-button {
+    -fx-background-color:
+        linear-gradient(to bottom, rgba(210,45,45,0.62), rgba(92,8,12,0.78));
+    -fx-border-color: rgba(255,110,110,0.28);
+}
+
+.attendance-time-out-button {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 100% 0%, rgba(190,35,35,0.20), transparent),
+        linear-gradient(to bottom, rgba(54,55,61,0.96), rgba(27,28,33,0.98));
+    -fx-border-color: rgba(255,90,90,0.22);
+}
+
+.attendance-history-card,
+.support-ticket-list-card {
+    -fx-padding: 24;
+}
+
+.support-ticket-list-card {
+    -fx-background-color: rgba(23,26,31,0.78);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255,120,120,0.22);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-min-height: 650;
+}
+
+.support-ticket-form-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.18), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(162,10,10,0.46), rgba(112,5,5,0.58));
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255,120,120,0.32);
+    -fx-border-radius: 16;
+    -fx-border-width: 1.5;
+    -fx-padding: 26;
+}
+
+.leave-credits-grid {
+    -fx-padding: 0 0 2 0;
+}
+
+.leave-credit-cell {
+    -fx-border-color: transparent rgba(255,80,80,0.20) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.leave-credit-value {
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+}
+
+.payroll-table {
+    -fx-padding: 8 0 0 0;
+    -fx-hgap: 20;
+    -fx-vgap: 0;
+}
+
+.payroll-table .label {
+    -fx-min-height: 52;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.payroll-table .table-head {
+    -fx-min-height: 42;
+}
+
+.payroll-net-value {
+    -fx-font-weight: 900;
+}
+
+.text-area.input-field {
+    -fx-padding: 0;
+}
+
+.text-area.input-field .content {
+    -fx-background-color: #111827;
+}
+
+.root-canvas.light-mode .profile-name-large,
+.root-canvas.light-mode .profile-field-value,
+.root-canvas.light-mode .attendance-date-value,
+.root-canvas.light-mode .attendance-time-value,
+.root-canvas.light-mode .leave-credit-value {
+    -fx-text-fill: #111827;
+}

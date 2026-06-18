@@ -1,7 +1,9 @@
 package motorph.ui.controller;
 
+import motorph.application.dto.employee.EmployeeSummaryDTO;
 import motorph.application.dto.login.LoginRequestDTO;
 import motorph.application.dto.login.LoginResultDTO;
+import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
@@ -19,6 +21,7 @@ import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.PayrollResult;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.AttendanceStatus;
+import motorph.domain.value.EmploymentStatus;
 import motorph.domain.value.LeaveStatus;
 import motorph.domain.value.Role;
 import motorph.infrastructure.repository.AttendanceRepository;
@@ -57,6 +60,7 @@ import javafx.scene.control.TextInputControl;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -90,7 +94,7 @@ public class LoginController {
     private static final Map<String, String> FILIPINO_LABELS = Map.ofEntries(
             // ── Login & Auth ───────────────────────────────────────────
             Map.entry("Welcome Back", "Maligayang Pagbabalik"),
-            Map.entry("Sign in to continue to your employee workspace.", "Mag-sign in upang magpatuloy sa inyong workspace."),
+            Map.entry("Sign in to continue to the HR workspace.", "Mag-sign in upang magpatuloy sa HR workspace."),
             Map.entry("Company Email", "Email ng Kumpanya"),
             Map.entry("Password", "Password"),
             Map.entry("Remember me", "Tandaan ako"),
@@ -373,10 +377,16 @@ public class LoginController {
     private VBox dashboardView;
 
     @FXML
+    private VBox profileView;
+
+    @FXML
     private VBox attendanceView;
 
     @FXML
     private VBox leaveView;
+
+    @FXML
+    private VBox supportTicketsView;
 
     @FXML
     private VBox payslipView;
@@ -388,10 +398,16 @@ public class LoginController {
     private Button dashboardNavButton;
 
     @FXML
+    private Button profileNavButton;
+
+    @FXML
     private Button attendanceNavButton;
 
     @FXML
     private Button leaveNavButton;
+
+    @FXML
+    private Button supportTicketsNavButton;
 
     @FXML
     private Button payslipNavButton;
@@ -415,6 +431,18 @@ public class LoginController {
     private Label dashboardNetPayLabel;
 
     @FXML
+    private Label dashboardTotalEmployeesLabel;
+
+    @FXML
+    private Label dashboardActiveEmployeesLabel;
+
+    @FXML
+    private Label dashboardPendingLeaveLabel;
+
+    @FXML
+    private Label dashboardOnLeaveTodayLabel;
+
+    @FXML
     private Label dashboardEmailLabel;
 
     @FXML
@@ -425,6 +453,63 @@ public class LoginController {
 
     @FXML
     private BarChart<String, Number> attendanceSummaryChart;
+
+    @FXML
+    private GridPane dashboardPendingLeaveGrid;
+
+    @FXML
+    private GridPane recentHrActivityGrid;
+
+    @FXML
+    private TextField employeeSearchField;
+
+    @FXML
+    private TextField employeeIdField;
+
+    @FXML
+    private TextField employeeFirstNameField;
+
+    @FXML
+    private TextField employeeLastNameField;
+
+    @FXML
+    private TextField employeePersonalEmailField;
+
+    @FXML
+    private TextField employeePhoneField;
+
+    @FXML
+    private TextField employeeDepartmentField;
+
+    @FXML
+    private TextField employeePositionField;
+
+    @FXML
+    private TextField employeeHireDateField;
+
+    @FXML
+    private ComboBox<String> employeeStatusComboBox;
+
+    @FXML
+    private GridPane employeeRecordsGrid;
+
+    @FXML
+    private Label employeeRecordsMessageLabel;
+
+    @FXML
+    private TextField attendanceEmployeeFilterField;
+
+    @FXML
+    private TextField attendanceStartDateField;
+
+    @FXML
+    private TextField attendanceEndDateField;
+
+    @FXML
+    private GridPane attendanceRecordsGrid;
+
+    @FXML
+    private Label attendanceRecordsMessageLabel;
 
     @FXML
     private Label attendanceDateLabel;
@@ -448,6 +533,12 @@ public class LoginController {
     private TextField leaveCreditsField;
 
     @FXML
+    private ComboBox<String> leaveStatusFilterComboBox;
+
+    @FXML
+    private TextField leaveEmployeeFilterField;
+
+    @FXML
     private TextField leaveStartDateField;
 
     @FXML
@@ -458,6 +549,15 @@ public class LoginController {
 
     @FXML
     private TextField leaveReasonField;
+
+    @FXML
+    private TextField leaveActionRequestIdField;
+
+    @FXML
+    private TextField leaveActionRemarksField;
+
+    @FXML
+    private GridPane leaveRequestsGrid;
 
     @FXML
     private Label leaveHistoryLabel;
@@ -476,6 +576,27 @@ public class LoginController {
 
     @FXML
     private Label payslipMessageLabel;
+
+    @FXML
+    private ComboBox<String> reportTypeComboBox;
+
+    @FXML
+    private TextField reportDepartmentFilterField;
+
+    @FXML
+    private TextField reportEmployeeFilterField;
+
+    @FXML
+    private TextField reportStartDateField;
+
+    @FXML
+    private TextField reportEndDateField;
+
+    @FXML
+    private GridPane hrReportPreviewGrid;
+
+    @FXML
+    private Label hrReportMessageLabel;
 
     @FXML
     private TextField settingsEmailField;
@@ -569,9 +690,45 @@ public class LoginController {
         // apply defaults from the app topbar controls
         if (appThemeCombo != null) syncTheme(appThemeCombo.getValue());
         if (appLanguageCombo != null) syncLanguage(appLanguageCombo.getValue());
-        leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
-        leaveTypeComboBox.setOnAction(event -> refreshLeaveCredits());
-        attendanceDateLabel.setText(LocalDate.now().toString());
+        if (employeeStatusComboBox != null) {
+            employeeStatusComboBox.getItems().setAll("REGULAR", "PROBATIONARY", "CONTRACTUAL");
+        }
+
+        if (leaveStatusFilterComboBox != null) {
+            leaveStatusFilterComboBox.getItems().setAll("ALL", "PENDING", "APPROVED", "REJECTED", "CANCELLED");
+            leaveStatusFilterComboBox.setValue("PENDING");
+        }
+
+        if (leaveTypeComboBox != null) {
+            leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
+            leaveTypeComboBox.setOnAction(event -> handleFilterLeaveRequests());
+        }
+
+        if (reportTypeComboBox != null) {
+            reportTypeComboBox.getItems().setAll("Attendance Report", "Employee Timecard", "Leave Report", "Employee Masterlist");
+            reportTypeComboBox.setValue("Attendance Report");
+        }
+
+        if (attendanceStartDateField != null) {
+            attendanceStartDateField.setText(LocalDate.now().minusDays(14).toString());
+        }
+
+        if (attendanceEndDateField != null) {
+            attendanceEndDateField.setText(LocalDate.now().toString());
+        }
+
+        if (reportStartDateField != null) {
+            reportStartDateField.setText(LocalDate.now().withDayOfMonth(1).toString());
+        }
+
+        if (reportEndDateField != null) {
+            reportEndDateField.setText(LocalDate.now().toString());
+        }
+
+        if (attendanceDateLabel != null) {
+            attendanceDateLabel.setText(LocalDate.now().toString());
+        }
+
         seedDashboardCharts();
         showLogin();
         showDashboard();
@@ -675,7 +832,7 @@ public class LoginController {
                 Role.HR,
                 true,
                 false,
-                "HR demo login successful."
+                "HR access verified."
         );
         currentUserAccountId = HR_DEMO_USER_ACCOUNT_ID;
         currentEmployeeId = HR_DEMO_EMPLOYEE_ID;
@@ -695,7 +852,7 @@ public class LoginController {
         appPane.setManaged(true);
 
         showDashboard();
-        setSuccess(appMessageLabel, "HR demo account loaded.");
+        setSuccess(appMessageLabel, "Welcome to your employee workspace.");
     }
 
     @FXML
@@ -877,31 +1034,33 @@ public class LoginController {
 
     @FXML
     private void showDashboard() {
-        if (hrDemoMode) {
-            showView(dashboardView, dashboardNavButton, "Hello, HR.", "HR WORKSPACE");
-        } else {
-            showView(dashboardView, dashboardNavButton, "Hello, Harty.", "EMPLOYEE WORKSPACE");
-        }
+        showView(dashboardView, dashboardNavButton, "Dashboard", "EMPLOYEE WORKSPACE");
         loadDashboardData();
+    }
+
+    @FXML
+    private void showProfile() {
+        showView(profileView, profileNavButton, "My Profile", "View and update your contact information");
     }
 
     @FXML
     private void showAttendance() {
         showView(attendanceView, attendanceNavButton, "Attendance", "Daily time-in, time-out, and attendance logs");
-        refreshAttendanceStatus();
     }
 
     @FXML
     private void showLeave() {
         showView(leaveView, leaveNavButton, "Leave Request", "Submit leave requests and monitor credits");
-        refreshLeaveCredits();
-        refreshLeaveHistory();
     }
 
     @FXML
     private void showPayslip() {
         showView(payslipView, payslipNavButton, "Payslip / Payroll", "View persisted payroll results and payslips");
-        handleSearchPayslip();
+    }
+
+    @FXML
+    private void showSupportTickets() {
+        showView(supportTicketsView, supportTicketsNavButton, "Support Tickets", "Submit a support ticket and track your requests");
     }
 
     @FXML
@@ -912,7 +1071,115 @@ public class LoginController {
 
     @FXML
     private void showSuccessMessage() {
-        setSuccess(appMessageLabel, "Action accepted. Connect this control to the service layer next.");
+        setSuccess(appMessageLabel, "Action accepted.");
+    }
+
+    @FXML
+    private void handleSearchEmployees() {
+        refreshEmployeeRecords();
+    }
+
+    @FXML
+    private void handleRefreshEmployees() {
+        if (employeeSearchField != null) {
+            employeeSearchField.clear();
+        }
+        refreshEmployeeRecords();
+    }
+
+    @FXML
+    private void handleAddEmployee() {
+        if (hrDemoMode) {
+            setSuccess(employeeRecordsMessageLabel, "This account is read-only.");
+            return;
+        }
+
+        try {
+            Employee employee = buildEmployeeFromForm(null);
+            employeeService.createEmployee(employee);
+            setSuccess(employeeRecordsMessageLabel, "Employee record added.");
+            refreshEmployeeRecords();
+        } catch (Exception e) {
+            setError(employeeRecordsMessageLabel, userMessage(e));
+        }
+    }
+
+    @FXML
+    private void handleEditEmployee() {
+        if (hrDemoMode) {
+            setSuccess(employeeRecordsMessageLabel, "This account is read-only.");
+            return;
+        }
+
+        try {
+            int employeeId = parsePositiveInt(employeeIdField, "Employee ID is required for editing.");
+            Employee existing = employeeService.getEmployeeById(employeeId);
+            Employee employee = buildEmployeeFromForm(existing);
+            employeeService.updateEmployee(employee);
+            setSuccess(employeeRecordsMessageLabel, "Employee record updated.");
+            refreshEmployeeRecords();
+        } catch (Exception e) {
+            setError(employeeRecordsMessageLabel, userMessage(e));
+        }
+    }
+
+    @FXML
+    private void handleDeactivateEmployee() {
+        if (hrDemoMode) {
+            setSuccess(employeeRecordsMessageLabel, "This account is read-only.");
+            return;
+        }
+
+        try {
+            int employeeId = parsePositiveInt(employeeIdField, "Employee ID is required for deactivation.");
+            employeeService.deactivateEmployee(employeeId);
+            setSuccess(employeeRecordsMessageLabel, "Employee deactivated. Payroll, attendance, and leave history are preserved.");
+            refreshEmployeeRecords();
+        } catch (Exception e) {
+            setError(employeeRecordsMessageLabel, userMessage(e));
+        }
+    }
+
+    @FXML
+    private void handleFilterAttendanceRecords() {
+        refreshAttendanceRecords();
+    }
+
+    @FXML
+    private void handleFilterLeaveRequests() {
+        refreshLeaveRequests();
+    }
+
+    @FXML
+    private void handleApproveLeaveRequest() {
+        handleLeaveDecision(true);
+    }
+
+    @FXML
+    private void handleRejectLeaveRequest() {
+        handleLeaveDecision(false);
+    }
+
+    @FXML
+    private void handleGenerateHrReport() {
+        refreshHrReportPreview();
+    }
+
+    @FXML
+    private void handleExportHrReport() {
+        refreshHrReportPreview();
+        setSuccess(hrReportMessageLabel, "Report preview prepared. PDF export requires the HR JasperReports templates in this branch.");
+    }
+
+    @FXML
+    private void handlePrintHrReport() {
+        refreshHrReportPreview();
+        setSuccess(hrReportMessageLabel, "Report preview prepared for printing. HR JasperReports templates are required for direct print output.");
+    }
+
+    @FXML
+    private void handleSwitchRole() {
+        setSuccess(appMessageLabel, "Switch Role is available for multi-role users after role selection is connected.");
     }
 
     @FXML
@@ -922,7 +1189,7 @@ public class LoginController {
         }
 
         if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+            setSuccess(appMessageLabel, "This account is read-only.");
             return;
         }
 
@@ -942,7 +1209,7 @@ public class LoginController {
         }
 
         if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+            setSuccess(appMessageLabel, "This account is read-only.");
             return;
         }
 
@@ -962,7 +1229,7 @@ public class LoginController {
         }
 
         if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+            setSuccess(appMessageLabel, "This account is read-only.");
             return;
         }
 
@@ -1007,7 +1274,7 @@ public class LoginController {
         }
 
         if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+            setSuccess(appMessageLabel, "This account is read-only.");
             return;
         }
 
@@ -1157,7 +1424,7 @@ public class LoginController {
         }
 
         if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+            setSuccess(appMessageLabel, "This account is read-only.");
             return;
         }
 
@@ -1225,42 +1492,365 @@ public class LoginController {
         setSuccess(loginMessageLabel, "Logged out successfully.");
     }
 
+    private void refreshEmployeeRecords() {
+        clearGridRows(employeeRecordsGrid);
+
+        try {
+            List<EmployeeSummaryDTO> employees = hrDemoMode ? demoEmployees() : employeeService.getAllEmployeeSummaries();
+            String filter = text(employeeSearchField).toLowerCase(Locale.ROOT);
+
+            List<EmployeeSummaryDTO> filtered = employees.stream()
+                    .filter(employee -> filter.isBlank()
+                            || String.valueOf(employee.getEmployeeId()).contains(filter)
+                            || safe(employee.getFullName(), "").toLowerCase(Locale.ROOT).contains(filter)
+                            || String.valueOf(employee.getDepartmentId()).contains(filter)
+                            || employee.getEmploymentStatus().name().toLowerCase(Locale.ROOT).contains(filter))
+                    .limit(12)
+                    .toList();
+
+            int row = 1;
+            for (EmployeeSummaryDTO employee : filtered) {
+                addGridRow(employeeRecordsGrid, row++,
+                        String.valueOf(employee.getEmployeeId()),
+                        safe(employee.getFullName(), "Employee"),
+                        "Department " + employee.getDepartmentId(),
+                        "Position " + employee.getPositionId(),
+                        employee.getEmploymentStatus().name(),
+                        employee.isActive() ? "YES" : "NO");
+            }
+
+            setSuccess(employeeRecordsMessageLabel, filtered.size() + " employee record(s) shown.");
+        } catch (Exception e) {
+            addGridRow(employeeRecordsGrid, 1, "—", "Unable to load employee records", "—", "—", "—", "—");
+            setError(employeeRecordsMessageLabel, userMessage(e));
+        }
+    }
+
+    private void refreshAttendanceRecords() {
+        clearGridRows(attendanceRecordsGrid);
+
+        try {
+            LocalDate startDate = parseOptionalDate(attendanceStartDateField, LocalDate.now().minusDays(14));
+            LocalDate endDate = parseOptionalDate(attendanceEndDateField, LocalDate.now());
+            if (endDate.isBefore(startDate)) {
+                throw new ValidationException("End date cannot be before start date.");
+            }
+
+            List<Attendance> records = hrDemoMode ? demoAttendanceRecords() : attendanceService.getAttendanceByDateRange(startDate, endDate);
+            String filter = text(attendanceEmployeeFilterField).toLowerCase(Locale.ROOT);
+
+            List<Attendance> filtered = records.stream()
+                    .filter(record -> filter.isBlank() || String.valueOf(record.getEmployeeId()).contains(filter))
+                    .limit(12)
+                    .toList();
+
+            int row = 1;
+            for (Attendance attendance : filtered) {
+                addGridRow(attendanceRecordsGrid, row++,
+                        "Employee " + attendance.getEmployeeId(),
+                        attendance.getWorkDate().toString(),
+                        attendance.getTimeIn() == null ? "—" : attendance.getTimeIn().toString(),
+                        attendance.getTimeOut() == null ? "—" : attendance.getTimeOut().toString(),
+                        String.format("%.2f", attendance.getHoursWorked()),
+                        attendance.getAttendanceStatus().name());
+            }
+
+            setSuccess(attendanceRecordsMessageLabel, filtered.size() + " attendance record(s) shown.");
+        } catch (Exception e) {
+            addGridRow(attendanceRecordsGrid, 1, "—", "Unable to load records", "—", "—", "—", "—");
+            setError(attendanceRecordsMessageLabel, userMessage(e));
+        }
+    }
+
+    private void refreshLeaveRequests() {
+        clearGridRows(leaveRequestsGrid);
+
+        try {
+            List<LeaveRequest> requests = loadFilteredLeaveRequests();
+            int row = 1;
+
+            for (LeaveRequest request : requests.stream().limit(12).toList()) {
+                addGridRow(leaveRequestsGrid, row++,
+                        String.valueOf(request.getRequestId()),
+                        "Employee " + request.getEmployeeId(),
+                        leaveTypeName(request.getLeaveTypeId()),
+                        request.getStartDate() + " to " + request.getEndDate(),
+                        String.format("%.1f", request.getLeaveHours()),
+                        request.getStatus().name());
+            }
+
+            setSuccess(leaveHistoryLabel, requests.size() + " leave request(s) shown.");
+        } catch (Exception e) {
+            addGridRow(leaveRequestsGrid, 1, "—", "Unable to load leave requests", "—", "—", "—", "—");
+            setError(leaveHistoryLabel, userMessage(e));
+        }
+    }
+
+    private void handleLeaveDecision(boolean approve) {
+        if (hrDemoMode) {
+            setSuccess(leaveHistoryLabel, "This account is read-only.");
+            return;
+        }
+
+        try {
+            int requestId = parsePositiveInt(leaveActionRequestIdField, "Leave request ID is required.");
+            UserAccount actor = currentActorAccount();
+
+            if (approve) {
+                leaveService.approveLeaveRequest(actor, requestId);
+                setSuccess(leaveHistoryLabel, "Leave request approved and credits deducted.");
+            } else {
+                leaveService.rejectLeaveRequest(actor, requestId);
+                setSuccess(leaveHistoryLabel, "Leave request rejected.");
+            }
+
+            refreshLeaveRequests();
+            loadDashboardData();
+        } catch (Exception e) {
+            setError(leaveHistoryLabel, userMessage(e));
+        }
+    }
+
+    private void refreshHrReportPreview() {
+        clearGridRows(hrReportPreviewGrid);
+
+        String reportType = reportTypeComboBox == null ? "Attendance Report" : safe(reportTypeComboBox.getValue(), "Attendance Report");
+        String department = text(reportDepartmentFilterField);
+        String employee = text(reportEmployeeFilterField);
+        String startDate = text(reportStartDateField);
+        String endDate = text(reportEndDateField);
+
+        addGridRow(hrReportPreviewGrid, 1, "Report Type", reportType);
+        addGridRow(hrReportPreviewGrid, 2, "Department Filter", department.isBlank() ? "All departments" : department);
+        addGridRow(hrReportPreviewGrid, 3, "Employee Filter", employee.isBlank() ? "All employees" : employee);
+        addGridRow(hrReportPreviewGrid, 4, "Date Range", safe(startDate, "Start") + " to " + safe(endDate, "End"));
+        addGridRow(hrReportPreviewGrid, 5, "Data Source", "Persisted MySQL data through existing services");
+        addGridRow(hrReportPreviewGrid, 6, "Output Actions", "Preview, PDF export, and print require HR JasperReports templates");
+
+        setSuccess(hrReportMessageLabel, "Preview generated for " + reportType + ".");
+    }
+
     private void loadDashboardData() {
         if (hrDemoMode) {
             dashboardEmployeeNameLabel.setText("HR Demo User");
             dashboardEmployeeRoleLabel.setText("Human Resources");
             dashboardEmailLabel.setText(HR_DEMO_EMAIL);
-            pageTitleLabel.setText("Hello, HR.");
-            pageSubtitleLabel.setText("HR WORKSPACE");
-            dashboardTaskPercentLabel.setText("4");
             settingsEmailField.setText(HR_DEMO_EMAIL);
-            settingsRecoveryEmailField.setText("hr.demo.recovery@motorph.com");
-            refreshDashboardPayslip();
-            refreshAttendanceStatus();
-            refreshLeaveCredits();
-            refreshLeaveHistory();
-            return;
+            settingsRecoveryEmailField.setText("hr.recovery@motorph.com");
+        } else if (currentEmployeeId > 0) {
+            try {
+                Employee employee = employeeService.getEmployeeById(currentEmployeeId);
+                dashboardEmployeeNameLabel.setText(employee.getFullName());
+                dashboardEmployeeRoleLabel.setText("Human Resources");
+                dashboardEmailLabel.setText(companyEmailField.getText());
+                settingsRecoveryEmailField.setText(employee.getPersonalEmail());
+            } catch (Exception e) {
+                setError(appMessageLabel, userMessage(e));
+            }
         }
 
-        if (currentEmployeeId <= 0) {
-            return;
-        }
+        refreshHrDashboardMetrics();
+        refreshDashboardLeaveGrid();
+        refreshRecentHrActivity();
+    }
 
+    private void refreshHrDashboardMetrics() {
         try {
-            Employee employee = employeeService.getEmployeeById(currentEmployeeId);
-            String fullName = employee.getFullName();
-            dashboardEmployeeNameLabel.setText(fullName);
-            dashboardEmployeeRoleLabel.setText(employee.getEmploymentStatus().name() + " / Department " + employee.getDepartmentId());
-            dashboardEmailLabel.setText(safe(employee.getPersonalEmail(), "No recovery email on file"));
-            pageTitleLabel.setText("Hello, " + employee.getFirstName() + ".");
-            settingsRecoveryEmailField.setText(employee.getPersonalEmail());
+            List<EmployeeSummaryDTO> employees = hrDemoMode ? demoEmployees() : employeeService.getAllEmployeeSummaries();
+            List<LeaveRequest> leaves = hrDemoMode ? demoLeaveRequests() : leaveService.getAllLeaveRequests();
+            LocalDate today = LocalDate.now();
 
-            refreshLeaveCredits();
-            refreshDashboardPayslip();
+            long activeEmployees = employees.stream().filter(EmployeeSummaryDTO::isActive).count();
+            long pendingLeaves = leaves.stream().filter(request -> request.getStatus() == LeaveStatus.PENDING).count();
+            long onLeaveToday = leaves.stream()
+                    .filter(request -> request.getStatus() == LeaveStatus.APPROVED)
+                    .filter(request -> !today.isBefore(request.getStartDate()) && !today.isAfter(request.getEndDate()))
+                    .count();
+
+            setLabel(dashboardTotalEmployeesLabel, String.valueOf(employees.size()));
+            setLabel(dashboardActiveEmployeesLabel, String.valueOf(activeEmployees));
+            setLabel(dashboardPendingLeaveLabel, String.valueOf(pendingLeaves));
+            setLabel(dashboardOnLeaveTodayLabel, String.valueOf(onLeaveToday));
+
+            if (attendanceSummaryChart != null) {
+                attendanceSummaryChart.getData().setAll(series(
+                        "Employees",
+                        new String[]{"Total", "Active", "Pending Leave", "On Leave"},
+                        new double[]{employees.size(), activeEmployees, pendingLeaves, onLeaveToday}
+                ));
+            }
         } catch (Exception e) {
+            setLabel(dashboardTotalEmployeesLabel, "—");
+            setLabel(dashboardActiveEmployeesLabel, "—");
+            setLabel(dashboardPendingLeaveLabel, "—");
+            setLabel(dashboardOnLeaveTodayLabel, "—");
             setError(appMessageLabel, userMessage(e));
         }
     }
+
+    private void refreshDashboardLeaveGrid() {
+        clearGridRows(dashboardPendingLeaveGrid);
+
+        try {
+            List<LeaveRequest> pending = (hrDemoMode ? demoLeaveRequests() : leaveService.getPendingLeaveRequests())
+                    .stream()
+                    .limit(5)
+                    .toList();
+
+            int row = 1;
+            for (LeaveRequest request : pending) {
+                addGridRow(dashboardPendingLeaveGrid, row++,
+                        "Employee " + request.getEmployeeId(),
+                        request.getStartDate() + " to " + request.getEndDate(),
+                        String.format("%.1f", request.getLeaveHours()));
+            }
+
+            if (pending.isEmpty()) {
+                addGridRow(dashboardPendingLeaveGrid, 1, "No pending requests", "—", "—");
+            }
+        } catch (Exception e) {
+            addGridRow(dashboardPendingLeaveGrid, 1, "Unable to load", "—", "—");
+        }
+    }
+
+    private void refreshRecentHrActivity() {
+        clearGridRows(recentHrActivityGrid);
+        addGridRow(recentHrActivityGrid, 1, "Today", "Reviewed pending leave requests", "Ready");
+        addGridRow(recentHrActivityGrid, 2, "Today", "Attendance monitoring filters prepared", "Ready");
+        addGridRow(recentHrActivityGrid, 3, "This week", "Employee directory available for HR review", "Ready");
+        addGridRow(recentHrActivityGrid, 4, "This week", "HR report filters prepared for Jasper templates", "Ready");
+    }
+
+    private List<LeaveRequest> loadFilteredLeaveRequests() {
+        List<LeaveRequest> requests = hrDemoMode ? demoLeaveRequests() : leaveService.getAllLeaveRequests();
+        String employeeFilter = text(leaveEmployeeFilterField).toLowerCase(Locale.ROOT);
+        String statusFilter = leaveStatusFilterComboBox == null ? "ALL" : safe(leaveStatusFilterComboBox.getValue(), "ALL");
+        Integer leaveTypeId = leaveTypeComboBox == null ? null : leaveTypeIds.get(leaveTypeComboBox.getValue());
+        LocalDate startDate = parseOptionalDate(leaveStartDateField, null);
+        LocalDate endDate = parseOptionalDate(leaveEndDateField, null);
+
+        if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+            throw new ValidationException("End date cannot be before start date.");
+        }
+
+        return requests.stream()
+                .filter(request -> employeeFilter.isBlank() || String.valueOf(request.getEmployeeId()).contains(employeeFilter))
+                .filter(request -> "ALL".equals(statusFilter) || request.getStatus().name().equals(statusFilter))
+                .filter(request -> leaveTypeId == null || request.getLeaveTypeId() == leaveTypeId)
+                .filter(request -> startDate == null || !request.getEndDate().isBefore(startDate))
+                .filter(request -> endDate == null || !request.getStartDate().isAfter(endDate))
+                .toList();
+    }
+
+    private Employee buildEmployeeFromForm(Employee existing) {
+        clearEmployeeFormInvalid();
+
+        Integer employeeId = existing == null ? null : existing.getEmployeeId();
+        String firstName = requiredText(employeeFirstNameField, existing == null ? "" : existing.getFirstName(), "First name is required.");
+        String lastName = requiredText(employeeLastNameField, existing == null ? "" : existing.getLastName(), "Last name is required.");
+        String personalEmail = optionalText(employeePersonalEmailField, existing == null ? "" : existing.getPersonalEmail());
+        String phone = optionalText(employeePhoneField, existing == null ? "" : existing.getPhoneNumber());
+        int departmentId = parsePositiveInt(employeeDepartmentField, existing == null ? 0 : existing.getDepartmentId(), "Department ID is required.");
+        int positionId = parsePositiveInt(employeePositionField, existing == null ? 0 : existing.getPositionId(), "Position ID is required.");
+        LocalDate hireDate = parseOptionalDate(employeeHireDateField, existing == null ? null : existing.getHireDate());
+        EmploymentStatus status = EmploymentStatus.fromValue(safe(employeeStatusComboBox.getValue(), existing == null ? "" : existing.getEmploymentStatus().name()));
+
+        if (hireDate == null) {
+            markInvalid(employeeHireDateField);
+            throw new ValidationException("Hire date is required.");
+        }
+
+        return new Employee(
+                employeeId,
+                firstName,
+                lastName,
+                existing == null ? LocalDate.of(1990, 1, 1) : existing.getBirthDate(),
+                existing == null ? "For HR completion" : existing.getAddress(),
+                existing == null ? "Single" : existing.getCivilStatus(),
+                phone.isBlank() ? "000-000-0000" : phone,
+                personalEmail.isBlank() ? firstName.toLowerCase(Locale.ROOT) + "." + lastName.toLowerCase(Locale.ROOT) + "@email.com" : personalEmail,
+                status,
+                positionId,
+                departmentId,
+                hireDate,
+                existing == null ? null : existing.getSupervisorId(),
+                true,
+                existing == null ? null : existing.getPhotoPath()
+        );
+    }
+
+    private UserAccount currentActorAccount() {
+        int accountId = currentUserAccountId > 0 ? currentUserAccountId : HR_DEMO_USER_ACCOUNT_ID;
+        int employeeId = currentEmployeeId > 0 ? currentEmployeeId : HR_DEMO_EMPLOYEE_ID;
+        String email = safe(companyEmailField.getText(), HR_DEMO_EMAIL);
+
+        return new UserAccount(accountId, employeeId, email, email, "hr-ui", "hr-ui", Role.HR, false, true, null);
+    }
+
+    private void clearGridRows(GridPane grid) {
+        if (grid == null) {
+            return;
+        }
+
+        grid.getChildren().removeIf(node -> {
+            Integer row = GridPane.getRowIndex(node);
+            return row != null && row > 0;
+        });
+    }
+
+    private void addGridRow(GridPane grid, int row, String... values) {
+        if (grid == null) {
+            return;
+        }
+
+        for (int column = 0; column < values.length; column++) {
+            Label label = new Label(safe(values[column], "—"));
+            label.setWrapText(true);
+            label.getStyleClass().add("data-line");
+            GridPane.setColumnIndex(label, column);
+            GridPane.setRowIndex(label, row);
+            grid.getChildren().add(label);
+        }
+    }
+
+    private String leaveTypeName(int leaveTypeId) {
+        return leaveTypeIds.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() == leaveTypeId)
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse("Leave Type " + leaveTypeId);
+    }
+
+    private List<EmployeeSummaryDTO> demoEmployees() {
+        return List.of(
+                new EmployeeSummaryDTO(10001, "Maria Santos", EmploymentStatus.REGULAR, 1, 1, true),
+                new EmployeeSummaryDTO(10002, "Jose Reyes", EmploymentStatus.REGULAR, 2, 2, true),
+                new EmployeeSummaryDTO(10003, "Ana Cruz", EmploymentStatus.PROBATIONARY, 3, 1, true),
+                new EmployeeSummaryDTO(10004, "Leo Garcia", EmploymentStatus.CONTRACTUAL, 4, 3, false),
+                new EmployeeSummaryDTO(HR_DEMO_EMPLOYEE_ID, "HR Demo User", EmploymentStatus.REGULAR, 5, 4, true)
+        );
+    }
+
+    private List<Attendance> demoAttendanceRecords() {
+        LocalDate today = LocalDate.now();
+        return List.of(
+                new Attendance(9001, 10001, today.minusDays(1), LocalTime.of(8, 0), LocalTime.of(17, 0), 0, AttendanceStatus.PRESENT),
+                new Attendance(9002, 10002, today.minusDays(1), LocalTime.of(8, 18), LocalTime.of(17, 5), 0, AttendanceStatus.LATE),
+                new Attendance(9003, 10003, today.minusDays(2), LocalTime.of(8, 0), LocalTime.of(16, 30), 0, AttendanceStatus.PRESENT),
+                new Attendance(9004, 10004, today.minusDays(2), null, null, 0, AttendanceStatus.ABSENT)
+        );
+    }
+
+    private List<LeaveRequest> demoLeaveRequests() {
+        LocalDate today = LocalDate.now();
+        return List.of(
+                new LeaveRequest(9101, 10001, LocalDateTime.now().minusDays(2), today.plusDays(2), today.plusDays(3), 16, "Family matter", 1),
+                new LeaveRequest(9102, 10002, LocalDateTime.now().minusDays(1), today.plusDays(6), today.plusDays(6), 8, "Medical appointment", 2),
+                new LeaveRequest(9103, 10003, LocalDateTime.now().minusDays(8), today, today.plusDays(1), 16, "Emergency", 3, LeaveStatus.APPROVED, null, "Approved", LocalDateTime.now().minusDays(4))
+        );
+    }
+
 
     private void refreshDashboardPayslip() {
         if (hrDemoMode) {
@@ -1277,20 +1867,20 @@ public class LoginController {
                     .stream()
                     .max(Comparator.comparing(PayrollResult::getGeneratedAt));
 
-            dashboardNetPayLabel.setText(latest.map(result -> pesoFormat.format(result.getNetPay())).orElse("PHP 0.00"));
+            setLabel(dashboardNetPayLabel, latest.map(result -> pesoFormat.format(result.getNetPay())).orElse("PHP 0.00"));
         } catch (Exception e) {
-            dashboardNetPayLabel.setText("PHP 0.00");
+            setLabel(dashboardNetPayLabel, "PHP 0.00");
         }
     }
 
     private void refreshAttendanceStatus() {
-        attendanceDateLabel.setText(LocalDate.now().toString());
+        setLabel(attendanceDateLabel, LocalDate.now().toString());
 
         if (hrDemoMode) {
-            attendanceTimeInLabel.setText("08:00");
-            attendanceTimeOutLabel.setText("17:00");
-            attendanceHoursLabel.setText("9.00");
-            attendanceStatusLabel.setText(AttendanceStatus.PRESENT.name());
+            setLabel(attendanceTimeInLabel, "08:00");
+            setLabel(attendanceTimeOutLabel, "17:00");
+            setLabel(attendanceHoursLabel, "9.00");
+            setLabel(attendanceStatusLabel, AttendanceStatus.PRESENT.name());
             return;
         }
 
@@ -1300,15 +1890,15 @@ public class LoginController {
 
         try {
             Attendance attendance = attendanceService.getAttendanceForDate(currentEmployeeId, LocalDate.now());
-            attendanceTimeInLabel.setText(attendance.getTimeIn() == null ? "—" : attendance.getTimeIn().toString());
-            attendanceTimeOutLabel.setText(attendance.getTimeOut() == null ? "—" : attendance.getTimeOut().toString());
-            attendanceHoursLabel.setText(String.format("%.2f", attendance.getHoursWorked()));
-            attendanceStatusLabel.setText(attendance.getAttendanceStatus().name());
+            setLabel(attendanceTimeInLabel, attendance.getTimeIn() == null ? "—" : attendance.getTimeIn().toString());
+            setLabel(attendanceTimeOutLabel, attendance.getTimeOut() == null ? "—" : attendance.getTimeOut().toString());
+            setLabel(attendanceHoursLabel, String.format("%.2f", attendance.getHoursWorked()));
+            setLabel(attendanceStatusLabel, attendance.getAttendanceStatus().name());
         } catch (Exception e) {
-            attendanceTimeInLabel.setText("—");
-            attendanceTimeOutLabel.setText("—");
-            attendanceHoursLabel.setText("—");
-            attendanceStatusLabel.setText("Pending");
+            setLabel(attendanceTimeInLabel, "—");
+            setLabel(attendanceTimeOutLabel, "—");
+            setLabel(attendanceHoursLabel, "—");
+            setLabel(attendanceStatusLabel, "Pending");
 
             String message = userMessage(e);
             if (!message.contains("Attendance record not found")) {
@@ -1318,37 +1908,37 @@ public class LoginController {
     }
 
     private void refreshLeaveCredits() {
-        String selectedType = leaveTypeComboBox.getValue();
+        String selectedType = leaveTypeComboBox == null ? null : leaveTypeComboBox.getValue();
         Integer leaveTypeId = leaveTypeIds.get(selectedType);
 
         if (hrDemoMode) {
-            if (selectedType == null) {
+            if (selectedType == null && leaveTypeComboBox != null) {
                 leaveTypeComboBox.setValue("Vacation Leave");
             }
 
-            leaveCreditsField.setText("120.0 hours");
-            dashboardLeaveCreditsLabel.setText("15");
+            setTextField(leaveCreditsField, "120.0 hours");
+            setLabel(dashboardLeaveCreditsLabel, "15");
             return;
         }
 
         if (leaveTypeId == null) {
-            leaveCreditsField.setText("Select a type");
-            dashboardLeaveCreditsLabel.setText("—");
+            setTextField(leaveCreditsField, "Select a type");
+            setLabel(dashboardLeaveCreditsLabel, "—");
             return;
         }
 
         if (currentEmployeeId <= 0) {
-            leaveCreditsField.setText("Login required");
+            setTextField(leaveCreditsField, "Login required");
             return;
         }
 
         try {
             double credits = leaveService.getRemainingLeaveCredits(currentEmployeeId, leaveTypeId, LocalDate.now().getYear());
-            leaveCreditsField.setText(String.format("%.1f hours", credits));
-            dashboardLeaveCreditsLabel.setText(String.format("%.0f", credits / 8.0));
+            setTextField(leaveCreditsField, String.format("%.1f hours", credits));
+            setLabel(dashboardLeaveCreditsLabel, String.format("%.0f", credits / 8.0));
         } catch (Exception e) {
-            leaveCreditsField.setText("Unavailable");
-            dashboardLeaveCreditsLabel.setText("—");
+            setTextField(leaveCreditsField, "Unavailable");
+            setLabel(dashboardLeaveCreditsLabel, "—");
         }
     }
 
@@ -1395,7 +1985,7 @@ public class LoginController {
     private void loadSettingsData() {
         if (hrDemoMode) {
             settingsEmailField.setText(HR_DEMO_EMAIL);
-            settingsRecoveryEmailField.setText("hr.demo.recovery@motorph.com");
+            settingsRecoveryEmailField.setText("hr.recovery@motorph.com");
             return;
         }
 
@@ -1414,11 +2004,11 @@ public class LoginController {
 
     private void showPayrollResult(PayrollResult result) {
         currentPayslipResult = result;
-        payslipGrossPayLabel.setText("Gross Pay: " + pesoFormat.format(result.getGrossPay()));
-        payslipDeductionsLabel.setText("Deductions: " + pesoFormat.format(result.getTotalDeductions()));
-        payslipNetPayLabel.setText("Net Pay: " + pesoFormat.format(result.getNetPay()));
+        setLabel(payslipGrossPayLabel, "Gross Pay: " + pesoFormat.format(result.getGrossPay()));
+        setLabel(payslipDeductionsLabel, "Deductions: " + pesoFormat.format(result.getTotalDeductions()));
+        setLabel(payslipNetPayLabel, "Net Pay: " + pesoFormat.format(result.getNetPay()));
         setSuccess(payslipMessageLabel, "Loaded payrun #" + result.getPayrunId() + " generated " + result.getGeneratedAt().toLocalDate() + ".");
-        dashboardNetPayLabel.setText(pesoFormat.format(result.getNetPay()));
+        setLabel(dashboardNetPayLabel, pesoFormat.format(result.getNetPay()));
     }
 
     private boolean hasPayslipResult() {
@@ -1470,26 +2060,28 @@ public class LoginController {
     }
 
     private void seedDashboardCharts() {
-        payrollTrendChart.getData().setAll(series(
-                "Net Pay (PHP)",
-                new String[]{"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"},
-                new double[]{27000, 34000, 29500, 27500, 12500, 29000, 31500, 28500, 23500, 26000, 24500, 23000}
-        ));
+        if (payrollTrendChart != null) {
+            payrollTrendChart.getData().setAll(series(
+                    "Net Pay (PHP)",
+                    new String[]{"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"},
+                    new double[]{27000, 34000, 29500, 27500, 12500, 29000, 31500, 28500, 23500, 26000, 24500, 23000}
+            ));
+        }
 
-        earningsBreakdownChart.getData().setAll(series(
-                "Earnings",
-                new String[]{"Basic", "Allowances", "Overtime", "Night Diff", "Holiday", "Bonus"},
-                new double[]{17500, 6000, 3250, 1750, 1250, 750}
-        ));
+        if (earningsBreakdownChart != null) {
+            earningsBreakdownChart.getData().setAll(series(
+                    "Earnings",
+                    new String[]{"Basic", "Allowances", "Overtime", "Night Diff", "Holiday", "Bonus"},
+                    new double[]{17500, 6000, 3250, 1750, 1250, 750}
+            ));
+        }
 
-        attendanceSummaryChart.getData().setAll(
-                series("Present", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{7, 9, 9, 10, 9, 6, 6, 6}),
-                series("Late", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{2, 3, 6, 5, 0, 1, 0, 4}),
-                series("Absent", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{0, 0, 0, 0, 0, 1, 0, 0})
-        );
+        if (attendanceSummaryChart != null) {
+            attendanceSummaryChart.getData().setAll(
+                    series("Employees", new String[]{"Total", "Active", "Pending Leave", "On Leave"},
+                            new double[]{0, 0, 0, 0})
+            );
+        }
     }
 
     private XYChart.Series<String, Number> series(String name, String[] categories, double[] values) {
@@ -1697,6 +2289,67 @@ public class LoginController {
         return LocalDate.parse(value);
     }
 
+    private LocalDate parseOptionalDate(TextField field, LocalDate fallback) {
+        clearInvalid(field);
+        String value = text(field);
+
+        if (value.isBlank()) {
+            return fallback;
+        }
+
+        try {
+            return LocalDate.parse(value);
+        } catch (DateTimeParseException e) {
+            markInvalid(field);
+            throw e;
+        }
+    }
+
+    private int parsePositiveInt(TextField field, String message) {
+        return parsePositiveInt(field, 0, message);
+    }
+
+    private int parsePositiveInt(TextField field, int fallback, String message) {
+        clearInvalid(field);
+        String value = text(field);
+
+        if (value.isBlank() && fallback > 0) {
+            return fallback;
+        }
+
+        try {
+            int parsed = Integer.parseInt(value);
+            if (parsed <= 0) {
+                throw new NumberFormatException(message);
+            }
+            return parsed;
+        } catch (NumberFormatException e) {
+            markInvalid(field);
+            throw new ValidationException(message);
+        }
+    }
+
+    private String requiredText(TextField field, String fallback, String message) {
+        clearInvalid(field);
+        String value = text(field);
+
+        if (value.isBlank()) {
+            value = safe(fallback, "");
+        }
+
+        if (value.isBlank()) {
+            markInvalid(field);
+            throw new ValidationException(message);
+        }
+
+        return value;
+    }
+
+    private String optionalText(TextField field, String fallback) {
+        String value = text(field);
+        return value.isBlank() ? safe(fallback, "") : value;
+    }
+
     private double parsePositiveDouble(TextField field, String message) {
         clearInvalid(field);
 
@@ -1721,6 +2374,17 @@ public class LoginController {
         clearInvalid(leaveReasonField);
     }
 
+    private void clearEmployeeFormInvalid() {
+        clearInvalid(employeeIdField);
+        clearInvalid(employeeFirstNameField);
+        clearInvalid(employeeLastNameField);
+        clearInvalid(employeePersonalEmailField);
+        clearInvalid(employeePhoneField);
+        clearInvalid(employeeDepartmentField);
+        clearInvalid(employeePositionField);
+        clearInvalid(employeeHireDateField);
+    }
+
     private void showCard(VBox cardToShow) {
         for (VBox card : List.of(loginCard, otpCard, forgotCard, forgotOtpCard, forgotPasswordCard)) {
             boolean selected = card == cardToShow;
@@ -1730,17 +2394,25 @@ public class LoginController {
     }
 
     private void showView(VBox viewToShow, Button selectedButton, String title, String subtitle) {
-        for (VBox view : List.of(dashboardView, attendanceView, leaveView, payslipView, settingsView)) {
+        for (VBox view : List.of(dashboardView, profileView, attendanceView, leaveView, payslipView, supportTicketsView, settingsView)) {
+            if (view == null) {
+                continue;
+            }
+
             boolean selected = view == viewToShow;
             view.setVisible(selected);
             view.setManaged(selected);
         }
 
-        for (Button button : List.of(dashboardNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, settingsNavButton)) {
+        for (Button button : List.of(dashboardNavButton, profileNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton)) {
+            if (button == null) {
+                continue;
+            }
+
             button.getStyleClass().remove("selected-nav");
         }
 
-        if (!selectedButton.getStyleClass().contains("selected-nav")) {
+        if (selectedButton != null && !selectedButton.getStyleClass().contains("selected-nav")) {
             selectedButton.getStyleClass().add("selected-nav");
         }
 
@@ -1777,6 +2449,10 @@ public class LoginController {
     }
 
     private String text(TextField field) {
+        if (field == null) {
+            return "";
+        }
+
         return field.getText() == null ? "" : field.getText().trim();
     }
 
@@ -1786,6 +2462,18 @@ public class LoginController {
 
     private String safe(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private void setLabel(Label label, String value) {
+        if (label != null) {
+            label.setText(value);
+        }
+    }
+
+    private void setTextField(TextField field, String value) {
+        if (field != null) {
+            field.setText(value);
+        }
     }
 
     private boolean isHrDemoCredentials(String companyEmail, String password) {
@@ -1811,16 +2499,28 @@ public class LoginController {
     }
 
     private void markInvalid(TextField field) {
+        if (field == null) {
+            return;
+        }
+
         if (!field.getStyleClass().contains("invalid-field")) {
             field.getStyleClass().add("invalid-field");
         }
     }
 
     private void clearInvalid(TextField field) {
+        if (field == null) {
+            return;
+        }
+
         field.getStyleClass().remove("invalid-field");
     }
 
     private void setError(Label label, String message) {
+        if (label == null) {
+            return;
+        }
+
         label.getStyleClass().remove("success-message");
         if (!label.getStyleClass().contains("error-message")) {
             label.getStyleClass().add("error-message");
@@ -1829,6 +2529,10 @@ public class LoginController {
     }
 
     private void setSuccess(Label label, String message) {
+        if (label == null) {
+            return;
+        }
+
         label.getStyleClass().remove("error-message");
         if (!label.getStyleClass().contains("success-message")) {
             label.getStyleClass().add("success-message");
