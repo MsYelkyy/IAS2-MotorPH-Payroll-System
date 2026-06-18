@@ -8,7 +8,7 @@
      Login layout/brand   → modules/auth/login.css
      Sidebar/topbar/nav   → roles/it.css, roles/admin.css
      Employee shell       → roles/employee.css
-     Module styles        → modules/*/
+     Module styles        → modules/ folder
      Light-mode overrides → themes/light.css
    ══════════════════════════════════════════════════ */
 
@@ -49,7 +49,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.50), 8, 0.35, 0, 3);
 }
 
-.signin-button { -fx-min-height: 48; }
+.signin-button { -fx-min-height: 44; }
 
 .signin-button:hover,
 .primary-button:hover,
@@ -182,6 +182,14 @@
 .global-combo .arrow-button          { -fx-background-color: transparent; }
 .global-combo .arrow-button .arrow   { -fx-background-color: #CC2020; }
 
+/* High-specificity sizing to match monolith's .root-canvas overrides */
+.root-canvas .global-combo,
+.root-canvas .global-toggle-button {
+    -fx-font-size: 14px;
+    -fx-min-height: 44;
+    -fx-padding: 0 14;
+}
+
 .more-button {
     -fx-background-color: transparent;
     -fx-text-fill: rgba(180,180,200,0.60);
@@ -291,7 +299,7 @@
 .field-label {
     -fx-font-size: 11px;
     -fx-font-weight: 800;
-    -fx-text-fill: rgba(160,175,200,0.70);
+    -fx-text-fill: #6A6A82;
 }
 
 .input-field,
@@ -322,7 +330,15 @@
 
 .quiet-link, .inline-link { -fx-text-fill: #FF6060; -fx-font-weight: 800; -fx-border-color: transparent; }
 .quiet-link:hover          { -fx-text-fill: #FF8080; }
-.password-toggle           { -fx-text-fill: rgba(180,180,195,0.55); -fx-font-weight: 700; }
+.password-toggle {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: rgba(180,180,195,0.55);
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-padding: 0 14 0 0;
+}
 .password-toggle:hover     { -fx-text-fill: #FF6060; }
 
 .error-message   { -fx-text-fill: #FCA5A5; -fx-font-weight: 800; -fx-font-size: 12px; }

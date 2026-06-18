@@ -21,13 +21,13 @@ public class Main extends Application {
                 Main.class.getResource("/motorph/ui/auth/login.fxml")
         );
 
-        Scene scene = new Scene(root, 1600, 900);
+        Scene scene = new Scene(root, 1360, 880);
 
         stage.setTitle("MotorPH Payroll System");
         stage.setScene(scene);
 
-        stage.setMinWidth(1366);
-        stage.setMinHeight(768);
+        stage.setMinWidth(1360);
+        stage.setMinHeight(820);
 
         stage.centerOnScreen();
         stage.show();

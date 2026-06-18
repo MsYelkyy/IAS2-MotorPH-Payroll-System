@@ -37,7 +37,7 @@
 .root-canvas.light-mode .login-brand-panel {
     -fx-background-color:
         linear-gradient(to right, rgba(246,248,251,0.94), rgba(246,248,251,0.76), rgba(246,248,251,0.28));
-    -fx-border-color: transparent rgba(0,0,0,0.06) transparent transparent;
+    -fx-border-color: transparent #132a50 transparent transparent;
 }
 
 .root-canvas.light-mode .login-form-panel {
@@ -127,6 +127,9 @@
     -fx-text-fill: #0d1117;
 }
 
+.root-canvas.light-mode .brand-system-label,
+.root-canvas.light-mode .hero-heading,
+.root-canvas.light-mode .hero-subheading,
 .root-canvas.light-mode .form-subheading,
 .root-canvas.light-mode .muted-text,
 .root-canvas.light-mode .note-text,
@@ -236,6 +239,11 @@
 
 .root-canvas.light-mode .global-combo .list-cell {
     -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .global-combo > .list-cell .text,
+.root-canvas.light-mode .global-toggle-button .text {
+    -fx-fill: #4b5563;
 }
 
 

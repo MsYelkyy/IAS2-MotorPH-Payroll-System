@@ -19,7 +19,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.auth.LoginController"
-           stylesheets="@../../../css/motorph-theme.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/modules/auth/login.css, @../../../css/core/utilities.css">
 
     <!-- Auth page -->
     <BorderPane styleClass="login-fullpage">
@@ -49,7 +49,7 @@
                 <VBox styleClass="login-form-panel" HBox.hgrow="NEVER" alignment="CENTER">
 
                     <!-- Panel header / brand -->
-                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="form-panel-header">
+                    <HBox alignment="CENTER_LEFT" spacing="12" maxWidth="400" styleClass="form-panel-header">
                         <HBox spacing="0" alignment="CENTER_LEFT">
                             <Label text="Motor" styleClass="form-brand-motor"/>
                             <Label text="PH"    styleClass="form-brand-ph"/>
@@ -57,7 +57,7 @@
                     </HBox>
 
                     <!-- Auth card stack: login / otp / forgot-password -->
-                    <StackPane VBox.vgrow="ALWAYS" alignment="CENTER">
+                    <StackPane VBox.vgrow="ALWAYS" alignment="CENTER" maxWidth="400">
 
                         <!-- LOGIN CARD -->
                         <VBox fx:id="loginCard" spacing="18" styleClass="form-card">
@@ -107,8 +107,7 @@
                     </StackPane>
 
                     <!-- Footer bar -->
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="form-footer-bar">
-                        <Label text="MotorPH Payroll Management System  ·  v1.0" styleClass="form-footer-text"/>
+                    <HBox alignment="CENTER_LEFT" spacing="10" maxWidth="400" styleClass="form-footer-bar">
                         <Region HBox.hgrow="ALWAYS"/>
                         <HBox fx:id="globalControlsHostLogin" alignment="CENTER_RIGHT" spacing="6"/>
                     </HBox>
