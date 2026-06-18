@@ -82,7 +82,7 @@
                     <content>
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView"      source="dashboard.fxml"/>
-                            <fx:include fx:id="reportsView"        source="reports.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="reportsView"        source="../reports/reports.fxml"          visible="false" managed="false"/>
                             <fx:include fx:id="userManagementView" source="user-accounts.fxml"    visible="false" managed="false"/>
                             <fx:include fx:id="roleManagementView" source="role-management.fxml"  visible="false" managed="false"/>
                             <fx:include fx:id="accessLogsView"          source="user-access-logs.fxml"      visible="false" managed="false"/>

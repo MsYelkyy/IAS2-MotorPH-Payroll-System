@@ -2,7 +2,6 @@ package motorph.ui.it;
 
 import motorph.application.service.EmployeeService;
 import motorph.domain.value.Role;
-import motorph.ui.admin.reports.AdminReportsController;
 import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
@@ -14,6 +13,7 @@ import motorph.ui.it.account.ITUserAccountController;
 import motorph.ui.it.dashboard.ITDashboardController;
 import motorph.ui.it.reset.PasswordResetRequestController;
 import motorph.ui.it.role.ITRolesController;
+import motorph.ui.reports.ReportsController;
 import motorph.ui.it.ticket.ITSupportTicketController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
@@ -60,9 +60,9 @@ public class ITMainController {
     @FXML private VBox                  dashboardView;
     @FXML private ITDashboardController dashboardViewController;
 
-    // ── Reports sub-view (reuses AdminReportsController) ─────────────────────
-    @FXML private VBox                   reportsView;
-    @FXML private AdminReportsController reportsViewController;
+    // ── Reports sub-view (shared ReportsController) ──────────────────────────
+    @FXML private VBox              reportsView;
+    @FXML private ReportsController reportsViewController;
 
     // ── User Management sub-view ──────────────────────────────────────────────
     @FXML private VBox                    userManagementView;

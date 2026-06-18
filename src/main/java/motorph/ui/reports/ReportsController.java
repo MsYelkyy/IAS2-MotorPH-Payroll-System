@@ -1,4 +1,4 @@
-package motorph.ui.admin.reports;
+package motorph.ui.reports;
 
 import motorph.ui.util.UiMessageUtil;
 
@@ -21,7 +21,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-public class AdminReportsController {
+/** Shared Reports module: role-neutral, consumed by Admin, IT, and future HR/Finance shells. */
+public class ReportsController {
 
     private static final int PAGE_SIZE = 7;
 

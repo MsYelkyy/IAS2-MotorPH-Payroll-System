@@ -7,13 +7,13 @@ import motorph.ui.admin.dashboard.AdminDashboardController;
 import motorph.ui.admin.leave.AdminLeaveController;
 import motorph.ui.admin.employee.AdminEmployeeController;
 import motorph.ui.admin.payroll.AdminPayrollController;
-import motorph.ui.admin.reports.AdminReportsController;
 import motorph.ui.admin.salary.AdminSalaryController;
 import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.it.accesslogs.ITAccessLogsController;
 import motorph.ui.it.account.ITUserAccountController;
 import motorph.ui.it.role.ITRolesController;
+import motorph.ui.reports.ReportsController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
@@ -90,8 +90,8 @@ public class AdminMainController {
     @FXML private ITAccessLogsController      accessLogsViewController;
 
     // ── Reports sub-view ─────────────────────────────────────────────────────
-    @FXML private VBox                   reportsView;
-    @FXML private AdminReportsController reportsViewController;
+    @FXML private VBox               reportsView;
+    @FXML private ReportsController  reportsViewController;
 
     // ── Leave & Overtime sub-view ─────────────────────────────────────────────
     @FXML private VBox                 leaveView;
