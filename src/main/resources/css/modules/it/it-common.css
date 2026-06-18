@@ -65,6 +65,14 @@
     -fx-text-fill: #9CA3AF;
 }
 
+/* Account table: keep plain row selection neutral. The light-blue highlight is
+   reserved for the account currently open in the detail panel, which the row
+   factory paints inline (inline style wins over this rule). */
+.accounts-table .table-row-cell:selected,
+.accounts-table .table-row-cell:selected:hover {
+    -fx-background-color: transparent;
+}
+
 /* Account management controls */
 .switch-role-button {
     -fx-background-color: #0B0F19;
@@ -146,6 +154,14 @@
 
 .root-canvas.light-mode .status-badge {
     -fx-background-color: rgba(37,99,235,0.10);
+    -fx-text-fill: #2563EB;
+}
+
+/* Light-mode: ACTIVE status applied to a TableCell reads as text, not a filled
+   box (account table). Scoped to .table-cell so Label-based badges on other IT
+   screens keep their chip fill. Dark mode is unchanged. */
+.root-canvas.light-mode .table-cell.status-badge {
+    -fx-background-color: transparent;
     -fx-text-fill: #2563EB;
 }
 

@@ -76,7 +76,7 @@
                 </HBox>
 
                 <!-- Scrollable content -->
-                <ScrollPane fitToWidth="true" fitToHeight="false"
+                <ScrollPane fitToWidth="true" fitToHeight="true"
                             hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
                             styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
                     <content>

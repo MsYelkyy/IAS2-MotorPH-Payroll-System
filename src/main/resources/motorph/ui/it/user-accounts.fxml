@@ -36,7 +36,7 @@
         <!-- Account list -->
         <VBox styleClass="content-card" spacing="0" HBox.hgrow="ALWAYS">
             <TableView fx:id="accountTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                       styleClass="payroll-table">
+                       styleClass="payroll-table, accounts-table">
                 <columns>
                     <TableColumn fx:id="accountIdColumn" text="ID" prefWidth="70" minWidth="60"/>
                     <TableColumn fx:id="employeeIdColumn" text="Emp ID" prefWidth="90" minWidth="70"/>
