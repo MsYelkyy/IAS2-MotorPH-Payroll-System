@@ -3,6 +3,7 @@ package motorph.ui.factory;
 import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
 import motorph.application.service.DatabaseBackupService;
+import motorph.application.service.EmailPreviewService;
 import motorph.application.service.EmailService;
 import motorph.application.service.EmployeeService;
 import motorph.application.service.LeaveService;
@@ -62,6 +63,7 @@ public final class EmployeeUIServiceFactory {
     private final SupportTicketService supportTicketService;
     private final ITUserAccountService itUserAccountService;
     private final ITPasswordResetService itPasswordResetService;
+    private final EmailPreviewService emailPreviewService;
     private final SalaryBenefitService salaryBenefitService;
     private final PermissionService permissionService;
     private final SystemConfigService systemConfigService;
@@ -75,7 +77,8 @@ public final class EmployeeUIServiceFactory {
         UserAccessLogRepository userAccessLogRepository = new UserAccessLogRepository();
         TwoFactorCodeRepository twoFactorCodeRepository = new TwoFactorCodeRepository();
 
-        EmailService emailService = new EmailService(EmailConfig.mailtrapSandbox());
+        this.emailPreviewService = new EmailPreviewService();
+        EmailService emailService = new EmailService(EmailConfig.previewOnly(), emailPreviewService);
         UserAccountService sharedUserAccountService = new UserAccountService(userAccountRepository, emailService);
         EmployeeService sharedEmployeeService = new EmployeeService(
                 employeeRepository,
@@ -226,6 +229,10 @@ public final class EmployeeUIServiceFactory {
 
     public ITPasswordResetService getITPasswordResetService() {
         return itPasswordResetService;
+    }
+
+    public EmailPreviewService getEmailPreviewService() {
+        return emailPreviewService;
     }
 
     public SalaryBenefitService getSalaryBenefitService() {

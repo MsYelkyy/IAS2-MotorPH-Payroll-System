@@ -11,7 +11,7 @@
 <VBox maxHeight="Infinity" maxWidth="Infinity"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.payslip.EmployeePayslipController">
+      fx:controller="motorph.ui.employee.EmployeePayslipController">
 
     <VBox styleClass="content-card" VBox.vgrow="ALWAYS" spacing="0">
 

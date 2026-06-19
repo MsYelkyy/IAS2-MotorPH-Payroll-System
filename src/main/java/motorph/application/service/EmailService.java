@@ -1,23 +1,15 @@
 package motorph.application.service;
 
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
 import motorph.application.dto.auth.EmailPreviewDTO;
+import motorph.application.dto.auth.EmailPreviewType;
 import motorph.application.exception.ValidationException;
 import motorph.infrastructure.config.EmailConfig;
 import motorph.infrastructure.config.EmailPreviewConfig;
 
 import java.time.LocalDateTime;
-import java.util.Properties;
 
 /**
- * Handles sending system email notifications.
+ * Handles system email notifications through in-app preview delivery.
  */
 public class EmailService {
 
@@ -26,16 +18,21 @@ public class EmailService {
 
     // constructors
     public EmailService(EmailConfig emailConfig) {
+        this(emailConfig, new EmailPreviewService());
+    }
+
+    public EmailService(EmailConfig emailConfig, EmailPreviewService emailPreviewService) {
         if (emailConfig == null) {
             throw new IllegalArgumentException("EmailConfig is required.");
         }
 
-        validateRequired(emailConfig.getUsername(), "SMTP username is required.");
-        validateRequired(emailConfig.getPassword(), "SMTP password is required.");
         validateRequired(emailConfig.getSenderEmail(), "Sender email is required.");
+        if (emailPreviewService == null) {
+            throw new IllegalArgumentException("EmailPreviewService is required.");
+        }
 
         this.emailConfig = emailConfig;
-        this.emailPreviewService = new EmailPreviewService();
+        this.emailPreviewService = emailPreviewService;
     }
 
     // sends an OTP email
@@ -45,14 +42,65 @@ public class EmailService {
         validateRequired(subject, "Email subject is required.");
 
         sendEmail(
+                EmailPreviewType.LOGIN_OTP,
                 recipientEmail.trim(),
                 subject.trim(),
-                buildOtpMessage(otpCode.trim())
+                buildOtpMessage(otpCode.trim()),
+                "OTP Code",
+                otpCode.trim()
+        );
+    }
+
+    // sends a password reset OTP email
+    public void sendPasswordResetOtp(String recipientEmail, String otpCode, String subject) {
+        validateRequired(recipientEmail, "Recipient email is required.");
+        validateRequired(otpCode, "OTP code is required.");
+        validateRequired(subject, "Email subject is required.");
+
+        sendEmail(
+                EmailPreviewType.PASSWORD_RESET_OTP,
+                recipientEmail.trim(),
+                subject.trim(),
+                buildOtpMessage(otpCode.trim()),
+                "OTP Code",
+                otpCode.trim()
         );
     }
 
     // sends a temporary password email
     public void sendTemporaryPassword(String recipientEmail, String companyEmail, String temporaryPassword) {
+        sendTemporaryPassword(
+                EmailPreviewType.TEMPORARY_PASSWORD,
+                recipientEmail,
+                companyEmail,
+                temporaryPassword
+        );
+    }
+
+    // sends a temporary password email for employee account creation
+    public void sendEmployeeAccountCredentials(String recipientEmail, String companyEmail, String temporaryPassword) {
+        sendTemporaryPassword(
+                EmailPreviewType.EMPLOYEE_ACCOUNT_CREDENTIALS,
+                recipientEmail,
+                companyEmail,
+                temporaryPassword
+        );
+    }
+
+    // sends a temporary password email for IT-approved password reset
+    public void sendPasswordResetTemporaryPassword(String recipientEmail, String companyEmail, String temporaryPassword) {
+        sendTemporaryPassword(
+                EmailPreviewType.TEMPORARY_PASSWORD,
+                recipientEmail,
+                companyEmail,
+                temporaryPassword
+        );
+    }
+
+    private void sendTemporaryPassword(EmailPreviewType type,
+                                       String recipientEmail,
+                                       String companyEmail,
+                                       String temporaryPassword) {
         validateRequired(recipientEmail, "Recipient email is required.");
         validateRequired(companyEmail, "Company email is required.");
         validateRequired(temporaryPassword, "Temporary password is required.");
@@ -63,7 +111,14 @@ public class EmailService {
         String subject = "MotorPH Employee Account Credentials";
         String body = buildTemporaryPasswordMessage(cleanCompanyEmail, cleanTemporaryPassword);
 
-        sendEmail(cleanRecipient, subject, body);
+        sendEmail(
+                type,
+                cleanRecipient,
+                subject,
+                body,
+                "Temporary Password",
+                cleanTemporaryPassword
+        );
     }
 
     // checks if an email preview is available
@@ -81,74 +136,29 @@ public class EmailService {
         emailPreviewService.clearPreview();
     }
 
-    // sends a plain text email
-    private void sendEmail(String recipientEmail, String subject, String body) {
-        saveEmailPreview(recipientEmail, subject, body);
-
-        try {
-            Message message = buildMessage(recipientEmail, subject, body);
-            Transport.send(message);
-
-        } catch (MessagingException e) {
-            System.out.println("=================================");
-            System.out.println("EMAIL DELIVERY FAILED");
-            System.out.println("Recipient: " + recipientEmail);
-            System.out.println("Subject: " + subject);
-            System.out.println("Reason: " + e.getMessage());
-            System.out.println("=================================");
-
-            // do not block login while Mailtrap is unavailable
-        }
-    }
-
-    // builds an email message
-    private Message buildMessage(String recipientEmail, String subject, String body) throws MessagingException {
-        Session session = Session.getInstance(buildMailProperties(), new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(
-                        emailConfig.getUsername(),
-                        emailConfig.getPassword()
-                );
-            }
-        });
-
-        Message message = new MimeMessage(session);
-        message.setFrom(new InternetAddress(emailConfig.getSenderEmail()));
-        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipientEmail));
-        message.setSubject(subject);
-        message.setText(body);
-
-        return message;
-    }
-
-    // saves email preview when QA preview is enabled
-    private void saveEmailPreview(String recipientEmail, String subject, String body) {
+    // publishes a plain text email preview
+    private void sendEmail(EmailPreviewType type,
+                           String recipientEmail,
+                           String subject,
+                           String body,
+                           String highlightLabel,
+                           String highlightValue) {
         if (!EmailPreviewConfig.isPreviewEnabled()) {
             return;
         }
 
         EmailPreviewDTO preview = new EmailPreviewDTO(
+                type,
                 emailConfig.getSenderEmail(),
                 recipientEmail,
                 subject,
                 body,
+                highlightLabel,
+                highlightValue,
                 LocalDateTime.now()
         );
 
         emailPreviewService.savePreview(preview);
-    }
-
-    // builds SMTP properties
-    private Properties buildMailProperties() {
-        Properties properties = new Properties();
-
-        properties.put("mail.smtp.auth", String.valueOf(emailConfig.isAuthEnabled()));
-        properties.put("mail.smtp.starttls.enable", String.valueOf(emailConfig.isStartTlsEnabled()));
-        properties.put("mail.smtp.host", emailConfig.getHost());
-        properties.put("mail.smtp.port", String.valueOf(emailConfig.getPort()));
-
-        return properties;
     }
 
     // builds the OTP email message

@@ -1,13 +1,6 @@
 package motorph.ui.employee;
 
 import motorph.application.service.EmployeeService;
-import motorph.ui.employee.attendance.EmployeeAttendanceController;
-import motorph.ui.employee.dashboard.EmployeeDashboardController;
-import motorph.ui.employee.leave.EmployeeLeaveController;
-import motorph.ui.employee.payslip.EmployeePayslipController;
-import motorph.ui.employee.profile.EmployeeProfileController;
-import motorph.ui.employee.settings.EmployeeSettingsController;
-import motorph.ui.employee.support.EmployeeSupportTicketController;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
@@ -36,16 +29,14 @@ public class EmployeeMainController {
     @FXML
     private StackPane rootPane;
 
-    // ── Sidebar ──────────────────────────────────────────────────────────────
-
+    // Sidebar
     @FXML
     private Label dashboardEmployeeNameLabel;
 
     @FXML
     private Label dashboardEmployeeRoleLabel;
 
-    // ── Navigation buttons ───────────────────────────────────────────────────
-
+    // Navigation buttons
     @FXML
     private Button dashboardNavButton;
 
@@ -70,8 +61,7 @@ public class EmployeeMainController {
     @FXML
     private Button switchRoleButton;
 
-    // ── Topbar ───────────────────────────────────────────────────────────────
-
+    // Topbar
     @FXML
     private Label pageTitleLabel;
 
@@ -81,8 +71,7 @@ public class EmployeeMainController {
     @FXML
     private HBox globalControlsHostApp;
 
-    // ── Content views (roots from fx:include) ────────────────────────────────
-
+    // Content views (roots from fx:include)
     @FXML
     private VBox dashboardView;
 
@@ -104,8 +93,7 @@ public class EmployeeMainController {
     @FXML
     private VBox settingsView;
 
-    // ── Sub-controllers (injected by fx:include) ─────────────────────────────
-
+    // Sub-controllers (injected by fx:include)
     @FXML
     private EmployeeDashboardController dashboardViewController;
 
@@ -127,13 +115,11 @@ public class EmployeeMainController {
     @FXML
     private EmployeeSettingsController settingsViewController;
 
-    // ── Footer ───────────────────────────────────────────────────────────────
-
+    // Footer
     @FXML
     private Label appMessageLabel;
 
-    // ── Side panel ───────────────────────────────────────────────────────────
-
+    // Side panel
     @FXML
     private VBox sidePanel;
 
@@ -205,10 +191,9 @@ public class EmployeeMainController {
         }
     }
 
-    // switches to the first non-active secondary role (IT before ADMIN)
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchToNextAvailable(rootPane.getScene(), appMessageLabel);
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
     }
 
     @FXML

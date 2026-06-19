@@ -1,9 +1,12 @@
 package motorph.application.service;
 
 import motorph.application.dto.employee.EmployeeProfileDTO;
+import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
 import motorph.application.dto.payroll.PayrollSummaryDTO;
 import motorph.application.dto.payroll.PayrunCreateDTO;
+import motorph.application.dto.payroll.PayrunReadinessDTO;
+import motorph.application.dto.payroll.PendingPayrunSummaryDTO;
 import motorph.application.dto.payroll.PayslipDTO;
 import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
@@ -20,6 +23,7 @@ import motorph.domain.model.PayrollEarning;
 import motorph.domain.model.PayrollResult;
 import motorph.domain.model.Payrun;
 import motorph.domain.model.SalaryHistory;
+import motorph.domain.value.ReadinessStatus;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.PayrollBenefitRepository;
@@ -31,7 +35,9 @@ import motorph.infrastructure.repository.SalaryHistoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Handles payroll execution, including computation and result storage.
@@ -455,6 +461,180 @@ public class PayrollService {
             if (!payrollResultRepository.existsByEmployeeAndPayrunId(employee.getEmployeeId(), payrunId)) {
                 runPayrollForEmployee(employee.getEmployeeId(), payrunId);
             }
+        }
+    }
+
+    // ----------------------------------------------------------------------
+    // Payroll-date / payrun-centered workflow (pending vs completed)
+    // ----------------------------------------------------------------------
+
+    /** Returns pending payruns (no payroll results yet) with attendance readiness counts. */
+    public List<PendingPayrunSummaryDTO> getPendingPayruns() {
+        List<PendingPayrunSummaryDTO> pending = new ArrayList<>();
+        List<Employee> activeEmployees = employeeService.getAllActiveEmployees();
+
+        for (Payrun payrun : payrunRepository.findAll()) {
+            if (!payrollResultRepository.findByPayrunId(payrun.getPayrunId()).isEmpty()) {
+                continue; // already has results -> completed, not pending
+            }
+
+            Map<Integer, List<Attendance>> attendanceByEmployee = getAttendanceByEmployee(payrun);
+            if (attendanceByEmployee.isEmpty()) {
+                continue; // no activity in the payrun period -> do not show on Pending landing
+            }
+
+            int ready = 0;
+            int incomplete = 0;
+            int noAttendance = 0;
+            for (Employee employee : activeEmployees) {
+                switch (computeReadiness(attendanceByEmployee.get(employee.getEmployeeId())).status) {
+                    case READY -> ready++;
+                    case INCOMPLETE -> incomplete++;
+                    case NO_ATTENDANCE -> noAttendance++;
+                }
+            }
+
+            pending.add(new PendingPayrunSummaryDTO(
+                    payrun.getPayrunId(),
+                    payrun.getStartDate(),
+                    payrun.getEndDate(),
+                    payrun.getPayDate(),
+                    payrun.getPayrollType(),
+                    activeEmployees.size(),
+                    ready,
+                    incomplete,
+                    noAttendance
+            ));
+        }
+        return pending;
+    }
+
+    /** Returns completed payruns (with payroll results) and their aggregated totals. */
+    public List<CompletedPayrunSummaryDTO> getCompletedPayruns() {
+        List<CompletedPayrunSummaryDTO> completed = new ArrayList<>();
+
+        for (Payrun payrun : payrunRepository.findAllWithPayrollResults()) {
+            List<PayrollResult> results = payrollResultRepository.findByPayrunId(payrun.getPayrunId());
+
+            double totalGross = results.stream().mapToDouble(PayrollResult::getGrossPay).sum();
+            double totalDeductions = results.stream().mapToDouble(PayrollResult::getTotalDeductions).sum();
+            double totalNet = results.stream().mapToDouble(PayrollResult::getNetPay).sum();
+
+            completed.add(new CompletedPayrunSummaryDTO(
+                    payrun.getPayrunId(),
+                    payrun.getStartDate(),
+                    payrun.getEndDate(),
+                    payrun.getPayDate(),
+                    payrun.getPayrollType(),
+                    results.size(),
+                    totalGross,
+                    totalDeductions,
+                    totalNet
+            ));
+        }
+        return completed;
+    }
+
+    /** Returns per-employee attendance readiness rows for a payrun's pending detail view. */
+    public List<PayrunReadinessDTO> getPayrunReadiness(int payrunId) {
+        validate(payrunId, "Payrun ID");
+        Payrun payrun = getPayrunOrThrow(payrunId);
+        Map<Integer, List<Attendance>> attendanceByEmployee = getAttendanceByEmployee(payrun);
+
+        List<PayrunReadinessDTO> rows = new ArrayList<>();
+        for (Employee employee : employeeService.getAllActiveEmployees()) {
+            ReadinessResult readiness = computeReadiness(attendanceByEmployee.get(employee.getEmployeeId()));
+
+            String department = "—";
+            String position = "—";
+            try {
+                EmployeeProfileDTO profile = employeeService.getEmployeeProfileAdmin(employee.getEmployeeId());
+                if (profile != null) {
+                    department = profile.getDepartmentName() != null ? profile.getDepartmentName() : "—";
+                    position = profile.getPositionName() != null ? profile.getPositionName() : "—";
+                }
+            } catch (Exception ignored) {
+                // fall back to placeholders when profile cannot be resolved
+            }
+
+            rows.add(new PayrunReadinessDTO(
+                    employee.getEmployeeId(),
+                    employee.getFullName(),
+                    department,
+                    position,
+                    readiness.daysWorked,
+                    readiness.totalHours,
+                    readiness.status
+            ));
+        }
+        return rows;
+    }
+
+    /**
+     * Generates payroll for the payrun, processing only employees whose attendance
+     * is READY and who do not already have a result. Returns the number generated.
+     */
+    public int generatePayrollForReadyEmployees(int payrunId) {
+        validate(payrunId, "Payrun ID");
+        Payrun payrun = getPayrunOrThrow(payrunId);
+
+        int generated = 0;
+        for (Employee employee : employeeService.getAllActiveEmployees()) {
+            int employeeId = employee.getEmployeeId();
+            if (computeReadiness(employeeId, payrun).status != ReadinessStatus.READY) {
+                continue;
+            }
+            if (payrollResultRepository.existsByEmployeeAndPayrunId(employeeId, payrunId)) {
+                continue;
+            }
+            runPayrollForEmployee(employeeId, payrunId);
+            generated++;
+        }
+        return generated;
+    }
+
+    // computes an employee's attendance readiness, days worked, and total hours for a payrun period
+    private ReadinessResult computeReadiness(int employeeId, Payrun payrun) {
+        return computeReadiness(attendanceService.getAttendanceByEmployeeAndDateRange(
+                employeeId, payrun.getStartDate(), payrun.getEndDate()));
+    }
+
+    private ReadinessResult computeReadiness(List<Attendance> logs) {
+        if (logs == null || logs.isEmpty()) {
+            return new ReadinessResult(ReadinessStatus.NO_ATTENDANCE, 0, 0.0);
+        }
+
+        boolean allComplete = logs.stream().allMatch(Attendance::isComplete);
+        double totalHours = logs.stream().mapToDouble(Attendance::getHoursWorked).sum();
+
+        ReadinessStatus status = allComplete ? ReadinessStatus.READY : ReadinessStatus.INCOMPLETE;
+        return new ReadinessResult(status, logs.size(), totalHours);
+    }
+
+    private Map<Integer, List<Attendance>> getAttendanceByEmployee(Payrun payrun) {
+        Map<Integer, List<Attendance>> attendanceByEmployee = new HashMap<>();
+        List<Attendance> logs = attendanceService.getAttendanceByDateRange(
+                payrun.getStartDate(), payrun.getEndDate());
+
+        for (Attendance log : logs) {
+            attendanceByEmployee
+                    .computeIfAbsent(log.getEmployeeId(), id -> new ArrayList<>())
+                    .add(log);
+        }
+
+        return attendanceByEmployee;
+    }
+
+    // holds the computed readiness for one employee in one payrun period
+    private static final class ReadinessResult {
+        private final ReadinessStatus status;
+        private final int daysWorked;
+        private final double totalHours;
+
+        private ReadinessResult(ReadinessStatus status, int daysWorked, double totalHours) {
+            this.status = status;
+            this.daysWorked = daysWorked;
+            this.totalHours = totalHours;
         }
     }
 }

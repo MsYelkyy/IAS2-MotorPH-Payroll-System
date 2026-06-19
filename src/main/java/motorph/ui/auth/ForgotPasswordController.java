@@ -7,48 +7,23 @@ import motorph.ui.util.UiValidationUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
-import java.util.List;
-
-/** Handles the three-step password reset flow: email → OTP → new password. */
+/** Submits a password reset request to IT for approval. */
 public class ForgotPasswordController {
 
     private PasswordResetService passwordResetService;
     private LoginController loginController;
-    private int pendingResetRequestId;
 
     @FXML
     private VBox forgotEmailCard;
 
     @FXML
-    private VBox forgotOtpCard;
-
-    @FXML
-    private VBox forgotNewPasswordCard;
-
-    @FXML
     private TextField resetEmailField;
 
     @FXML
-    private TextField resetOtpField;
-
-    @FXML
-    private PasswordField newPasswordField;
-
-    @FXML
-    private PasswordField confirmPasswordField;
-
-    @FXML
     private Label forgotEmailMessageLabel;
-
-    @FXML
-    private Label forgotOtpMessageLabel;
-
-    @FXML
-    private Label forgotNewPasswordMessageLabel;
 
     @FXML
     private void initialize() {
@@ -62,18 +37,15 @@ public class ForgotPasswordController {
 
     // resets state and shows the email entry step
     public void showEmailStep() {
-        pendingResetRequestId = 0;
         resetEmailField.clear();
-        resetOtpField.clear();
-        newPasswordField.clear();
-        confirmPasswordField.clear();
-        clearAllMessages();
-        showStep(forgotEmailCard);
+        UiMessageUtil.clearMessage(forgotEmailMessageLabel);
+        UiValidationUtil.clearInvalid(resetEmailField);
     }
 
     @FXML
-    private void handleSendResetOtp() {
-        clearAllMessages();
+    private void handleSubmitRequest() {
+        UiMessageUtil.clearMessage(forgotEmailMessageLabel);
+        UiValidationUtil.clearInvalid(resetEmailField);
         String email = UiValidationUtil.getText(resetEmailField);
 
         if (!UiValidationUtil.isMotorphEmail(email)) {
@@ -83,7 +55,7 @@ public class ForgotPasswordController {
         }
 
         try {
-            pendingResetRequestId = passwordResetService.requestPasswordReset(email);
+            passwordResetService.requestPasswordReset(email);
         } catch (Exception e) {
             if (isDatabaseUnavailable(e)) {
                 UiValidationUtil.clearInvalid(resetEmailField);
@@ -95,66 +67,9 @@ public class ForgotPasswordController {
             return;
         }
 
-        showStep(forgotOtpCard);
-        UiMessageUtil.setSuccess(forgotOtpMessageLabel, "Reset OTP sent to your registered email address.");
-    }
-
-    @FXML
-    private void handleVerifyResetOtp() {
-        UiValidationUtil.clearInvalid(resetOtpField);
-
-        if (pendingResetRequestId <= 0) {
-            UiMessageUtil.setError(forgotOtpMessageLabel, "Please request a reset OTP first.");
-            showStep(forgotEmailCard);
-            return;
-        }
-
-        try {
-            passwordResetService.verifyResetOtp(pendingResetRequestId, UiValidationUtil.getText(resetOtpField));
-        } catch (Exception e) {
-            UiValidationUtil.markInvalid(resetOtpField);
-            UiMessageUtil.setError(forgotOtpMessageLabel, userMessage(e));
-            return;
-        }
-
-        showStep(forgotNewPasswordCard);
-        UiMessageUtil.setSuccess(forgotNewPasswordMessageLabel, "OTP verified. Enter your new password.");
-    }
-
-    @FXML
-    private void handleCompleteReset() {
-        UiValidationUtil.clearInvalid(newPasswordField);
-        UiValidationUtil.clearInvalid(confirmPasswordField);
-
-        String newPassword = UiValidationUtil.getText(newPasswordField);
-        String confirmPassword = UiValidationUtil.getText(confirmPasswordField);
-        boolean valid = true;
-
-        if (newPassword.length() < 8) {
-            UiValidationUtil.markInvalid(newPasswordField);
-            valid = false;
-        }
-
-        if (!newPassword.equals(confirmPassword)) {
-            UiValidationUtil.markInvalid(confirmPasswordField);
-            valid = false;
-        }
-
-        if (!valid) {
-            UiMessageUtil.setError(forgotNewPasswordMessageLabel, "Password must be 8+ characters and match confirmation.");
-            return;
-        }
-
-        try {
-            passwordResetService.resetPassword(pendingResetRequestId, newPassword, confirmPassword);
-        } catch (Exception e) {
-            UiMessageUtil.setError(forgotNewPasswordMessageLabel, userMessage(e));
-            return;
-        }
-
-        pendingResetRequestId = 0;
         if (loginController != null) {
-            loginController.onPasswordResetComplete("Password updated successfully. You can now sign in.");
+            loginController.onPasswordResetComplete(
+                    "Request submitted. IT will email you a temporary password.");
         }
     }
 
@@ -163,32 +78,6 @@ public class ForgotPasswordController {
         if (loginController != null) {
             loginController.showLoginCard();
         }
-    }
-
-    @FXML
-    private void backToEmailStep() {
-        showStep(forgotEmailCard);
-        clearAllMessages();
-    }
-
-    // shows only the given step card within this controller's root
-    private void showStep(VBox stepToShow) {
-        for (VBox card : List.of(forgotEmailCard, forgotOtpCard, forgotNewPasswordCard)) {
-            boolean active = card == stepToShow;
-            card.setVisible(active);
-            card.setManaged(active);
-        }
-    }
-
-    // clears all message labels across the three steps
-    private void clearAllMessages() {
-        UiMessageUtil.clearMessage(forgotEmailMessageLabel);
-        UiMessageUtil.clearMessage(forgotOtpMessageLabel);
-        UiMessageUtil.clearMessage(forgotNewPasswordMessageLabel);
-        UiValidationUtil.clearInvalid(resetEmailField);
-        UiValidationUtil.clearInvalid(resetOtpField);
-        UiValidationUtil.clearInvalid(newPasswordField);
-        UiValidationUtil.clearInvalid(confirmPasswordField);
     }
 
     // extracts a user-friendly message from an exception

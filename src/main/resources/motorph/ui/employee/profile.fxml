@@ -13,7 +13,7 @@
 <VBox spacing="16"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.profile.EmployeeProfileController">
+      fx:controller="motorph.ui.employee.EmployeeProfileController">
 
     <!-- ── Profile header: photo left | name/ID right ─────────────── -->
     <HBox spacing="28" alignment="CENTER_LEFT" styleClass="profile-header-section">

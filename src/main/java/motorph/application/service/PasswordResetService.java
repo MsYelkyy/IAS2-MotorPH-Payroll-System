@@ -6,7 +6,6 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
-import motorph.domain.value.OtpPurpose;
 import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
@@ -20,7 +19,7 @@ import java.util.List;
  */
 public class PasswordResetService {
 
-    private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 5;
+    private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 60;
     private static final int TEMPORARY_PASSWORD_LENGTH = 10;
     private static final String TEMPORARY_PASSWORD_PREFIX = "MPH-";
     private static final String TEMPORARY_PASSWORD_CHARACTERS =
@@ -82,9 +81,6 @@ public class PasswordResetService {
 
         PasswordResetRequest request = new PasswordResetRequest(account.getUserAccountId());
         int requestId = passwordResetRequestRepository.saveAndReturnId(request);
-
-        String rawOtp = twoFactorService.createOtp(account.getUserAccountId(), requestId, OtpPurpose.PASSWORD_RESET);
-        emailService.sendOtp(personalEmail, rawOtp, "MotorPH Password Reset");
 
         return requestId;
     }
@@ -158,7 +154,7 @@ public class PasswordResetService {
 
         passwordResetRequestRepository.markManuallyResolved(resetRequestId, resolverEmployeeId);
 
-        emailService.sendTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
+        emailService.sendPasswordResetTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
 
         logPasswordReset(resolverEmployeeId, account.getEmployeeId());
     }

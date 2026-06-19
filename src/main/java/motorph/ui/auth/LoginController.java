@@ -5,6 +5,7 @@ import motorph.application.dto.login.LoginResultDTO;
 import motorph.domain.value.Role;
 import motorph.application.service.AuthenticationService;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.AnimationUtil;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
@@ -84,16 +85,19 @@ public class LoginController {
         List<Role> roles = result.getRoles();
 
         if (roles.contains(Role.ADMIN)) {
+            CurrentUserSession.switchRole(Role.ADMIN);
             NavigationUtil.goToAdminApp(rootPane.getScene());
             return;
         }
 
         if (roles.contains(Role.HR)) {
+            CurrentUserSession.switchRole(Role.HR);
             NavigationUtil.goToAdminApp(rootPane.getScene());
             return;
         }
 
         if (roles.contains(Role.IT)) {
+            CurrentUserSession.switchRole(Role.IT);
             NavigationUtil.goToITApp(rootPane.getScene());
             return;
         }

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      styleClass="user-access-logs-view"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.it.ITAccessLogsController">
+
+    <HBox spacing="14">
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL ENTRIES" styleClass="metric-label"/>
+            <Label fx:id="totalLogsLabel" text="0" styleClass="metric-value"/>
+            <Label text="All access log entries" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="LOGIN SUCCESSFUL" styleClass="metric-label"/>
+            <Label fx:id="loginSuccessLabel" text="0" styleClass="metric-value"/>
+            <Label text="Successful logins" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="LOGIN FAILED" styleClass="metric-label"/>
+            <Label fx:id="loginFailedLabel" text="0" styleClass="metric-value"/>
+            <Label text="Failed login attempts" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="OTHER ACTIONS" styleClass="metric-label"/>
+            <Label fx:id="otherActionsLabel" text="0" styleClass="metric-value"/>
+            <Label text="Non-login events" styleClass="muted-text"/>
+        </VBox>
+    </HBox>
+
+    <VBox spacing="12" styleClass="content-card">
+        <HBox alignment="BOTTOM_LEFT" spacing="12">
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Search" styleClass="metric-label"/>
+                <TextField fx:id="searchField"
+                           promptText="Search by user ID, action, or details"
+                           maxWidth="Infinity"
+                           styleClass="input-field"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="Action" styleClass="metric-label"/>
+                <ComboBox fx:id="actionFilterCombo" prefWidth="210" styleClass="input-field"/>
+            </VBox>
+
+            <Region HBox.hgrow="NEVER"/>
+            <Button text="Refresh" onAction="#handleRefresh" styleClass="primary-button"/>
+        </HBox>
+
+        <Label fx:id="messageLabel" wrapText="true" styleClass="message-label"/>
+    </VBox>
+
+    <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity"
+          styleClass="content-card, attendance-history-card"
+          VBox.vgrow="ALWAYS">
+
+        <VBox spacing="4">
+            <Label text="Log Entries" styleClass="section-title"/>
+            <Label text="List of user access log entries" styleClass="note-text"/>
+        </VBox>
+
+        <Region prefHeight="16"/>
+
+        <TableView fx:id="logsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                   styleClass="payroll-table, attendance-table">
+            <columns>
+                <TableColumn fx:id="userIdColumn"    text="User ID"   prefWidth="80"  minWidth="60"/>
+                <TableColumn fx:id="actionColumn"    text="Action"    prefWidth="220" minWidth="140"/>
+                <TableColumn fx:id="detailsColumn"   text="Details"   prefWidth="340" minWidth="200"/>
+                <TableColumn fx:id="timestampColumn" text="Timestamp" prefWidth="175" minWidth="130"/>
+            </columns>
+            <placeholder>
+                <Label text="No access log entries found." styleClass="note-text"/>
+            </placeholder>
+        </TableView>
+
+        <Region prefHeight="14"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="logsPrevButton" text="&#8592; Previous" onAction="#handleLogsPrevPage"
+                    styleClass="secondary-button"/>
+            <Label fx:id="logsPageLabel" text="Page 1 of 1" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="logsRecordInfoLabel" text="" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="logsNextButton" text="Next &#8594;" onAction="#handleLogsNextPage"
+                    styleClass="secondary-button"/>
+        </HBox>
+
+    </VBox>
+
+</VBox>

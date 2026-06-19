@@ -46,6 +46,11 @@ public class PayrollDeduction extends PayrollComponent {
         this.taxable = taxable;
     }
 
+    @Override
+    public String getComponentType() {
+        return "DEDUCTION";
+    }
+
     // returns the payroll deduction summary
     @Override
     public String toString() {

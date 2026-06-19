@@ -35,6 +35,11 @@ public class PayrollBenefit extends PayrollComponent {
         this.benefitTypeId = benefitTypeId;
     }
 
+    @Override
+    public String getComponentType() {
+        return "BENEFIT";
+    }
+
     // returns the payroll benefit summary
     @Override
     public String toString() {

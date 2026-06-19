@@ -1,19 +1,12 @@
 package motorph.ui.it;
 
 import motorph.application.service.EmployeeService;
-import motorph.domain.value.Role;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
-import motorph.ui.factory.EmployeeUIServiceFactory;
-import motorph.ui.it.accesslogs.ITAccessLogsController;
-import motorph.ui.it.account.ITUserAccountController;
-import motorph.ui.it.dashboard.ITDashboardController;
-import motorph.ui.it.reset.PasswordResetRequestController;
-import motorph.ui.it.role.ITRolesController;
+import motorph.ui.factory.ITUIServiceFactory;
 import motorph.ui.reports.ReportsController;
-import motorph.ui.it.ticket.ITSupportTicketController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
@@ -32,14 +25,14 @@ public class ITMainController {
 
     private EmployeeService employeeService;
 
-    // ── Root ──────────────────────────────────────────────────────────────────
+    // Root
     @FXML private StackPane rootPane;
 
-    // ── Sidebar identity card ─────────────────────────────────────────────────
+    // Sidebar identity card
     @FXML private Label employeeNameLabel;
     @FXML private Label employeeRoleLabel;
 
-    // ── Navigation buttons ────────────────────────────────────────────────────
+    // Navigation buttons
     @FXML private Button dashboardNavButton;
     @FXML private Button reportsNavButton;
     @FXML private Button userManagementNavButton;
@@ -49,45 +42,45 @@ public class ITMainController {
     @FXML private Button supportTicketsNavButton;
     @FXML private Button switchRoleButton;
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
+    // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
     @FXML private HBox  globalControlsHost;
 
-    // ── Dashboard sub-view ────────────────────────────────────────────────────
+    // Dashboard sub-view
     @FXML private VBox                  dashboardView;
     @FXML private ITDashboardController dashboardViewController;
 
-    // ── Reports sub-view (shared ReportsController) ──────────────────────────
+    // Reports sub-view (shared ReportsController)
     @FXML private VBox              reportsView;
     @FXML private ReportsController reportsViewController;
 
-    // ── User Management sub-view ──────────────────────────────────────────────
+    // User Management sub-view
     @FXML private VBox                    userManagementView;
     @FXML private ITUserAccountController userManagementViewController;
 
-    // ── Role Management sub-view (IT-owned ITRolesController) ────────────────
+    // Role Management sub-view (IT-owned ITRolesController)
     @FXML private VBox              roleManagementView;
     @FXML private ITRolesController roleManagementViewController;
 
-    // ── User Access Logs sub-view ─────────────────────────────────────────────
+    // User Access Logs sub-view
     @FXML private VBox                   accessLogsView;
     @FXML private ITAccessLogsController accessLogsViewController;
 
-    // ── Password Reset Requests sub-view ──────────────────────────────────────
+    // Password Reset Requests sub-view
     @FXML private VBox                          passwordResetRequestsView;
     @FXML private PasswordResetRequestController passwordResetRequestsViewController;
 
-    // ── Support Tickets sub-view ──────────────────────────────────────────────
+    // Support Tickets sub-view
     @FXML private VBox                    supportTicketsView;
     @FXML private ITSupportTicketController supportTicketsViewController;
 
-    // ── Footer ────────────────────────────────────────────────────────────────
+    // Footer
     @FXML private Label appMessageLabel;
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeService = ITUIServiceFactory.getInstance().getEmployeeService();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -99,8 +92,7 @@ public class ITMainController {
         UiMessageUtil.setSuccess(appMessageLabel, "IT Management System is ready.");
     }
 
-    // ── Navigation handlers ───────────────────────────────────────────────────
-
+    // Navigation handlers
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
@@ -157,8 +149,7 @@ public class ITMainController {
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
 
-    // ── Public navigation entry points (called by sub-controllers) ───────────
-
+    // Public navigation entry points (called by sub-controllers)
     /** Called by ITDashboardController's "View All" button. */
     public void navigateToSupportTickets() {
         showSupportTickets();
@@ -169,11 +160,10 @@ public class ITMainController {
         showPasswordReset();
     }
 
-    // ── Auth handlers ─────────────────────────────────────────────────────────
-
+    // Auth handlers
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchTo(Role.EMPLOYEE, rootPane.getScene(), appMessageLabel, "No employee role available.");
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
     }
 
     @FXML
@@ -182,8 +172,7 @@ public class ITMainController {
         NavigationUtil.goToLogin(rootPane.getScene());
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    // Helpers
     private void setNavSelected(Button selected) {
         NavigationHelper.setNavSelected(selected,
                 dashboardNavButton, reportsNavButton, userManagementNavButton,

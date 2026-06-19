@@ -9,7 +9,7 @@
 <VBox spacing="18"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.it.dashboard.ITDashboardController">
+      fx:controller="motorph.ui.it.ITDashboardController">
 
     <!-- ── Row 1: Account metric cards ───────────────────────────── -->
     <HBox spacing="14">

@@ -1,0 +1,350 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.AdminPayrollController"
+      VBox.vgrow="ALWAYS" spacing="6" styleClass="payroll-module">
+
+    <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
+        <Button fx:id="backButton" text="Back" onAction="#handleBack"
+                visible="false" managed="false" styleClass="secondary-button"/>
+        <VBox fx:id="detailHeaderBox" spacing="2" visible="false" managed="false">
+            <Label fx:id="detailTitleLabel" styleClass="section-title"/>
+            <Label fx:id="detailSubtitleLabel" styleClass="muted-text"/>
+        </VBox>
+        <Label fx:id="moduleMessageLabel" styleClass="muted-text"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button fx:id="generateButton" text="Generate Payroll"
+                onAction="#handleGenerate" visible="false" managed="false"
+                styleClass="primary-button, payroll-primary-action"/>
+        <Button fx:id="printButton" text="Print Payslip"
+                onAction="#handlePrint" visible="false" managed="false"
+                styleClass="print-payslip-button"/>
+        <Button fx:id="newPayrunButton" text="+ New Payrun"
+                onAction="#handleNewPayrun" styleClass="primary-button"/>
+    </HBox>
+
+    <StackPane VBox.vgrow="ALWAYS">
+
+        <!-- ░░░ LANDING: Pending / Completed tabs ░░░ -->
+        <VBox fx:id="landingPanel" spacing="0" VBox.vgrow="ALWAYS">
+            <TabPane fx:id="payrollTabPane" tabClosingPolicy="UNAVAILABLE"
+                     styleClass="payroll-tab-pane" VBox.vgrow="ALWAYS">
+                <tabs>
+                    <Tab text="Pending Payroll">
+                        <content>
+                            <VBox styleClass="content-card, payroll-tab-card" spacing="12">
+                                <VBox spacing="2">
+                                    <Label text="Pending Payroll Dates" styleClass="section-title"/>
+                                    <Label text="Payroll dates ready for generation." styleClass="muted-text"/>
+                                </VBox>
+                                <HBox spacing="12">
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="PENDING PAYRUNS" styleClass="metric-label"/>
+                                        <Label fx:id="landingPendingPayrunsCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="READY EMPLOYEES" styleClass="metric-label"/>
+                                        <Label fx:id="landingReadyEmployeesCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="INCOMPLETE EMPLOYEES" styleClass="metric-label"/>
+                                        <Label fx:id="landingIncompleteEmployeesCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                </HBox>
+                                <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
+                                           styleClass="payroll-table">
+                                    <columns>
+                                        <TableColumn fx:id="pendingPayDateColumn" text="Payroll Date" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="pendingPeriodColumn" text="Pay Period" prefWidth="220" minWidth="180"/>
+                                        <TableColumn fx:id="pendingEmployeesColumn" text="Employees" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="pendingReadyColumn" text="Ready" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="pendingIncompleteColumn" text="Incomplete" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="pendingStatusColumn" text="Status" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="pendingActionColumn" text="Actions" prefWidth="180" minWidth="160"/>
+                                    </columns>
+                                    <placeholder>
+                                        <Label text="No pending payroll dates available." styleClass="muted-text"/>
+                                    </placeholder>
+                                </TableView>
+                            </VBox>
+                        </content>
+                    </Tab>
+                    <Tab text="Completed Payroll">
+                        <content>
+                            <VBox styleClass="content-card, payroll-tab-card" spacing="12">
+                                <VBox spacing="2">
+                                    <Label text="Completed Payroll Dates" styleClass="section-title"/>
+                                    <Label text="Payroll dates already generated." styleClass="muted-text"/>
+                                </VBox>
+                                <HBox spacing="12">
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="COMPLETED PAYRUNS" styleClass="metric-label"/>
+                                        <Label fx:id="landingCompletedPayrunsCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="EMPLOYEES PAID" styleClass="metric-label"/>
+                                        <Label fx:id="landingEmployeesPaidCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="TOTAL NET PAY" styleClass="metric-label"/>
+                                        <Label fx:id="landingTotalNetPayCard" text="PHP 0.00" styleClass="metric-value"/>
+                                    </VBox>
+                                </HBox>
+                                <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
+                                           styleClass="payroll-table">
+                                    <columns>
+                                        <TableColumn fx:id="completedPayDateColumn" text="Payroll Date" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedPeriodColumn" text="Pay Period" prefWidth="200" minWidth="160"/>
+                                        <TableColumn fx:id="completedPaidColumn" text="Employees Paid" prefWidth="120" minWidth="100"/>
+                                        <TableColumn fx:id="completedGrossColumn" text="Total Gross Pay" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedDeductionsColumn" text="Total Deductions" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedNetColumn" text="Total Net Pay" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedStatusColumn" text="Status" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="completedActionColumn" text="Actions" prefWidth="100" minWidth="90"/>
+                                    </columns>
+                                    <placeholder>
+                                        <Label text="No completed payroll dates available." styleClass="muted-text"/>
+                                    </placeholder>
+                                </TableView>
+                            </VBox>
+                        </content>
+                    </Tab>
+                </tabs>
+            </TabPane>
+        </VBox>
+
+        <!-- ░░░ PENDING DETAIL: readiness list ░░░ -->
+        <VBox fx:id="pendingDetailPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="14">
+            <HBox spacing="12">
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
+                    <Label fx:id="pendingCardTotal" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="READY EMPLOYEES" styleClass="metric-label"/>
+                    <Label fx:id="pendingCardReady" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="INCOMPLETE EMPLOYEES" styleClass="metric-label"/>
+                    <Label fx:id="pendingCardIncomplete" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="NO ATTENDANCE" styleClass="metric-label"/>
+                    <Label fx:id="pendingCardNoAttendance" styleClass="metric-value"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="2">
+                <Label text="Pending Employee Payroll List" styleClass="section-title"/>
+                <Label text="Employees under this payroll date and their attendance readiness."
+                       styleClass="muted-text"/>
+            </VBox>
+
+            <TableView fx:id="readinessTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="readyEmpIdColumn" text="Employee ID" prefWidth="100" minWidth="90"/>
+                    <TableColumn fx:id="readyNameColumn" text="Employee Name" prefWidth="200" minWidth="160"/>
+                    <TableColumn fx:id="readyDeptColumn" text="Department" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="readyPositionColumn" text="Position" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="readyDaysColumn" text="Days Worked" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="readyHoursColumn" text="Total Hours" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="readyAttendanceColumn" text="Attendance Status" prefWidth="140" minWidth="120"/>
+                    <TableColumn fx:id="readyPayrollColumn" text="Payroll Status" prefWidth="130" minWidth="110"/>
+                </columns>
+                <placeholder>
+                    <Label text="No employees found for this payroll date." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- ░░░ COMPLETED DETAIL: payroll results list ░░░ -->
+        <VBox fx:id="completedDetailPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="14">
+            <HBox spacing="12">
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="EMPLOYEES PAID" styleClass="metric-label"/>
+                    <Label fx:id="completedCardPaid" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="TOTAL GROSS PAY" styleClass="metric-label"/>
+                    <Label fx:id="completedCardGross" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="TOTAL DEDUCTIONS" styleClass="metric-label"/>
+                    <Label fx:id="completedCardDeductions" styleClass="metric-value"/>
+                </VBox>
+                <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="TOTAL NET PAY" styleClass="metric-label"/>
+                    <Label fx:id="completedCardNet" styleClass="metric-value"/>
+                </VBox>
+            </HBox>
+
+            <VBox spacing="2">
+                <Label text="Employee Payroll List" styleClass="section-title"/>
+                <Label text="Employees paid under this payroll date." styleClass="muted-text"/>
+            </VBox>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="employeeSearchField" promptText="Search employee ID or name"
+                           prefWidth="420" styleClass="input-field"/>
+                <Button fx:id="clearResultFiltersButton" text="Clear"
+                        onAction="#clearResultFilters" styleClass="secondary-button"/>
+            </HBox>
+
+            <TableView fx:id="resultTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="resultEmployeeIdColumn" text="Employee ID" prefWidth="100" minWidth="80"/>
+                    <TableColumn fx:id="resultEmployeeColumn" text="Employee Name" prefWidth="200" minWidth="160"/>
+                    <TableColumn fx:id="resultGrossPayColumn" text="Gross Pay" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultDeductionsColumn" text="Deductions" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultNetPayColumn" text="Net Pay" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultStatusColumn" text="Status" prefWidth="90" minWidth="80"/>
+                    <TableColumn fx:id="resultActionColumn" text="Actions" prefWidth="220" minWidth="190"/>
+                </columns>
+                <placeholder>
+                    <Label text="No payroll results found." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- ░░░ PAYSLIP DETAIL ░░░ -->
+        <VBox fx:id="payslipDetailPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="16">
+
+            <HBox spacing="0">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="EMPLOYEE" styleClass="field-label"/>
+                    <Label fx:id="slipNameLabel" styleClass="section-title"/>
+                    <Label fx:id="slipPositionLabel" styleClass="muted-text"/>
+                    <Label fx:id="slipSuperLabel" styleClass="muted-text"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="PAY PERIOD" styleClass="field-label"/>
+                    <Label fx:id="slipPeriodLabel" styleClass="section-title"/>
+                    <Label fx:id="slipPayDateLabel" styleClass="muted-text"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="GOVERNMENT NUMBERS" styleClass="field-label"/>
+                    <Label fx:id="slipSssLabel" styleClass="muted-text"/>
+                    <Label fx:id="slipPhilhLabel" styleClass="muted-text"/>
+                    <Label fx:id="slipPagibigLabel" styleClass="muted-text"/>
+                    <Label fx:id="slipTinLabel" styleClass="muted-text"/>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <HBox spacing="32">
+                <VBox spacing="8" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 8; -fx-padding: 14;">
+                    <Label text="EARNINGS" styleClass="section-label"/>
+                    <HBox><Label text="Basic Pay" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipBasicPayLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Rice Subsidy" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipRiceLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Phone Allowance" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipPhoneLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Clothing Allowance" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipClothingLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <Separator style="-fx-opacity: 0.4;"/>
+                    <HBox>
+                        <Label text="Total Compensation" prefWidth="200" styleClass="field-label"/>
+                        <Label fx:id="slipTotalCompLabel" styleClass="field-label" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+                <VBox spacing="8" HBox.hgrow="ALWAYS"
+                      style="-fx-background-color: rgba(255,255,255,0.03); -fx-background-radius: 8; -fx-padding: 14;">
+                    <Label text="DEDUCTIONS" styleClass="section-label"/>
+                    <HBox><Label text="SSS" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipSssDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="PhilHealth" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipPhDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Pag-IBIG" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipPagibigDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Withholding Tax" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipTaxDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Late" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipLateDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Undertime" prefWidth="200" styleClass="muted-text"/><Label fx:id="slipUndertimeDedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <Separator style="-fx-opacity: 0.4;"/>
+                    <HBox>
+                        <Label text="Total Deductions" prefWidth="200" styleClass="field-label"/>
+                        <Label fx:id="slipTotalDedLabel" styleClass="field-label" HBox.hgrow="ALWAYS"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <HBox alignment="CENTER_RIGHT" spacing="16"
+                  style="-fx-background-color: rgba(59,130,246,0.08); -fx-background-radius: 8; -fx-padding: 14 18;">
+                <Label text="NET PAY" styleClass="field-label"/>
+                <Label fx:id="slipNetPayLabel" styleClass="metric-value"/>
+            </HBox>
+        </VBox>
+
+        <!-- ░░░ NEW PAYRUN MODAL ░░░ -->
+        <Region fx:id="payrunFormBackdrop" visible="false" managed="false"
+                style="-fx-background-color: rgba(0,0,0,0.72);"/>
+
+        <VBox fx:id="payrunFormPanel" visible="false" managed="false"
+              spacing="16" styleClass="content-card, modal-panel, payrun-form-panel"
+              prefWidth="520" maxWidth="520" maxHeight="-Infinity"
+              StackPane.alignment="CENTER" style="-fx-translate-y: 0;">
+            <VBox styleClass="payrun-form-header" spacing="3">
+                <Label text="New Payrun" styleClass="payrun-form-title"/>
+                <Label text="Create a payroll run for a pay period."
+                       styleClass="payrun-form-subtitle" wrapText="true"/>
+            </VBox>
+
+            <VBox styleClass="payrun-form-fields" spacing="12">
+                <HBox spacing="12">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label text="START DATE" styleClass="field-label"/>
+                        <DatePicker fx:id="payrunStartDatePicker" styleClass="input-field"
+                                    maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label text="END DATE" styleClass="field-label"/>
+                        <DatePicker fx:id="payrunEndDatePicker" styleClass="input-field"
+                                    maxWidth="Infinity"/>
+                    </VBox>
+                </HBox>
+
+                <HBox spacing="12">
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label text="PAY DATE" styleClass="field-label"/>
+                        <DatePicker fx:id="payrunPayDatePicker" styleClass="input-field"
+                                    promptText="Pay date" maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox spacing="6" HBox.hgrow="ALWAYS">
+                        <Label text="PAYROLL TYPE" styleClass="field-label"/>
+                        <ComboBox fx:id="payrunTypeCombo" styleClass="input-field"
+                                  maxWidth="Infinity"/>
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <Label fx:id="payrunFormErrorLabel" styleClass="error-message" wrapText="true"/>
+
+            <HBox spacing="10" styleClass="payrun-form-actions">
+                <Button text="Cancel" onAction="#hideNewPayrunForm"
+                        styleClass="secondary-button, payrun-form-button"/>
+                <Button text="Create Payrun" onAction="#saveNewPayrun"
+                        styleClass="primary-button, payrun-form-button, payrun-create-button"/>
+            </HBox>
+        </VBox>
+
+    </StackPane>
+
+</VBox>

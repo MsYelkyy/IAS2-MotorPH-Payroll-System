@@ -10,18 +10,21 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="18"
+<VBox spacing="14"
+      fillWidth="true"
+      maxWidth="Infinity"
+      minWidth="0"
+      styleClass="employee-dashboard"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.dashboard.EmployeeDashboardController">
+      fx:controller="motorph.ui.employee.EmployeeDashboardController">
 
-    <HBox spacing="18">
+    <HBox spacing="18" maxWidth="Infinity" minWidth="0">
 
         <!-- Metric column -->
-        <VBox spacing="14" prefWidth="220" minWidth="180">
+        <VBox spacing="14" prefWidth="210" minWidth="180" maxWidth="250" HBox.hgrow="NEVER">
             <VBox spacing="6" styleClass="metric-card">
                 <Label text="TOTAL NET PAY" styleClass="metric-label"/>
                 <Label fx:id="dashboardNetPayLabel" text="PHP 0.00" styleClass="metric-value, financial-value"/>
@@ -47,100 +50,132 @@
         </VBox>
 
         <!-- Chart / data column -->
-        <VBox spacing="14" HBox.hgrow="ALWAYS">
+        <VBox spacing="14" minWidth="680" maxWidth="Infinity" HBox.hgrow="ALWAYS">
 
-            <HBox spacing="14">
-                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+            <GridPane hgap="14" maxWidth="Infinity">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50" minWidth="320" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="50" minWidth="320" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <VBox spacing="10" minWidth="320" maxWidth="Infinity"
+                      styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
                     <Label text="NET PAY TREND" styleClass="section-title"/>
                     <LineChart fx:id="payrollTrendChart" animated="false" legendVisible="false"
-                               createSymbols="true" styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                               createSymbols="true" minWidth="0" maxWidth="Infinity"
+                               styleClass="portal-chart" VBox.vgrow="ALWAYS">
                         <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
                         <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
                     </LineChart>
                 </VBox>
-                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+                <VBox spacing="10" minWidth="320" maxWidth="Infinity"
+                      styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="EARNINGS BREAKDOWN" styleClass="section-title"/>
                     <BarChart fx:id="earningsBreakdownChart" animated="false" legendVisible="false"
+                              minWidth="0" maxWidth="Infinity"
                               styleClass="portal-chart" VBox.vgrow="ALWAYS">
                         <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
                         <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
                     </BarChart>
                 </VBox>
-            </HBox>
+            </GridPane>
 
-            <HBox spacing="14">
-                <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+            <GridPane hgap="14" maxWidth="Infinity">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="62" minWidth="420" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="38" minWidth="300" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <VBox spacing="10" minWidth="420" maxWidth="Infinity"
+                      styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
                     <Label text="ATTENDANCE SUMMARY" styleClass="section-title"/>
                     <BarChart fx:id="attendanceSummaryChart" animated="false" legendVisible="true"
+                              minWidth="0" maxWidth="Infinity"
                               styleClass="portal-chart" VBox.vgrow="ALWAYS">
                         <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
                         <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
                     </BarChart>
                 </VBox>
-                <VBox spacing="12" prefWidth="390" styleClass="chart-card">
+                <VBox spacing="12" minWidth="300" maxWidth="Infinity"
+                      styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="LEAVE SUMMARY" styleClass="section-title"/>
-                    <GridPane hgap="8" vgap="8" VBox.vgrow="ALWAYS">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="40"/>
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
-                        </columnConstraints>
-                        <rowConstraints>
-                            <RowConstraints minHeight="64" vgrow="ALWAYS"/>
-                            <RowConstraints minHeight="64" vgrow="ALWAYS"/>
-                        </rowConstraints>
-                        <VBox spacing="8" styleClass="leave-tile vacation" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
-                            <Label text="Vacation Leave" styleClass="tile-title"/>
-                            <Region VBox.vgrow="ALWAYS"/>
-                            <Label text="12.5 days" styleClass="tile-value"/>
-                        </VBox>
-                        <VBox spacing="8" styleClass="leave-tile sick"      GridPane.columnIndex="1" GridPane.rowIndex="0">
-                            <Label text="Sick Leave"      styleClass="tile-title"/>
-                            <Region VBox.vgrow="ALWAYS"/>
-                            <Label text="3 days" styleClass="tile-value"/>
-                        </VBox>
-                        <VBox spacing="8" styleClass="leave-tile emergency" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                            <Label text="Emergency Leave" styleClass="tile-title"/>
-                            <Region VBox.vgrow="ALWAYS"/>
-                            <Label text="1 day" styleClass="tile-value"/>
-                        </VBox>
-                        <VBox spacing="8" styleClass="leave-tile special"   GridPane.columnIndex="1" GridPane.rowIndex="1">
-                            <Label text="Special Leave"   styleClass="tile-title"/>
-                            <Region VBox.vgrow="ALWAYS"/>
-                            <Label text="2 days" styleClass="tile-value"/>
-                        </VBox>
-                        <VBox spacing="8" styleClass="leave-tile maternity" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                            <Label text="Maternity Leave" styleClass="tile-title"/>
-                            <Region VBox.vgrow="ALWAYS"/>
-                            <Label text="0 day" styleClass="tile-value"/>
-                        </VBox>
-                    </GridPane>
+                    <VBox spacing="9" styleClass="leave-summary-list" VBox.vgrow="ALWAYS">
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
+                            <Label text="Vacation Leave" styleClass="leave-summary-name"/>
+                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
+                            <Label text="12.5 days" styleClass="leave-summary-value"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
+                            <Label text="Sick Leave" styleClass="leave-summary-name"/>
+                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
+                            <Label text="2 days" styleClass="leave-summary-value"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
+                            <Label text="Emergency Leave" styleClass="leave-summary-name"/>
+                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
+                            <Label text="0 days" styleClass="leave-summary-value"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
+                            <Label text="Special Leave" styleClass="leave-summary-name"/>
+                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
+                            <Label text="3 days" styleClass="leave-summary-value"/>
+                        </HBox>
+                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
+                            <Label text="Maternity Leave" styleClass="leave-summary-name"/>
+                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
+                            <Label text="1 day" styleClass="leave-summary-value"/>
+                        </HBox>
+                    </VBox>
                 </VBox>
-            </HBox>
-
-            <HBox spacing="14">
-                <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                    <Label text="UPCOMING PAYDAY" styleClass="metric-label"/>
-                    <Label text="June 30, 2026"   styleClass="bottom-value, financial-value"/>
-                    <Label text="In 26 days"       styleClass="positive-text"/>
-                </VBox>
-                <VBox spacing="8" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                    <Label text="RECENT PAYSLIP"          styleClass="metric-label"/>
-                    <Label text="May 16 – May 31, 2026"   styleClass="bottom-value"/>
-                    <Region VBox.vgrow="ALWAYS"/>
-                    <Button text="View Payslip" onAction="#navigateToPayslip" maxWidth="Infinity" styleClass="small-pill-button"/>
-                </VBox>
-                <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                    <Label text="ANNOUNCEMENTS"                       styleClass="metric-label"/>
-                    <Label text="Company Meeting"                     styleClass="bottom-value"/>
-                    <Label text="June 20, 2026 • 09:00 AM"           styleClass="muted-text"/>
-                    <Label text="All employees are expected to attend." wrapText="true" styleClass="muted-text"/>
-                </VBox>
-            </HBox>
+            </GridPane>
 
         </VBox>
     </HBox>
 
-    <Label fx:id="dashboardMessageLabel" styleClass="message-label"/>
+            <GridPane hgap="14" maxWidth="Infinity" styleClass="dashboard-bottom-row">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="29" minWidth="300" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="30" minWidth="320" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="41" minWidth="420" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, upcoming-payday-card"
+                      minWidth="300" maxWidth="Infinity"
+                      GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                    <Label text="UPCOMING PAYDAY" styleClass="metric-label"/>
+                    <VBox spacing="6" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
+                        <Label text="June 30, 2026" maxWidth="Infinity"
+                               styleClass="bottom-value, financial-value"/>
+                        <Label text="Next scheduled payroll release" wrapText="true" styleClass="muted-text"/>
+                        <Label text="In 26 days" styleClass="positive-text"/>
+                    </VBox>
+                </VBox>
+                <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, recent-payslip-card"
+                      minWidth="320" maxWidth="Infinity"
+                      GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                    <Label text="RECENT PAYSLIP"          styleClass="metric-label"/>
+                    <VBox spacing="8" styleClass="bottom-card-content, recent-payslip-content" VBox.vgrow="ALWAYS">
+                        <Label text="May 16 – May 31, 2026"   styleClass="bottom-value"/>
+                        <Label text="Latest available payslip" wrapText="true" styleClass="muted-text"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button text="View Payslip" onAction="#navigateToPayslip" maxWidth="Infinity" styleClass="small-pill-button"/>
+                    </VBox>
+                </VBox>
+                <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, payroll-status-card"
+                      minWidth="420" maxWidth="Infinity"
+                      GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
+                    <Label text="PAYROLL STATUS"                      styleClass="metric-label"/>
+                    <VBox spacing="8" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
+                        <Label text="Pending Processing" maxWidth="Infinity"
+                               styleClass="bottom-value"/>
+                        <Label text="Your payroll for the current payroll period is still being processed by Finance Team."
+                               wrapText="true" styleClass="muted-text"/>
+                        <Label text="Please wait until payroll generation is completed."
+                               wrapText="true" styleClass="muted-text"/>
+                    </VBox>
+                </VBox>
+            </GridPane>
+
+    <Label fx:id="dashboardMessageLabel" visible="false" managed="false" styleClass="message-label"/>
 
 </VBox>

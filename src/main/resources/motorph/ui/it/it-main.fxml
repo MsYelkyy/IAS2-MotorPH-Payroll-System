@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.it.ITMainController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/it/it-common.css, @../../../css/modules/it/dashboard.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/it/it-common.css, @../../../css/modules/it/dashboard.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/modules/shared/support-ticket.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -80,13 +80,13 @@
                             styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
                     <content>
                         <StackPane styleClass="content-area">
-                            <fx:include fx:id="dashboardView"      source="dashboard.fxml"/>
+                            <fx:include fx:id="dashboardView"      source="Dashboard.fxml"/>
                             <fx:include fx:id="reportsView"        source="../reports/reports.fxml"          visible="false" managed="false"/>
-                            <fx:include fx:id="userManagementView" source="user-accounts.fxml"    visible="false" managed="false"/>
-                            <fx:include fx:id="roleManagementView" source="role-management.fxml"  visible="false" managed="false"/>
-                            <fx:include fx:id="accessLogsView"          source="user-access-logs.fxml"      visible="false" managed="false"/>
-                            <fx:include fx:id="passwordResetRequestsView" source="password-reset-requests.fxml" visible="false" managed="false"/>
-                            <fx:include fx:id="supportTicketsView"     source="support-tickets.fxml"       visible="false" managed="false"/>
+                            <fx:include fx:id="userManagementView" source="UserAccounts.fxml"    visible="false" managed="false"/>
+                            <fx:include fx:id="roleManagementView" source="RoleManagement.fxml"  visible="false" managed="false"/>
+                            <fx:include fx:id="accessLogsView"          source="UserAccessLogs.fxml"      visible="false" managed="false"/>
+                            <fx:include fx:id="passwordResetRequestsView" source="PasswordResetRequests.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="supportTicketsView"     source="SupportTickets.fxml"       visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>

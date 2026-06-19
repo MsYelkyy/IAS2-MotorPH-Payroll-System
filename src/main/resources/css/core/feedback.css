@@ -55,3 +55,20 @@
 .root-canvas.light-mode .content-card .positive-text {
     -fx-text-fill: #16A34A;
 }
+
+/* ── Toast notification ─────────────────────────────────────────── */
+.toast-label {
+    -fx-background-color: #1E2736;
+    -fx-background-radius: 8;
+    -fx-text-fill: #86EFAC;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+}
+
+.root-canvas.light-mode .toast-label {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #166534;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
+}

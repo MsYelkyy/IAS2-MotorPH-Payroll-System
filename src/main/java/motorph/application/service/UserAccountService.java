@@ -76,7 +76,7 @@ public class UserAccountService {
             throw new IllegalStateException("User account was not created successfully.");
         }
 
-        emailService.sendTemporaryPassword(personalEmail, companyEmail, temporaryPassword);
+        emailService.sendEmployeeAccountCredentials(personalEmail, companyEmail, temporaryPassword);
 
         return savedAccount;
     }
@@ -93,6 +93,14 @@ public class UserAccountService {
 
         userAccountRepository.updateLockStatus(account.getUserAccountId(), true);
         userAccountRepository.updateActiveStatus(account.getUserAccountId(), false);
+    }
+
+    // returns the company email linked to an employee, or blank when no account exists
+    public String getCompanyEmailByEmployeeId(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        UserAccount account = userAccountRepository.findByEmployeeId(employeeId);
+        return account != null ? account.getCompanyEmail() : "";
     }
 
     // locks a user account

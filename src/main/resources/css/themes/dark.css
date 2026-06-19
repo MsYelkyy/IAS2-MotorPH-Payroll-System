@@ -565,16 +565,52 @@
 .period-picker .arrow-button .arrow { -fx-background-color: #CC2020; }
 
 
-/* ══ CARD DEFAULTS — Neutral dark base ═══════════════
-   Must come LAST among dark rules. Overrides any
-   colored-gradient card definition above. Modules and
-   roles define their own card accent colors on top.
+/* ══ CARD DEFAULTS — Dark red glass base ═════════════
+   Restores the retired motorph-theme.css tail layer for
+   shared cards that were red before the split. Neutral
+   containers remain separate below.
    ═════════════════════════════════════════════════ */
 
-.metric-card,
-.chart-card,
+.metric-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 28%, rgba(255,120,120,0.22), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(170,10,10,0.42), rgba(120,5,5,0.52));
+    -fx-background-radius: 14;
+    -fx-border-color:
+        rgba(255,140,140,0.38) rgba(55,3,3,0.60) rgba(40,2,2,0.65) rgba(255,140,140,0.38);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.40), 14, 0.22, 0, 5);
+    -fx-padding: 16;
+    -fx-min-height: 0;
+}
+
+.chart-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.18), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(165,10,10,0.40), rgba(115,5,5,0.50));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,130,130,0.32);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 18;
+    -fx-min-height: 265;
+}
+
+.content-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 22%, rgba(255,110,110,0.18), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(162,10,10,0.40), rgba(112,5,5,0.50));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,120,120,0.32);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 20;
+}
+
 .bottom-card,
-.content-card,
 .dashboard-card,
 .admin-card,
 .it-card {
@@ -586,10 +622,7 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.32), 14, 0.18, 0, 6);
 }
 
-.metric-card  { -fx-padding: 18; -fx-min-height: 110; }
-.chart-card   { -fx-padding: 18; -fx-min-height: 270; }
 .bottom-card  { -fx-padding: 18; -fx-min-height: 130; }
-.content-card { -fx-padding: 20; }
 
 /* Typography on neutral dark cards */
 .metric-value     { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }

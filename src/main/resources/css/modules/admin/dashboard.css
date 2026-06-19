@@ -16,6 +16,28 @@
     -fx-text-fill: #EF4444;
 }
 
+.admin-dashboard-view .admin-login-metrics {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.admin-dashboard-view .admin-login-metric-group {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.admin-dashboard-view .admin-login-label-success,
+.admin-dashboard-view .admin-login-label-danger {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+}
+
+.admin-dashboard-view .admin-login-label-success {
+    -fx-text-fill: #22C55E;
+}
+
+.admin-dashboard-view .admin-login-label-danger {
+    -fx-text-fill: #EF4444;
+}
+
 /* ── Activity feed row ───────────────────────────────────────────── */
 .activity-row {
     -fx-padding: 8 0;
@@ -33,12 +55,43 @@
     -fx-text-fill: #93C5FD;
 }
 
+.admin-dashboard-view .admin-activity-row {
+    -fx-min-height: 36;
+    -fx-padding: 6 0;
+}
+
+.admin-dashboard-view .admin-activity-status {
+    -fx-font-weight: 800;
+}
+
+.admin-dashboard-view .admin-activity-success {
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+.admin-dashboard-view .admin-activity-failed {
+    -fx-font-weight: 900;
+    -fx-text-fill: #EF4444;
+}
+
+.admin-dashboard-view .admin-activity-time {
+    -fx-text-fill: rgba(160,175,200,0.65);
+}
+
 /* ── Light-mode overrides (stat numbers) ─────────────────────────── */
 .root-canvas.light-mode .stat-success {
     -fx-text-fill: #16A34A;
 }
 
 .root-canvas.light-mode .stat-danger {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .admin-dashboard-view .admin-login-label-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .admin-dashboard-view .admin-login-label-danger {
     -fx-text-fill: #DC2626;
 }
 
@@ -118,6 +171,23 @@
     -fx-border-color: rgba(0,0,0,0.16);
 }
 
+.root-canvas.light-mode .admin-dashboard-view .module-tile-icon,
+.root-canvas.light-mode .admin-dashboard-view .module-tile-label {
+    -fx-text-fill: #111827;
+}
+
 .root-canvas.light-mode .module-tile-sub {
-    -fx-text-fill: rgba(0,0,0,0.45);
+    -fx-text-fill: #4B5563;
+}
+
+.root-canvas.light-mode .admin-dashboard-view .admin-activity-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .admin-dashboard-view .admin-activity-failed {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .admin-dashboard-view .admin-activity-time {
+    -fx-text-fill: #6B7280;
 }

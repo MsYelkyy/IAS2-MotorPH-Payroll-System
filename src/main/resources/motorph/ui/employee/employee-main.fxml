@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.employee.EmployeeMainController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/support-ticket.css, @../../../css/modules/employee/dashboard.css, @../../../css/modules/employee/profile.css, @../../../css/modules/employee/attendance.css, @../../../css/modules/employee/leave.css, @../../../css/modules/employee/payslip.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/shared/support-ticket.css, @../../../css/modules/employee/dashboard.css, @../../../css/modules/employee/profile.css, @../../../css/modules/employee/attendance.css, @../../../css/modules/employee/leave.css, @../../../css/modules/employee/payslip.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -97,22 +97,22 @@
                             styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
                     <content>
                         <StackPane styleClass="content-area">
-                            <fx:include fx:id="dashboardView"  source="dashboard.fxml"/>
-                            <fx:include fx:id="profileView"    source="profile.fxml"    visible="false" managed="false"/>
-                            <fx:include fx:id="attendanceView" source="attendance.fxml" visible="false" managed="false"/>
-                            <fx:include fx:id="leaveView"      source="leave.fxml"      visible="false" managed="false"/>
+                            <fx:include fx:id="dashboardView"  source="Dashboard.fxml"/>
+                            <fx:include fx:id="profileView"    source="Profile.fxml"    visible="false" managed="false"/>
+                            <fx:include fx:id="attendanceView" source="Attendance.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="leaveView"      source="Leave.fxml"      visible="false" managed="false"/>
                             <fx:include fx:id="payslipView"
-                                        source="payslip.fxml"
+                                        source="Payslip.fxml"
                                         visible="false"
                                         managed="false"/>
 
                             <fx:include fx:id="supportTicketsView"
-                                        source="support-tickets.fxml"
+                                        source="SupportTickets.fxml"
                                         visible="false"
                                         managed="false"/>
 
                             <fx:include fx:id="settingsView"
-                                        source="settings.fxml"
+                                        source="Settings.fxml"
                                         visible="false"
                                         managed="false"/>
                         </StackPane>

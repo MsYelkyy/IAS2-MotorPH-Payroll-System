@@ -1,7 +1,7 @@
 package motorph.infrastructure.config;
 
 /**
- * Stores Mailtrap SMTP configuration for system email delivery.
+ * Stores email sender configuration for preview-based demo delivery.
  */
 public class EmailConfig {
 
@@ -31,16 +31,22 @@ public class EmailConfig {
         this.startTlsEnabled = startTlsEnabled;
     }
 
-    // creates Mailtrap sandbox email configuration
+    // compatibility alias for old callers; demo builds now use in-app previews
+    @Deprecated
     public static EmailConfig mailtrapSandbox() {
+        return previewOnly();
+    }
+
+    // creates preview-only email configuration for in-app demo delivery
+    public static EmailConfig previewOnly() {
         return new EmailConfig(
-                "sandbox.smtp.mailtrap.io",
-                2525,
-                "23c2aceda2a08b",
-                "6e6a6792156c42",
+                "preview.local",
+                25,
+                "preview",
+                "preview",
                 "no-reply@motorph.com",
-                true,
-                true
+                false,
+                false
         );
     }
 

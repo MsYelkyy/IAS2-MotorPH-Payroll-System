@@ -9,7 +9,7 @@
 <VBox spacing="20"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.settings.EmployeeSettingsController">
+      fx:controller="motorph.ui.employee.EmployeeSettingsController">
 
     <VBox spacing="14" styleClass="content-card">
         <Label text="Account Settings" styleClass="section-title"/>

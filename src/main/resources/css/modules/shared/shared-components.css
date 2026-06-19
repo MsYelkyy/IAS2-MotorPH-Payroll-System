@@ -94,6 +94,32 @@
     -fx-font-weight: 900;
 }
 
+/* Payroll status / readiness variants */
+.status-badge.status-pending {
+    -fx-background-color: rgba(251,191,36,0.16);
+    -fx-text-fill: #FBBF24;
+}
+
+.status-badge.status-incomplete {
+    -fx-background-color: rgba(239,68,68,0.16);
+    -fx-text-fill: #EF4444;
+}
+
+.status-badge.status-ready {
+    -fx-background-color: rgba(34,197,94,0.16);
+    -fx-text-fill: #22C55E;
+}
+
+.status-badge.status-completed {
+    -fx-background-color: rgba(59,130,246,0.16);
+    -fx-text-fill: #60A5FA;
+}
+
+.status-badge.status-none {
+    -fx-background-color: rgba(148,163,184,0.16);
+    -fx-text-fill: #94A3B8;
+}
+
 /* ── Section label (payslip heading / OTP info panel) ────────────── */
 .section-label {
     -fx-font-size: 10px;
@@ -200,6 +226,7 @@
     -fx-border-color: transparent;
     -fx-padding: 0;
     -fx-table-cell-border-color: transparent;
+    -fx-min-height: 360;
 }
 
 .payroll-table > .virtual-flow,
@@ -233,7 +260,7 @@
     -fx-table-cell-border-color: transparent;
     -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
     -fx-border-width: 0 0 1 0;
-    -fx-cell-size: 52;
+    -fx-cell-size: 56;
 }
 
 .payroll-table .table-row-cell:hover {
@@ -256,8 +283,9 @@
 }
 
 .payroll-table .placeholder .label {
-    -fx-text-fill: rgba(140,165,210,0.40);
+    -fx-text-fill: rgba(190,205,230,0.56);
     -fx-font-size: 13px;
+    -fx-font-weight: 700;
 }
 
 .payroll-table .scroll-bar:vertical {

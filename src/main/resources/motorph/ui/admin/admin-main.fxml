@@ -56,7 +56,7 @@
                     <Label fx:id="employeeRoleLabel" text="ADMIN"             styleClass="sidebar-card-copy"/>
                 </VBox>
 
-                <Button fx:id="switchRoleButton" text="Switch to Employee" onAction="#handleSwitchRole"
+                <Button fx:id="switchRoleButton" text="Switch Role" onAction="#handleSwitchRole"
                         visible="false" managed="false" maxWidth="Infinity" styleClass="secondary-button"/>
                 <Button text="Logout" onAction="#handleLogout" maxWidth="Infinity" styleClass="danger-outline-button"/>
 
@@ -85,16 +85,16 @@
                     <content>
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView"  source="Dashboard.fxml"/>
-                            <fx:include fx:id="employeeView"   source="employee/AdminEmployee.fxml" visible="false" managed="false"/>
-                            <fx:include fx:id="payrollView"    source="payroll/AdminPayroll.fxml"  visible="false" managed="false"/>
-                            <fx:include fx:id="salaryView"       source="salary/AdminSalary.fxml"                    visible="false" managed="false"/>
-                            <fx:include fx:id="userAccountView" source="../it/user-accounts.fxml"                   visible="false" managed="false"/>
-                            <fx:include fx:id="rolesView"       source="../it/role-management.fxml"                 visible="false" managed="false"/>
-                            <fx:include fx:id="accessLogsView"  source="../it/user-access-logs.fxml"                visible="false" managed="false"/>
+                            <fx:include fx:id="employeeView"   source="AdminEmployee.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="payrollView"    source="AdminPayroll.fxml"  visible="false" managed="false"/>
+                            <fx:include fx:id="salaryView"       source="AdminSalary.fxml"                    visible="false" managed="false"/>
+                            <fx:include fx:id="userAccountView" source="../it/UserAccounts.fxml"                   visible="false" managed="false"/>
+                            <fx:include fx:id="rolesView"       source="../it/RoleManagement.fxml"                 visible="false" managed="false"/>
+                            <fx:include fx:id="accessLogsView"  source="../it/UserAccessLogs.fxml"                visible="false" managed="false"/>
                             <fx:include fx:id="reportsView"     source="../reports/reports.fxml"                    visible="false" managed="false"/>
-                            <fx:include fx:id="leaveView"       source="leave/AdminLeave.fxml"                      visible="false" managed="false"/>
-                            <fx:include fx:id="systemConfigView"    source="systemconfig/AdminSystemConfig.fxml"           visible="false" managed="false"/>
-                            <fx:include fx:id="databaseToolsView"  source="databasetools/AdminDatabaseTools.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="leaveView"       source="AdminLeave.fxml"                      visible="false" managed="false"/>
+                            <fx:include fx:id="systemConfigView"    source="AdminSystemConfig.fxml"           visible="false" managed="false"/>
+                            <fx:include fx:id="databaseToolsView"  source="AdminDatabaseTools.fxml"          visible="false" managed="false"/>
                             <VBox fx:id="modulePlaceholder" alignment="CENTER" spacing="12"
                                   visible="false" managed="false">
                                 <Label text="Coming Soon" styleClass="page-title"/>

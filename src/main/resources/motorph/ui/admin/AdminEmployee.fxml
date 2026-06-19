@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.AdminEmployeeController">
+
+    <!-- Toolbar -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <TextField fx:id="searchField" promptText="Search employees by name or ID..."
+                   styleClass="input-field" prefWidth="320" maxWidth="480" HBox.hgrow="ALWAYS"/>
+        <ComboBox fx:id="statusFilterCombo" promptText="Status"
+                  styleClass="input-field" prefWidth="150"/>
+        <ComboBox fx:id="typeFilterCombo" promptText="Type"
+                  styleClass="input-field" prefWidth="170"/>
+        <ComboBox fx:id="departmentFilterCombo" promptText="Department"
+                  styleClass="input-field" prefWidth="210"/>
+        <Region HBox.hgrow="ALWAYS"/>
+        <Button text="+ Add Employee" onAction="#showAddForm" styleClass="primary-button"/>
+    </HBox>
+
+    <HBox spacing="14">
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="activeEmployeeCountLabel" text="0" styleClass="metric-value"/>
+            <Label text="Currently employed" styleClass="muted-text"/>
+        </VBox>
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="totalEmployeeCountLabel" text="0" styleClass="metric-value"/>
+            <Label text="Including inactive" styleClass="muted-text"/>
+        </VBox>
+    </HBox>
+
+    <!-- Main content -->
+    <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
+
+        <!-- Employee list (full width — no sidebar) -->
+        <VBox styleClass="content-card" spacing="0">
+            <TableView fx:id="employeeTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="employeeIdColumn" text="ID" prefWidth="70" minWidth="60"/>
+                    <TableColumn fx:id="employeeNameColumn" text="Name" prefWidth="260" minWidth="170"/>
+                    <TableColumn fx:id="employeeStatusColumn" text="Status" prefWidth="120" minWidth="90"/>
+                    <TableColumn fx:id="employeeTypeColumn" text="Type" prefWidth="160" minWidth="110"/>
+                    <TableColumn fx:id="employeeDepartmentColumn" text="Department" prefWidth="260" minWidth="160"/>
+                    <TableColumn fx:id="employeeActionsColumn" text="Actions" prefWidth="110" minWidth="90"/>
+                </columns>
+                <placeholder>
+                    <Label text="No employees found." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <!-- Modal backdrop (dims table when any modal is open) -->
+        <Region fx:id="formBackdrop" visible="false" managed="false"
+                style="-fx-background-color: rgba(0,0,0,0.72);"/>
+
+        <!-- ── Unified Employee form panel (Add / View / Edit) ────────────── -->
+        <VBox fx:id="formPanel" styleClass="content-card modal-panel" maxWidth="1080" prefWidth="1080"
+              StackPane.alignment="CENTER" style="-fx-translate-y: 0;"
+              visible="false" managed="false">
+
+            <!-- Form header -->
+            <VBox styleClass="emp-form-header" spacing="4">
+                <Label fx:id="formTitleLabel" text="Add Employee" styleClass="section-title"/>
+            </VBox>
+
+            <!-- Scrollable form body -->
+            <ScrollPane fx:id="formScrollPane" VBox.vgrow="ALWAYS" fitToWidth="true"
+                        styleClass="emp-form-scroll" hbarPolicy="NEVER">
+                <VBox styleClass="emp-form-body" spacing="16">
+
+                    <!-- TOP ROW: Personal Information | Government Details -->
+                    <HBox spacing="16" alignment="TOP_LEFT">
+
+                        <!-- PERSONAL INFORMATION -->
+                        <VBox styleClass="emp-form-section, personal-info-section" spacing="14" HBox.hgrow="ALWAYS">
+                            <Label text="PERSONAL INFORMATION" styleClass="emp-section-heading"/>
+
+                            <HBox spacing="12" maxWidth="Infinity" styleClass="personal-info-row">
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="First Name" styleClass="field-label"/>
+                                        <Label fx:id="addFirstNameAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addFirstNameError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addFirstNameField" promptText="Enter first name"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Last Name" styleClass="field-label"/>
+                                        <Label fx:id="addLastNameAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addLastNameError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addLastNameField" promptText="Enter last name"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12" maxWidth="Infinity" styleClass="personal-info-row">
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Gender" styleClass="field-label"/>
+                                        <Label fx:id="addGenderAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addGenderError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addGenderCombo" promptText="Select gender"
+                                              styleClass="input-field, personal-info-control"
+                                              minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Civil Status" styleClass="field-label"/>
+                                        <Label fx:id="addCivilStatusAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addCivilStatusError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addCivilStatusCombo" promptText="Select civil status"
+                                              styleClass="input-field, personal-info-control"
+                                              minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12" maxWidth="Infinity" styleClass="personal-info-row">
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Birth Date" styleClass="field-label"/>
+                                        <Label fx:id="addBirthDateAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addBirthDateError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addBirthDateField" promptText="MM-DD-YYYY"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Phone Number" styleClass="field-label"/>
+                                        <Label fx:id="addPhoneAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addPhoneError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addPhoneField" promptText="000-000-0000"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12" maxWidth="Infinity" styleClass="personal-info-row">
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Personal Email" styleClass="field-label"/>
+                                        <Label fx:id="addEmailAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addEmailError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addEmailField" promptText="example@email.com"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" minWidth="0" prefWidth="0" maxWidth="Infinity" styleClass="personal-info-field" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Address" styleClass="field-label"/>
+                                        <Label fx:id="addAddressAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addAddressError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addAddressField" promptText="Enter full address"
+                                               styleClass="input-field, personal-info-control"
+                                               minWidth="0" prefWidth="320" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+                        </VBox>
+
+                        <!-- GOVERNMENT DETAILS -->
+                        <VBox styleClass="emp-form-section" spacing="14"
+                              prefWidth="360" minWidth="360" maxWidth="360">
+                            <Label text="GOVERNMENT DETAILS" styleClass="emp-section-heading"/>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="SSS Number" styleClass="field-label"/>
+                                    <Label fx:id="sssAsterisk" text=" *" styleClass="required-asterisk"/>
+                                    <Label fx:id="sssError" text="Required" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="sssField" promptText="00-0000000-0"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="PhilHealth Number" styleClass="field-label"/>
+                                    <Label fx:id="philhealthAsterisk" text=" *" styleClass="required-asterisk"/>
+                                    <Label fx:id="philhealthError" text="Required" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="philhealthField" promptText="00-000000000-0"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="TIN Number" styleClass="field-label"/>
+                                    <Label fx:id="tinAsterisk" text=" *" styleClass="required-asterisk"/>
+                                    <Label fx:id="tinError" text="Required" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="tinField" promptText="000-000-000-000"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="Pag-IBIG Number" styleClass="field-label"/>
+                                    <Label fx:id="pagibigAsterisk" text=" *" styleClass="required-asterisk"/>
+                                    <Label fx:id="pagibigError" text="Required" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="pagibigField" promptText="0000-0000-0000"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+                        </VBox>
+                    </HBox>
+
+                    <!-- BOTTOM ROW: Employment Details | Benefits -->
+                    <HBox spacing="16" alignment="TOP_LEFT">
+
+                        <!-- EMPLOYMENT DETAILS -->
+                        <VBox styleClass="emp-form-section" spacing="14" HBox.hgrow="ALWAYS">
+                            <Label text="EMPLOYMENT DETAILS" styleClass="emp-section-heading"/>
+
+                            <!-- Employee Number + Company Email — shown only in view/edit mode, read-only -->
+                            <HBox fx:id="editIdentityRow" spacing="12" visible="false" managed="false">
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <Label text="Employee Number" styleClass="field-label"/>
+                                    <TextField fx:id="editEmployeeIdField"
+                                               styleClass="input-field, readonly-field" maxWidth="Infinity"
+                                               editable="false" focusTraversable="false"/>
+                                </VBox>
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <Label text="Company Email" styleClass="field-label"/>
+                                    <TextField fx:id="editCompanyEmailField"
+                                               styleClass="input-field, readonly-field" maxWidth="Infinity"
+                                               editable="false" focusTraversable="false"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12">
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Employment Status" styleClass="field-label"/>
+                                        <Label fx:id="addEmploymentStatusAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addEmploymentStatusError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addEmploymentStatusCombo" promptText="Select status"
+                                              styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Supervisor" styleClass="field-label"/>
+                                        <Label fx:id="addSupervisorAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addSupervisorError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addSupervisorCombo" promptText="Select supervisor"
+                                              styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12" styleClass="dept-position-row">
+                                <VBox spacing="6" styleClass="dept-position-field">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Department" styleClass="field-label"/>
+                                        <Label fx:id="addDepartmentAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addDepartmentError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addDepartmentCombo" promptText="Select department"
+                                              styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" styleClass="dept-position-field">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Position" styleClass="field-label"/>
+                                        <Label fx:id="addPositionAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addPositionError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <ComboBox fx:id="addPositionCombo" promptText="Select position"
+                                              styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <HBox spacing="12">
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Hire Date" styleClass="field-label"/>
+                                        <Label fx:id="addHireDateAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addHireDateError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <DatePicker fx:id="addHireDatePicker" promptText="MM-DD-YYYY"
+                                                styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                                    <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                        <Label text="Basic Salary" styleClass="field-label"/>
+                                        <Label fx:id="addBasicSalaryAsterisk" text=" *" styleClass="required-asterisk"/>
+                                        <Label fx:id="addBasicSalaryError" text="Required" styleClass="field-error"
+                                               visible="false" managed="false"/>
+                                    </HBox>
+                                    <TextField fx:id="addBasicSalaryField" promptText="0.00"
+                                               styleClass="input-field" maxWidth="Infinity"/>
+                                </VBox>
+                            </HBox>
+
+                            <VBox spacing="6">
+                                <Label text="Hourly Rate" styleClass="field-label"/>
+                                <TextField fx:id="addHourlyRateField"
+                                           styleClass="input-field, readonly-field" maxWidth="Infinity"
+                                           editable="false" focusTraversable="false"/>
+                            </VBox>
+                        </VBox>
+
+                        <!-- BENEFITS -->
+                        <VBox styleClass="emp-form-section" spacing="14"
+                              prefWidth="360" minWidth="360" maxWidth="360">
+                            <Label text="BENEFITS" styleClass="emp-section-heading"/>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="Rice Subsidy" styleClass="field-label"/>
+                                    <Label fx:id="riceSubsidyError" text="Cannot be negative" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="riceSubsidyField" promptText="0.00"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="Phone Allowance" styleClass="field-label"/>
+                                    <Label fx:id="phoneAllowanceError" text="Cannot be negative" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="phoneAllowanceField" promptText="0.00"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+
+                            <VBox spacing="6">
+                                <HBox styleClass="emp-field-label-row" spacing="4" alignment="CENTER_LEFT">
+                                    <Label text="Clothing Allowance" styleClass="field-label"/>
+                                    <Label fx:id="clothingAllowanceError" text="Cannot be negative" styleClass="field-error"
+                                           visible="false" managed="false"/>
+                                </HBox>
+                                <TextField fx:id="clothingAllowanceField" promptText="0.00"
+                                           styleClass="input-field" maxWidth="Infinity"/>
+                            </VBox>
+                        </VBox>
+                    </HBox>
+
+                    <!-- Form error -->
+                    <Label fx:id="addFormErrorLabel" text="" styleClass="error-message" wrapText="true"
+                           minHeight="20" prefHeight="20"/>
+
+                </VBox>
+            </ScrollPane>
+
+            <!-- Action bar — changes by mode -->
+            <!-- View mode: Close | Delete Employee | Edit Employee -->
+            <HBox fx:id="viewActions" styleClass="emp-form-actions" spacing="12" alignment="CENTER_RIGHT"
+                  visible="false" managed="false">
+                <Button text="Close" onAction="#handleCloseView" styleClass="secondary-button"/>
+                <Button fx:id="deleteEmployeeButton" text="Delete Employee" onAction="#handleDeleteEmployee"
+                        styleClass="danger-outline-button"/>
+                <Button fx:id="editEmployeeButton" text="Edit Employee" onAction="#handleStartEdit" styleClass="primary-button"/>
+            </HBox>
+
+            <!-- Add / Edit mode: Cancel | Save Employee -->
+            <HBox fx:id="addEditActions" styleClass="emp-form-actions" spacing="12" alignment="CENTER_RIGHT">
+                <Button text="Cancel" onAction="#handleCancelForm" styleClass="secondary-button"/>
+                <Button text="Save Employee" onAction="#handleAddSave" styleClass="primary-button"/>
+            </HBox>
+
+        </VBox>
+
+    </StackPane>
+
+</VBox>

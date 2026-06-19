@@ -8,9 +8,10 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox spacing="18"
+      styleClass="admin-dashboard-view"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.admin.dashboard.AdminDashboardController">
+      fx:controller="motorph.ui.admin.AdminDashboardController">
 
     <Label text="PEOPLE" styleClass="section-title"/>
     <HBox spacing="14" minHeight="116" prefHeight="116">
@@ -109,18 +110,21 @@
             <Label text="Inactive accounts" styleClass="muted-text"/>
         </VBox>
 
-        <VBox spacing="12" styleClass="content-card"
+        <VBox spacing="6" styleClass="metric-card"
               minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <Label text="LOGIN ACTIVITY" styleClass="metric-label"/>
-            <HBox spacing="24">
-                <VBox spacing="4">
+            <Label text="LOGIN ACTIVITY (TODAY)" styleClass="metric-label"/>
+            <HBox spacing="18" alignment="CENTER_LEFT" maxWidth="-Infinity"
+                  styleClass="admin-login-metrics">
+                <VBox spacing="4" alignment="CENTER_LEFT" minWidth="76" prefWidth="76"
+                      styleClass="admin-login-metric-group">
                     <Label fx:id="successLoginsLabel" text="&#8212;" styleClass="stat-success"/>
-                    <Label text="Successful" styleClass="positive-text"/>
+                    <Label text="Successful" styleClass="admin-login-label-success"/>
                 </VBox>
-                <VBox spacing="4">
+                <VBox spacing="4" alignment="CENTER_LEFT" minWidth="76" prefWidth="76"
+                      styleClass="admin-login-metric-group">
                     <Label fx:id="failedLoginsLabel" text="&#8212;" styleClass="stat-danger"/>
-                    <Label text="Failed" styleClass="muted-text"/>
+                    <Label text="Failed" styleClass="admin-login-label-danger"/>
                 </VBox>
             </HBox>
         </VBox>

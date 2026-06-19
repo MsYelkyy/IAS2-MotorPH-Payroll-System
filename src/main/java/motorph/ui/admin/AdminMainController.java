@@ -1,18 +1,10 @@
 package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
-import motorph.domain.value.Role;
-import motorph.ui.admin.databasetools.AdminDatabaseToolsController;
-import motorph.ui.admin.dashboard.AdminDashboardController;
-import motorph.ui.admin.leave.AdminLeaveController;
-import motorph.ui.admin.employee.AdminEmployeeController;
-import motorph.ui.admin.payroll.AdminPayrollController;
-import motorph.ui.admin.salary.AdminSalaryController;
-import motorph.ui.admin.systemconfig.AdminSystemConfigController;
 import motorph.ui.common.GlobalControlsHelper;
-import motorph.ui.it.accesslogs.ITAccessLogsController;
-import motorph.ui.it.account.ITUserAccountController;
-import motorph.ui.it.role.ITRolesController;
+import motorph.ui.it.ITAccessLogsController;
+import motorph.ui.it.ITUserAccountController;
+import motorph.ui.it.ITRolesController;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
@@ -35,14 +27,14 @@ public class AdminMainController {
 
     private EmployeeService employeeService;
 
-    // ── Root ──────────────────────────────────────────────────────────────────
+    // Root
     @FXML private StackPane rootPane;
 
-    // ── Sidebar identity card ─────────────────────────────────────────────────
+    // Sidebar identity card
     @FXML private Label employeeNameLabel;
     @FXML private Label employeeRoleLabel;
 
-    // ── Navigation buttons ────────────────────────────────────────────────────
+    // Navigation buttons
     @FXML private Button dashboardNavButton;
     @FXML private Button employeesNavButton;
     @FXML private Button payrollNavButton;
@@ -56,59 +48,59 @@ public class AdminMainController {
     @FXML private Button settingsNavButton;
     @FXML private Button switchRoleButton;
 
-    // ── Topbar ────────────────────────────────────────────────────────────────
+    // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
     @FXML private HBox  globalControlsHost;
 
-    // ── Dashboard sub-view ────────────────────────────────────────────────────
+    // Dashboard sub-view
     @FXML private VBox                     dashboardView;
     @FXML private AdminDashboardController dashboardViewController;
 
-    // ── Employee sub-view ─────────────────────────────────────────────────────
+    // Employee sub-view
     @FXML private VBox                      employeeView;
     @FXML private AdminEmployeeController   employeeViewController;
 
-    // ── Payroll sub-view ──────────────────────────────────────────────────────
+    // Payroll sub-view
     @FXML private VBox                    payrollView;
     @FXML private AdminPayrollController  payrollViewController;
 
-    // ── Salary & Benefits sub-view ────────────────────────────────────────────
+    // Salary & Benefits sub-view
     @FXML private VBox                    salaryView;
     @FXML private AdminSalaryController   salaryViewController;
 
-    // ── User Account Management sub-view ──────────────────────────────────────
+    // User Account Management sub-view
     @FXML private VBox                        userAccountView;
     @FXML private ITUserAccountController     userAccountViewController;
 
-    // ── Roles & Permissions sub-view ─────────────────────────────────────────
+    // Roles & Permissions sub-view
     @FXML private VBox                   rolesView;
     @FXML private ITRolesController      rolesViewController;
 
-    // ── Access Logs sub-view ──────────────────────────────────────────────────
+    // Access Logs sub-view
     @FXML private VBox                        accessLogsView;
     @FXML private ITAccessLogsController      accessLogsViewController;
 
-    // ── Reports sub-view ─────────────────────────────────────────────────────
+    // Reports sub-view
     @FXML private VBox               reportsView;
     @FXML private ReportsController  reportsViewController;
 
-    // ── Leave & Overtime sub-view ─────────────────────────────────────────────
+    // Leave & Overtime sub-view
     @FXML private VBox                 leaveView;
     @FXML private AdminLeaveController leaveViewController;
 
-    // ── System Config sub-view ────────────────────────────────────────────────
+    // System Config sub-view
     @FXML private VBox                          systemConfigView;
     @FXML private AdminSystemConfigController   systemConfigViewController;
 
-    // ── Database Tools sub-view ───────────────────────────────────────────────
+    // Database Tools sub-view
     @FXML private VBox                          databaseToolsView;
     @FXML private AdminDatabaseToolsController  databaseToolsViewController;
 
-    // ── Module placeholder (shown for unbuilt modules) ────────────────────────
+    // Module placeholder (shown for unbuilt modules)
     @FXML private VBox modulePlaceholder;
 
-    // ── Footer ────────────────────────────────────────────────────────────────
+    // Footer
     @FXML private Label appMessageLabel;
 
     @FXML
@@ -124,8 +116,7 @@ public class AdminMainController {
         UiMessageUtil.setSuccess(appMessageLabel, "Admin Control Panel is ready.");
     }
 
-    // ── Navigation handlers ───────────────────────────────────────────────────
-
+    // Navigation handlers
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
@@ -214,8 +205,7 @@ public class AdminMainController {
         if (systemConfigViewController != null) systemConfigViewController.refresh();
     }
 
-    // ── Auth handlers ─────────────────────────────────────────────────────────
-
+    // Auth handlers
     @FXML
     private void handleLogout() {
         CurrentUserSession.clear();
@@ -224,11 +214,10 @@ public class AdminMainController {
 
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchTo(Role.EMPLOYEE, rootPane.getScene(), null, null);
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), null);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
-
+    // Helpers
     /** Exposes the navigate-to-employees action so the dashboard quick-access tiles can trigger it. */
     public void navigateToEmployees()      { showEmployees(); }
     public void navigateToPayroll()        { showPayroll(); }
@@ -287,9 +276,7 @@ public class AdminMainController {
     }
 
     private void updateRoleSwitchButton() {
-        boolean show = CurrentUserSession.hasMultipleRoles()
-                && CurrentUserSession.hasRole(Role.EMPLOYEE)
-                && CurrentUserSession.getActiveRole() != Role.EMPLOYEE;
+        boolean show = CurrentUserSession.hasMultipleRoles();
 
         if (switchRoleButton != null) {
             switchRoleButton.setVisible(show);

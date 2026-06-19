@@ -45,6 +45,38 @@
 .tile-title, .tile-value { -fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 
 
+/* Leave summary list */
+.leave-summary-list {
+    -fx-padding: 8 2 2 2;
+}
+
+.leave-summary-row {
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-padding: 0 0 1 0;
+}
+
+.leave-summary-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(248,250,252,0.92);
+}
+
+.leave-summary-leader {
+    -fx-border-color: transparent transparent rgba(226,232,240,0.22) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 1;
+}
+
+.leave-summary-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+    -fx-min-width: 78;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+
 /* ── Data color values ───────────────────────────────── */
 /* Yellow — financial / money data */
 .financial-value {
@@ -81,6 +113,64 @@
 
 .bottom-value { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 
+.dashboard-bottom-row {
+    -fx-alignment: TOP_LEFT;
+}
+
+.dashboard-bottom-card {
+    -fx-padding: 20 22;
+    -fx-min-height: 158;
+    -fx-pref-height: 164;
+}
+
+.bottom-card-content {
+    -fx-padding: 6 0 0 0;
+}
+
+.dashboard-bottom-card .bottom-value {
+    -fx-font-size: 19px;
+    -fx-wrap-text: true;
+    -fx-text-overrun: ellipsis;
+}
+
+.dashboard-bottom-card .muted-text {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 2;
+}
+
+.dashboard-bottom-card .positive-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+}
+
+.dashboard-bottom-card .small-pill-button {
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-max-height: 36;
+    -fx-font-size: 13px;
+    -fx-wrap-text: false;
+}
+
+.upcoming-payday-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.recent-payslip-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.recent-payslip-content {
+    -fx-padding: 6 0 0 0;
+}
+
+.payroll-status-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.payroll-status-card .muted-text {
+    -fx-font-size: 13px;
+}
+
 
 /* ══════════════════════════════════════════════════
    LIGHT MODE — leave-tile text (extracted from the
@@ -89,4 +179,13 @@
 .light-mode .tile-title,
 .light-mode .tile-value {
     -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-summary-name,
+.root-canvas.light-mode .leave-summary-value {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-summary-leader {
+    -fx-border-color: transparent transparent rgba(15,23,42,0.20) transparent;
 }

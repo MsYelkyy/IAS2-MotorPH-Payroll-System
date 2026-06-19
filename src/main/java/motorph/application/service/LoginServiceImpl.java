@@ -19,7 +19,7 @@ public class LoginServiceImpl implements LoginService {
 
     // constructors
     public LoginServiceImpl() {
-        this.emailService = new EmailService(EmailConfig.mailtrapSandbox());
+        this.emailService = new EmailService(EmailConfig.previewOnly());
         this.authenticationService = buildAuthenticationService(emailService);
     }
 

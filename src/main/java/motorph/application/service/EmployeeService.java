@@ -6,16 +6,24 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Department;
 import motorph.domain.model.Employee;
+import motorph.domain.model.EmployeeBenefit;
+import motorph.domain.model.GovernmentDetails;
 import motorph.domain.model.Position;
+import motorph.domain.model.SalaryHistory;
 import motorph.domain.model.UserAccount;
+import motorph.domain.value.SalaryType;
 import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,16 +32,35 @@ import java.util.stream.Collectors;
  */
 public class EmployeeService {
 
+    private static final int BENEFIT_RICE_SUBSIDY    = 1;
+    private static final int BENEFIT_PHONE_ALLOWANCE = 2;
+    private static final int BENEFIT_CLOTHING        = 3;
+
     private final EmployeeRepository employeeRepository;
     private final UserAccountService userAccountService;
     private final DepartmentRepository departmentRepository;
     private final PositionRepository positionRepository;
+    private final SalaryHistoryRepository salaryHistoryRepository;
+    private final EmployeeBenefitRepository employeeBenefitRepository;
+    private final GovernmentDetailsRepository governmentDetailsRepository;
 
     // constructors
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserAccountService userAccountService,
                            DepartmentRepository departmentRepository,
                            PositionRepository positionRepository) {
+        this(employeeRepository, userAccountService, departmentRepository, positionRepository,
+                new SalaryHistoryRepository(), new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository());
+    }
+
+    public EmployeeService(EmployeeRepository employeeRepository,
+                           UserAccountService userAccountService,
+                           DepartmentRepository departmentRepository,
+                           PositionRepository positionRepository,
+                           SalaryHistoryRepository salaryHistoryRepository,
+                           EmployeeBenefitRepository employeeBenefitRepository,
+                           GovernmentDetailsRepository governmentDetailsRepository) {
         if (employeeRepository == null) {
             throw new IllegalArgumentException("EmployeeRepository is required.");
         }
@@ -46,6 +73,12 @@ public class EmployeeService {
         this.userAccountService = userAccountService;
         this.departmentRepository = departmentRepository != null ? departmentRepository : new DepartmentRepository();
         this.positionRepository   = positionRepository   != null ? positionRepository   : new PositionRepository();
+        this.salaryHistoryRepository = salaryHistoryRepository != null
+                ? salaryHistoryRepository : new SalaryHistoryRepository();
+        this.employeeBenefitRepository = employeeBenefitRepository != null
+                ? employeeBenefitRepository : new EmployeeBenefitRepository();
+        this.governmentDetailsRepository = governmentDetailsRepository != null
+                ? governmentDetailsRepository : new GovernmentDetailsRepository();
     }
 
     // returns an active employee by id
@@ -120,6 +153,12 @@ public class EmployeeService {
         return toProfileDTO(result);
     }
 
+    // returns government details for an employee, or null when not recorded
+    public GovernmentDetails getGovernmentDetails(int employeeId) {
+        validateEmployeeId(employeeId);
+        return governmentDetailsRepository.findByEmployeeId(employeeId);
+    }
+
     private EmployeeProfileDTO toProfileDTO(EmployeeRepository.ProfileQueryResult result) {
         Employee employee = result.getEmployee();
         return new EmployeeProfileDTO(
@@ -157,6 +196,52 @@ public class EmployeeService {
         validateEmployee(employee);
 
         int employeeId = employeeRepository.saveAndReturnId(employee);
+
+        return userAccountService.createTemporaryEmployeeAccount(
+                employeeId,
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getPersonalEmail()
+        );
+    }
+
+    // creates a new employee together with initial salary, government IDs, and benefit records
+    public UserAccount createEmployeeWithSalaryAndBenefits(
+            Employee employee,
+            double basicSalary,
+            double hourlyRate,
+            String sssNumber,
+            String philhealthNumber,
+            String tinNumber,
+            String pagibigNumber,
+            double riceSubsidy,
+            double phoneAllowance,
+            double clothingAllowance) {
+
+        validateEmployee(employee);
+
+        int employeeId = employeeRepository.saveAndReturnId(employee);
+
+        LocalDate hireDate = employee.getHireDate();
+
+        salaryHistoryRepository.save(new SalaryHistory(
+                null, employeeId, SalaryType.MONTHLY, basicSalary, hourlyRate, hireDate, null));
+
+        governmentDetailsRepository.save(new GovernmentDetails(
+                null, employeeId, sssNumber, tinNumber, pagibigNumber, philhealthNumber));
+
+        if (riceSubsidy > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_RICE_SUBSIDY, riceSubsidy, hireDate, null));
+        }
+        if (phoneAllowance > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_PHONE_ALLOWANCE, phoneAllowance, hireDate, null));
+        }
+        if (clothingAllowance > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_CLOTHING, clothingAllowance, hireDate, null));
+        }
 
         return userAccountService.createTemporaryEmployeeAccount(
                 employeeId,
