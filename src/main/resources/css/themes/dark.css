@@ -212,6 +212,9 @@
    ═════════════════════════════════════════════════════════════════ */
 
 .sidebar {
+    -fx-pref-width: 226;
+    -fx-min-width: 226;
+    -fx-max-width: 226;
     -fx-background-color:
         linear-gradient(to bottom, #141418, #111114 60%, #161618);
     -fx-padding: 22 14 18 14;
