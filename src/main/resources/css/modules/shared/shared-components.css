@@ -3,9 +3,7 @@
    Used by both Admin (admin-main.fxml) and IT (it-main.fxml).
    Loaded after motorph-theme.css, before role-specific stylesheets.
 
-   Source: promoted from admin-ui.css and modules/it/it-common.css
-   (Phase 1 consolidation — all rules here were byte-identical in
-   both role files before promotion).
+   Source: promoted from retired admin-ui.css and modules/it/it-common.css.
    ══════════════════════════════════════════════════════════════════ */
 
 /* ── Module toolbar (spacing below toolbar row) ──────────────────── */

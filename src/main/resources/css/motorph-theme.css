@@ -308,18 +308,6 @@
     -fx-text-fill: #991b1b;
 }
 
-/* Tables */
-.light-mode .table-view,
-.light-mode .table-cell,
-.light-mode .payroll-table .table-cell {
-    -fx-text-fill: #111827;
-}
-
-.light-mode .payroll-table .column-header .label {
-    -fx-text-fill: #374151;
-}
-
-
 .app-shell {
     -fx-background-color:
         radial-gradient(center 0%   0%,  radius 72%, rgba(59,130,246,0.16), transparent),
@@ -1359,34 +1347,6 @@
 
 .payroll-table .scroll-bar:vertical .track {
     -fx-background-color: transparent;
-}
-
-/* Net pay cells — gold text */
-.net-pay-cell {
-    -fx-text-fill: #FBBF24;
-    -fx-font-weight: 900;
-    -fx-font-size: 13px;
-}
-
-/* View Payslip action button */
-.view-payslip-button {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(200,45,45,0.38);
-    -fx-border-width: 1;
-    -fx-text-fill: rgba(210,65,65,0.82);
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-    -fx-font-weight: 800;
-    -fx-font-size: 12px;
-    -fx-padding: 6 14;
-    -fx-cursor: hand;
-    -fx-min-height: 32;
-}
-
-.view-payslip-button:hover {
-    -fx-background-color: rgba(232,67,67,0.09);
-    -fx-border-color: rgba(232,67,67,0.65);
-    -fx-text-fill: #E84343;
 }
 
 /* Light-mode overrides for the payroll table */
