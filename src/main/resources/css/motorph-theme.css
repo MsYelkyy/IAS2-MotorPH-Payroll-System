@@ -976,19 +976,10 @@
     -fx-min-height: 265;
 }
 
-.bottom-card {
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 100%,
-            rgba(200,20,20,0.68),
-            rgba(148,10,10,0.80));
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255,80,80,0.40);
-    -fx-border-width: 1.5;
-    -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
-    -fx-padding: 16;
-    -fx-min-height: 130;
-}
+/* Employee-only .bottom-card override moved to
+   modules/employee/dashboard.css (single owner; dashboard is the
+   only screen using .bottom-card). The shared grouped
+   .chart-card,.bottom-card,.content-card base rules stay above. */
 
 .content-card {
     -fx-background-color:
@@ -1082,7 +1073,11 @@
 
 
 /* ── Chart styles on dark red background ──────────────────────────────── */
-.portal-chart          { -fx-background-color: transparent; -fx-padding: 0; }
+/* Employee-only .portal-chart moved to modules/employee/dashboard.css
+   (it is the styleClass on the Employee dashboard chart node, used
+   nowhere else). The generic JavaFX chart-internal selectors below
+   (.chart-plot-background, grid-lines, .axis, .chart-bar, legend) are
+   global control surfaces and stay shared in the theme. */
 .chart-plot-background { -fx-background-color: transparent; }
 .chart-vertical-grid-lines,
 .chart-horizontal-grid-lines { -fx-stroke: rgba(255,255,255,0.06); }
@@ -1197,13 +1192,8 @@
     -fx-border-color: rgba(255,130,130,0.32);
 }
 
-.bottom-card {
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 28%, rgba(255,110,110,0.20), transparent),
-        linear-gradient(from 0% 0% to 0% 100%, rgba(168,10,10,0.42), rgba(118,5,5,0.52));
-    -fx-border-color: rgba(255,130,130,0.34);
-    -fx-min-height: 128;
-}
+/* Employee-only .bottom-card translucent override moved to
+   modules/employee/dashboard.css. */
 
 .content-card {
     -fx-background-color:
@@ -1221,25 +1211,15 @@
     -fx-text-fill: #FFFFFF;
 }
 
-/* Yellow — financial / money data */
-.financial-value {
-    -fx-font-size: 24px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FBBF24;
-}
-
-/* Blue — attendance data */
-.attendance-value {
-    -fx-font-size: 24px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #60A5FA;
-}
+/* Employee-only .financial-value / .attendance-value moved to
+   modules/employee/dashboard.css (only the Employee dashboard uses
+   them). Shared .metric-value above stays (Admin + IT + Employee). */
 
 /* General card typography on translucent dark-red */
 .metric-label   { -fx-font-size: 9px;  -fx-font-weight: 900; -fx-text-fill: rgba(255,210,210,0.70); }
 .data-line      { -fx-font-size: 13px; -fx-text-fill: rgba(245,225,225,0.82); }
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: rgba(255,200,200,0.58); }
-.bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
+/* Employee-only .bottom-value moved to modules/employee/dashboard.css. */
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: rgba(255,200,200,0.62); }
 
 .root-canvas.light-mode .content-card .label {

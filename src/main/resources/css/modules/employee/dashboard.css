@@ -62,11 +62,20 @@
 
 
 /* ── Bottom row cards ────────────────────────────────── */
+/* Full effective value set (was split across two standalone
+   .bottom-card rules in motorph-theme.css). Radius/border-width/
+   effect/padding came from the theme's first standalone rule;
+   background/border-color/min-height from its translucent pass. */
 .bottom-card {
     -fx-background-color:
         linear-gradient(from 0% 0% to 0% 28%, rgba(255,110,110,0.20), transparent),
         linear-gradient(from 0% 0% to 0% 100%, rgba(168,10,10,0.42), rgba(118,5,5,0.52));
+    -fx-background-radius: 14;
     -fx-border-color: rgba(255,130,130,0.34);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 16;
     -fx-min-height: 128;
 }
 
