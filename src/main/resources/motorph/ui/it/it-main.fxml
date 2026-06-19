@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.it.ITMainController"
-           stylesheets="@../../../css/motorph-theme.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/it/it-common.css, @../../../css/modules/it/dashboard.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/it/it-common.css, @../../../css/modules/it/dashboard.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/modules/support-ticket.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 

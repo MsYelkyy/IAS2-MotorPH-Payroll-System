@@ -1,19 +1,12 @@
 /* ══════════════════════════════════════════════════
    MODULE — EMPLOYEE ATTENDANCE
    Attendance-exclusive selectors, extracted from
-   motorph-theme.css with exact values, in source
-   order (dark/default rules first, then light-mode).
-   Loaded AFTER motorph-theme.css (employee-main.fxml),
-   so these own the Attendance screen outright;
-   appearance is unchanged from the pre-extraction theme.
+   Attendance-exclusive selectors extracted from the
+   retired motorph-theme.css. Loaded after dark.css/light.css
+   and shared-components.css (employee-main.fxml).
 
-   NOT moved (shared — used by the IT shell, which does
-   not load attendance.css, so these stay in
-   motorph-theme.css):
-     .attendance-table .column-header .label,
-     .attendance-table .table-cell
-     (.attendance-history-card is also IT-shared but has
-      no dedicated rule)
+   The shared .attendance-table alignment rule now lives in
+   shared-components.css (used by IT shell without attendance.css).
    ══════════════════════════════════════════════════ */
 
 

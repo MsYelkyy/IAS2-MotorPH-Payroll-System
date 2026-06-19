@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════════
    SHARED COMPONENTS — cross-role shell classes
    Used by both Admin (admin-main.fxml) and IT (it-main.fxml).
-   Loaded after motorph-theme.css, before role-specific stylesheets.
+   Loaded after dark.css/light.css, before role-specific stylesheets.
 
    Source: promoted from retired admin-ui.css and modules/it/it-common.css.
    ══════════════════════════════════════════════════════════════════ */
@@ -188,4 +188,161 @@
     -fx-min-width: 116;
     -fx-pref-width: 116;
     -fx-min-height: 40;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   PAYROLL TABLE — shared across Admin, IT, Employee, and Reports
+   ══════════════════════════════════════════════════════════════ */
+
+.payroll-table {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-table-cell-border-color: transparent;
+}
+
+.payroll-table > .virtual-flow,
+.payroll-table > .virtual-flow > .clipped-container {
+    -fx-background-color: transparent;
+}
+
+.payroll-table .column-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.payroll-table .column-header,
+.payroll-table .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-size: 42;
+}
+
+.payroll-table .column-header .label {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(140,165,210,0.70);
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 14;
+}
+
+.payroll-table .table-row-cell {
+    -fx-background-color: transparent;
+    -fx-table-cell-border-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.05) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 52;
+}
+
+.payroll-table .table-row-cell:hover {
+    -fx-background-color: rgba(255,255,255,0.025);
+}
+
+.payroll-table .table-row-cell:selected,
+.payroll-table .table-row-cell:selected:hover {
+    -fx-background-color: rgba(59,130,246,0.08);
+}
+
+.payroll-table .table-cell {
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 14;
+    -fx-text-fill: rgba(200,215,240,0.82);
+    -fx-font-size: 13px;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-table-cell-border-color: transparent;
+}
+
+.payroll-table .placeholder .label {
+    -fx-text-fill: rgba(140,165,210,0.40);
+    -fx-font-size: 13px;
+}
+
+.payroll-table .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.payroll-table .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-radius: 999;
+}
+
+.payroll-table .scroll-bar:vertical .track {
+    -fx-background-color: transparent;
+}
+
+.root-canvas.light-mode .payroll-table .column-header-background {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.08) transparent;
+}
+
+.root-canvas.light-mode .payroll-table .column-header .label {
+    -fx-text-fill: rgba(50,75,115,0.60);
+}
+
+.root-canvas.light-mode .payroll-table .table-row-cell {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.06) transparent;
+}
+
+.root-canvas.light-mode .payroll-table .table-row-cell:hover {
+    -fx-background-color: rgba(0,0,0,0.025);
+}
+
+.root-canvas.light-mode .payroll-table .table-cell {
+    -fx-text-fill: #1A2030;
+}
+
+.root-canvas.light-mode .net-pay-cell {
+    -fx-text-fill: #B45309;
+}
+
+.root-canvas.light-mode .view-payslip-button {
+    -fx-border-color: rgba(200,40,40,0.35);
+    -fx-text-fill: rgba(185,30,30,0.80);
+}
+
+.root-canvas.light-mode .view-payslip-button:hover {
+    -fx-background-color: rgba(200,40,40,0.07);
+    -fx-border-color: rgba(200,40,40,0.60);
+    -fx-text-fill: #C62828;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   ATTENDANCE TABLE — center-alignment shared by Employee, IT, Reports
+   ══════════════════════════════════════════════════════════════ */
+
+.attendance-table .column-header .label,
+.attendance-table .table-cell {
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+}
+
+
+/* ══════════════════════════════════════════════════════════════
+   FORM VALIDATION — shared by Employee Leave + Support Tickets (both shells)
+   ══════════════════════════════════════════════════════════════ */
+
+.field-error {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(255,150,150,0.92);
+}
+
+.required-asterisk {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF4D4D;
+}
+
+.character-counter {
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(255,210,210,0.62);
+}
+
+.root-canvas.light-mode .character-counter {
+    -fx-text-fill: #6B7280;
 }

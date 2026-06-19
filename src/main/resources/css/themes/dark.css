@@ -199,12 +199,99 @@
 }
 .more-button:hover { -fx-text-fill: #FF6060; }
 
-/* Sidebar brand labels (used in IT + Admin sidebar) */
+/* Sidebar brand labels (used in IT + Admin + Employee sidebar) */
 .sidebar-brand        { -fx-padding: 4 0 8 4; }
 .sidebar-brand-motor  { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #C8D0E0; }
 .sidebar-brand-ph     { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #E84343; }
 .sidebar-brand-system { -fx-font-size: 7px;  -fx-font-weight: 900; -fx-text-fill: rgba(180,190,215,0.45); -fx-padding: 0 0 0 2; }
 .sidebar-title        { -fx-font-size: 24px; -fx-font-weight: 900; -fx-text-fill: #F0F0F4; }
+
+
+/* ══ SHELL CHROME — Sidebar, topbar, footerbar, nav ══════════════════
+   Used by all three main shells (Admin, IT, Employee).
+   ═════════════════════════════════════════════════════════════════ */
+
+.sidebar {
+    -fx-background-color:
+        linear-gradient(to bottom, #141418, #111114 60%, #161618);
+    -fx-padding: 22 14 18 14;
+    -fx-border-color: transparent rgba(255,40,40,0.20) transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.sidebar .separator .line { -fx-border-color: rgba(255,60,60,0.20); }
+
+.sidebar-card {
+    -fx-background-color:
+        linear-gradient(to bottom, rgba(180,15,15,0.22), rgba(120,5,5,0.30));
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(255,60,60,0.28);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-padding: 12 14;
+}
+
+.sidebar-card-kicker { -fx-text-fill: #FF6060; -fx-font-size: 9px; -fx-font-weight: 900; }
+.sidebar-card-title  { -fx-text-fill: #F0F0F4; -fx-font-size: 13px; -fx-font-weight: 900; }
+.sidebar-card-copy   { -fx-text-fill: rgba(200,200,210,0.55); -fx-font-size: 11px; }
+
+.nav-button {
+    -fx-min-height: 38;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 0 12 0 12;
+    -fx-background-radius: 0 8 8 0;
+    -fx-border-radius: 0 8 8 0;
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 2;
+    -fx-text-fill: rgba(190,190,200,0.60);
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.nav-button:hover {
+    -fx-background-color: rgba(255,40,40,0.10);
+    -fx-border-color: transparent transparent transparent rgba(255,80,80,0.40);
+    -fx-text-fill: rgba(230,230,240,0.88);
+}
+
+.selected-nav {
+    -fx-background-color:
+        linear-gradient(to right, rgba(180,15,15,0.30), rgba(140,10,10,0.15));
+    -fx-border-color: transparent transparent transparent #CC2020;
+    -fx-border-width: 0 0 0 3;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 900;
+}
+
+.topbar {
+    -fx-padding: 14 22 12 22;
+    -fx-background-color:
+        linear-gradient(to bottom, #2A2A2E, #222226 55%, #1E1E22);
+    -fx-border-color: transparent transparent rgba(255,60,60,0.28) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.footerbar {
+    -fx-padding: 8 22 10 22;
+    -fx-background-color: linear-gradient(to bottom, #1E1E22, #242428);
+    -fx-border-color: rgba(255,60,60,0.22) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+/* Form card (login + modal overlays) */
+.form-card {
+    -fx-background-color:
+        linear-gradient(to bottom, rgba(28,28,32,0.94), rgba(20,20,24,0.96));
+    -fx-background-radius: 16;
+    -fx-border-color: #CC2020 rgba(255,255,255,0.08) rgba(255,255,255,0.08) rgba(255,255,255,0.08);
+    -fx-border-width: 2 1 1 1;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.60), 36, 0.28, 0, 14);
+    -fx-max-width: 400;
+    -fx-padding: 40;
+}
 
 /* Page header typography */
 .page-title    { -fx-font-size: 22px; -fx-font-weight: 900; -fx-text-fill: #E8E8EC; }

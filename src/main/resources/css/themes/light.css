@@ -51,6 +51,24 @@
     -fx-background-color: rgba(246,248,251,0.86);
 }
 
+.root-canvas.light-mode .topbar {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.08) transparent;
+}
+
+.root-canvas.light-mode .footerbar {
+    -fx-border-color: rgba(0,0,0,0.06) transparent transparent transparent;
+}
+
+
+/* ── Form card (login / modal overlays) light override ───────────────── */
+.root-canvas.light-mode .form-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.07);
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 16, 0.10, 0, 6);
+    -fx-max-width: 400;
+    -fx-padding: 40;
+}
 
 /* ── Cards ───────────────────────────────────────────────────────────── */
 .root-canvas.light-mode .form-card,

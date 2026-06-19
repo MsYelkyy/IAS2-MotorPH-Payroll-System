@@ -1,16 +1,12 @@
 /* ══════════════════════════════════════════════════
    MODULE — EMPLOYEE LEAVE
    Leave-exclusive selectors, extracted from
-   motorph-theme.css with exact values, in source
-   order (dark/default rules first, then light-mode).
-   Loaded AFTER motorph-theme.css (employee-main.fxml),
-   so these own the Leave screen outright; appearance
-   is unchanged from the pre-extraction theme.
+   Leave-exclusive selectors extracted from the retired
+   motorph-theme.css. Loaded after dark.css/light.css and
+   shared-components.css (employee-main.fxml).
 
-   NOT moved (shared with Support Tickets — stay in
-   motorph-theme.css so the IT shell keeps them):
-     .field-error, .required-asterisk, .character-counter
-     (base rules) and .root-canvas.light-mode .character-counter
+   .field-error, .required-asterisk, .character-counter now
+   live in shared-components.css (shared with IT support-ticket).
    ══════════════════════════════════════════════════ */
 
 /* ── Containers ─────────────────────────────────────────────────────── */

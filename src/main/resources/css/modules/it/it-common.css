@@ -4,7 +4,7 @@
    dashboard-exclusive .stat-success / .stat-danger / .system-ok-text
    rules, which moved to modules/it/dashboard.css).
 
-   IT-only: loaded after motorph-theme.css and shared-components.css
+   IT-only: loaded after dark.css/light.css and shared-components.css
    in the cascade. Contains IT-specific table styles, badge variants,
    account-table, switch-role-button, and metric-card height fix.
 
@@ -191,8 +191,7 @@
 }
 
 /* Restore proper metric-card height for IT views.
-   The last .metric-card rule in motorph-theme.css sets -fx-min-height: 0.
-   it-ui.css loads after motorph-theme.css; equal-specificity rules here win. */
+   dark.css sets -fx-min-height: 110 on .metric-card; this override wins by source order. */
 .metric-card {
     -fx-min-height: 116;
 }

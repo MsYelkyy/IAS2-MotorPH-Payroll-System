@@ -1,25 +1,13 @@
 /* ══════════════════════════════════════════════════
    MODULE — EMPLOYEE PAYSLIP
-   Payslip-exclusive selectors extracted from
-   motorph-theme.css with exact winning values, in
-   source order. Loaded AFTER motorph-theme.css so
-   these win their ties; values are identical, so
-   appearance is unchanged. Light-mode is preserved by
-   motorph-theme's higher-specificity
-   .root-canvas.light-mode rules (NOT copied here).
+   Payslip-exclusive selectors. Loaded after
+   shared-components.css (which owns payroll-table).
 
-   NOTE: .net-pay-cell (0,1,0) is currently OVERRIDDEN
-   by .payroll-table .table-cell (0,2,0, motorph L3550)
-   for -fx-text-fill, so the gold does not render today.
-   This is specificity-determined and order-independent;
-   it is copied verbatim and left overridden on purpose
-   to preserve current appearance. Do NOT raise its
-   specificity to make the gold appear.
-
-   NOT moved (shared / global): payroll-table family,
-   content-card, section-title, note-text, secondary-button.
-
-   Source lines in motorph-theme.css: L3580–3605
+   NOTE: .net-pay-cell (0,1,0) is overridden by
+   .payroll-table .table-cell (0,2,0) for -fx-text-fill —
+   gold intentionally does not render; do not raise specificity.
+   Light-mode overrides for net-pay-cell and view-payslip-button
+   live in shared-components.css.
    ══════════════════════════════════════════════════ */
 
 
