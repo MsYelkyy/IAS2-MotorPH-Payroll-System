@@ -430,24 +430,6 @@
     -fx-min-height: 150;
 }
 
-.metric-value {
-    -fx-font-size: 27px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.status-pill {
-    -fx-padding: 6 14;
-    -fx-background-radius: 999;
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-}
-
-.success-pill {
-    -fx-background-color: rgba(34,197,94,0.18);
-    -fx-text-fill: #22C55E;
-}
-
 .leave-tile {
     -fx-padding: 12;
     -fx-background-radius: 8;
@@ -1251,10 +1233,6 @@
     -fx-min-width: 1180;
 }
 
-.metric-value {
-    -fx-font-size: 25px;
-}
-
 .chart-card {
     -fx-min-height: 275;
 }
@@ -1346,80 +1324,9 @@
     -fx-text-fill: #3B82F6;
 }
 
-/* -- Palette Override: Gray / Black / White / Soft Blue -- */
-/* Apply a unified palette across dark and light modes; soft-blue is the accent. */
-.root-canvas {
-    -fx-background-color: linear-gradient(to bottom right, #0b0f14, #07090a);
-}
-
-.login-brand-panel {
-    -fx-background-color: linear-gradient(to right, #0b0f14, #0e1216);
-}
-
-.login-form-panel {
-    -fx-background-color: linear-gradient(to left, #0e1216, #0b0f14);
-}
-
-.form-card,
-.chart-card,
-.content-card,
-.bottom-card,
-.feature-card,
-.sidebar-card {
-    -fx-background-color: linear-gradient(to bottom right, #0d1114, #0b0f12);
-    -fx-border-color: rgba(255,255,255,0.06);
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.36), 14, 0.16, 0, 8);
-}
-
-.brand-name-white {
-    -fx-text-fill: #ffffff;
-}
-
-/* Use soft-blue as primary accent */
-.brand-name-green {
-    -fx-text-fill: #3B82F6;
-}
-
-.form-heading,
-.page-title,
-.feature-title,
-.metric-value,
-.floating-label,
-.floating-value {
-    -fx-text-fill: #ffffff;
-}
-
-.hero-heading,
-.hero-subheading,
-.form-subheading,
-.feature-copy,
-.muted-text,
-.page-subtitle {
-    -fx-text-fill: #9CA3AF;
-}
-
-.input-field,
-.combo-box.input-field,
-.global-combo,
-.global-toggle-button {
-    -fx-background-color: rgba(255,255,255,0.03);
-    -fx-border-color: rgba(255,255,255,0.06);
-    -fx-text-fill: #ffffff;
-    -fx-prompt-text-fill: #9CA3AF;
-}
-
-.more-button,
-.quiet-link,
-.inline-link,
-.password-toggle {
-    -fx-text-fill: #3B82F6;
-}
-
-.selected-nav,
-.nav-button:hover {
-    -fx-background-color: rgba(59,130,246,0.14);
-    -fx-text-fill: #ffffff;
-}
+/* Palette Override light-mode tail — dark-mode globals removed (Batch A);
+   superseded by the metallic red/silver pass below. Light-mode input rule
+   retained: motorph-theme.css is the sole owner for the app main shells. */
 
 /* Light-mode adjustments to keep soft-blue accent */
 .root-canvas.light-mode {
@@ -1656,18 +1563,6 @@
     -fx-text-fill: rgba(110,140,190,0.70);
 }
 
-/* ── Status pill ─────────────────────────────────────────────────── */
-.success-pill {
-    -fx-background-color: rgba(59,130,246,0.12);
-    -fx-text-fill: #3B82F6;
-    -fx-border-color: rgba(59,130,246,0.28);
-    -fx-border-width: 1;
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-}
-
 /* ── Metric & content cards ──────────────────────────────────────── */
 .chart-card {
     -fx-background-color: rgba(8,16,34,0.90);
@@ -1700,18 +1595,6 @@
 }
 
 /* ── Data typography ─────────────────────────────────────────────── */
-.metric-value {
-    -fx-font-size: 26px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #EEF3FF;
-}
-
-.financial-value {
-    -fx-font-size: 26px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FBBF24;
-}
-
 .note-text,
 .muted-text {
     -fx-font-size: 12px;
@@ -2239,17 +2122,6 @@
 }
 
 /* ── Status pill ──────────────────────────────────────────────────────── */
-.success-pill {
-    -fx-background-color: rgba(232,67,67,0.10);
-    -fx-text-fill: #E84343;
-    -fx-border-color: rgba(232,67,67,0.25);
-    -fx-border-width: 1;
-    -fx-border-radius: 999;
-    -fx-background-radius: 999;
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-}
-
 .status-pill { -fx-padding: 5 14; -fx-background-radius: 999; -fx-font-size: 11px; -fx-font-weight: 900; }
 
 /* ── White cards on light gray ────────────────────────────────────────── */
