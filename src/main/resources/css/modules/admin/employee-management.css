@@ -1,0 +1,19 @@
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN EMPLOYEE MANAGEMENT
+   Loaded via admin-main.fxml after shared-components.css.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Inactive employee status badge ─────────────────────────────── */
+.status-badge-inactive {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(156,163,175,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+.root-canvas.light-mode .status-badge-inactive {
+    -fx-background-color: rgba(107,114,128,0.12);
+    -fx-text-fill: #6B7280;
+}
