@@ -5,7 +5,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import motorph.ui.controller.LoginController;
 
 import java.io.IOException;
 import java.net.URL;
@@ -23,15 +22,7 @@ public class Main extends Application {
         Parent root = loader.load();
         Scene scene = new Scene(root, 1360, 820);
 
-        if (Boolean.getBoolean("motorph.demo.hr")) {
-            LoginController controller = loader.getController();
-            if (controller != null) {
-                controller.startHrDemoSession();
-            }
-            stage.setTitle("MotorPH AOOP - HR Demo");
-        } else {
-            stage.setTitle("MotorPH AOOP");
-        }
+        stage.setTitle("MotorPH AOOP");
 
         stage.setScene(scene);
         stage.setMinWidth(1120);

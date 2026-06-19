@@ -1,8 +1,34 @@
 package motorph.ui.controller;
 
+import javafx.collections.FXCollections;
+import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.print.PrinterJob;
+import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.login.LoginRequestDTO;
 import motorph.application.dto.login.LoginResultDTO;
-import motorph.application.security.PasswordHasher;
+import motorph.application.exception.AuthenticationException;
+import motorph.application.exception.BusinessRuleException;
+import motorph.application.exception.EntityNotFoundException;
+import motorph.application.exception.ValidationException;
 import motorph.application.service.AttendanceService;
 import motorph.application.service.AuthenticationService;
 import motorph.application.service.EmailService;
@@ -13,13 +39,10 @@ import motorph.application.service.PayrollService;
 import motorph.application.service.TwoFactorService;
 import motorph.application.service.UserAccessLogService;
 import motorph.domain.calculator.PayrollCalculator;
-import motorph.domain.model.Attendance;
 import motorph.domain.model.Employee;
-import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.PayrollResult;
-import motorph.domain.model.UserAccount;
-import motorph.domain.value.AttendanceStatus;
-import motorph.domain.value.LeaveStatus;
+import motorph.domain.model.Payrun;
+import motorph.domain.value.PayrollType;
 import motorph.domain.value.Role;
 import motorph.infrastructure.repository.AttendanceRepository;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
@@ -35,45 +58,40 @@ import motorph.infrastructure.repository.SalaryHistoryRepository;
 import motorph.infrastructure.repository.TwoFactorCodeRepository;
 import motorph.infrastructure.repository.UserAccessLogRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
+import motorph.infrastructure.config.DatabaseConnection;
+import net.sf.jasperreports.engine.JRException;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperExportManager;
+import net.sf.jasperreports.engine.JasperFillManager;
+import net.sf.jasperreports.engine.JasperPrint;
+import net.sf.jasperreports.engine.JasperPrintManager;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import net.sf.jasperreports.engine.design.JRDesignBand;
+import net.sf.jasperreports.engine.design.JRDesignExpression;
+import net.sf.jasperreports.engine.design.JRDesignField;
+import net.sf.jasperreports.engine.design.JRDesignParameter;
+import net.sf.jasperreports.engine.design.JRDesignSection;
+import net.sf.jasperreports.engine.design.JRDesignStaticText;
+import net.sf.jasperreports.engine.design.JRDesignTextField;
+import net.sf.jasperreports.engine.design.JasperDesign;
+import net.sf.jasperreports.engine.type.HorizontalTextAlignEnum;
+import net.sf.jasperreports.engine.type.OrientationEnum;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
-import javafx.animation.ScaleTransition;
-import javafx.animation.TranslateTransition;
-import javafx.fxml.FXML;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.chart.BarChart;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.XYChart;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.Labeled;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextInputControl;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.print.PrinterJob;
-import javafx.util.Duration;
-
+import java.awt.Desktop;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -81,164 +99,114 @@ import java.util.Optional;
 
 public class LoginController {
 
-    private static final String MOTORPH_EMAIL_PATTERN = "^[A-Za-z0-9._%+-]+@motorph\\.com$";
-    private static final String HR_DEMO_EMAIL = "hr.demo@motorph.com";
-    private static final String HR_DEMO_PASSWORD = "HrDemo@2026!";
-    private static final int HR_DEMO_USER_ACCOUNT_ID = 90001;
-    private static final int HR_DEMO_EMPLOYEE_ID = 90001;
-
-    private static final Map<String, String> FILIPINO_LABELS = Map.ofEntries(
-            // ── Login & Auth ───────────────────────────────────────────
-            Map.entry("Welcome Back", "Maligayang Pagbabalik"),
-            Map.entry("Sign in to continue to your employee workspace.", "Mag-sign in upang magpatuloy sa inyong workspace."),
-            Map.entry("Company Email", "Email ng Kumpanya"),
-            Map.entry("Password", "Password"),
-            Map.entry("Remember me", "Tandaan ako"),
-            Map.entry("Forgot Password", "Nakalimutan ang Password"),
-            Map.entry("Sign In", "Mag-sign In"),
-            Map.entry("Protected by Two-Factor Authentication", "Protektado ng Two-Factor Authentication"),
-            Map.entry("Show", "Ipakita"),
-            Map.entry("Hide", "Itago"),
-            // ── OTP & Password Reset ───────────────────────────────────
-            Map.entry("Verify OTP", "I-verify ang OTP"),
-            Map.entry("Enter the verification code sent to your registered email address.", "Ilagay ang verification code na ipinadala sa inyong registered email."),
-            Map.entry("OTP Code", "OTP Code"),
-            Map.entry("Verify and Continue", "I-verify at Magpatuloy"),
-            Map.entry("← Back to Login", "← Bumalik sa Login"),
-            Map.entry("Reset Password", "I-reset ang Password"),
-            Map.entry("Enter your email to receive a reset OTP.", "Ilagay ang inyong email para makatanggap ng reset OTP."),
-            Map.entry("Email", "Email"),
-            Map.entry("Send Reset OTP", "Ipadala ang Reset OTP"),
-            Map.entry("Verify Reset OTP", "I-verify ang Reset OTP"),
-            Map.entry("Enter the reset code sent to your registered email address.", "Ilagay ang reset code na ipinadala sa inyong registered email."),
-            Map.entry("← Back to Email", "← Bumalik sa Email"),
-            Map.entry("Create New Password", "Lumikha ng Bagong Password"),
-            Map.entry("Use at least 8 characters.", "Gumamit ng hindi bababa sa 8 na karakter."),
-            Map.entry("New Password", "Bagong Password"),
-            Map.entry("Confirm Password", "Kumpirmahin ang Password"),
-            Map.entry("Update Password", "I-update ang Password"),
-            // ── Navigation ─────────────────────────────────────────────
-            Map.entry("Dashboard", "Dashboard"),
-            Map.entry("Profile", "Profil"),
-            Map.entry("Attendance", "Presensya"),
-            Map.entry("Payslip / Payroll", "Payslip / Payroll"),
-            Map.entry("Account Settings", "Mga Setting ng Account"),
-            Map.entry("Logout", "Mag-logout"),
-            Map.entry("EMPLOYEE", "EMPLEYADO"),
-            Map.entry("Operations", "Operasyon"),
-            // ── Dashboard labels ───────────────────────────────────────
-            Map.entry("EMPLOYEE WORKSPACE", "WORKSPACE NG EMPLEYADO"),
-            Map.entry("TOTAL NET PAY", "KABUUANG NET PAY"),
-            Map.entry("ATTENDANCE RATE", "RATE NG PRESENSYA"),
-            Map.entry("DAYS WORKED", "MGA ARAW NA NAGTRABAHO"),
-            Map.entry("AVAILABLE LEAVE", "NALALABAS NA LEAVE"),
-            Map.entry("PENDING REQUESTS", "MGA KAHILINGANG NAGHIHINTAY"),
-            Map.entry("NET PAY TREND", "TREND NG NET PAY"),
-            Map.entry("EARNINGS BREAKDOWN", "BREAKDOWN NG KITA"),
-            Map.entry("ATTENDANCE SUMMARY", "BUOD NG PRESENSYA"),
-            Map.entry("LEAVE SUMMARY", "BUOD NG LEAVE"),
-            Map.entry("Vacation Leave", "Vacation Leave"),
-            Map.entry("Sick Leave", "Sick Leave"),
-            Map.entry("Emergency Leave", "Emergency Leave"),
-            Map.entry("Special Leave", "Espesyal na Leave"),
-            Map.entry("Maternity Leave", "Maternity Leave"),
-            Map.entry("UPCOMING PAYDAY", "DARATING NA SAHOD"),
-            Map.entry("In 26 days", "Sa loob ng 26 na araw"),
-            Map.entry("RECENT PAYSLIP", "PINAKABAGONG PAYSLIP"),
-            Map.entry("ANNOUNCEMENTS", "MGA ANUNSYO"),
-            Map.entry("Company Meeting", "Pulong ng Kumpanya"),
-            Map.entry("All employees are expected to attend.", "Lahat ng empleyado ay inaasahang dadalo."),
-            Map.entry("Active Session", "Aktibong Session"),
-            Map.entry("View Payslip", "Tingnan ang Payslip"),
-            Map.entry("Welcome to your employee workspace.", "Maligayang pagdating sa inyong workspace."),
-            Map.entry("Employee workspace is ready.", "Handa na ang workspace ng empleyado."),
-            Map.entry("Please log in before using this action.", "Mangyaring mag-login bago gamitin ang aksyong ito."),
-            // ── Attendance view ────────────────────────────────────────
-            Map.entry("Attendance Logs", "Mga Talaan ng Presensya"),
-            Map.entry("Work Date", "Petsa ng Trabaho"),
-            Map.entry("Time In", "Pasok"),
-            Map.entry("Time Out", "Labas"),
-            Map.entry("Total Hours", "Kabuuang Oras"),
-            Map.entry("Status", "Katayuan"),
-            Map.entry("Pending", "Naghihintay"),
-            // ── Leave view ─────────────────────────────────────────────
-            Map.entry("Leave Request", "Kahilingang Leave"),
-            Map.entry("Leave Type", "Uri ng Leave"),
-            Map.entry("Available Credits", "Nalalabas na Credits"),
-            Map.entry("Start Date", "Petsa ng Simula"),
-            Map.entry("End Date", "Petsa ng Katapusan"),
-            Map.entry("Leave Hours", "Oras ng Leave"),
-            Map.entry("Reason", "Dahilan"),
-            Map.entry("Submit Leave Request", "Isumite ang Kahilingang Leave"),
-            Map.entry("Leave History", "Kasaysayan ng Leave"),
-            Map.entry("Pending requests can be cancelled. Approved requests consume leave credits.", "Ang mga naghihintay na kahilingan ay maaaring kanselahin. Ang mga naaprubahang kahilingan ay kumukuha ng leave credits."),
-            Map.entry("Cancel Latest Pending Request", "Kanselahin ang Pinakabagong Kahilingan"),
-            // ── Payslip view ───────────────────────────────────────────
-            Map.entry("Payslip Preview", "Preview ng Payslip"),
-            Map.entry("Gross Pay:", "Gross Pay:"),
-            Map.entry("Deductions:", "Mga Bawas:"),
-            Map.entry("Net Pay:", "Net Pay:"),
-            Map.entry("Search", "Hanapin"),
-            Map.entry("Preview Payslip", "I-preview ang Payslip"),
-            Map.entry("Export Text Payslip", "I-export ang Payslip"),
-            Map.entry("Print Payslip", "I-print ang Payslip"),
-            Map.entry("Employee can only view their own persisted payroll data.", "Ang empleyado ay makakakita lamang ng sariling payroll data."),
-            // ── Account Settings ───────────────────────────────────────
-            Map.entry("Email is view-only and remains the login identity.", "Ang email ay para sa pagtingin lamang at nananatiling login identity."),
-            Map.entry("Change Password", "Palitan ang Password"),
-            // ── OTP footer ─────────────────────────────────────────────
-            Map.entry("MotorPH Payroll Management System  ·  v1.0", "MotorPH Payroll Management System  ·  v1.0")
-    );
-
     private final AuthenticationService authenticationService;
     private final PasswordResetService passwordResetService;
     private final EmployeeService employeeService;
-    private final AttendanceService attendanceService;
-    private final LeaveService leaveService;
     private final PayrollService payrollService;
-    private final UserAccountRepository userAccountRepository;
-    private final Map<String, Integer> leaveTypeIds = new LinkedHashMap<>();
-    private final NumberFormat pesoFormat = NumberFormat.getCurrencyInstance(Locale.of("en", "PH"));
+    private final PayrunRepository payrunRepository;
 
-    private boolean passwordVisible = false;
-    private boolean offlinePreviewMode = false;
-    private boolean hrDemoMode = false;
-    private boolean darkMode = true;
-    private LoginResultDTO pendingLoginResult;
+    private LoginResultDTO pendingLogin;
     private int pendingResetRequestId;
-    private int currentUserAccountId;
     private int currentEmployeeId;
-    private Integer latestPendingLeaveRequestId;
-    private PayrollResult currentPayslipResult;
+    private String currentEmployeeName = "Finance Officer";
+    private String currentCompanyEmail = "finance@motorph.com";
+    private Role currentRole = Role.FINANCE;
+
+    @FXML private StackPane rootCanvas;
+    @FXML private HBox loginView;
+    @FXML private HBox resetView;
+    @FXML private HBox appView;
+    @FXML private VBox loginFormBox;
+    @FXML private VBox otpFormBox;
+    @FXML private VBox resetEmailBox;
+    @FXML private VBox resetOtpBox;
+    @FXML private VBox resetPasswordBox;
+
+    @FXML private TextField emailField;
+    @FXML private PasswordField passwordField;
+    @FXML private TextField otpField;
+    @FXML private TextField resetEmailField;
+    @FXML private TextField resetOtpField;
+    @FXML private PasswordField newPasswordField;
+    @FXML private PasswordField confirmPasswordField;
+    @FXML private Label loginMessageLabel;
+    @FXML private Label resetMessageLabel;
+
+    @FXML private Label sidebarNameLabel;
+    @FXML private Label sidebarRoleLabel;
+    @FXML private Label sidebarEmailLabel;
+    @FXML private Label footerStatusLabel;
+    @FXML private Label pageTitleLabel;
+    @FXML private Label pageSubtitleLabel;
+    @FXML private ComboBox<String> languageCombo;
+    @FXML private ComboBox<String> themeCombo;
+
+    @FXML private Button dashboardNavButton;
+    @FXML private Button payrollNavButton;
+    @FXML private Button payslipNavButton;
+    @FXML private Button reportsNavButton;
+    @FXML private Button settingsNavButton;
+
+    @FXML private VBox dashboardView;
+    @FXML private VBox payrollView;
+    @FXML private VBox payslipView;
+    @FXML private VBox reportsView;
+    @FXML private VBox settingsView;
+
+    @FXML private Label latestPayrunValueLabel;
+    @FXML private Label upcomingPayDateValueLabel;
+    @FXML private Label pendingPeriodsValueLabel;
+    @FXML private Label generatedPayrollValueLabel;
+    @FXML private Label totalNetPayValueLabel;
+    @FXML private Label recentActivityLabel;
+    @FXML private BarChart<String, Number> payrollBarChart;
+    @FXML private CategoryAxis payrollBarXAxis;
+    @FXML private NumberAxis payrollBarYAxis;
+    @FXML private GridPane dashboardActivityGrid;
+
+    @FXML private DatePicker payrunStartDatePicker;
+    @FXML private DatePicker payrunEndDatePicker;
+    @FXML private DatePicker payrunPayDatePicker;
+    @FXML private ComboBox<String> payrollTypeCombo;
+    @FXML private TextField generateEmployeeIdField;
+    @FXML private GridPane payrunGrid;
+    @FXML private GridPane generatedPayrollGrid;
+    @FXML private Label payrollSummaryLabel;
+
+    @FXML private TextField payslipSearchField;
+    @FXML private ComboBox<String> payslipPayrunCombo;
+    @FXML private Label payslipEmployeeNameLabel;
+    @FXML private Label payslipEmployeeIdLabel;
+    @FXML private Label payslipDepartmentLabel;
+    @FXML private Label payslipPositionLabel;
+    @FXML private Label payslipPeriodLabel;
+    @FXML private Label payslipGrossLabel;
+    @FXML private Label payslipDeductionsLabel;
+    @FXML private Label payslipNetLabel;
+    @FXML private TextArea payslipPreviewArea;
+
+    @FXML private ComboBox<String> reportTypeCombo;
+    @FXML private ComboBox<String> reportDepartmentCombo;
+    @FXML private ComboBox<String> reportPayrunCombo;
+    @FXML private TextField reportEmployeeField;
+    @FXML private DatePicker reportStartDatePicker;
+    @FXML private DatePicker reportEndDatePicker;
+    @FXML private TextArea reportPreviewArea;
+
+    @FXML private Label settingsNameLabel;
+    @FXML private Label settingsRoleLabel;
+    @FXML private Label settingsEmailLabel;
+    @FXML private Label settingsDataSourceLabel;
+
+    private JasperPrint currentReportPrint;
 
     public LoginController() {
-        userAccountRepository = new UserAccountRepository();
         EmployeeRepository employeeRepository = new EmployeeRepository();
-        AttendanceRepository attendanceRepository = new AttendanceRepository();
-        EmployeeService sharedEmployeeService = new EmployeeService(employeeRepository, userAccountRepository);
-        AttendanceService sharedAttendanceService = new AttendanceService(attendanceRepository);
-        TwoFactorService twoFactorService = new TwoFactorService(new TwoFactorCodeRepository());
+        UserAccountRepository userAccountRepository = new UserAccountRepository();
+        TwoFactorCodeRepository twoFactorCodeRepository = new TwoFactorCodeRepository();
         EmailService emailService = new EmailService("motorph@example.com", "", true);
         UserAccessLogService accessLogService = new UserAccessLogService(new UserAccessLogRepository());
-
-        employeeService = sharedEmployeeService;
-        attendanceService = sharedAttendanceService;
-        leaveService = new LeaveService(
-                new LeaveRepository(),
-                new LeaveCreditRepository(),
-                new LeaveApprovalRepository(),
-                sharedEmployeeService
-        );
-        payrollService = new PayrollService(
-                new PayrunRepository(),
-                new PayrollResultRepository(),
-                new SalaryHistoryRepository(),
-                new EmployeeBenefitRepository(),
-                new GovernmentDetailsRepository(),
-                sharedAttendanceService,
-                sharedEmployeeService,
-                new PayrollCalculator()
-        );
+        TwoFactorService twoFactorService = new TwoFactorService(twoFactorCodeRepository);
 
         authenticationService = new AuthenticationService(
                 userAccountRepository,
@@ -247,7 +215,6 @@ public class LoginController {
                 emailService,
                 accessLogService
         );
-
         passwordResetService = new PasswordResetService(
                 new PasswordResetRequestRepository(),
                 userAccountRepository,
@@ -255,1622 +222,1428 @@ public class LoginController {
                 twoFactorService,
                 emailService
         );
+        employeeService = new EmployeeService(employeeRepository, userAccountRepository);
+        AttendanceService attendanceService = new AttendanceService(new AttendanceRepository());
+        LeaveService leaveService = new LeaveService(
+                new LeaveRepository(),
+                new LeaveCreditRepository(),
+                new LeaveApprovalRepository(),
+                employeeService
+        );
+        leaveService.toString();
 
-        leaveTypeIds.put("Vacation Leave", 1);
-        leaveTypeIds.put("Sick Leave", 2);
-        leaveTypeIds.put("Emergency Leave", 3);
+        payrunRepository = new PayrunRepository();
+        payrollService = new PayrollService(
+                payrunRepository,
+                new PayrollResultRepository(),
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository(),
+                attendanceService,
+                employeeService,
+                new PayrollCalculator()
+        );
     }
-
-    @FXML
-    private StackPane rootPane;
-
-    @FXML
-    private BorderPane loginPane;
-
-    @FXML
-    private BorderPane appPane;
-
-    @FXML
-    private VBox loginCard;
-
-    @FXML
-    private VBox floatingNetPayCard;
-
-    @FXML
-    private VBox floatingAttendanceCard;
-
-    @FXML
-    private VBox floatingLeaveCard;
-
-    @FXML
-    private VBox floatingPaydayCard;
-
-    @FXML
-    private VBox floatingPayslipCard;
-
-    @FXML
-    private VBox otpCard;
-
-    @FXML
-    private VBox forgotCard;
-
-    @FXML
-    private VBox forgotOtpCard;
-
-    @FXML
-    private VBox forgotPasswordCard;
-
-    @FXML
-    private TextField companyEmailField;
-
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private TextField passwordTextField;
-
-    @FXML
-    private Button passwordToggleBtn;
-
-    // Hosts inside the login form and app topbar where we insert the global controls programmatically
-    @FXML
-    private javafx.scene.layout.HBox globalControlsHostLogin;
-
-    @FXML
-    private javafx.scene.layout.HBox globalControlsHostApp;
-
-    // Programmatic controls (distinct instances for login and app hosts)
-    private ComboBox<String> loginLanguageCombo;
-    private ComboBox<String> appLanguageCombo;
-    private ComboBox<String> loginThemeCombo;
-    private ComboBox<String> appThemeCombo;
-    private Button loginMoreBtn;
-    private Button appMoreBtn;
-
-    @FXML
-    private VBox sidePanel;
-
-    @FXML
-    private TextField otpField;
-
-    @FXML
-    private TextField resetEmailField;
-
-    @FXML
-    private TextField resetOtpField;
-
-    @FXML
-    private PasswordField newPasswordField;
-
-    @FXML
-    private PasswordField confirmPasswordField;
-
-    @FXML
-    private Label loginMessageLabel;
-
-    @FXML
-    private Label otpMessageLabel;
-
-    @FXML
-    private Label forgotMessageLabel;
-
-    @FXML
-    private Label forgotOtpMessageLabel;
-
-    @FXML
-    private Label forgotPasswordMessageLabel;
-
-    @FXML
-    private Label appMessageLabel;
-
-    @FXML
-    private Label pageTitleLabel;
-
-    @FXML
-    private Label pageSubtitleLabel;
-
-    @FXML
-    private VBox dashboardView;
-
-    @FXML
-    private VBox attendanceView;
-
-    @FXML
-    private VBox leaveView;
-
-    @FXML
-    private VBox payslipView;
-
-    @FXML
-    private VBox settingsView;
-
-    @FXML
-    private Button dashboardNavButton;
-
-    @FXML
-    private Button attendanceNavButton;
-
-    @FXML
-    private Button leaveNavButton;
-
-    @FXML
-    private Button payslipNavButton;
-
-    @FXML
-    private Button settingsNavButton;
-
-    @FXML
-    private Label dashboardEmployeeNameLabel;
-
-    @FXML
-    private Label dashboardEmployeeRoleLabel;
-
-    @FXML
-    private Label dashboardTaskPercentLabel;
-
-    @FXML
-    private Label dashboardLeaveCreditsLabel;
-
-    @FXML
-    private Label dashboardNetPayLabel;
-
-    @FXML
-    private Label dashboardEmailLabel;
-
-    @FXML
-    private LineChart<String, Number> payrollTrendChart;
-
-    @FXML
-    private BarChart<String, Number> earningsBreakdownChart;
-
-    @FXML
-    private BarChart<String, Number> attendanceSummaryChart;
-
-    @FXML
-    private Label attendanceDateLabel;
-
-    @FXML
-    private Label attendanceTimeInLabel;
-
-    @FXML
-    private Label attendanceTimeOutLabel;
-
-    @FXML
-    private Label attendanceHoursLabel;
-
-    @FXML
-    private Label attendanceStatusLabel;
-
-    @FXML
-    private ComboBox<String> leaveTypeComboBox;
-
-    @FXML
-    private TextField leaveCreditsField;
-
-    @FXML
-    private TextField leaveStartDateField;
-
-    @FXML
-    private TextField leaveEndDateField;
-
-    @FXML
-    private TextField leaveHoursField;
-
-    @FXML
-    private TextField leaveReasonField;
-
-    @FXML
-    private Label leaveHistoryLabel;
-
-    @FXML
-    private TextField payslipSearchField;
-
-    @FXML
-    private Label payslipGrossPayLabel;
-
-    @FXML
-    private Label payslipDeductionsLabel;
-
-    @FXML
-    private Label payslipNetPayLabel;
-
-    @FXML
-    private Label payslipMessageLabel;
-
-    @FXML
-    private TextField settingsEmailField;
-
-    @FXML
-    private TextField settingsRecoveryEmailField;
-
-    @FXML
-    private PasswordField settingsOldPasswordField;
-
-    @FXML
-    private PasswordField settingsNewPasswordField;
-
-    @FXML
-    private PasswordField settingsConfirmPasswordField;
 
     @FXML
     private void initialize() {
-        // create programmatic global controls (distinct instances per host) and insert into hosts
-        loginLanguageCombo = new ComboBox<>();
-        loginLanguageCombo.getStyleClass().add("global-combo");
-        loginLanguageCombo.setPrefWidth(140);
-        loginLanguageCombo.getItems().setAll("English", "Filipino");
-        loginLanguageCombo.setValue("English");
-        loginLanguageCombo.setOnAction(e -> syncLanguage(loginLanguageCombo.getValue()));
-
-        appLanguageCombo = new ComboBox<>();
-        appLanguageCombo.getStyleClass().add("global-combo");
-        appLanguageCombo.setPrefWidth(140);
-        appLanguageCombo.getItems().setAll("English", "Filipino");
-        appLanguageCombo.setValue("English");
-        appLanguageCombo.setOnAction(e -> syncLanguage(appLanguageCombo.getValue()));
-
-        loginThemeCombo = new ComboBox<>();
-        loginThemeCombo.getStyleClass().add("global-combo");
-        loginThemeCombo.setPrefWidth(120);
-        loginThemeCombo.getItems().setAll("System", "Light", "Dark");
-        loginThemeCombo.setValue("Dark");
-        loginThemeCombo.setOnAction(e -> syncTheme(loginThemeCombo.getValue()));
-
-        appThemeCombo = new ComboBox<>();
-        appThemeCombo.getStyleClass().add("global-combo");
-        appThemeCombo.setPrefWidth(120);
-        appThemeCombo.getItems().setAll("System", "Light", "Dark");
-        appThemeCombo.setValue("Dark");
-        appThemeCombo.setOnAction(e -> syncTheme(appThemeCombo.getValue()));
-
-        loginMoreBtn = new Button("⋮");
-        loginMoreBtn.getStyleClass().add("more-button");
-        loginMoreBtn.setOnAction(e -> toggleSidePanel());
-
-        appMoreBtn = new Button("⋮");
-        appMoreBtn.getStyleClass().add("more-button");
-        appMoreBtn.setOnAction(e -> toggleSidePanel());
-
-        // Populate global controls on both login header and app topbar
-        if (globalControlsHostLogin != null) {
-            globalControlsHostLogin.getChildren().clear();
-            globalControlsHostLogin.getChildren().addAll(loginLanguageCombo, loginThemeCombo, loginMoreBtn);
-            // avoid empty areas of the host intercepting mouse events
-            globalControlsHostLogin.setPickOnBounds(false);
-            if (globalControlsHostLogin.getParent() instanceof javafx.scene.layout.HBox parentHBox) {
-                for (Node n : parentHBox.getChildren()) {
-                    if (n != globalControlsHostLogin && n instanceof javafx.scene.layout.Region r) {
-                        r.setPickOnBounds(false);
-                    }
-                }
-            }
-        }
-
-        if (globalControlsHostApp != null) {
-            globalControlsHostApp.getChildren().clear();
-            globalControlsHostApp.getChildren().addAll(appLanguageCombo, appThemeCombo, appMoreBtn);
-            // avoid empty areas of the host intercepting mouse events
-            globalControlsHostApp.setPickOnBounds(false);
-            if (globalControlsHostApp.getParent() instanceof javafx.scene.layout.HBox parentHBox) {
-                for (Node n : parentHBox.getChildren()) {
-                    if (n != globalControlsHostApp && n instanceof javafx.scene.layout.Region r) {
-                        r.setPickOnBounds(false);
-                    }
-                }
-            }
-        }
-
-        // ensure side panel hidden initially
-        if (sidePanel != null) {
-            sidePanel.setVisible(false);
-            sidePanel.setManaged(false);
-        }
-
-        // apply defaults from the app topbar controls
-        if (appThemeCombo != null) syncTheme(appThemeCombo.getValue());
-        if (appLanguageCombo != null) syncLanguage(appLanguageCombo.getValue());
-        leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
-        leaveTypeComboBox.setOnAction(event -> refreshLeaveCredits());
-        attendanceDateLabel.setText(LocalDate.now().toString());
-        seedDashboardCharts();
+        setupGlobalControls();
+        setupFinanceControls();
         showLogin();
-        showDashboard();
-        startLoginAnimations();
-    }
-
-    @FXML
-    private void applyTheme() {
-        String mode = null;
-
-        if (loginThemeCombo != null) mode = loginThemeCombo.getValue();
-        else if (appThemeCombo != null) mode = appThemeCombo.getValue();
-
-        syncTheme(mode);
-    }
-
-    @FXML
-    private void toggleSidePanel() {
-        if (sidePanel == null) return;
-
-        if (sidePanel.isVisible()) {
-            TranslateTransition tt = new TranslateTransition(Duration.millis(260), sidePanel);
-            tt.setFromX(0);
-            tt.setToX(280);
-            tt.setInterpolator(Interpolator.EASE_IN);
-            tt.setOnFinished(e -> {
-                sidePanel.setVisible(false);
-                sidePanel.setManaged(false);
-            });
-            tt.play();
-        } else {
-            sidePanel.setTranslateX(280);
-            sidePanel.setVisible(true);
-            sidePanel.setManaged(true);
-            TranslateTransition tt = new TranslateTransition(Duration.millis(260), sidePanel);
-            tt.setFromX(280);
-            tt.setToX(0);
-            tt.setInterpolator(Interpolator.EASE_OUT);
-            tt.play();
-        }
     }
 
     @FXML
     private void handleLogin() {
-        clearLoginState();
+        clearLoginMessage();
+        String email = text(emailField);
+        String password = text(passwordField);
 
-        String companyEmail = text(companyEmailField);
-        String password = passwordVisible ? text(passwordTextField) : text(passwordField);
-        boolean valid = true;
-
-        if (!isMotorphEmail(companyEmail)) {
-            markInvalid(companyEmailField);
-            valid = false;
-        }
-
-        if (password.isEmpty()) {
-            markInvalid(passwordField);
-            valid = false;
-        }
-
-        if (!valid) {
-            setError(loginMessageLabel, "Enter your MotorPH email and password.");
+        if (email.isBlank() || password.isBlank()) {
+            showLoginError("Company email and password are required.");
             return;
         }
 
-        if (isHrDemoCredentials(companyEmail, password)) {
-            startHrDemoSession();
+        if (!email.endsWith("@motorph.com")) {
+            showLoginError("Use your MotorPH company email.");
             return;
         }
 
         try {
-            pendingLoginResult = authenticationService.authenticate(new LoginRequestDTO(companyEmail, password));
-        } catch (Exception e) {
-            if (isDatabaseUnavailable(e)) {
-                offlinePreviewMode = true;
-                pendingLoginResult = null;
-                clearInvalid(companyEmailField);
-                clearInvalid(passwordField);
-                showCard(otpCard);
-                setSuccess(otpMessageLabel, "Database is offline. Preview mode enabled. Enter any 6-digit OTP.");
-                return;
-            }
+            pendingLogin = authenticationService.authenticate(new LoginRequestDTO(email, password));
+            showOtpForm(pendingLogin.getMessage());
+        } catch (RuntimeException ex) {
+            showLoginError(readable(ex));
+        }
+    }
 
-            markInvalid(companyEmailField);
-            markInvalid(passwordField);
-            setError(loginMessageLabel, userMessage(e));
+    @FXML
+    private void handleVerifyOtp() {
+        clearLoginMessage();
+
+        if (pendingLogin == null) {
+            showLoginError("Sign in first before entering an OTP.");
             return;
         }
 
-        showCard(otpCard);
-            setSuccess(otpMessageLabel, "OTP sent to your registered email address.");
-    }
-
-    public void startHrDemoSession() {
-        hrDemoMode = true;
-        offlinePreviewMode = false;
-        pendingLoginResult = new LoginResultDTO(
-                HR_DEMO_USER_ACCOUNT_ID,
-                HR_DEMO_EMPLOYEE_ID,
-                HR_DEMO_EMAIL,
-                Role.HR,
-                true,
-                false,
-                "HR demo login successful."
-        );
-        currentUserAccountId = HR_DEMO_USER_ACCOUNT_ID;
-        currentEmployeeId = HR_DEMO_EMPLOYEE_ID;
-        currentPayslipResult = null;
-        latestPendingLeaveRequestId = null;
-
-        clearLoginState();
-        clearForgotState();
-        companyEmailField.setText(HR_DEMO_EMAIL);
-        passwordField.clear();
-        passwordTextField.clear();
-        otpField.clear();
-
-        loginPane.setVisible(false);
-        loginPane.setManaged(false);
-        appPane.setVisible(true);
-        appPane.setManaged(true);
-
-        showDashboard();
-        setSuccess(appMessageLabel, "HR demo account loaded.");
-    }
-
-    @FXML
-    private void togglePassword() {
-        passwordVisible = !passwordVisible;
-        if (passwordVisible) {
-            passwordTextField.setText(passwordField.getText());
-            passwordTextField.setVisible(true);
-            passwordTextField.setManaged(true);
-            passwordField.setVisible(false);
-            passwordField.setManaged(false);
-            passwordToggleBtn.setText("Hide");
-        } else {
-            passwordField.setText(passwordTextField.getText());
-            passwordField.setVisible(true);
-            passwordField.setManaged(true);
-            passwordTextField.setVisible(false);
-            passwordTextField.setManaged(false);
-            passwordToggleBtn.setText("Show");
-        }
-    }
-
-    @FXML
-    private void handleOtpVerification() {
-        clearInvalid(otpField);
         String otp = text(otpField);
-
-        if (offlinePreviewMode) {
-            if (!otp.matches("\\d{6}")) {
-                markInvalid(otpField);
-                setError(otpMessageLabel, "Enter a 6-digit OTP code.");
-                return;
-            }
-
-            offlinePreviewMode = false;
-            pendingLoginResult = null;
-            currentUserAccountId = 0;
-            currentEmployeeId = 0;
-            loginPane.setVisible(false);
-            loginPane.setManaged(false);
-            appPane.setVisible(true);
-            appPane.setManaged(true);
-            showDashboard();
-            setSuccess(appMessageLabel, "Employee workspace is ready.");
-            return;
-        }
-
-        if (pendingLoginResult == null || !pendingLoginResult.isOtpRequired()) {
-            setError(otpMessageLabel, "Please sign in again before verifying OTP.");
-            showCard(loginCard);
+        if (!otp.matches("\\d{6}")) {
+            showLoginError("Enter a valid six-digit OTP.");
             return;
         }
 
         try {
-            LoginResultDTO result = authenticationService.verifyLoginOtp(
-                    pendingLoginResult.getUserAccountId(),
-                    otp
-            );
-            currentUserAccountId = result.getUserAccountId();
-            currentEmployeeId = result.getEmployeeId();
-            pendingLoginResult = null;
-        } catch (Exception e) {
-            markInvalid(otpField);
-            setError(otpMessageLabel, userMessage(e));
-            return;
-        }
+            LoginResultDTO result = authenticationService.verifyLoginOtp(pendingLogin.getUserAccountId(), otp);
 
-        loginPane.setVisible(false);
-        loginPane.setManaged(false);
-        appPane.setVisible(true);
-        appPane.setManaged(true);
-        showDashboard();
-        setSuccess(appMessageLabel, "Login successful. Employee workspace is ready.");
+            if (result.getRole() != Role.FINANCE && result.getRole() != Role.ADMIN) {
+                showLoginError("This workspace is available to Finance users only.");
+                return;
+            }
+
+            startFinanceSession(result);
+        } catch (RuntimeException ex) {
+            showLoginError(readable(ex));
+        }
     }
 
     @FXML
     private void showForgotPassword() {
-        showCard(forgotCard);
-        clearForgotState();
+        loginView.setVisible(false);
+        loginView.setManaged(false);
+        appView.setVisible(false);
+        appView.setManaged(false);
+        resetView.setVisible(true);
+        resetView.setManaged(true);
+        resetEmailBox.setVisible(true);
+        resetEmailBox.setManaged(true);
+        resetOtpBox.setVisible(false);
+        resetOtpBox.setManaged(false);
+        resetPasswordBox.setVisible(false);
+        resetPasswordBox.setManaged(false);
+        resetMessageLabel.setText("");
     }
 
     @FXML
-    private void handlePasswordReset() {
-        clearForgotState();
+    private void handleSendResetOtp() {
+        clearResetMessage();
+        String email = text(resetEmailField);
 
-        String resetEmail = text(resetEmailField);
-
-        if (!isMotorphEmail(resetEmail)) {
-            markInvalid(resetEmailField);
-            setError(forgotMessageLabel, "Enter a valid MotorPH email address.");
+        if (email.isBlank() || !email.endsWith("@motorph.com")) {
+            showResetError("Enter a valid MotorPH company email.");
             return;
         }
 
         try {
-            pendingResetRequestId = passwordResetService.requestPasswordReset(resetEmail);
-        } catch (Exception e) {
-            if (isDatabaseUnavailable(e)) {
-                clearInvalid(resetEmailField);
-                setError(forgotMessageLabel, "Password reset needs MySQL. Start the database and try again.");
-                return;
-            }
-
-            markInvalid(resetEmailField);
-            setError(forgotMessageLabel, userMessage(e));
-            return;
+            pendingResetRequestId = passwordResetService.requestPasswordReset(email);
+            showResetOtpStep("Reset OTP sent to the registered personal email.");
+        } catch (RuntimeException ex) {
+            showResetError(readable(ex));
         }
-
-        showCard(forgotOtpCard);
-        setSuccess(forgotOtpMessageLabel, "Reset OTP sent to your registered email address.");
     }
 
     @FXML
-    private void handleResetOtpVerification() {
-        clearInvalid(resetOtpField);
+    private void handleVerifyResetOtp() {
+        clearResetMessage();
+        String otp = text(resetOtpField);
 
         if (pendingResetRequestId <= 0) {
-            setError(forgotOtpMessageLabel, "Please request a reset OTP first.");
-            showCard(forgotCard);
+            showResetError("Request a reset OTP first.");
+            return;
+        }
+
+        if (!otp.matches("\\d{6}")) {
+            showResetError("Enter a valid six-digit OTP.");
             return;
         }
 
         try {
-            passwordResetService.verifyResetOtp(pendingResetRequestId, text(resetOtpField));
-        } catch (Exception e) {
-            markInvalid(resetOtpField);
-            setError(forgotOtpMessageLabel, userMessage(e));
-            return;
+            passwordResetService.verifyResetOtp(pendingResetRequestId, otp);
+            resetOtpBox.setVisible(false);
+            resetOtpBox.setManaged(false);
+            resetPasswordBox.setVisible(true);
+            resetPasswordBox.setManaged(true);
+            showResetSuccess("OTP verified. Enter your new password.");
+        } catch (RuntimeException ex) {
+            showResetError(readable(ex));
         }
-
-        showCard(forgotPasswordCard);
-        setSuccess(forgotPasswordMessageLabel, "OTP verified. Enter your new password.");
     }
 
     @FXML
-    private void handleCompletePasswordReset() {
-        clearInvalid(newPasswordField);
-        clearInvalid(confirmPasswordField);
-
+    private void handleSaveNewPassword() {
+        clearResetMessage();
         String newPassword = text(newPasswordField);
         String confirmPassword = text(confirmPasswordField);
-        boolean valid = true;
+
+        if (pendingResetRequestId <= 0) {
+            showResetError("Password reset request is missing.");
+            return;
+        }
 
         if (newPassword.length() < 8) {
-            markInvalid(newPasswordField);
-            valid = false;
+            showResetError("New password must be at least eight characters.");
+            return;
         }
 
         if (!newPassword.equals(confirmPassword)) {
-            markInvalid(confirmPasswordField);
-            valid = false;
-        }
-
-        if (!valid) {
-            setError(forgotPasswordMessageLabel, "Password must be 8+ characters and match confirmation.");
+            showResetError("New password and confirm password do not match.");
             return;
         }
 
         try {
             passwordResetService.resetPassword(pendingResetRequestId, newPassword, confirmPassword);
-        } catch (Exception e) {
-            setError(forgotPasswordMessageLabel, userMessage(e));
-            return;
+            showLogin();
+            showLoginSuccess("Password reset completed. Sign in with your new password.");
+        } catch (RuntimeException ex) {
+            showResetError(readable(ex));
         }
-
-        pendingResetRequestId = 0;
-        newPasswordField.clear();
-        confirmPasswordField.clear();
-        showCard(loginCard);
-        setSuccess(loginMessageLabel, "Password updated successfully. You can now sign in.");
     }
 
     @FXML
     private void showLogin() {
-        showCard(loginCard);
-        clearLoginState();
-        offlinePreviewMode = false;
-        pendingLoginResult = null;
+        resetView.setVisible(false);
+        resetView.setManaged(false);
+        appView.setVisible(false);
+        appView.setManaged(false);
+        loginView.setVisible(true);
+        loginView.setManaged(true);
+        loginFormBox.setVisible(true);
+        loginFormBox.setManaged(true);
+        otpFormBox.setVisible(false);
+        otpFormBox.setManaged(false);
     }
 
     @FXML
     private void showDashboard() {
-        if (hrDemoMode) {
-            showView(dashboardView, dashboardNavButton, "Hello, HR.", "HR WORKSPACE");
-        } else {
-            showView(dashboardView, dashboardNavButton, "Hello, Harty.", "EMPLOYEE WORKSPACE");
-        }
-        loadDashboardData();
+        showView(dashboardView, dashboardNavButton, "Finance Dashboard", "PAYROLL MONITORING");
+        refreshDashboard();
     }
 
     @FXML
-    private void showAttendance() {
-        showView(attendanceView, attendanceNavButton, "Attendance", "Daily time-in, time-out, and attendance logs");
-        refreshAttendanceStatus();
+    private void showPayrollManagement() {
+        showView(payrollView, payrollNavButton, "Payroll Management", "CREATE, GENERATE, AND REVIEW PAYRUNS");
+        refreshPayrunTables();
     }
 
     @FXML
-    private void showLeave() {
-        showView(leaveView, leaveNavButton, "Leave Request", "Submit leave requests and monitor credits");
-        refreshLeaveCredits();
-        refreshLeaveHistory();
+    private void showGeneratePayslip() {
+        showView(payslipView, payslipNavButton, "Generate Payslip", "SEARCH, PREVIEW, EXPORT, AND PRINT");
+        refreshPayslipPayrunCombo();
     }
 
     @FXML
-    private void showPayslip() {
-        showView(payslipView, payslipNavButton, "Payslip / Payroll", "View persisted payroll results and payslips");
-        handleSearchPayslip();
+    private void showPayrollReports() {
+        showView(reportsView, reportsNavButton, "Payroll Reports", "SUMMARY AND DEPARTMENT MONITORING");
+        refreshReportPayrunCombo();
+        currentReportPrint = null;
+        reportPreviewArea.setText("Select a report template and filters, then generate a preview.");
     }
 
     @FXML
     private void showSettings() {
-        showView(settingsView, settingsNavButton, "Account Settings", "Manage password and recovery-account details");
-        loadSettingsData();
+        showView(settingsView, settingsNavButton, "Account Settings", "FINANCE USER AND SESSION DETAILS");
+        settingsNameLabel.setText(currentEmployeeName);
+        settingsRoleLabel.setText(currentRole.name());
+        settingsEmailLabel.setText(currentCompanyEmail);
+        settingsDataSourceLabel.setText("Connected to persisted payroll data");
     }
 
     @FXML
-    private void showSuccessMessage() {
-        setSuccess(appMessageLabel, "Action accepted. Connect this control to the service layer next.");
-    }
+    private void handleCreatePayrun() {
+        LocalDate start = payrunStartDatePicker.getValue();
+        LocalDate end = payrunEndDatePicker.getValue();
+        LocalDate payDate = payrunPayDatePicker.getValue();
+        String typeText = payrollTypeCombo.getValue();
 
-    @FXML
-    private void handleTimeIn() {
-        if (!hasLoggedInEmployee()) {
+        if (start == null || end == null || payDate == null || typeText == null) {
+            showFooterError("Complete the period, pay date, and payroll type.");
             return;
         }
 
-        if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
+        if (end.isBefore(start)) {
+            showFooterError("End date cannot be before start date.");
             return;
         }
 
         try {
-            attendanceService.timeIn(currentEmployeeId);
-            refreshAttendanceStatus();
-            setSuccess(appMessageLabel, "Time in recorded.");
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
-        }
-    }
-
-    @FXML
-    private void handleTimeOut() {
-        if (!hasLoggedInEmployee()) {
-            return;
-        }
-
-        if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
-            return;
-        }
-
-        try {
-            attendanceService.timeOut(currentEmployeeId);
-            refreshAttendanceStatus();
-            setSuccess(appMessageLabel, "Time out recorded.");
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
-        }
-    }
-
-    @FXML
-    private void handleSubmitLeaveRequest() {
-        if (!hasLoggedInEmployee()) {
-            return;
-        }
-
-        if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
-            return;
-        }
-
-        clearLeaveInvalid();
-
-        try {
-            Integer leaveTypeId = leaveTypeIds.get(leaveTypeComboBox.getValue());
-
-            if (leaveTypeId == null) {
-                throw new IllegalArgumentException("Select a leave type.");
+            PayrollType type = PayrollType.fromValue(typeText);
+            if (payrunRepository.existsByPeriod(start, end)) {
+                showFooterError("A payrun already exists for this payroll period.");
+                return;
             }
-
-            LocalDate startDate = parseDate(leaveStartDateField);
-            LocalDate endDate = parseDate(leaveEndDateField);
-            double leaveHours = parsePositiveDouble(leaveHoursField, "Leave hours must be a positive number.");
-
-            leaveService.submitLeaveRequest(
-                    currentEmployeeId,
-                    leaveTypeId,
-                    startDate,
-                    endDate,
-                    leaveHours,
-                    text(leaveReasonField)
-            );
-
-            setSuccess(appMessageLabel, "Leave request submitted.");
-            refreshLeaveCredits();
-            refreshLeaveHistory();
-        } catch (DateTimeParseException e) {
-            markInvalid(leaveStartDateField);
-            markInvalid(leaveEndDateField);
-            setError(appMessageLabel, "Use YYYY-MM-DD for leave dates.");
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
+            payrunRepository.save(new Payrun(null, start, end, payDate, type));
+            showFooterSuccess("Payrun saved for " + formatDate(start) + " to " + formatDate(end) + ".");
+            refreshDashboard();
+            refreshPayrunTables();
+            refreshPayslipPayrunCombo();
+        } catch (RuntimeException ex) {
+            showFooterError(readable(ex));
         }
     }
 
     @FXML
-    private void handleCancelLatestLeaveRequest() {
-        if (!hasLoggedInEmployee()) {
+    private void handleGeneratePayroll() {
+        Optional<Payrun> payrun = latestPayrun();
+
+        if (payrun.isEmpty()) {
+            showFooterError("Create or load a payrun before generating payroll.");
             return;
         }
 
-        if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
-            return;
-        }
-
-        if (latestPendingLeaveRequestId == null) {
-            setError(appMessageLabel, "No pending leave request to cancel.");
-            return;
-        }
-
-        try {
-            leaveService.cancelLeaveRequest(currentEmployeeId, latestPendingLeaveRequestId);
-            latestPendingLeaveRequestId = null;
-            setSuccess(appMessageLabel, "Pending leave request cancelled.");
-            refreshLeaveHistory();
-            refreshLeaveCredits();
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
-        }
+        generatePayrollForPayrun(payrun.get());
     }
 
     @FXML
     private void handleSearchPayslip() {
-        if (!hasLoggedInEmployee()) {
-            return;
-        }
+        String query = text(payslipSearchField);
+        String selectedPayrun = payslipPayrunCombo.getValue();
 
-        clearInvalid(payslipSearchField);
-
-        if (hrDemoMode) {
-            currentPayslipResult = demoPayrollResult();
-            showPayrollResult(currentPayslipResult);
+        if (query.isBlank()) {
+            showFooterError("Enter an employee ID or employee name.");
             return;
         }
 
         try {
-            PayrollResult result;
-            String search = text(payslipSearchField);
+            Employee employee = findEmployee(query);
+            Payrun payrun = selectedPayrun == null || selectedPayrun.isBlank()
+                    ? latestPayrun().orElseThrow(() -> new EntityNotFoundException("Payrun not found."))
+                    : payrunByComboText(selectedPayrun);
+            PayrollResult result = payrollService.getPayrollResult(employee.getEmployeeId(), payrun.getPayrunId());
 
-            if (search.isBlank()) {
-                result = payrollService.getPayrollResultsByEmployee(currentEmployeeId)
-                        .stream()
-                        .max(Comparator.comparing(PayrollResult::getGeneratedAt))
-                        .orElse(null);
-            } else {
-                result = payrollService.getPayrollResult(currentEmployeeId, Integer.parseInt(search));
-            }
-
-            if (result == null) {
-                currentPayslipResult = null;
-                payslipGrossPayLabel.setText("Gross Pay: PHP 0.00");
-                payslipDeductionsLabel.setText("Deductions: PHP 0.00");
-                payslipNetPayLabel.setText("Net Pay: PHP 0.00");
-                setError(payslipMessageLabel, "No persisted payslip found for this employee.");
-                return;
-            }
-
-            showPayrollResult(result);
-        } catch (NumberFormatException e) {
-            markInvalid(payslipSearchField);
-            setError(payslipMessageLabel, "Enter a numeric payrun ID.");
-        } catch (Exception e) {
-            setError(payslipMessageLabel, userMessage(e));
+            fillPayslip(employee, payrun, result);
+            showFooterSuccess("Payslip loaded from persisted payroll results.");
+        } catch (RuntimeException ex) {
+            showFooterError(readable(ex));
         }
     }
 
     @FXML
     private void handlePreviewPayslip() {
-        if (!hasPayslipResult()) {
+        if (payslipPreviewArea.getText().isBlank()) {
+            showFooterError("Search for a persisted payroll result first.");
             return;
         }
-
-        TextArea preview = new TextArea(buildPayslipText(currentPayslipResult));
-        preview.setEditable(false);
-        preview.setWrapText(false);
-        preview.setPrefColumnCount(56);
-        preview.setPrefRowCount(22);
-
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("MotorPH Payslip Preview");
-        alert.setHeaderText("Payslip Preview");
-        alert.getDialogPane().setContent(preview);
-        alert.showAndWait();
+        showInfo("Payslip Preview", payslipPreviewArea.getText());
     }
 
     @FXML
     private void handleExportPayslip() {
-        if (!hasPayslipResult()) {
-            return;
-        }
-
-        try {
-            Path outputDir = Path.of("target", "payslips");
-            Files.createDirectories(outputDir);
-
-            String fileName = "motorph-payslip-employee-"
-                    + currentPayslipResult.getEmployeeId()
-                    + "-payrun-"
-                    + currentPayslipResult.getPayrunId()
-                    + ".txt";
-            Path outputFile = outputDir.resolve(fileName);
-            Files.writeString(outputFile, buildPayslipText(currentPayslipResult));
-            setSuccess(payslipMessageLabel, "Payslip exported to " + outputFile.toAbsolutePath() + ".");
-        } catch (IOException e) {
-            setError(payslipMessageLabel, "Unable to export payslip file.");
-        }
+        exportPdf("payslips", "payslip-preview.pdf", payslipPreviewArea.getText());
     }
 
     @FXML
     private void handlePrintPayslip() {
-        if (!hasPayslipResult()) {
+        if (payslipPreviewArea.getText().isBlank()) {
+            showFooterError("Search for a payslip before printing.");
             return;
         }
-
-        TextArea printView = new TextArea(buildPayslipText(currentPayslipResult));
-        printView.setEditable(false);
-        printView.setWrapText(false);
-        printView.setPrefColumnCount(68);
-        printView.setPrefRowCount(28);
 
         PrinterJob job = PrinterJob.createPrinterJob();
-
         if (job == null) {
-            setError(payslipMessageLabel, "No printer is available.");
+            showFooterError("No printer is available.");
             return;
         }
 
-        boolean accepted = job.showPrintDialog(payslipView.getScene().getWindow());
+        Text printText = new Text(payslipPreviewArea.getText());
+        printText.setWrappingWidth(520);
 
-        if (!accepted) {
-            setError(payslipMessageLabel, "Print cancelled.");
-            return;
-        }
-
-        if (job.printPage(printView)) {
+        boolean confirmed = job.showPrintDialog(rootCanvas.getScene().getWindow());
+        if (confirmed && job.printPage(printText)) {
             job.endJob();
-            setSuccess(payslipMessageLabel, "Payslip sent to printer.");
+            showFooterSuccess("Payslip sent to the print dialog.");
             return;
         }
 
-        setError(payslipMessageLabel, "Unable to print payslip.");
+        showFooterError("Payslip printing was cancelled.");
     }
 
     @FXML
-    private void handleChangePassword() {
-        if (currentUserAccountId <= 0) {
-            setError(appMessageLabel, "Please log in again before changing your password.");
+    private void handleGenerateReport() {
+        String reportType = reportTypeCombo.getValue();
+        LocalDate start = reportStartDatePicker.getValue();
+        LocalDate end = reportEndDatePicker.getValue();
+
+        if (reportType == null || start == null || end == null) {
+            showFooterError("Choose a report type and date range.");
             return;
         }
 
-        if (hrDemoMode) {
-            setSuccess(appMessageLabel, "HR demo account is read-only.");
-            return;
-        }
-
-        clearInvalid(settingsOldPasswordField);
-        clearInvalid(settingsNewPasswordField);
-        clearInvalid(settingsConfirmPasswordField);
-
-        String oldPassword = text(settingsOldPasswordField);
-        String newPassword = text(settingsNewPasswordField);
-        String confirmPassword = text(settingsConfirmPasswordField);
-
-        if (oldPassword.isBlank()) {
-            markInvalid(settingsOldPasswordField);
-            setError(appMessageLabel, "Old password is required.");
-            return;
-        }
-
-        if (newPassword.length() < 8 || !newPassword.equals(confirmPassword)) {
-            markInvalid(settingsNewPasswordField);
-            markInvalid(settingsConfirmPasswordField);
-            setError(appMessageLabel, "New password must be 8+ characters and match confirmation.");
+        if (end.isBefore(start)) {
+            showFooterError("Report end date cannot be before start date.");
             return;
         }
 
         try {
-            UserAccount account = userAccountRepository.findById(currentUserAccountId);
-
-            if (account == null) {
-                throw new IllegalStateException("User account not found.");
-            }
-
-            if (!PasswordHasher.verify(oldPassword, account.getPasswordSalt(), account.getPasswordHash())) {
-                markInvalid(settingsOldPasswordField);
-                setError(appMessageLabel, "Old password is incorrect.");
-                return;
-            }
-
-            String salt = PasswordHasher.generateSalt();
-            String hash = PasswordHasher.hash(newPassword, salt);
-            userAccountRepository.updatePassword(currentUserAccountId, hash, salt);
-            settingsOldPasswordField.clear();
-            settingsNewPasswordField.clear();
-            settingsConfirmPasswordField.clear();
-            setSuccess(appMessageLabel, "Password updated successfully.");
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
+            List<ReportRow> rows = reportRows(start, end, selectedReportPayrun());
+            currentReportPrint = buildJasperReport(reportType, start, end, rows);
+            reportPreviewArea.setText(buildReportPreview(reportType, start, end, rows));
+            showFooterSuccess("JasperReports preview generated from persisted payroll data.");
+        } catch (RuntimeException ex) {
+            currentReportPrint = null;
+            showFooterError(readable(ex));
         }
+    }
+
+    @FXML
+    private void handleExportReport() {
+        if (currentReportPrint == null) {
+            showFooterError("Generate a JasperReports preview before exporting.");
+            return;
+        }
+
+        try {
+            Path folder = Path.of("target", "payroll-reports");
+            Files.createDirectories(folder);
+            Path file = folder.resolve("payroll-report-preview.pdf");
+            JasperExportManager.exportReportToPdfFile(currentReportPrint, file.toString());
+            openFile(file);
+            showFooterSuccess("Exported JasperReports PDF to " + file + ".");
+        } catch (IOException | JRException ex) {
+            showFooterError("Unable to export JasperReports PDF.");
+        }
+    }
+
+    @FXML
+    private void handlePrintReport() {
+        if (currentReportPrint == null) {
+            showFooterError("Generate a JasperReports preview before printing.");
+            return;
+        }
+
+        try {
+            JasperPrintManager.printReport(currentReportPrint, true);
+            showFooterSuccess("Report sent to the print dialog.");
+        } catch (JRException ex) {
+            showFooterError("Unable to open report print dialog.");
+        }
+    }
+
+    @FXML
+    private void handleSwitchRole() {
+        List<Role> roles = availableRolesForCurrentUser();
+        if (roles.size() <= 1) {
+            showFooterError("No additional assigned roles are available for this account.");
+            return;
+        }
+
+        ChoiceDialog<Role> dialog = new ChoiceDialog<>(currentRole, roles);
+        dialog.setTitle("Switch Role");
+        dialog.setHeaderText("Select an assigned role");
+        dialog.setContentText("Role");
+        dialog.showAndWait().ifPresent(role -> {
+            currentRole = role;
+            sidebarRoleLabel.setText(role.name());
+            settingsRoleLabel.setText(role.name());
+            showFooterSuccess("Switched active role to " + role.name() + " without logging out.");
+        });
+    }
+
+    private void generatePayrollForPayrun(Payrun payrun) {
+        if (payrun == null) {
+            showFooterError("Select a payrun before generating payroll.");
+            return;
+        }
+
+        int generated = 0;
+        int skipped = 0;
+        int failed = 0;
+
+        List<Employee> employees;
+        try {
+            employees = employeeService.getAllActiveEmployees();
+        } catch (RuntimeException ex) {
+            showFooterError(readable(ex));
+            return;
+        }
+
+        for (Employee employee : employees) {
+            try {
+                payrollService.runPayrollForEmployee(employee.getEmployeeId(), payrun.getPayrunId());
+                generated++;
+            } catch (BusinessRuleException ex) {
+                skipped++;
+            } catch (RuntimeException ex) {
+                failed++;
+            }
+        }
+
+        payrollSummaryLabel.setText("Payrun " + payrun.getPayrunId()
+                + ": generated " + generated
+                + ", skipped existing " + skipped
+                + ", failed " + failed + ".");
+
+        if (generated > 0 || skipped > 0) {
+            showFooterSuccess("Payroll generation completed for payrun " + payrun.getPayrunId() + ".");
+        } else {
+            showFooterError("No payroll results were generated for payrun " + payrun.getPayrunId() + ".");
+        }
+
+        refreshDashboard();
+        refreshPayrunTables();
+        refreshPayslipPayrunCombo();
+        refreshReportPayrunCombo();
+    }
+
+    private void showPayrunDetails(Payrun payrun) {
+        List<PayrollResult> results = loadPayrollResults(payrun.getPayrunId());
+        StringBuilder details = new StringBuilder();
+        details.append("Payrun ").append(payrun.getPayrunId()).append('\n');
+        details.append("Date Covered: ").append(formatDate(payrun.getStartDate())).append(" - ").append(formatDate(payrun.getEndDate())).append('\n');
+        details.append("Pay Date: ").append(formatDate(payrun.getPayDate())).append('\n');
+        details.append("Payroll Type: ").append(payrun.getPayrollType()).append("\n\n");
+        details.append("Employee | Gross | Deductions | Net\n");
+
+        for (PayrollResult result : results) {
+            details.append(result.getEmployeeId()).append(" | ")
+                    .append(money(result.getGrossPay())).append(" | ")
+                    .append(money(result.getTotalDeductions())).append(" | ")
+                    .append(money(result.getNetPay())).append('\n');
+        }
+
+        showInfo("Generated Payrolls", details.toString());
     }
 
     @FXML
     private void handleLogout() {
-        appPane.setVisible(false);
-        appPane.setManaged(false);
-        loginPane.setVisible(true);
-        loginPane.setManaged(true);
-        passwordField.clear();
-        passwordTextField.clear();
-        otpField.clear();
-        pendingLoginResult = null;
-        offlinePreviewMode = false;
-        hrDemoMode = false;
-        currentUserAccountId = 0;
         currentEmployeeId = 0;
+        currentEmployeeName = "Finance Officer";
+        currentCompanyEmail = "finance@motorph.com";
+        currentRole = Role.FINANCE;
+        pendingLogin = null;
+        clearFinanceFields();
         showLogin();
-        setSuccess(loginMessageLabel, "Logged out successfully.");
+        showLoginSuccess("Signed out successfully.");
     }
 
-    private void loadDashboardData() {
-        if (hrDemoMode) {
-            dashboardEmployeeNameLabel.setText("HR Demo User");
-            dashboardEmployeeRoleLabel.setText("Human Resources");
-            dashboardEmailLabel.setText(HR_DEMO_EMAIL);
-            pageTitleLabel.setText("Hello, HR.");
-            pageSubtitleLabel.setText("HR WORKSPACE");
-            dashboardTaskPercentLabel.setText("4");
-            settingsEmailField.setText(HR_DEMO_EMAIL);
-            settingsRecoveryEmailField.setText("hr.demo.recovery@motorph.com");
-            refreshDashboardPayslip();
-            refreshAttendanceStatus();
-            refreshLeaveCredits();
-            refreshLeaveHistory();
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            return;
-        }
-
-        try {
-            Employee employee = employeeService.getEmployeeById(currentEmployeeId);
-            String fullName = employee.getFullName();
-            dashboardEmployeeNameLabel.setText(fullName);
-            dashboardEmployeeRoleLabel.setText(employee.getEmploymentStatus().name() + " / Department " + employee.getDepartmentId());
-            dashboardEmailLabel.setText(safe(employee.getPersonalEmail(), "No recovery email on file"));
-            pageTitleLabel.setText("Hello, " + employee.getFirstName() + ".");
-            settingsRecoveryEmailField.setText(employee.getPersonalEmail());
-
-            refreshLeaveCredits();
-            refreshDashboardPayslip();
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
-        }
+    private void setupGlobalControls() {
+        languageCombo.setItems(FXCollections.observableArrayList("English"));
+        languageCombo.getSelectionModel().select("English");
+        themeCombo.setItems(FXCollections.observableArrayList("System", "Dark", "Light"));
+        themeCombo.getSelectionModel().select("System");
+        themeCombo.valueProperty().addListener((obs, oldValue, newValue) -> applyTheme(newValue));
     }
 
-    private void refreshDashboardPayslip() {
-        if (hrDemoMode) {
-            showPayrollResult(demoPayrollResult());
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            return;
-        }
-
-        try {
-            Optional<PayrollResult> latest = payrollService.getPayrollResultsByEmployee(currentEmployeeId)
-                    .stream()
-                    .max(Comparator.comparing(PayrollResult::getGeneratedAt));
-
-            dashboardNetPayLabel.setText(latest.map(result -> pesoFormat.format(result.getNetPay())).orElse("PHP 0.00"));
-        } catch (Exception e) {
-            dashboardNetPayLabel.setText("PHP 0.00");
-        }
-    }
-
-    private void refreshAttendanceStatus() {
-        attendanceDateLabel.setText(LocalDate.now().toString());
-
-        if (hrDemoMode) {
-            attendanceTimeInLabel.setText("08:00");
-            attendanceTimeOutLabel.setText("17:00");
-            attendanceHoursLabel.setText("9.00");
-            attendanceStatusLabel.setText(AttendanceStatus.PRESENT.name());
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            return;
-        }
-
-        try {
-            Attendance attendance = attendanceService.getAttendanceForDate(currentEmployeeId, LocalDate.now());
-            attendanceTimeInLabel.setText(attendance.getTimeIn() == null ? "—" : attendance.getTimeIn().toString());
-            attendanceTimeOutLabel.setText(attendance.getTimeOut() == null ? "—" : attendance.getTimeOut().toString());
-            attendanceHoursLabel.setText(String.format("%.2f", attendance.getHoursWorked()));
-            attendanceStatusLabel.setText(attendance.getAttendanceStatus().name());
-        } catch (Exception e) {
-            attendanceTimeInLabel.setText("—");
-            attendanceTimeOutLabel.setText("—");
-            attendanceHoursLabel.setText("—");
-            attendanceStatusLabel.setText("Pending");
-
-            String message = userMessage(e);
-            if (!message.contains("Attendance record not found")) {
-                setError(appMessageLabel, message);
-            }
-        }
-    }
-
-    private void refreshLeaveCredits() {
-        String selectedType = leaveTypeComboBox.getValue();
-        Integer leaveTypeId = leaveTypeIds.get(selectedType);
-
-        if (hrDemoMode) {
-            if (selectedType == null) {
-                leaveTypeComboBox.setValue("Vacation Leave");
-            }
-
-            leaveCreditsField.setText("120.0 hours");
-            dashboardLeaveCreditsLabel.setText("15");
-            return;
-        }
-
-        if (leaveTypeId == null) {
-            leaveCreditsField.setText("Select a type");
-            dashboardLeaveCreditsLabel.setText("—");
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            leaveCreditsField.setText("Login required");
-            return;
-        }
-
-        try {
-            double credits = leaveService.getRemainingLeaveCredits(currentEmployeeId, leaveTypeId, LocalDate.now().getYear());
-            leaveCreditsField.setText(String.format("%.1f hours", credits));
-            dashboardLeaveCreditsLabel.setText(String.format("%.0f", credits / 8.0));
-        } catch (Exception e) {
-            leaveCreditsField.setText("Unavailable");
-            dashboardLeaveCreditsLabel.setText("—");
-        }
-    }
-
-    private void refreshLeaveHistory() {
-        if (hrDemoMode) {
-            latestPendingLeaveRequestId = 9001;
-            leaveHistoryLabel.setText("Latest: PENDING | 2026-06-12 to 2026-06-14 | 16.0 hours");
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            return;
-        }
-
-        try {
-            List<LeaveRequest> requests = leaveService.getLeaveRequestsByEmployeeId(currentEmployeeId);
-            latestPendingLeaveRequestId = requests.stream()
-                    .filter(request -> request.getStatus() == LeaveStatus.PENDING)
-                    .max(Comparator.comparing(LeaveRequest::getRequestDate))
-                    .map(LeaveRequest::getRequestId)
-                    .orElse(null);
-
-            if (requests.isEmpty()) {
-                leaveHistoryLabel.setText("No leave requests found.");
-                return;
-            }
-
-            LeaveRequest latest = requests.stream()
-                    .max(Comparator.comparing(LeaveRequest::getRequestDate))
-                    .orElseThrow();
-
-            leaveHistoryLabel.setText(
-                    "Latest: " + latest.getStatus().name()
-                            + " | " + latest.getStartDate()
-                            + " to " + latest.getEndDate()
-                            + " | " + latest.getLeaveHours() + " hours"
-            );
-        } catch (Exception e) {
-            latestPendingLeaveRequestId = null;
-            leaveHistoryLabel.setText(userMessage(e));
-        }
-    }
-
-    private void loadSettingsData() {
-        if (hrDemoMode) {
-            settingsEmailField.setText(HR_DEMO_EMAIL);
-            settingsRecoveryEmailField.setText("hr.demo.recovery@motorph.com");
-            return;
-        }
-
-        if (currentEmployeeId <= 0) {
-            return;
-        }
-
-        try {
-            Employee employee = employeeService.getEmployeeById(currentEmployeeId);
-            settingsEmailField.setText(companyEmailField.getText());
-            settingsRecoveryEmailField.setText(employee.getPersonalEmail());
-        } catch (Exception e) {
-            setError(appMessageLabel, userMessage(e));
-        }
-    }
-
-    private void showPayrollResult(PayrollResult result) {
-        currentPayslipResult = result;
-        payslipGrossPayLabel.setText("Gross Pay: " + pesoFormat.format(result.getGrossPay()));
-        payslipDeductionsLabel.setText("Deductions: " + pesoFormat.format(result.getTotalDeductions()));
-        payslipNetPayLabel.setText("Net Pay: " + pesoFormat.format(result.getNetPay()));
-        setSuccess(payslipMessageLabel, "Loaded payrun #" + result.getPayrunId() + " generated " + result.getGeneratedAt().toLocalDate() + ".");
-        dashboardNetPayLabel.setText(pesoFormat.format(result.getNetPay()));
-    }
-
-    private boolean hasPayslipResult() {
-        if (currentPayslipResult != null) {
-            return true;
-        }
-
-        setError(payslipMessageLabel, "Search and load a payslip before previewing, exporting, or printing.");
-        return false;
-    }
-
-    private String buildPayslipText(PayrollResult result) {
-        String employeeName = dashboardEmployeeNameLabel.getText();
-        String email = companyEmailField.getText();
-        String generated = result.getGeneratedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
-
-        return """
-                MOTORPH PAYROLL MANAGEMENT SYSTEM
-                Employee Payslip
-                ==========================================
-
-                Employee: %s
-                Email: %s
-                Employee ID: %d
-                Payrun ID: %d
-                Generated: %s
-
-                ------------------------------------------
-                Total Hours Worked: %.2f
-                Gross Pay: %s
-                Total Deductions: %s
-                Net Pay: %s
-                ------------------------------------------
-
-                This payslip is generated from persisted MotorPH payroll results.
-                For official release, connect the JasperReports template when the
-                JasperReports dependency and JRXML design are added to the project.
-                """.formatted(
-                safe(employeeName, "Employee"),
-                safe(email, "employee@motorph.com"),
-                result.getEmployeeId(),
-                result.getPayrunId(),
-                generated,
-                result.getTotalHoursWorked(),
-                pesoFormat.format(result.getGrossPay()),
-                pesoFormat.format(result.getTotalDeductions()),
-                pesoFormat.format(result.getNetPay())
-        );
-    }
-
-    private void seedDashboardCharts() {
-        payrollTrendChart.getData().setAll(series(
-                "Net Pay (PHP)",
-                new String[]{"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"},
-                new double[]{27000, 34000, 29500, 27500, 12500, 29000, 31500, 28500, 23500, 26000, 24500, 23000}
+    private void setupFinanceControls() {
+        payrollTypeCombo.setItems(FXCollections.observableArrayList("SEMI_MONTHLY", "MONTHLY", "WEEKLY", "BI_WEEKLY"));
+        payrollTypeCombo.getSelectionModel().select("SEMI_MONTHLY");
+        reportTypeCombo.setItems(FXCollections.observableArrayList(
+                "Payroll Summary Report",
+                "Department Payroll Summary",
+                "Organization Payroll Register"
         ));
+        reportDepartmentCombo.setItems(FXCollections.observableArrayList("All Departments", "Human Resources", "Finance", "Operations", "IT"));
+        reportDepartmentCombo.getSelectionModel().select("All Departments");
+        reportPayrunCombo.setItems(FXCollections.observableArrayList("All Payruns"));
+        reportPayrunCombo.getSelectionModel().select("All Payruns");
 
-        earningsBreakdownChart.getData().setAll(series(
-                "Earnings",
-                new String[]{"Basic", "Allowances", "Overtime", "Night Diff", "Holiday", "Bonus"},
-                new double[]{17500, 6000, 3250, 1750, 1250, 750}
-        ));
-
-        attendanceSummaryChart.getData().setAll(
-                series("Present", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{7, 9, 9, 10, 9, 6, 6, 6}),
-                series("Late", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{2, 3, 6, 5, 0, 1, 0, 4}),
-                series("Absent", new String[]{"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"},
-                        new double[]{0, 0, 0, 0, 0, 1, 0, 0})
-        );
+        LocalDate today = LocalDate.now();
+        payrunStartDatePicker.setValue(today.withDayOfMonth(1));
+        payrunEndDatePicker.setValue(today.withDayOfMonth(Math.min(today.lengthOfMonth(), 15)));
+        payrunPayDatePicker.setValue(today.withDayOfMonth(Math.min(today.lengthOfMonth(), 30)));
+        reportStartDatePicker.setValue(today.withDayOfMonth(1));
+        reportEndDatePicker.setValue(today);
+        seedPayrollChart(List.of());
     }
 
-    private XYChart.Series<String, Number> series(String name, String[] categories, double[] values) {
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName(name);
+    private void startFinanceSession(LoginResultDTO result) {
+        currentEmployeeId = result.getEmployeeId();
+        currentCompanyEmail = result.getCompanyEmail();
+        currentRole = result.getRole();
+        currentEmployeeName = resolveEmployeeName(result.getEmployeeId());
 
-        for (int i = 0; i < categories.length; i++) {
-            XYChart.Data<String, Number> data = new XYChart.Data<>(categories[i], values[i]);
-            series.getData().add(data);
-            data.nodeProperty().addListener((observable, oldNode, node) -> {
-                if (node != null) {
-                    Tooltip.install(node, new Tooltip(data.getXValue() + ": " + data.getYValue()));
-                }
-            });
-        }
+        sidebarNameLabel.setText(currentEmployeeName);
+        sidebarRoleLabel.setText(currentRole.name());
+        sidebarEmailLabel.setText(currentCompanyEmail);
 
-        return series;
+        loginView.setVisible(false);
+        loginView.setManaged(false);
+        resetView.setVisible(false);
+        resetView.setManaged(false);
+        appView.setVisible(true);
+        appView.setManaged(true);
+        showDashboard();
+        showFooterSuccess("Welcome to your finance workspace.");
     }
 
-    private void startLoginAnimations() {
-        fadeIn(loginCard, 220, 0);
-        scaleIn(loginCard, 240, 0);
-
-        floatNode(floatingNetPayCard, -8, 4.8, 0.1);
-        floatNode(floatingAttendanceCard, 9, 5.6, 0.6);
-        floatNode(floatingLeaveCard, -7, 5.2, 1.0);
-        floatNode(floatingPaydayCard, 6, 6.0, 0.4);
-        floatNode(floatingPayslipCard, -6, 5.8, 0.8);
-
-        fadeIn(floatingNetPayCard, 420, 100);
-        fadeIn(floatingAttendanceCard, 420, 100);
-        fadeIn(floatingLeaveCard, 420, 100);
-        fadeIn(floatingPaydayCard, 420, 100);
-        fadeIn(floatingPayslipCard, 420, 100);
+    private void showOtpForm(String message) {
+        loginFormBox.setVisible(false);
+        loginFormBox.setManaged(false);
+        otpFormBox.setVisible(true);
+        otpFormBox.setManaged(true);
+        otpField.clear();
+        showLoginSuccess(message);
     }
 
-    private void applyLanguage() {
-        String lang = null;
-
-        if (loginLanguageCombo != null) lang = loginLanguageCombo.getValue();
-        else if (appLanguageCombo != null) lang = appLanguageCombo.getValue();
-
-        syncLanguage(lang);
+    private void showResetOtpStep(String message) {
+        resetEmailBox.setVisible(false);
+        resetEmailBox.setManaged(false);
+        resetOtpBox.setVisible(true);
+        resetOtpBox.setManaged(true);
+        resetPasswordBox.setVisible(false);
+        resetPasswordBox.setManaged(false);
+        showResetSuccess(message);
     }
 
-    private void syncLanguage(String lang) {
-        if (lang == null) return;
+    private void showView(Node selectedView, Button selectedButton, String title, String subtitle) {
+        List<Node> views = List.of(dashboardView, payrollView, payslipView, reportsView, settingsView);
+        List<Button> buttons = List.of(dashboardNavButton, payrollNavButton, payslipNavButton, reportsNavButton, settingsNavButton);
 
-        if (loginLanguageCombo != null && !lang.equals(loginLanguageCombo.getValue())) loginLanguageCombo.setValue(lang);
-        if (appLanguageCombo != null && !lang.equals(appLanguageCombo.getValue())) appLanguageCombo.setValue(lang);
-
-        boolean filipino = "Filipino".equals(lang);
-        applyLanguage(rootPane, filipino);
-    }
-
-    private void syncTheme(String mode) {
-        if (mode == null) mode = "System";
-
-        if (loginThemeCombo != null && !mode.equals(loginThemeCombo.getValue())) loginThemeCombo.setValue(mode);
-        if (appThemeCombo != null && !mode.equals(appThemeCombo.getValue())) appThemeCombo.setValue(mode);
-
-        if (mode.isBlank() || "System".equals(mode)) {
-            rootPane.getStyleClass().remove("light-mode");
-            darkMode = true;
-            return;
-        }
-
-        if ("Light".equals(mode)) {
-            if (!rootPane.getStyleClass().contains("light-mode")) {
-                rootPane.getStyleClass().add("light-mode");
-            }
-            darkMode = false;
-            return;
-        }
-
-        rootPane.getStyleClass().remove("light-mode");
-        darkMode = true;
-    }
-
-    // Robust translation lookup (case-insensitive / trimmed fallback)
-    private String translateText(String english) {
-        if (english == null) return "";
-        String direct = FILIPINO_LABELS.get(english);
-        if (direct != null) return direct;
-
-        String key = english.trim();
-        for (Map.Entry<String, String> e : FILIPINO_LABELS.entrySet()) {
-            if (e.getKey().trim().equalsIgnoreCase(key)) return e.getValue();
-        }
-
-        return english;
-    }
-
-    private void applyLanguage(Node node, boolean filipino) {
-        if (node == null) {
-            return;
-        }
-
-        if (node instanceof Labeled labeled) {
-            Object storedText = labeled.getProperties().get("englishText");
-
-            if (storedText == null) {
-                storedText = labeled.getText() == null ? "" : labeled.getText();
-                labeled.getProperties().put("englishText", storedText);
-            }
-
-            String englishText = storedText.toString();
-            String newText = filipino ? translateText(englishText) : englishText;
-            labeled.setText(newText);
-
-            // enable wrapping for labels when Filipino to avoid truncation
-            if (labeled instanceof javafx.scene.control.Label lbl) {
-                Object storedWrap = lbl.getProperties().get("englishWrap");
-
-                if (storedWrap == null) {
-                    lbl.getProperties().put("englishWrap", lbl.isWrapText());
-                }
-
-                boolean originalWrap = (boolean) lbl.getProperties().get("englishWrap");
-                lbl.setWrapText(filipino || originalWrap);
-            }
-        }
-
-        if (node instanceof TextInputControl input) {
-            Object storedPrompt = input.getProperties().get("englishPrompt");
-
-            if (storedPrompt == null) {
-                storedPrompt = input.getPromptText();
-                input.getProperties().put("englishPrompt", storedPrompt == null ? "" : storedPrompt);
-            }
-
-            String englishPrompt = storedPrompt.toString();
-            input.setPromptText(filipino ? translateText(englishPrompt) : englishPrompt);
-        }
-
-        if (node instanceof Parent parent) {
-            parent.getChildrenUnmodifiable().forEach(child -> applyLanguage(child, filipino));
-        }
-    }
-
-    private void fadeIn(Node node, double durationMillis, double delayMillis) {
-        if (node == null) {
-            return;
-        }
-
-        node.setOpacity(0);
-        FadeTransition fade = new FadeTransition(Duration.millis(durationMillis), node);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.setDelay(Duration.millis(delayMillis));
-        fade.setInterpolator(Interpolator.EASE_OUT);
-        fade.play();
-    }
-
-    private void scaleIn(Node node, double durationMillis, double delayMillis) {
-        if (node == null) {
-            return;
-        }
-
-        node.setScaleX(0.98);
-        node.setScaleY(0.98);
-        ScaleTransition scale = new ScaleTransition(Duration.millis(durationMillis), node);
-        scale.setFromX(0.98);
-        scale.setFromY(0.98);
-        scale.setToX(1);
-        scale.setToY(1);
-        scale.setDelay(Duration.millis(delayMillis));
-        scale.setInterpolator(Interpolator.EASE_OUT);
-        scale.play();
-    }
-
-    private void floatNode(Node node, double offsetY, double seconds, double delaySeconds) {
-        if (node == null) {
-            return;
-        }
-
-        TranslateTransition floatAnimation = new TranslateTransition(Duration.seconds(seconds), node);
-        floatAnimation.setFromY(0);
-        floatAnimation.setByY(offsetY);
-        floatAnimation.setDelay(Duration.seconds(delaySeconds));
-        floatAnimation.setAutoReverse(true);
-        floatAnimation.setCycleCount(TranslateTransition.INDEFINITE);
-        floatAnimation.setInterpolator(Interpolator.EASE_BOTH);
-        floatAnimation.play();
-    }
-
-    private boolean hasLoggedInEmployee() {
-        if (hrDemoMode || currentEmployeeId > 0) {
-            return true;
-        }
-
-        setError(appMessageLabel, "Please log in before using this action.");
-        return false;
-    }
-
-    private LocalDate parseDate(TextField field) {
-        clearInvalid(field);
-        String value = text(field);
-
-        if (value.isBlank()) {
-            markInvalid(field);
-            throw new DateTimeParseException("Date is required.", value, 0);
-        }
-
-        return LocalDate.parse(value);
-    }
-
-    private double parsePositiveDouble(TextField field, String message) {
-        clearInvalid(field);
-
-        try {
-            double value = Double.parseDouble(text(field));
-
-            if (value <= 0) {
-                throw new NumberFormatException(message);
-            }
-
-            return value;
-        } catch (NumberFormatException e) {
-            markInvalid(field);
-            throw new IllegalArgumentException(message);
-        }
-    }
-
-    private void clearLeaveInvalid() {
-        clearInvalid(leaveStartDateField);
-        clearInvalid(leaveEndDateField);
-        clearInvalid(leaveHoursField);
-        clearInvalid(leaveReasonField);
-    }
-
-    private void showCard(VBox cardToShow) {
-        for (VBox card : List.of(loginCard, otpCard, forgotCard, forgotOtpCard, forgotPasswordCard)) {
-            boolean selected = card == cardToShow;
-            card.setVisible(selected);
-            card.setManaged(selected);
-        }
-    }
-
-    private void showView(VBox viewToShow, Button selectedButton, String title, String subtitle) {
-        for (VBox view : List.of(dashboardView, attendanceView, leaveView, payslipView, settingsView)) {
-            boolean selected = view == viewToShow;
+        for (Node view : views) {
+            boolean selected = view == selectedView;
             view.setVisible(selected);
             view.setManaged(selected);
         }
 
-        for (Button button : List.of(dashboardNavButton, attendanceNavButton, leaveNavButton, payslipNavButton, settingsNavButton)) {
+        for (Button button : buttons) {
             button.getStyleClass().remove("selected-nav");
         }
-
-        if (!selectedButton.getStyleClass().contains("selected-nav")) {
-            selectedButton.getStyleClass().add("selected-nav");
-        }
-
+        selectedButton.getStyleClass().add("selected-nav");
         pageTitleLabel.setText(title);
         pageSubtitleLabel.setText(subtitle);
     }
 
-    private void clearLoginState() {
-        clearInvalid(companyEmailField);
-        clearInvalid(passwordField);
-        clearInvalid(passwordTextField);
-        loginMessageLabel.setText("");
-        loginMessageLabel.getStyleClass().removeAll("success-message", "error-message");
-        passwordField.setVisible(true);
-        passwordField.setManaged(true);
-        passwordTextField.setVisible(false);
-        passwordTextField.setManaged(false);
-        passwordTextField.clear();
-        passwordVisible = false;
-        passwordToggleBtn.setText("Show");
+    private void refreshDashboard() {
+        List<Payrun> payruns = loadPayruns();
+        List<PayrollResult> latestResults = payruns.isEmpty()
+                ? List.of()
+                : loadPayrollResults(payruns.get(0).getPayrunId());
+
+        latestPayrunValueLabel.setText(payruns.isEmpty() ? "No payrun" : payruns.get(0).getPayrunId().toString());
+        upcomingPayDateValueLabel.setText(nextPayDate(payruns));
+        pendingPeriodsValueLabel.setText(String.valueOf(pendingPayrunCount(payruns)));
+        generatedPayrollValueLabel.setText(String.valueOf(latestResults.size()));
+        totalNetPayValueLabel.setText(money(latestResults.stream().mapToDouble(PayrollResult::getNetPay).sum()));
+        recentActivityLabel.setText(payruns.isEmpty()
+                ? "No payrun records are available."
+                : "Latest payrun " + payruns.get(0).getPayrunId() + " has " + latestResults.size() + " generated payroll result(s).");
+
+        seedPayrollChart(latestResults);
+        fillActivityGrid(payruns, latestResults);
     }
 
-    private void clearForgotState() {
-        clearInvalid(resetEmailField);
-        clearInvalid(resetOtpField);
-        clearInvalid(newPasswordField);
-        clearInvalid(confirmPasswordField);
-        forgotMessageLabel.setText("");
-        forgotOtpMessageLabel.setText("");
-        forgotPasswordMessageLabel.setText("");
-        forgotMessageLabel.getStyleClass().removeAll("success-message", "error-message");
-        forgotOtpMessageLabel.getStyleClass().removeAll("success-message", "error-message");
-        forgotPasswordMessageLabel.getStyleClass().removeAll("success-message", "error-message");
-    }
+    private void refreshPayrunTables() {
+        List<Payrun> payruns = loadPayruns();
+        fillPayrunGrid(payruns);
 
-    private String text(TextField field) {
-        return field.getText() == null ? "" : field.getText().trim();
-    }
-
-    private boolean isMotorphEmail(String email) {
-        return email != null && email.trim().toLowerCase(Locale.ROOT).matches(MOTORPH_EMAIL_PATTERN);
-    }
-
-    private String safe(String value, String fallback) {
-        return value == null || value.isBlank() ? fallback : value;
-    }
-
-    private boolean isHrDemoCredentials(String companyEmail, String password) {
-        if (companyEmail == null || password == null) {
-            return false;
+        if (payruns.isEmpty()) {
+            generatedPayrollGrid.getChildren().clear();
+            addRow(generatedPayrollGrid, 0, "Pay Date", "Date Covered", "Employees", "Gross", "Deductions", "Net", "Status", "View");
+            payrollSummaryLabel.setText("No generated payroll results are available.");
+            return;
         }
 
-        return HR_DEMO_EMAIL.equalsIgnoreCase(companyEmail.trim())
-                && HR_DEMO_PASSWORD.equals(password.trim());
+        List<PayrollResult> results = loadPayrollResults(payruns.get(0).getPayrunId());
+        fillGeneratedPayrollGrid(payruns);
+        payrollSummaryLabel.setText(results.isEmpty()
+                ? "No generated payrolls found for the latest payrun."
+                : results.size() + " payroll result(s) found for latest payrun " + payruns.get(0).getPayrunId() + ".");
     }
 
-    private PayrollResult demoPayrollResult() {
-        return new PayrollResult(
-                9001,
-                HR_DEMO_EMPLOYEE_ID,
-                2506,
-                160.0,
-                82500.0,
-                12450.0,
-                70050.0,
-                LocalDateTime.of(2026, 6, 10, 15, 30)
+    private void refreshPayslipPayrunCombo() {
+        List<String> values = loadPayruns().stream()
+                .map(this::payrunComboText)
+                .toList();
+
+        payslipPayrunCombo.setItems(FXCollections.observableArrayList(values));
+        if (!values.isEmpty()) {
+            payslipPayrunCombo.getSelectionModel().select(0);
+        }
+    }
+
+    private void refreshReportPayrunCombo() {
+        List<String> values = new ArrayList<>();
+        values.add("All Payruns");
+        values.addAll(loadPayruns().stream().map(this::payrunComboText).toList());
+        reportPayrunCombo.setItems(FXCollections.observableArrayList(values));
+        reportPayrunCombo.getSelectionModel().selectFirst();
+    }
+
+    private void fillPayrunGrid(List<Payrun> payruns) {
+        payrunGrid.getChildren().clear();
+        addRow(payrunGrid, 0, "Payrun", "Period", "Pay Date", "Type", "Status", "Generate");
+
+        if (payruns.isEmpty()) {
+            addRow(payrunGrid, 1, "-", "No payruns found", "-", "-", "-", "-");
+            return;
+        }
+
+        int row = 1;
+        for (Payrun payrun : payruns.stream().limit(8).toList()) {
+            addRow(
+                    payrunGrid,
+                    row++,
+                    String.valueOf(payrun.getPayrunId()),
+                    formatDate(payrun.getStartDate()) + " - " + formatDate(payrun.getEndDate()),
+                    formatDate(payrun.getPayDate()),
+                    payrun.getPayrollType().name(),
+                    payrun.getPayDate().isAfter(LocalDate.now()) ? "Pending" : "Released"
+            );
+            Button generateButton = new Button("Generate");
+            generateButton.getStyleClass().add("small-pill-button");
+            generateButton.setOnAction(event -> generatePayrollForPayrun(payrun));
+            payrunGrid.add(generateButton, 5, row - 1);
+        }
+    }
+
+    private void fillGeneratedPayrollGrid(List<Payrun> payruns) {
+        generatedPayrollGrid.getChildren().clear();
+        addRow(generatedPayrollGrid, 0, "Pay Date", "Date Covered", "Employees", "Gross", "Deductions", "Net", "Status", "View");
+
+        if (payruns.isEmpty()) {
+            addRow(generatedPayrollGrid, 1, "-", "No payroll results found", "-", "-", "-", "-", "-");
+            return;
+        }
+
+        int row = 1;
+        for (Payrun payrun : payruns.stream().limit(8).toList()) {
+            List<PayrollResult> results = loadPayrollResults(payrun.getPayrunId());
+            if (results.isEmpty()) {
+                continue;
+            }
+
+            double gross = results.stream().mapToDouble(PayrollResult::getGrossPay).sum();
+            double deductions = results.stream().mapToDouble(PayrollResult::getTotalDeductions).sum();
+            double net = results.stream().mapToDouble(PayrollResult::getNetPay).sum();
+            addRow(
+                    generatedPayrollGrid,
+                    row++,
+                    formatDate(payrun.getPayDate()),
+                    formatDate(payrun.getStartDate()) + " - " + formatDate(payrun.getEndDate()),
+                    String.valueOf(results.size()),
+                    money(gross),
+                    money(deductions),
+                    money(net),
+                    "Generated"
+            );
+            Button viewButton = new Button("View");
+            viewButton.getStyleClass().add("small-pill-button");
+            viewButton.setOnAction(event -> showPayrunDetails(payrun));
+            generatedPayrollGrid.add(viewButton, 7, row - 1);
+        }
+
+        if (row == 1) {
+            addRow(generatedPayrollGrid, 1, "-", "No payroll results found", "-", "-", "-", "-", "-");
+        }
+    }
+
+    private void fillActivityGrid(List<Payrun> payruns, List<PayrollResult> latestResults) {
+        dashboardActivityGrid.getChildren().clear();
+        addRow(dashboardActivityGrid, 0, "Activity", "Reference", "Status");
+
+        if (payruns.isEmpty()) {
+            addRow(dashboardActivityGrid, 1, "Payrun", "No records found", "Ready");
+            return;
+        }
+
+        addRow(dashboardActivityGrid, 1, "Latest payrun", String.valueOf(payruns.get(0).getPayrunId()), "Loaded");
+        addRow(dashboardActivityGrid, 2, "Generated payrolls", String.valueOf(latestResults.size()), "Monitored");
+        addRow(dashboardActivityGrid, 3, "Upcoming pay date", nextPayDate(payruns), "Scheduled");
+    }
+
+    private void addRow(GridPane grid, int row, String... values) {
+        for (int column = 0; column < values.length; column++) {
+            Label label = new Label(values[column]);
+            label.getStyleClass().add(row == 0 ? "table-head" : "data-line");
+            grid.add(label, column, row);
+        }
+    }
+
+    private void seedPayrollChart(List<PayrollResult> results) {
+        payrollBarChart.getData().clear();
+        payrollBarXAxis.setLabel("");
+        payrollBarYAxis.setLabel("");
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Net Pay");
+
+        if (results.isEmpty()) {
+            series.getData().add(new XYChart.Data<>("No Data", 0));
+        } else {
+            for (PayrollResult result : results.stream().limit(8).toList()) {
+                series.getData().add(new XYChart.Data<>("E" + result.getEmployeeId(), result.getNetPay()));
+            }
+        }
+
+        payrollBarChart.getData().add(series);
+    }
+
+    private List<Payrun> loadPayruns() {
+        try {
+            return payrunRepository.findAll();
+        } catch (RuntimeException ex) {
+            showFooterError("Unable to load payruns. Check the database connection.");
+            return List.of();
+        }
+    }
+
+    private List<PayrollResult> loadPayrollResults(int payrunId) {
+        try {
+            return payrollService.getPayrollResultsByPayrun(payrunId);
+        } catch (RuntimeException ex) {
+            return List.of();
+        }
+    }
+
+    private Optional<Payrun> latestPayrun() {
+        return loadPayruns().stream().findFirst();
+    }
+
+    private Employee findEmployee(String query) {
+        if (query.matches("\\d+")) {
+            return employeeService.getEmployeeById(Integer.parseInt(query));
+        }
+
+        String cleaned = query.toLowerCase(Locale.ROOT);
+        return employeeService.getAllActiveEmployees()
+                .stream()
+                .filter(employee -> employee.getFullName().toLowerCase(Locale.ROOT).contains(cleaned))
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Employee not found."));
+    }
+
+    private void fillPayslip(Employee employee, Payrun payrun, PayrollResult result) {
+        String departmentName = resolveDepartmentName(employee.getDepartmentId());
+        String positionName = resolvePositionName(employee.getPositionId());
+        payslipEmployeeNameLabel.setText(employee.getFullName());
+        payslipEmployeeIdLabel.setText(String.valueOf(employee.getEmployeeId()));
+        payslipDepartmentLabel.setText(departmentName);
+        payslipPositionLabel.setText(positionName);
+        payslipPeriodLabel.setText(formatDate(payrun.getStartDate()) + " - " + formatDate(payrun.getEndDate()));
+        payslipGrossLabel.setText(money(result.getGrossPay()));
+        payslipDeductionsLabel.setText(money(result.getTotalDeductions()));
+        payslipNetLabel.setText(money(result.getNetPay()));
+        payslipPreviewArea.setText("""
+                MotorPH Payroll System
+                Payslip Preview
+
+                Employee: %s
+                Employee ID: %s
+                Department: %s
+                Position: %s
+                Payrun: %s
+                Payroll Period: %s - %s
+                Pay Date: %s
+
+                Total Hours Worked: %.2f
+                Gross Pay: %s
+                Total Deductions: %s
+                Net Pay: %s
+                Generated: %s
+                """.formatted(
+                employee.getFullName(),
+                employee.getEmployeeId(),
+                departmentName,
+                positionName,
+                payrun.getPayrunId(),
+                formatDate(payrun.getStartDate()),
+                formatDate(payrun.getEndDate()),
+                formatDate(payrun.getPayDate()),
+                result.getTotalHoursWorked(),
+                money(result.getGrossPay()),
+                money(result.getTotalDeductions()),
+                money(result.getNetPay()),
+                result.getGeneratedAt() == null ? "Not recorded" : result.getGeneratedAt().format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"))
+        ));
+    }
+
+    private String buildReportPreview(String reportType, LocalDate start, LocalDate end, List<ReportRow> rows) {
+        double gross = rows.stream().mapToDouble(ReportRow::getGrossPayValue).sum();
+        double deductions = rows.stream().mapToDouble(ReportRow::getTotalDeductionsValue).sum();
+        double net = rows.stream().mapToDouble(ReportRow::getNetPayValue).sum();
+        long payrunCount = rows.stream().map(ReportRow::getPayrunId).distinct().count();
+
+        return """
+                MotorPH Payroll System
+                %s
+
+                Period: %s - %s
+                Department Filter: %s
+                Payrun Filter: %s
+                Employee Filter: %s
+
+                Payruns Included: %d
+                Payroll Results: %d
+                Gross Pay: %s
+                Total Deductions: %s
+                Net Pay: %s
+
+                JasperReports template: %s
+                """.formatted(
+                reportType,
+                formatDate(start),
+                formatDate(end),
+                safeValue(reportDepartmentCombo.getValue()),
+                safeValue(reportPayrunCombo.getValue()),
+                text(reportEmployeeField).isBlank() ? "All employees" : text(reportEmployeeField),
+                payrunCount,
+                rows.size(),
+                money(gross),
+                money(deductions),
+                money(net),
+                reportTemplatePath(reportType)
         );
     }
 
-    private void markInvalid(TextField field) {
-        if (!field.getStyleClass().contains("invalid-field")) {
-            field.getStyleClass().add("invalid-field");
-        }
-    }
+    private List<ReportRow> reportRows(LocalDate start, LocalDate end, Optional<Payrun> selectedPayrun) {
+        String departmentFilter = safeValue(reportDepartmentCombo.getValue());
+        String employeeFilter = text(reportEmployeeField).toLowerCase(Locale.ROOT);
 
-    private void clearInvalid(TextField field) {
-        field.getStyleClass().remove("invalid-field");
-    }
+        List<Payrun> payruns = selectedPayrun
+                .map(List::of)
+                .orElseGet(this::loadPayruns)
+                .stream()
+                .filter(payrun -> !payrun.getStartDate().isAfter(end) && !payrun.getEndDate().isBefore(start))
+                .toList();
 
-    private void setError(Label label, String message) {
-        label.getStyleClass().remove("success-message");
-        if (!label.getStyleClass().contains("error-message")) {
-            label.getStyleClass().add("error-message");
-        }
-        label.setText(message);
-    }
+        List<ReportRow> rows = new ArrayList<>();
+        for (Payrun payrun : payruns) {
+            for (PayrollResult result : loadPayrollResults(payrun.getPayrunId())) {
+                Employee employee;
+                try {
+                    employee = employeeService.getEmployeeById(result.getEmployeeId());
+                } catch (RuntimeException ex) {
+                    continue;
+                }
 
-    private void setSuccess(Label label, String message) {
-        label.getStyleClass().remove("error-message");
-        if (!label.getStyleClass().contains("success-message")) {
-            label.getStyleClass().add("success-message");
-        }
-        label.setText(message);
-    }
+                String department = resolveDepartmentName(employee.getDepartmentId());
+                if (!departmentFilter.equals("All Departments") && !department.equalsIgnoreCase(departmentFilter)) {
+                    continue;
+                }
 
-    private String userMessage(Exception e) {
-        String message = e.getMessage();
+                if (!employeeFilter.isBlank()
+                        && !employee.getFullName().toLowerCase(Locale.ROOT).contains(employeeFilter)
+                        && !String.valueOf(employee.getEmployeeId()).contains(employeeFilter)) {
+                    continue;
+                }
 
-        if (message == null || message.isBlank()) {
-            return "Unable to complete the request. Please try again.";
-        }
-
-        if (isDatabaseUnavailable(e)) {
-            return "Database connection unavailable. Start MySQL and try again.";
-        }
-
-        if (message.startsWith("Failed to ")) {
-            return "Unable to complete the request. Please check the database connection.";
-        }
-
-        return message;
-    }
-
-    private boolean isDatabaseUnavailable(Exception e) {
-        Throwable current = e;
-
-        while (current != null) {
-            String message = current.getMessage();
-
-            if (message != null
-                    && (message.contains("Failed to connect to the database")
-                    || message.contains("Communications link failure")
-                    || message.contains("Connection refused")
-                    || message.contains("No suitable driver"))) {
-                return true;
+                rows.add(new ReportRow(
+                        String.valueOf(payrun.getPayrunId()),
+                        formatDate(payrun.getPayDate()),
+                        formatDate(payrun.getStartDate()) + " - " + formatDate(payrun.getEndDate()),
+                        String.valueOf(employee.getEmployeeId()),
+                        employee.getFullName(),
+                        department,
+                        resolvePositionName(employee.getPositionId()),
+                        money(result.getGrossPay()),
+                        money(result.getTotalDeductions()),
+                        money(result.getNetPay()),
+                        result.getGrossPay(),
+                        result.getTotalDeductions(),
+                        result.getNetPay()
+                ));
             }
+        }
+        return rows;
+    }
 
-            current = current.getCause();
+    private JasperPrint buildJasperReport(String reportType, LocalDate start, LocalDate end, List<ReportRow> rows) {
+        if (rows.isEmpty()) {
+            throw new BusinessRuleException("No payroll data matched the selected report filters.");
         }
 
-        return false;
+        try {
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("REPORT_TITLE", reportType);
+            parameters.put("PERIOD", formatDate(start) + " - " + formatDate(end));
+            parameters.put("DEPARTMENT_FILTER", safeValue(reportDepartmentCombo.getValue()));
+            parameters.put("PAYRUN_FILTER", safeValue(reportPayrunCombo.getValue()));
+            parameters.put("EMPLOYEE_FILTER", text(reportEmployeeField).isBlank() ? "All employees" : text(reportEmployeeField));
+            parameters.put("TOTAL_GROSS", money(rows.stream().mapToDouble(ReportRow::getGrossPayValue).sum()));
+            parameters.put("TOTAL_DEDUCTIONS", money(rows.stream().mapToDouble(ReportRow::getTotalDeductionsValue).sum()));
+            parameters.put("TOTAL_NET", money(rows.stream().mapToDouble(ReportRow::getNetPayValue).sum()));
+
+            return JasperFillManager.fillReport(
+                    JasperCompileManager.compileReport(buildReportDesign(reportType)),
+                    parameters,
+                    new JRBeanCollectionDataSource(rows)
+            );
+        } catch (JRException ex) {
+            throw new RuntimeException("Failed to generate JasperReports preview.", ex);
+        }
+    }
+
+    private JasperDesign buildReportDesign(String reportType) throws JRException {
+        JasperDesign design = new JasperDesign();
+        design.setName("finance_payroll_report");
+        design.setPageWidth(842);
+        design.setPageHeight(595);
+        design.setOrientation(OrientationEnum.LANDSCAPE);
+        design.setColumnWidth(802);
+        design.setLeftMargin(20);
+        design.setRightMargin(20);
+        design.setTopMargin(20);
+        design.setBottomMargin(20);
+
+        for (String parameter : List.of(
+                "REPORT_TITLE", "PERIOD", "DEPARTMENT_FILTER", "PAYRUN_FILTER",
+                "EMPLOYEE_FILTER", "TOTAL_GROSS", "TOTAL_DEDUCTIONS", "TOTAL_NET")) {
+            JRDesignParameter designParameter = new JRDesignParameter();
+            designParameter.setName(parameter);
+            designParameter.setValueClass(String.class);
+            design.addParameter(designParameter);
+        }
+
+        for (String field : List.of(
+                "payrunId", "payDate", "dateCovered", "employeeId", "employeeName",
+                "department", "position", "grossPay", "totalDeductions", "netPay")) {
+            JRDesignField designField = new JRDesignField();
+            designField.setName(field);
+            designField.setValueClass(String.class);
+            design.addField(designField);
+        }
+
+        design.setTitle(reportTitleBand(reportType));
+        design.setColumnHeader(reportHeaderBand());
+        ((JRDesignSection) design.getDetailSection()).addBand(reportDetailBand());
+        design.setSummary(reportSummaryBand());
+        return design;
+    }
+
+    private JRDesignBand reportTitleBand(String reportType) {
+        JRDesignBand band = new JRDesignBand();
+        band.setHeight(84);
+        band.addElement(staticText("MotorPH Payroll System", 0, 0, 280, 24, 18, true));
+        band.addElement(textField("$P{REPORT_TITLE}", 0, 28, 330, 20, 12, true));
+        band.addElement(textField("\"Period: \" + $P{PERIOD} + \" | Department: \" + $P{DEPARTMENT_FILTER} + \" | Payrun: \" + $P{PAYRUN_FILTER}", 0, 54, 802, 16, 10, false));
+        band.addElement(textField("\"Employee Filter: \" + $P{EMPLOYEE_FILTER}", 0, 70, 802, 14, 10, false));
+        return band;
+    }
+
+    private JRDesignBand reportHeaderBand() {
+        JRDesignBand band = new JRDesignBand();
+        band.setHeight(24);
+        int x = 0;
+        String[][] headers = {
+                {"Payrun", "54"}, {"Pay Date", "82"}, {"Date Covered", "126"},
+                {"Employee", "64"}, {"Name", "124"}, {"Department", "92"},
+                {"Position", "92"}, {"Gross", "54"}, {"Deductions", "70"}, {"Net", "44"}
+        };
+        for (String[] header : headers) {
+            int width = Integer.parseInt(header[1]);
+            band.addElement(staticText(header[0], x, 0, width, 18, 9, true));
+            x += width + 4;
+        }
+        return band;
+    }
+
+    private JRDesignBand reportDetailBand() {
+        JRDesignBand band = new JRDesignBand();
+        band.setHeight(20);
+        int x = 0;
+        String[][] fields = {
+                {"payrunId", "54"}, {"payDate", "82"}, {"dateCovered", "126"},
+                {"employeeId", "64"}, {"employeeName", "124"}, {"department", "92"},
+                {"position", "92"}, {"grossPay", "54"}, {"totalDeductions", "70"}, {"netPay", "44"}
+        };
+        for (String[] field : fields) {
+            int width = Integer.parseInt(field[1]);
+            band.addElement(textField("$F{" + field[0] + "}", x, 0, width, 16, 8, false));
+            x += width + 4;
+        }
+        return band;
+    }
+
+    private JRDesignBand reportSummaryBand() {
+        JRDesignBand band = new JRDesignBand();
+        band.setHeight(46);
+        JRDesignTextField totals = textField("\"Gross: \" + $P{TOTAL_GROSS} + \"   Deductions: \" + $P{TOTAL_DEDUCTIONS}", 390, 8, 412, 16, 10, true);
+        totals.setHorizontalTextAlign(HorizontalTextAlignEnum.RIGHT);
+        band.addElement(totals);
+        JRDesignTextField net = textField("\"Net Pay: \" + $P{TOTAL_NET}", 390, 26, 412, 16, 10, true);
+        net.setHorizontalTextAlign(HorizontalTextAlignEnum.RIGHT);
+        band.addElement(net);
+        return band;
+    }
+
+    private JRDesignStaticText staticText(String value, int x, int y, int width, int height, int size, boolean bold) {
+        JRDesignStaticText text = new JRDesignStaticText();
+        text.setText(value);
+        text.setX(x);
+        text.setY(y);
+        text.setWidth(width);
+        text.setHeight(height);
+        text.setFontSize((float) size);
+        text.setBold(bold);
+        return text;
+    }
+
+    private JRDesignTextField textField(String expression, int x, int y, int width, int height, int size, boolean bold) {
+        JRDesignTextField field = new JRDesignTextField();
+        field.setX(x);
+        field.setY(y);
+        field.setWidth(width);
+        field.setHeight(height);
+        field.setFontSize((float) size);
+        field.setBold(bold);
+        field.setBlankWhenNull(true);
+        field.setExpression(new JRDesignExpression(expression));
+        return field;
+    }
+
+    private Optional<Payrun> selectedReportPayrun() {
+        String selected = reportPayrunCombo.getValue();
+        if (selected == null || selected.isBlank() || selected.equals("All Payruns")) {
+            return Optional.empty();
+        }
+        return Optional.of(payrunByComboText(selected));
+    }
+
+    private String reportTemplatePath(String reportType) {
+        if ("Department Payroll Summary".equals(reportType)) {
+            return "/motorph/reports/payroll/department_payroll_summary_report.jrxml";
+        }
+        return "/motorph/reports/payroll/payroll_summary_report.jrxml";
+    }
+
+    private Payrun payrunByComboText(String text) {
+        int id = Integer.parseInt(text.substring(0, text.indexOf(" ")).trim());
+        return loadPayruns().stream()
+                .filter(payrun -> payrun.getPayrunId() == id)
+                .findFirst()
+                .orElseThrow(() -> new EntityNotFoundException("Payrun not found."));
+    }
+
+    private String payrunComboText(Payrun payrun) {
+        return payrun.getPayrunId() + " | " + formatDate(payrun.getStartDate()) + " - " + formatDate(payrun.getEndDate());
+    }
+
+    private String resolveEmployeeName(int employeeId) {
+        try {
+            EmployeeProfileDTO profile = employeeService.getEmployeeProfile(employeeId);
+            return profile.getFirstName() + " " + profile.getLastName();
+        } catch (RuntimeException ex) {
+            return "Finance Officer";
+        }
+    }
+
+    private String resolveDepartmentName(int departmentId) {
+        return lookupName(
+                "SELECT department_name FROM department WHERE department_id = ?",
+                departmentId,
+                "Department #" + departmentId
+        );
+    }
+
+    private String resolvePositionName(int positionId) {
+        return lookupName(
+                "SELECT position_name FROM position WHERE position_id = ?",
+                positionId,
+                "Position #" + positionId
+        );
+    }
+
+    private String lookupName(String sql, int id, String fallback) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString(1);
+                }
+            }
+        } catch (SQLException | RuntimeException ex) {
+            return fallback;
+        }
+        return fallback;
+    }
+
+    private List<Role> availableRolesForCurrentUser() {
+        List<Role> roles = new ArrayList<>();
+        String sql = """
+                SELECT DISTINCT r.role_name
+                FROM user_account ua
+                JOIN role r ON ua.role_id = r.role_id
+                WHERE ua.employee_id = ? AND ua.is_active = 1 AND ua.is_locked = 0
+                ORDER BY r.role_name
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, currentEmployeeId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    roles.add(Role.fromValue(rs.getString("role_name")));
+                }
+            }
+        } catch (SQLException | RuntimeException ex) {
+            return List.of(currentRole);
+        }
+
+        if (!roles.contains(currentRole)) {
+            roles.add(0, currentRole);
+        }
+        return roles;
+    }
+
+    private void exportPdf(String folderName, String fileName, String content) {
+        if (content == null || content.isBlank()) {
+            showFooterError("Generate a preview before exporting.");
+            return;
+        }
+
+        try {
+            Path folder = Path.of("target", folderName);
+            Files.createDirectories(folder);
+            Path file = folder.resolve(fileName);
+            Files.write(file, buildSimplePdf(content));
+            showFooterSuccess("Exported preview to " + file + ".");
+
+            if (Desktop.isDesktopSupported()) {
+                try {
+                    Desktop.getDesktop().open(file.toFile());
+                } catch (IOException ignored) {
+                    // Export already completed; opening the file is optional.
+                }
+            }
+        } catch (IOException ex) {
+            showFooterError("Unable to export preview.");
+        }
+    }
+
+    private void openFile(Path file) {
+        if (!Desktop.isDesktopSupported()) {
+            return;
+        }
+
+        try {
+            Desktop.getDesktop().open(file.toFile());
+        } catch (IOException ignored) {
+            // Export already completed; opening the file is optional.
+        }
+    }
+
+    private byte[] buildSimplePdf(String text) {
+        String[] rawLines = text.split("\\R");
+        List<String> drawingCommands = new ArrayList<>();
+        int y = 760;
+
+        for (String rawLine : rawLines) {
+            if (y < 60) {
+                break;
+            }
+            drawingCommands.add("BT /F1 10 Tf 48 " + y + " Td (" + escapePdf(rawLine) + ") Tj ET\n");
+            y -= 16;
+        }
+
+        String content = String.join("", drawingCommands);
+        byte[] contentBytes = content.getBytes(StandardCharsets.ISO_8859_1);
+        List<String> objects = List.of(
+                "<< /Type /Catalog /Pages 2 0 R >>",
+                "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+                "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+                "<< /Length " + contentBytes.length + " >>\nstream\n" + content + "endstream"
+        );
+
+        StringBuilder pdf = new StringBuilder("%PDF-1.4\n");
+        List<Integer> offsets = new ArrayList<>();
+
+        for (int i = 0; i < objects.size(); i++) {
+            offsets.add(pdf.toString().getBytes(StandardCharsets.ISO_8859_1).length);
+            pdf.append(i + 1).append(" 0 obj\n").append(objects.get(i)).append("\nendobj\n");
+        }
+
+        int xrefOffset = pdf.toString().getBytes(StandardCharsets.ISO_8859_1).length;
+        pdf.append("xref\n0 ").append(objects.size() + 1).append("\n");
+        pdf.append("0000000000 65535 f \n");
+        for (Integer offset : offsets) {
+            pdf.append(String.format("%010d 00000 n \n", offset));
+        }
+        pdf.append("trailer\n<< /Size ").append(objects.size() + 1).append(" /Root 1 0 R >>\n");
+        pdf.append("startxref\n").append(xrefOffset).append("\n%%EOF\n");
+
+        return pdf.toString().getBytes(StandardCharsets.ISO_8859_1);
+    }
+
+    private String escapePdf(String value) {
+        String safe = value.replace("₱", "PHP ");
+        safe = safe.replaceAll("[^\\x20-\\x7E]", "?");
+        return safe.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
+    }
+
+    private String nextPayDate(List<Payrun> payruns) {
+        return payruns.stream()
+                .map(Payrun::getPayDate)
+                .filter(date -> !date.isBefore(LocalDate.now()))
+                .min(Comparator.naturalOrder())
+                .map(this::formatDate)
+                .orElse(payruns.isEmpty() ? "No schedule" : formatDate(payruns.get(0).getPayDate()));
+    }
+
+    private int pendingPayrunCount(List<Payrun> payruns) {
+        return (int) payruns.stream()
+                .filter(payrun -> payrun.getPayDate().isAfter(LocalDate.now()))
+                .count();
+    }
+
+    private void clearFinanceFields() {
+        payslipPreviewArea.clear();
+        reportPreviewArea.clear();
+        currentReportPrint = null;
+        payrollSummaryLabel.setText("");
+        payslipEmployeeNameLabel.setText("-");
+        payslipEmployeeIdLabel.setText("-");
+        payslipDepartmentLabel.setText("-");
+        payslipPositionLabel.setText("-");
+        payslipPeriodLabel.setText("-");
+        payslipGrossLabel.setText("-");
+        payslipDeductionsLabel.setText("-");
+        payslipNetLabel.setText("-");
+    }
+
+    private void applyTheme(String theme) {
+        rootCanvas.getStyleClass().remove("light-mode");
+        if ("Light".equals(theme)) {
+            rootCanvas.getStyleClass().add("light-mode");
+        }
+    }
+
+    private void showLoginError(String message) {
+        loginMessageLabel.getStyleClass().remove("success-message");
+        if (!loginMessageLabel.getStyleClass().contains("error-message")) {
+            loginMessageLabel.getStyleClass().add("error-message");
+        }
+        loginMessageLabel.setText(message);
+    }
+
+    private void showLoginSuccess(String message) {
+        loginMessageLabel.getStyleClass().remove("error-message");
+        if (!loginMessageLabel.getStyleClass().contains("success-message")) {
+            loginMessageLabel.getStyleClass().add("success-message");
+        }
+        loginMessageLabel.setText(message);
+    }
+
+    private void showResetError(String message) {
+        resetMessageLabel.getStyleClass().remove("success-message");
+        if (!resetMessageLabel.getStyleClass().contains("error-message")) {
+            resetMessageLabel.getStyleClass().add("error-message");
+        }
+        resetMessageLabel.setText(message);
+    }
+
+    private void showResetSuccess(String message) {
+        resetMessageLabel.getStyleClass().remove("error-message");
+        if (!resetMessageLabel.getStyleClass().contains("success-message")) {
+            resetMessageLabel.getStyleClass().add("success-message");
+        }
+        resetMessageLabel.setText(message);
+    }
+
+    private void showFooterSuccess(String message) {
+        footerStatusLabel.getStyleClass().remove("error-message");
+        if (!footerStatusLabel.getStyleClass().contains("success-message")) {
+            footerStatusLabel.getStyleClass().add("success-message");
+        }
+        footerStatusLabel.setText(message);
+    }
+
+    private void showFooterError(String message) {
+        footerStatusLabel.getStyleClass().remove("success-message");
+        if (!footerStatusLabel.getStyleClass().contains("error-message")) {
+            footerStatusLabel.getStyleClass().add("error-message");
+        }
+        footerStatusLabel.setText(message);
+    }
+
+    private void clearLoginMessage() {
+        loginMessageLabel.setText("");
+    }
+
+    private void clearResetMessage() {
+        resetMessageLabel.setText("");
+    }
+
+    private void showInfo(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private String text(TextField field) {
+        return field == null || field.getText() == null ? "" : field.getText().trim();
+    }
+
+    private String readable(RuntimeException ex) {
+        if (ex instanceof AuthenticationException
+                || ex instanceof ValidationException
+                || ex instanceof BusinessRuleException
+                || ex instanceof EntityNotFoundException) {
+            return ex.getMessage();
+        }
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            return ex.getCause().getMessage();
+        }
+        return ex.getMessage() == null ? "Unable to complete the action." : ex.getMessage();
+    }
+
+    private String formatDate(LocalDate date) {
+        return date == null ? "-" : date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+    }
+
+    private String money(double amount) {
+        NumberFormat format = NumberFormat.getCurrencyInstance(new Locale("en", "PH"));
+        return format.format(amount);
+    }
+
+    private String safeValue(String value) {
+        return value == null || value.isBlank() ? "-" : value;
+    }
+
+    public static class ReportRow {
+        private final String payrunId;
+        private final String payDate;
+        private final String dateCovered;
+        private final String employeeId;
+        private final String employeeName;
+        private final String department;
+        private final String position;
+        private final String grossPay;
+        private final String totalDeductions;
+        private final String netPay;
+        private final double grossPayValue;
+        private final double totalDeductionsValue;
+        private final double netPayValue;
+
+        public ReportRow(String payrunId,
+                         String payDate,
+                         String dateCovered,
+                         String employeeId,
+                         String employeeName,
+                         String department,
+                         String position,
+                         String grossPay,
+                         String totalDeductions,
+                         String netPay,
+                         double grossPayValue,
+                         double totalDeductionsValue,
+                         double netPayValue) {
+            this.payrunId = payrunId;
+            this.payDate = payDate;
+            this.dateCovered = dateCovered;
+            this.employeeId = employeeId;
+            this.employeeName = employeeName;
+            this.department = department;
+            this.position = position;
+            this.grossPay = grossPay;
+            this.totalDeductions = totalDeductions;
+            this.netPay = netPay;
+            this.grossPayValue = grossPayValue;
+            this.totalDeductionsValue = totalDeductionsValue;
+            this.netPayValue = netPayValue;
+        }
+
+        public String getPayrunId() { return payrunId; }
+        public String getPayDate() { return payDate; }
+        public String getDateCovered() { return dateCovered; }
+        public String getEmployeeId() { return employeeId; }
+        public String getEmployeeName() { return employeeName; }
+        public String getDepartment() { return department; }
+        public String getPosition() { return position; }
+        public String getGrossPay() { return grossPay; }
+        public String getTotalDeductions() { return totalDeductions; }
+        public String getNetPay() { return netPay; }
+        public double getGrossPayValue() { return grossPayValue; }
+        public double getTotalDeductionsValue() { return totalDeductionsValue; }
+        public double getNetPayValue() { return netPayValue; }
     }
 }

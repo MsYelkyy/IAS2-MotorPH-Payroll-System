@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="payroll_summary_report"
+              pageWidth="842"
+              pageHeight="595"
+              orientation="Landscape"
+              columnWidth="802"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20">
+    <parameter name="REPORT_TITLE" class="java.lang.String"/>
+    <parameter name="PERIOD" class="java.lang.String"/>
+    <parameter name="DEPARTMENT_FILTER" class="java.lang.String"/>
+    <parameter name="PAYRUN_FILTER" class="java.lang.String"/>
+    <parameter name="EMPLOYEE_FILTER" class="java.lang.String"/>
+    <parameter name="TOTAL_GROSS" class="java.lang.String"/>
+    <parameter name="TOTAL_DEDUCTIONS" class="java.lang.String"/>
+    <parameter name="TOTAL_NET" class="java.lang.String"/>
+
+    <field name="payrunId" class="java.lang.String"/>
+    <field name="payDate" class="java.lang.String"/>
+    <field name="dateCovered" class="java.lang.String"/>
+    <field name="employeeId" class="java.lang.String"/>
+    <field name="employeeName" class="java.lang.String"/>
+    <field name="department" class="java.lang.String"/>
+    <field name="grossPay" class="java.lang.String"/>
+    <field name="totalDeductions" class="java.lang.String"/>
+    <field name="netPay" class="java.lang.String"/>
+
+    <title>
+        <band height="82">
+            <staticText>
+                <reportElement x="0" y="0" width="230" height="24"/>
+                <textElement>
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <text><![CDATA[MotorPH Payroll System]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="28" width="280" height="20"/>
+                <textElement>
+                    <font size="12" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{REPORT_TITLE}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="0" y="54" width="430" height="16"/>
+                <textFieldExpression><![CDATA["Period: " + $P{PERIOD} + " | Department: " + $P{DEPARTMENT_FILTER} + " | Payrun: " + $P{PAYRUN_FILTER}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="452" y="54" width="350" height="16"/>
+                <textFieldExpression><![CDATA["Employee Filter: " + $P{EMPLOYEE_FILTER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <columnHeader>
+        <band height="24">
+            <staticText><reportElement x="0" y="0" width="54" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Payrun]]></text></staticText>
+            <staticText><reportElement x="58" y="0" width="82" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Pay Date]]></text></staticText>
+            <staticText><reportElement x="144" y="0" width="142" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Date Covered]]></text></staticText>
+            <staticText><reportElement x="290" y="0" width="70" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Employee]]></text></staticText>
+            <staticText><reportElement x="364" y="0" width="150" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Name]]></text></staticText>
+            <staticText><reportElement x="518" y="0" width="88" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Department]]></text></staticText>
+            <staticText><reportElement x="610" y="0" width="64" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Gross]]></text></staticText>
+            <staticText><reportElement x="678" y="0" width="70" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Deductions]]></text></staticText>
+            <staticText><reportElement x="752" y="0" width="50" height="18"/><textElement><font isBold="true"/></textElement><text><![CDATA[Net]]></text></staticText>
+        </band>
+    </columnHeader>
+
+    <detail>
+        <band height="20">
+            <textField><reportElement x="0" y="0" width="54" height="16"/><textFieldExpression><![CDATA[$F{payrunId}]]></textFieldExpression></textField>
+            <textField><reportElement x="58" y="0" width="82" height="16"/><textFieldExpression><![CDATA[$F{payDate}]]></textFieldExpression></textField>
+            <textField><reportElement x="144" y="0" width="142" height="16"/><textFieldExpression><![CDATA[$F{dateCovered}]]></textFieldExpression></textField>
+            <textField><reportElement x="290" y="0" width="70" height="16"/><textFieldExpression><![CDATA[$F{employeeId}]]></textFieldExpression></textField>
+            <textField><reportElement x="364" y="0" width="150" height="16"/><textFieldExpression><![CDATA[$F{employeeName}]]></textFieldExpression></textField>
+            <textField><reportElement x="518" y="0" width="88" height="16"/><textFieldExpression><![CDATA[$F{department}]]></textFieldExpression></textField>
+            <textField><reportElement x="610" y="0" width="64" height="16"/><textFieldExpression><![CDATA[$F{grossPay}]]></textFieldExpression></textField>
+            <textField><reportElement x="678" y="0" width="70" height="16"/><textFieldExpression><![CDATA[$F{totalDeductions}]]></textFieldExpression></textField>
+            <textField><reportElement x="752" y="0" width="50" height="16"/><textFieldExpression><![CDATA[$F{netPay}]]></textFieldExpression></textField>
+        </band>
+    </detail>
+
+    <summary>
+        <band height="46">
+            <textField><reportElement x="500" y="8" width="302" height="16"/><textElement textAlignment="Right"><font isBold="true"/></textElement><textFieldExpression><![CDATA["Gross: " + $P{TOTAL_GROSS} + "   Deductions: " + $P{TOTAL_DEDUCTIONS}]]></textFieldExpression></textField>
+            <textField><reportElement x="500" y="26" width="302" height="16"/><textElement textAlignment="Right"><font isBold="true"/></textElement><textFieldExpression><![CDATA["Net Pay: " + $P{TOTAL_NET}]]></textFieldExpression></textField>
+        </band>
+    </summary>
+</jasperReport>

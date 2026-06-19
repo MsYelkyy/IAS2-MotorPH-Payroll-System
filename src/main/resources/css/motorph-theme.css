@@ -3447,3 +3447,25 @@
 
 /* Tile text */
 .tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
+
+/* Finance workspace refinements */
+.finance-table {
+    -fx-padding: 4 0 0 0;
+}
+
+.finance-table .label {
+    -fx-min-height: 28;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.root-canvas .text-area.input-field {
+    -fx-padding: 0;
+}
+
+.root-canvas .text-area.input-field .content {
+    -fx-background-color: rgba(18,20,25,0.92);
+}
+
+.root-canvas.light-mode .text-area.input-field .content {
+    -fx-background-color: #ffffff;
+}

@@ -3,488 +3,462 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.DatePicker?>
-<?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="rootPane"
-           styleClass="root-canvas"
-           xmlns="http://javafx.com/javafx/21"
-           xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="motorph.ui.controller.LoginController"
-           stylesheets="@../css/motorph-theme.css">
+<StackPane fx:id="rootCanvas" styleClass="root-canvas" stylesheets="@../css/motorph-theme.css"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="motorph.ui.controller.LoginController">
 
-    <!-- ═══════════════════════════════════════════════════════
-         LOGIN PAGE
-         ═══════════════════════════════════════════════════════ -->
-    <BorderPane fx:id="loginPane" styleClass="login-fullpage">
-        <center>
-            <HBox>
-
-                <!-- LEFT: Hero brand panel -->
-                <StackPane styleClass="login-brand-panel" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                    <VBox spacing="48" styleClass="hero-content">
-
-                        <!-- Brand mark — red & silver -->
-                        <VBox spacing="2">
-                            <HBox spacing="0" alignment="CENTER_LEFT">
-                                <Label text="Motor" styleClass="hero-brand-motor"/>
-                                <Label text="PH" styleClass="hero-brand-ph"/>
-                            </HBox>
-                            <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="brand-system-label"/>
-                        </VBox>
-
-                        <!-- Statement heading -->
-                        <VBox spacing="10">
-                            <Label text="The Workforce" styleClass="hero-statement"/>
-                            <Label text="Payroll Platform." styleClass="hero-statement-accent"/>
-                            <Label text="Attendance tracking, payroll processing, leave management, and employee self-service — all in one secure platform built for MotorPH." wrapText="true" styleClass="hero-subheading"/>
-                        </VBox>
-
-
-                    </VBox>
-                </StackPane>
-
-                <!-- RIGHT: Auth form panel -->
-                <VBox styleClass="login-form-panel" HBox.hgrow="NEVER" alignment="CENTER">
-
-                    <!-- Header: text brand -->
-                    <HBox alignment="CENTER_LEFT" spacing="12" styleClass="form-panel-header">
-                        <HBox spacing="0" alignment="CENTER_LEFT">
-                            <Label text="Motor" styleClass="form-brand-motor"/>
-                            <Label text="PH" styleClass="form-brand-ph"/>
-                        </HBox>
-                    </HBox>
-
-                    <!-- Auth card stack -->
-                    <StackPane VBox.vgrow="ALWAYS" alignment="CENTER">
-
-                        <!-- LOGIN CARD -->
-                        <VBox fx:id="loginCard" spacing="18" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Welcome Back" styleClass="form-heading"/>
-                                <Label text="Sign in to continue to your employee workspace." styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Company Email" styleClass="field-label"/>
-                                <TextField fx:id="companyEmailField" promptText="employee@motorph.com" styleClass="input-field"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Password" styleClass="field-label"/>
-                                <StackPane>
-                                    <PasswordField fx:id="passwordField" promptText="Enter your password" styleClass="input-field"/>
-                                    <TextField fx:id="passwordTextField" promptText="Enter your password" styleClass="input-field" visible="false" managed="false"/>
-                                    <Button fx:id="passwordToggleBtn" text="Show" onAction="#togglePassword" styleClass="password-toggle" StackPane.alignment="CENTER_RIGHT"/>
-                                </StackPane>
-                            </VBox>
-                            <HBox alignment="CENTER_LEFT" spacing="10">
-                                <CheckBox text="Remember me" styleClass="remember-check"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <Hyperlink text="Forgot Password" onAction="#showForgotPassword" styleClass="quiet-link"/>
-                            </HBox>
-                            <Button text="Sign In" onAction="#handleLogin" maxWidth="Infinity" styleClass="signin-button"/>
-                            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="security-badge">
-                                <Label text="🛡" styleClass="security-icon"/>
-                                <Label text="Protected by Two-Factor Authentication" styleClass="form-security-note"/>
-                            </HBox>
-                            <Label text="HR Demo Account: hr.demo@motorph.com / HrDemo@2026!" wrapText="true" styleClass="muted-text"/>
-                            <Label fx:id="loginMessageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
-                        </VBox>
-
-                        <!-- OTP CARD -->
-                        <VBox fx:id="otpCard" spacing="20" visible="false" managed="false" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Verify OTP" styleClass="form-heading"/>
-                                <Label text="Enter the verification code sent to your registered email address." wrapText="true" styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="OTP Code" styleClass="field-label"/>
-                                <TextField fx:id="otpField" promptText="6-digit code" styleClass="input-field"/>
-                            </VBox>
-                            <Button text="Verify and Continue" onAction="#handleOtpVerification" maxWidth="Infinity" styleClass="signin-button"/>
-                            <Button text="← Back to Login" onAction="#showLogin" maxWidth="Infinity" styleClass="form-back-button"/>
-                            <Label fx:id="otpMessageLabel" wrapText="true" styleClass="message-label"/>
-                        </VBox>
-
-                        <!-- FORGOT: STEP 1 - Email -->
-                        <VBox fx:id="forgotCard" spacing="20" visible="false" managed="false" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Reset Password" styleClass="form-heading"/>
-                                <Label text="Enter your email to receive a reset OTP." wrapText="true" styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Email" styleClass="field-label"/>
-                                <TextField fx:id="resetEmailField" promptText="name@motorph.com" styleClass="input-field"/>
-                            </VBox>
-                            <Button text="Send Reset OTP" onAction="#handlePasswordReset" maxWidth="Infinity" styleClass="signin-button"/>
-                            <Button text="← Back to Login" onAction="#showLogin" maxWidth="Infinity" styleClass="form-back-button"/>
-                            <Label fx:id="forgotMessageLabel" wrapText="true" styleClass="message-label"/>
-                        </VBox>
-
-                        <!-- FORGOT: STEP 2 - OTP -->
-                        <VBox fx:id="forgotOtpCard" spacing="20" visible="false" managed="false" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Verify Reset OTP" styleClass="form-heading"/>
-                                <Label text="Enter the reset code sent to your registered email address." wrapText="true" styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="OTP Code" styleClass="field-label"/>
-                                <TextField fx:id="resetOtpField" promptText="6-digit code" styleClass="input-field"/>
-                            </VBox>
-                            <Button text="Verify Reset OTP" onAction="#handleResetOtpVerification" maxWidth="Infinity" styleClass="signin-button"/>
-                            <Button text="← Back to Email" onAction="#showForgotPassword" maxWidth="Infinity" styleClass="form-back-button"/>
-                            <Label fx:id="forgotOtpMessageLabel" wrapText="true" styleClass="message-label"/>
-                        </VBox>
-
-                        <!-- FORGOT: STEP 3 - New Password -->
-                        <VBox fx:id="forgotPasswordCard" spacing="20" visible="false" managed="false" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Create New Password" styleClass="form-heading"/>
-                                <Label text="Use at least 8 characters." wrapText="true" styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="New Password" styleClass="field-label"/>
-                                <PasswordField fx:id="newPasswordField" promptText="New password" styleClass="input-field"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Confirm Password" styleClass="field-label"/>
-                                <PasswordField fx:id="confirmPasswordField" promptText="Confirm password" styleClass="input-field"/>
-                            </VBox>
-                            <Button text="Update Password" onAction="#handleCompletePasswordReset" maxWidth="Infinity" styleClass="signin-button"/>
-                            <Button text="← Back to Login" onAction="#showLogin" maxWidth="Infinity" styleClass="form-back-button"/>
-                            <Label fx:id="forgotPasswordMessageLabel" wrapText="true" styleClass="message-label"/>
-                        </VBox>
-
-                    </StackPane>
-
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="form-footer-bar">
-                        <Label text="MotorPH Payroll Management System  ·  v1.0" styleClass="form-footer-text"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <HBox fx:id="globalControlsHostLogin" alignment="CENTER_RIGHT" spacing="6"/>
-                    </HBox>
-
-                </VBox>
-
-            </HBox>
-        </center>
-    </BorderPane>
-
-    <!-- ═══════════════════════════════════════════════════════
-         APP SHELL
-         ═══════════════════════════════════════════════════════ -->
-    <BorderPane fx:id="appPane" visible="false" managed="false" styleClass="app-shell">
-        <left>
-            <VBox spacing="10" styleClass="sidebar">
-
-                <!-- Sidebar brand mark — red & silver -->
-                <VBox spacing="2" styleClass="sidebar-brand">
-                    <HBox spacing="0" alignment="CENTER_LEFT">
-                        <Label text="Motor" styleClass="sidebar-brand-motor"/>
-                        <Label text="PH"    styleClass="sidebar-brand-ph"/>
-                    </HBox>
-                    <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="sidebar-brand-system"/>
-                </VBox>
-
-                <Separator/>
-
-                <!-- Navigation -->
-                <Button fx:id="dashboardNavButton" text="Dashboard"       onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
-                <Button                             text="Profile"         onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="attendanceNavButton" text="Attendance"      onAction="#showAttendance" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="leaveNavButton"      text="Leave Requests"  onAction="#showLeave"     maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="payslipNavButton"    text="Payslip / Payroll" onAction="#showPayslip" maxWidth="Infinity" styleClass="nav-button"/>
-                <Button fx:id="settingsNavButton"   text="Account Settings" onAction="#showSettings" maxWidth="Infinity" styleClass="nav-button"/>
-
-                <Region VBox.vgrow="ALWAYS"/>
-
-                <!-- Employee identity card -->
-                <VBox spacing="6" styleClass="sidebar-card">
-                    <Label text="EMPLOYEE" styleClass="sidebar-card-kicker"/>
-                    <Label fx:id="dashboardEmployeeNameLabel" text="Harty Joy Villegas" wrapText="true" styleClass="sidebar-card-title"/>
-                    <Label fx:id="dashboardEmployeeRoleLabel" text="Operations" styleClass="sidebar-card-copy"/>
-                    <Label fx:id="dashboardEmailLabel" text="harty.villegas@motorph.com" wrapText="true" styleClass="sidebar-card-copy"/>
-                </VBox>
-
-                <Button text="Logout" onAction="#handleLogout" maxWidth="Infinity" styleClass="danger-outline-button"/>
-
-            </VBox>
-        </left>
-        <center>
-            <VBox styleClass="app-main">
-
-                <!-- Topbar -->
-                <HBox alignment="CENTER_LEFT" spacing="18" styleClass="topbar">
-                    <VBox spacing="2">
-                        <Label fx:id="pageTitleLabel" text="Hello, Harty." styleClass="page-title"/>
-                        <Label fx:id="pageSubtitleLabel" text="EMPLOYEE WORKSPACE" styleClass="page-subtitle"/>
-                    </VBox>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <HBox spacing="6" alignment="CENTER_LEFT" styleClass="date-range-box">
-                        <DatePicker styleClass="period-picker" promptText="From"/>
-                        <Label text="→" styleClass="period-range-sep"/>
-                        <DatePicker styleClass="period-picker" promptText="To"/>
-                    </HBox>
-                    <Label text="Active Session" styleClass="status-pill success-pill"/>
+    <HBox fx:id="loginView" styleClass="login-fullpage" StackPane.alignment="CENTER">
+        <VBox alignment="CENTER_LEFT" spacing="36" styleClass="login-brand-panel" HBox.hgrow="ALWAYS">
+            <VBox spacing="4">
+                <HBox spacing="0">
+                    <Label text="Motor" styleClass="hero-brand-motor"/>
+                    <Label text="PH" styleClass="hero-brand-ph"/>
                 </HBox>
-
-                <!-- Scrollable workspace -->
-                <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="AS_NEEDED" vbarPolicy="AS_NEEDED" styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
-                    <content>
-                        <StackPane styleClass="content-area">
-
-                            <!-- ── DASHBOARD ──────────────────────────── -->
-                            <VBox fx:id="dashboardView" spacing="18">
-                                <HBox spacing="18">
-
-                                    <!-- Metric column -->
-                                    <VBox spacing="14" prefWidth="220" minWidth="180">
-                                        <VBox spacing="6" styleClass="metric-card">
-                                            <Label text="TOTAL NET PAY" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardNetPayLabel" text="PHP 0.00" styleClass="metric-value, financial-value"/>
-                                        </VBox>
-                                        <VBox spacing="6" styleClass="metric-card">
-                                            <Label text="ATTENDANCE RATE" styleClass="metric-label"/>
-                                            <Label text="98.20%" styleClass="metric-value, attendance-value"/>
-                                        </VBox>
-                                        <VBox spacing="6" styleClass="metric-card">
-                                            <Label text="DAYS WORKED" styleClass="metric-label"/>
-                                            <Label text="11 / 11" styleClass="metric-value, attendance-value"/>
-                                        </VBox>
-                                        <VBox spacing="6" styleClass="metric-card">
-                                            <Label text="AVAILABLE LEAVE" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardLeaveCreditsLabel" text="12.5 days" styleClass="metric-value"/>
-                                            <Label text="Vacation Leave" styleClass="muted-text"/>
-                                        </VBox>
-                                        <VBox spacing="6" styleClass="metric-card">
-                                            <Label text="PENDING REQUESTS" styleClass="metric-label"/>
-                                            <Label fx:id="dashboardTaskPercentLabel" text="2" styleClass="metric-value"/>
-                                            <Label text="Leave Requests" styleClass="muted-text"/>
-                                        </VBox>
-                                    </VBox>
-
-                                    <!-- Chart / data column -->
-                                    <VBox spacing="14" HBox.hgrow="ALWAYS">
-
-                                        <HBox spacing="14">
-                                            <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
-                                                <Label text="NET PAY TREND" styleClass="section-title"/>
-                                                <LineChart fx:id="payrollTrendChart" animated="false" legendVisible="false" createSymbols="true" styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                                                    <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                                                    <yAxis><NumberAxis tickLabelFill="#A5A8B0"/></yAxis>
-                                                </LineChart>
-                                            </VBox>
-                                            <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
-                                                <Label text="EARNINGS BREAKDOWN" styleClass="section-title"/>
-                                                <BarChart fx:id="earningsBreakdownChart" animated="false" legendVisible="false" styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                                                    <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                                                    <yAxis><NumberAxis tickLabelFill="#A5A8B0"/></yAxis>
-                                                </BarChart>
-                                            </VBox>
-                                        </HBox>
-
-                                        <HBox spacing="14">
-                                            <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
-                                                <Label text="ATTENDANCE SUMMARY" styleClass="section-title"/>
-                                                <BarChart fx:id="attendanceSummaryChart" animated="false" legendVisible="true" styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                                                    <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                                                    <yAxis><NumberAxis tickLabelFill="#A5A8B0"/></yAxis>
-                                                </BarChart>
-                                            </VBox>
-                                            <VBox spacing="12" prefWidth="390" styleClass="chart-card">
-                                                <Label text="LEAVE SUMMARY" styleClass="section-title"/>
-                                                <GridPane hgap="8" vgap="8" VBox.vgrow="ALWAYS">
-                                                    <columnConstraints>
-                                                        <ColumnConstraints hgrow="ALWAYS" percentWidth="40"/>
-                                                        <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
-                                                        <ColumnConstraints hgrow="ALWAYS" percentWidth="30"/>
-                                                    </columnConstraints>
-                                                    <rowConstraints>
-                                                        <RowConstraints minHeight="64" vgrow="ALWAYS"/>
-                                                        <RowConstraints minHeight="64" vgrow="ALWAYS"/>
-                                                    </rowConstraints>
-                                                    <VBox spacing="8" styleClass="leave-tile vacation" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
-                                                        <Label text="Vacation Leave" styleClass="tile-title"/>
-                                                        <Region VBox.vgrow="ALWAYS"/>
-                                                        <Label text="12.5 days" styleClass="tile-value"/>
-                                                    </VBox>
-                                                    <VBox spacing="8" styleClass="leave-tile sick" GridPane.columnIndex="1" GridPane.rowIndex="0">
-                                                        <Label text="Sick Leave" styleClass="tile-title"/>
-                                                        <Region VBox.vgrow="ALWAYS"/>
-                                                        <Label text="3 days" styleClass="tile-value"/>
-                                                    </VBox>
-                                                    <VBox spacing="8" styleClass="leave-tile emergency" GridPane.columnIndex="2" GridPane.rowIndex="0">
-                                                        <Label text="Emergency Leave" styleClass="tile-title"/>
-                                                        <Region VBox.vgrow="ALWAYS"/>
-                                                        <Label text="1 day" styleClass="tile-value"/>
-                                                    </VBox>
-                                                    <VBox spacing="8" styleClass="leave-tile special" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                                                        <Label text="Special Leave" styleClass="tile-title"/>
-                                                        <Region VBox.vgrow="ALWAYS"/>
-                                                        <Label text="2 days" styleClass="tile-value"/>
-                                                    </VBox>
-                                                    <VBox spacing="8" styleClass="leave-tile maternity" GridPane.columnIndex="2" GridPane.rowIndex="1">
-                                                        <Label text="Maternity Leave" styleClass="tile-title"/>
-                                                        <Region VBox.vgrow="ALWAYS"/>
-                                                        <Label text="0 day" styleClass="tile-value"/>
-                                                    </VBox>
-                                                </GridPane>
-                                            </VBox>
-                                        </HBox>
-
-                                        <HBox spacing="14">
-                                            <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                                                <Label text="UPCOMING PAYDAY" styleClass="metric-label"/>
-                                                <Label text="June 30, 2026" styleClass="bottom-value, financial-value"/>
-                                                <Label text="In 26 days" styleClass="positive-text"/>
-                                            </VBox>
-                                            <VBox spacing="8" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                                                <Label text="RECENT PAYSLIP" styleClass="metric-label"/>
-                                                <Label text="May 16 – May 31, 2026" styleClass="bottom-value"/>
-                                                <Region VBox.vgrow="ALWAYS"/>
-                                                <Button text="View Payslip" onAction="#showPayslip" maxWidth="Infinity" styleClass="small-pill-button"/>
-                                            </VBox>
-                                            <VBox spacing="10" styleClass="bottom-card" HBox.hgrow="ALWAYS">
-                                                <Label text="ANNOUNCEMENTS" styleClass="metric-label"/>
-                                                <Label text="Company Meeting" styleClass="bottom-value"/>
-                                                <Label text="June 20, 2026 • 09:00 AM" styleClass="muted-text"/>
-                                                <Label text="All employees are expected to attend." wrapText="true" styleClass="muted-text"/>
-                                            </VBox>
-                                        </HBox>
-
-                                    </VBox>
-                                </HBox>
-                            </VBox>
-
-                            <!-- ── ATTENDANCE ──────────────────────────── -->
-                            <VBox fx:id="attendanceView" spacing="20" visible="false" managed="false">
-                                <HBox spacing="14">
-                                    <Button text="Time In"  onAction="#handleTimeIn"  styleClass="success-button"/>
-                                    <Button text="Time Out" onAction="#handleTimeOut" styleClass="primary-button"/>
-                                </HBox>
-                                <VBox spacing="12" styleClass="content-card">
-                                    <Label text="Attendance Logs" styleClass="section-title"/>
-                                    <GridPane hgap="28" vgap="12">
-                                        <Label text="Work Date"   styleClass="table-head" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
-                                        <Label text="Time In"     styleClass="table-head" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
-                                        <Label text="Time Out"    styleClass="table-head" GridPane.columnIndex="2" GridPane.rowIndex="0"/>
-                                        <Label text="Total Hours" styleClass="table-head" GridPane.columnIndex="3" GridPane.rowIndex="0"/>
-                                        <Label text="Status"      styleClass="table-head" GridPane.columnIndex="4" GridPane.rowIndex="0"/>
-                                        <Label fx:id="attendanceDateLabel"   text="2026-06-04" styleClass="data-line"  GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceTimeInLabel"  text="—"          styleClass="data-line"  GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceTimeOutLabel" text="—"          styleClass="data-line"  GridPane.columnIndex="2" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceHoursLabel"   text="—"          styleClass="data-line"  GridPane.columnIndex="3" GridPane.rowIndex="1"/>
-                                        <Label fx:id="attendanceStatusLabel"  text="Pending"    styleClass="status-pill" GridPane.columnIndex="4" GridPane.rowIndex="1"/>
-                                    </GridPane>
-                                </VBox>
-                            </VBox>
-
-                            <!-- ── LEAVE ──────────────────────────────── -->
-                            <VBox fx:id="leaveView" spacing="20" visible="false" managed="false">
-                                <GridPane hgap="18" vgap="16" styleClass="content-card">
-                                    <Label text="Leave Request" styleClass="section-title" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
-                                    <Label text="Leave Type"        styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-                                    <ComboBox fx:id="leaveTypeComboBox" promptText="Select leave type" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-                                    <Label text="Available Credits" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-                                    <TextField fx:id="leaveCreditsField" text="Select a type" editable="false" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-                                    <Label text="Start Date"        styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
-                                    <TextField fx:id="leaveStartDateField" promptText="YYYY-MM-DD" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
-                                    <Label text="End Date"          styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
-                                    <TextField fx:id="leaveEndDateField" promptText="YYYY-MM-DD" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-                                    <Label text="Leave Hours"       styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-                                    <TextField fx:id="leaveHoursField" promptText="8" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-                                    <Label text="Reason"            styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
-                                    <TextField fx:id="leaveReasonField" promptText="Reason for leave" styleClass="input-field" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
-                                    <Button text="Submit Leave Request" onAction="#handleSubmitLeaveRequest" styleClass="primary-button" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
-                                </GridPane>
-                                <VBox spacing="10" styleClass="content-card">
-                                    <Label text="Leave History" styleClass="section-title"/>
-                                    <Label fx:id="leaveHistoryLabel" text="Pending requests can be cancelled. Approved requests consume leave credits." styleClass="note-text"/>
-                                    <Button text="Cancel Latest Pending Request" onAction="#handleCancelLatestLeaveRequest" styleClass="secondary-button"/>
-                                </VBox>
-                            </VBox>
-
-                            <!-- ── PAYSLIP ─────────────────────────────── -->
-                            <VBox fx:id="payslipView" spacing="20" visible="false" managed="false">
-                                <HBox spacing="12">
-                                    <TextField fx:id="payslipSearchField" promptText="Payrun ID (optional)" styleClass="input-field" HBox.hgrow="ALWAYS"/>
-                                    <Button text="Search" onAction="#handleSearchPayslip" styleClass="primary-button"/>
-                                </HBox>
-                                <VBox spacing="12" styleClass="content-card">
-                                    <Label text="Payslip Preview" styleClass="section-title"/>
-                                    <Label fx:id="payslipGrossPayLabel"    text="Gross Pay: PHP 0.00"   styleClass="data-line"/>
-                                    <Label fx:id="payslipDeductionsLabel"  text="Deductions: PHP 0.00"  styleClass="data-line"/>
-                                    <Label fx:id="payslipNetPayLabel"      text="Net Pay: PHP 0.00"     styleClass="metric-value, financial-value"/>
-                                    <HBox spacing="10">
-                                        <Button text="Preview Payslip"    onAction="#handlePreviewPayslip" styleClass="secondary-button"/>
-                                        <Button text="Export Text Payslip" onAction="#handleExportPayslip" styleClass="primary-button"/>
-                                        <Button text="Print Payslip"      onAction="#handlePrintPayslip"  styleClass="secondary-button"/>
-                                    </HBox>
-                                    <Label fx:id="payslipMessageLabel" text="Employee can only view their own persisted payroll data." styleClass="note-text"/>
-                                </VBox>
-                            </VBox>
-
-                            <!-- ── SETTINGS ───────────────────────────── -->
-                            <VBox fx:id="settingsView" spacing="20" visible="false" managed="false">
-                                <VBox spacing="14" styleClass="content-card">
-                                    <Label text="Account Settings" styleClass="section-title"/>
-                                    <Label text="Email is view-only and remains the login identity." styleClass="note-text"/>
-                                    <TextField fx:id="settingsEmailField" text="harty.villegas@motorph.com" editable="false" styleClass="input-field"/>
-                                    <TextField fx:id="settingsRecoveryEmailField" promptText="Recovery email" editable="false" styleClass="input-field"/>
-                                    <PasswordField fx:id="settingsOldPasswordField"     promptText="Old password"          styleClass="input-field"/>
-                                    <PasswordField fx:id="settingsNewPasswordField"     promptText="New password"          styleClass="input-field"/>
-                                    <PasswordField fx:id="settingsConfirmPasswordField" promptText="Confirm new password"  styleClass="input-field"/>
-                                    <Button text="Change Password" onAction="#handleChangePassword" styleClass="success-button"/>
-                                </VBox>
-                            </VBox>
-
-                        </StackPane>
-                    </content>
-                </ScrollPane>
-
-                <!-- Footer bar — message left, toggles right -->
-                <HBox alignment="CENTER_LEFT" spacing="12" styleClass="footerbar">
-                    <Label fx:id="appMessageLabel" text="Welcome to your employee workspace." styleClass="success-message"/>
-                    <Region HBox.hgrow="ALWAYS"/>
-                    <HBox fx:id="globalControlsHostApp" alignment="CENTER_RIGHT" spacing="6" HBox.hgrow="NEVER"/>
-                </HBox>
-
+                <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="brand-system-label"/>
             </VBox>
-        </center>
-    </BorderPane>
 
-    <!-- Sliding side panel -->
-    <VBox fx:id="sidePanel" visible="false" managed="false" styleClass="side-panel" StackPane.alignment="TOP_RIGHT">
-        <VBox styleClass="side-panel-content">
-            <HBox alignment="CENTER_RIGHT" spacing="8">
-                <Label text="Options" styleClass="side-panel-title"/>
-                <Button text="✕" onAction="#toggleSidePanel" styleClass="side-panel-close"/>
-            </HBox>
-            <Separator/>
-            <Button text="Profile"          onAction="#showDashboard" styleClass="side-panel-item"/>
-            <Button text="Notifications"    onAction="#showDashboard" styleClass="side-panel-item"/>
-            <Button text="Help"             onAction="#showDashboard" styleClass="side-panel-item"/>
-            <Separator/>
-            <Button text="Account Settings" onAction="#showSettings"  styleClass="side-panel-item"/>
+            <VBox spacing="18" styleClass="hero-content">
+                <Label text="Finance Payroll Operations" styleClass="hero-statement"/>
+                <Label text="Payruns, payslips, payroll monitoring, and reports in one controlled workspace."
+                       wrapText="true" styleClass="hero-subheading"/>
+                <HBox spacing="26" styleClass="hero-stats-row">
+                    <VBox spacing="4" styleClass="hero-stat">
+                        <Label text="2FA" styleClass="hero-stat-value"/>
+                        <Label text="SECURED LOGIN" styleClass="hero-stat-label"/>
+                    </VBox>
+                    <Region styleClass="hero-stat-divider"/>
+                    <VBox spacing="4" styleClass="hero-stat">
+                        <Label text="PDF" styleClass="hero-stat-value"/>
+                        <Label text="PAYSLIP OUTPUT" styleClass="hero-stat-label"/>
+                    </VBox>
+                    <Region styleClass="hero-stat-divider"/>
+                    <VBox spacing="4" styleClass="hero-stat">
+                        <Label text="SQL" styleClass="hero-stat-value"/>
+                        <Label text="PERSISTED DATA" styleClass="hero-stat-label"/>
+                    </VBox>
+                </HBox>
+            </VBox>
         </VBox>
-    </VBox>
 
+        <VBox alignment="CENTER" spacing="18" styleClass="login-form-panel">
+            <VBox spacing="20" styleClass="form-card">
+                <VBox fx:id="loginFormBox" spacing="16">
+                    <VBox spacing="6">
+                        <Label text="Finance Sign In" styleClass="form-heading"/>
+                        <Label text="Enter your MotorPH account to continue." styleClass="form-subheading"/>
+                    </VBox>
+                    <VBox spacing="8">
+                        <Label text="Company Email" styleClass="field-label"/>
+                        <TextField fx:id="emailField" promptText="name@motorph.com" styleClass="input-field"/>
+                    </VBox>
+                    <VBox spacing="8">
+                        <Label text="Password" styleClass="field-label"/>
+                        <PasswordField fx:id="passwordField" promptText="Enter password" styleClass="input-field"/>
+                    </VBox>
+                    <Button text="Login" maxWidth="Infinity" onAction="#handleLogin" styleClass="signin-button"/>
+                    <Button text="Forgot password" maxWidth="Infinity" onAction="#showForgotPassword" styleClass="form-back-button"/>
+                </VBox>
+
+                <VBox fx:id="otpFormBox" spacing="16" managed="false" visible="false">
+                    <VBox spacing="6">
+                        <Label text="Verify OTP" styleClass="form-heading"/>
+                        <Label text="Enter the code sent to the registered personal email." styleClass="form-subheading"/>
+                    </VBox>
+                    <VBox spacing="8">
+                        <Label text="OTP Code" styleClass="field-label"/>
+                        <TextField fx:id="otpField" promptText="000000" styleClass="input-field"/>
+                    </VBox>
+                    <Button text="Verify OTP" maxWidth="Infinity" onAction="#handleVerifyOtp" styleClass="signin-button"/>
+                    <Button text="Back to Login" maxWidth="Infinity" onAction="#showLogin" styleClass="form-back-button"/>
+                </VBox>
+
+                <Label fx:id="loginMessageLabel" wrapText="true" styleClass="message-label"/>
+            </VBox>
+        </VBox>
+    </HBox>
+
+    <HBox fx:id="resetView" managed="false" visible="false" styleClass="login-fullpage" StackPane.alignment="CENTER">
+        <VBox alignment="CENTER_LEFT" spacing="30" styleClass="login-brand-panel" HBox.hgrow="ALWAYS">
+            <VBox spacing="4">
+                <HBox spacing="0">
+                    <Label text="Motor" styleClass="hero-brand-motor"/>
+                    <Label text="PH" styleClass="hero-brand-ph"/>
+                </HBox>
+                <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="brand-system-label"/>
+            </VBox>
+            <VBox spacing="14" styleClass="hero-content">
+                <Label text="Reset Password" styleClass="hero-statement"/>
+                <Label text="Password reset requests are verified with an OTP before a new hashed password is saved."
+                       wrapText="true" styleClass="hero-subheading"/>
+            </VBox>
+        </VBox>
+
+        <VBox alignment="CENTER" spacing="18" styleClass="login-form-panel">
+            <VBox spacing="20" styleClass="form-card">
+                <VBox fx:id="resetEmailBox" spacing="16">
+                    <VBox spacing="6">
+                        <Label text="Reset Password" styleClass="form-heading"/>
+                        <Label text="Enter your company email to receive a reset OTP." styleClass="form-subheading"/>
+                    </VBox>
+                    <VBox spacing="8">
+                        <Label text="Company Email" styleClass="field-label"/>
+                        <TextField fx:id="resetEmailField" promptText="name@motorph.com" styleClass="input-field"/>
+                    </VBox>
+                    <Button text="Send Reset OTP" maxWidth="Infinity" onAction="#handleSendResetOtp" styleClass="signin-button"/>
+                    <Button text="Back to Login" maxWidth="Infinity" onAction="#showLogin" styleClass="form-back-button"/>
+                </VBox>
+
+                <VBox fx:id="resetOtpBox" spacing="16" managed="false" visible="false">
+                    <VBox spacing="6">
+                        <Label text="Verify Reset OTP" styleClass="form-heading"/>
+                        <Label text="Enter the six-digit reset verification code." styleClass="form-subheading"/>
+                    </VBox>
+                    <VBox spacing="8">
+                        <Label text="OTP Code" styleClass="field-label"/>
+                        <TextField fx:id="resetOtpField" promptText="000000" styleClass="input-field"/>
+                    </VBox>
+                    <Button text="Verify OTP" maxWidth="Infinity" onAction="#handleVerifyResetOtp" styleClass="signin-button"/>
+                </VBox>
+
+                <VBox fx:id="resetPasswordBox" spacing="16" managed="false" visible="false">
+                    <VBox spacing="6">
+                        <Label text="New Password" styleClass="form-heading"/>
+                        <Label text="Create and confirm the replacement password." styleClass="form-subheading"/>
+                    </VBox>
+                    <PasswordField fx:id="newPasswordField" promptText="New password" styleClass="input-field"/>
+                    <PasswordField fx:id="confirmPasswordField" promptText="Confirm new password" styleClass="input-field"/>
+                    <Button text="Save New Password" maxWidth="Infinity" onAction="#handleSaveNewPassword" styleClass="signin-button"/>
+                </VBox>
+
+                <Label fx:id="resetMessageLabel" wrapText="true" styleClass="message-label"/>
+            </VBox>
+        </VBox>
+    </HBox>
+
+    <HBox fx:id="appView" managed="false" visible="false" styleClass="app-shell" StackPane.alignment="CENTER">
+        <VBox spacing="18" styleClass="sidebar">
+            <VBox spacing="4" styleClass="sidebar-brand">
+                <HBox spacing="0">
+                    <Label text="Motor" styleClass="sidebar-brand-motor"/>
+                    <Label text="PH" styleClass="sidebar-brand-ph"/>
+                </HBox>
+                <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="sidebar-brand-system"/>
+            </VBox>
+            <Separator/>
+            <VBox spacing="10" VBox.vgrow="ALWAYS">
+                <Button fx:id="dashboardNavButton" text="Dashboard" maxWidth="Infinity" onAction="#showDashboard" styleClass="nav-button"/>
+                <Button fx:id="payrollNavButton" text="Payroll Management" maxWidth="Infinity" onAction="#showPayrollManagement" styleClass="nav-button"/>
+                <Button fx:id="payslipNavButton" text="Generate Payslip" maxWidth="Infinity" onAction="#showGeneratePayslip" styleClass="nav-button"/>
+                <Button fx:id="reportsNavButton" text="Payroll Reports" maxWidth="Infinity" onAction="#showPayrollReports" styleClass="nav-button"/>
+                <Button fx:id="settingsNavButton" text="Account Settings" maxWidth="Infinity" onAction="#showSettings" styleClass="nav-button"/>
+            </VBox>
+            <VBox spacing="10">
+                <VBox spacing="6" styleClass="sidebar-card">
+                    <Label text="FINANCE" styleClass="sidebar-card-kicker"/>
+                    <Label fx:id="sidebarNameLabel" text="Finance Officer" wrapText="true" styleClass="sidebar-card-title"/>
+                    <Label fx:id="sidebarRoleLabel" text="Finance" styleClass="sidebar-card-copy"/>
+                    <Label fx:id="sidebarEmailLabel" text="finance@motorph.com" wrapText="true" styleClass="sidebar-card-copy"/>
+                    <Button text="Switch Role" maxWidth="Infinity" onAction="#handleSwitchRole" styleClass="secondary-button"/>
+                </VBox>
+                <Button text="Logout" maxWidth="Infinity" onAction="#handleLogout" styleClass="danger-outline-button"/>
+            </VBox>
+        </VBox>
+
+        <VBox styleClass="app-main" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_LEFT" spacing="16" styleClass="topbar">
+                <VBox spacing="3">
+                    <Label fx:id="pageTitleLabel" text="Finance Dashboard" styleClass="page-title"/>
+                    <Label fx:id="pageSubtitleLabel" text="PAYROLL MONITORING" styleClass="page-subtitle"/>
+                </VBox>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label text="Active Session" styleClass="muted-text"/>
+                <ComboBox fx:id="languageCombo" prefWidth="150" styleClass="global-combo"/>
+                <ComboBox fx:id="themeCombo" prefWidth="150" styleClass="global-combo"/>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
+                <VBox spacing="18" styleClass="content-area">
+
+                    <VBox fx:id="dashboardView" spacing="18">
+                        <HBox spacing="16">
+                            <VBox spacing="8" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                                <Label text="LATEST PAYRUN" styleClass="metric-label"/>
+                                <Label fx:id="latestPayrunValueLabel" text="-" styleClass="metric-value"/>
+                                <Label text="Most recent payroll period" styleClass="note-text"/>
+                            </VBox>
+                            <VBox spacing="8" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                                <Label text="UPCOMING PAY DATE" styleClass="metric-label"/>
+                                <Label fx:id="upcomingPayDateValueLabel" text="-" styleClass="metric-value"/>
+                                <Label text="Next scheduled release" styleClass="note-text"/>
+                            </VBox>
+                            <VBox spacing="8" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                                <Label text="PENDING PERIODS" styleClass="metric-label"/>
+                                <Label fx:id="pendingPeriodsValueLabel" text="0" styleClass="attendance-value"/>
+                                <Label text="Payruns awaiting release" styleClass="note-text"/>
+                            </VBox>
+                            <VBox spacing="8" styleClass="metric-card" HBox.hgrow="ALWAYS">
+                                <Label text="GENERATED PAYROLLS" styleClass="metric-label"/>
+                                <Label fx:id="generatedPayrollValueLabel" text="0" styleClass="metric-value"/>
+                                <Label text="Latest payrun records" styleClass="note-text"/>
+                            </VBox>
+                        </HBox>
+
+                        <HBox spacing="18">
+                            <VBox spacing="12" styleClass="chart-card" HBox.hgrow="ALWAYS">
+                                <Label text="Latest Payrun Net Pay" styleClass="section-title"/>
+                                <BarChart fx:id="payrollBarChart" animated="false" legendVisible="false" styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                                    <xAxis>
+                                        <CategoryAxis fx:id="payrollBarXAxis"/>
+                                    </xAxis>
+                                    <yAxis>
+                                        <NumberAxis fx:id="payrollBarYAxis"/>
+                                    </yAxis>
+                                </BarChart>
+                            </VBox>
+                            <VBox spacing="14" styleClass="content-card" prefWidth="360">
+                                <Label text="Payroll Summary" styleClass="section-title"/>
+                                <VBox spacing="6">
+                                    <Label text="TOTAL NET PAY" styleClass="metric-label"/>
+                                    <Label fx:id="totalNetPayValueLabel" text="₱0.00" styleClass="financial-value"/>
+                                </VBox>
+                                <Label fx:id="recentActivityLabel" text="No payroll activity loaded." wrapText="true" styleClass="data-line"/>
+                                <Button text="Open Payroll Management" onAction="#showPayrollManagement" maxWidth="Infinity" styleClass="primary-button"/>
+                                <Button text="Open Reports" onAction="#showPayrollReports" maxWidth="Infinity" styleClass="secondary-button"/>
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="12" styleClass="content-card">
+                            <Label text="Recent Payroll Activity" styleClass="section-title"/>
+                            <GridPane fx:id="dashboardActivityGrid" hgap="32" vgap="12" styleClass="finance-table">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="34"/>
+                                    <ColumnConstraints percentWidth="33"/>
+                                    <ColumnConstraints percentWidth="33"/>
+                                </columnConstraints>
+                            </GridPane>
+                        </VBox>
+                    </VBox>
+
+                    <VBox fx:id="payrollView" managed="false" visible="false" spacing="18">
+                        <VBox spacing="16" styleClass="content-card">
+                            <Label text="Create Payrun" styleClass="section-title"/>
+                            <GridPane hgap="14" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="25"/>
+                                    <ColumnConstraints percentWidth="25"/>
+                                    <ColumnConstraints percentWidth="25"/>
+                                    <ColumnConstraints percentWidth="25"/>
+                                </columnConstraints>
+                                <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="Start Date" styleClass="field-label"/>
+                                    <DatePicker fx:id="payrunStartDatePicker" maxWidth="Infinity" styleClass="period-picker"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="End Date" styleClass="field-label"/>
+                                    <DatePicker fx:id="payrunEndDatePicker" maxWidth="Infinity" styleClass="period-picker"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                    <Label text="Pay Date" styleClass="field-label"/>
+                                    <DatePicker fx:id="payrunPayDatePicker" maxWidth="Infinity" styleClass="period-picker"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                    <Label text="Payroll Type" styleClass="field-label"/>
+                                    <ComboBox fx:id="payrollTypeCombo" maxWidth="Infinity" styleClass="input-field"/>
+                                </VBox>
+                            </GridPane>
+                            <HBox spacing="12">
+                                <Button text="Create Payrun" onAction="#handleCreatePayrun" styleClass="primary-button"/>
+                                <Button text="Refresh" onAction="#showPayrollManagement" styleClass="secondary-button"/>
+                            </HBox>
+                        </VBox>
+
+                        <HBox spacing="18">
+                            <VBox spacing="12" styleClass="content-card" HBox.hgrow="ALWAYS">
+                                <HBox alignment="CENTER_LEFT" spacing="12">
+                                    <Label text="Pending Payrolls" styleClass="section-title"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button text="Generate Latest Payrun" onAction="#handleGeneratePayroll" styleClass="primary-button"/>
+                                </HBox>
+                                <GridPane fx:id="payrunGrid" hgap="18" vgap="12" styleClass="finance-table">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="10"/>
+                                        <ColumnConstraints percentWidth="28"/>
+                                        <ColumnConstraints percentWidth="16"/>
+                                        <ColumnConstraints percentWidth="16"/>
+                                        <ColumnConstraints percentWidth="14"/>
+                                        <ColumnConstraints percentWidth="16"/>
+                                    </columnConstraints>
+                                </GridPane>
+                                <Label fx:id="payrollSummaryLabel" text="" wrapText="true" styleClass="note-text"/>
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="12" styleClass="content-card">
+                            <Label text="Generated Payrolls" styleClass="section-title"/>
+                            <GridPane fx:id="generatedPayrollGrid" hgap="16" vgap="12" styleClass="finance-table">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="12"/>
+                                    <ColumnConstraints percentWidth="14"/>
+                                    <ColumnConstraints percentWidth="18"/>
+                                    <ColumnConstraints percentWidth="12"/>
+                                    <ColumnConstraints percentWidth="14"/>
+                                    <ColumnConstraints percentWidth="14"/>
+                                    <ColumnConstraints percentWidth="10"/>
+                                    <ColumnConstraints percentWidth="6"/>
+                                </columnConstraints>
+                            </GridPane>
+                        </VBox>
+                    </VBox>
+
+                    <VBox fx:id="payslipView" managed="false" visible="false" spacing="18">
+                        <VBox spacing="14" styleClass="content-card">
+                            <Label text="Payslip Search" styleClass="section-title"/>
+                            <GridPane hgap="14" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="42"/>
+                                    <ColumnConstraints percentWidth="38"/>
+                                    <ColumnConstraints percentWidth="20"/>
+                                </columnConstraints>
+                                <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="Employee ID or Name" styleClass="field-label"/>
+                                    <TextField fx:id="payslipSearchField" promptText="Search employee" styleClass="input-field"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="Payrun" styleClass="field-label"/>
+                                    <ComboBox fx:id="payslipPayrunCombo" maxWidth="Infinity" styleClass="input-field"/>
+                                </VBox>
+                                <VBox alignment="BOTTOM_LEFT" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                    <Button text="Search" maxWidth="Infinity" onAction="#handleSearchPayslip" styleClass="primary-button"/>
+                                </VBox>
+                            </GridPane>
+                        </VBox>
+
+                        <HBox spacing="18">
+                            <VBox spacing="12" styleClass="content-card" prefWidth="340">
+                                <Label text="Employee Details" styleClass="section-title"/>
+                                <GridPane hgap="16" vgap="12">
+                                    <Label text="Name" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+                                    <Label fx:id="payslipEmployeeNameLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+                                    <Label text="Employee ID" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                                    <Label fx:id="payslipEmployeeIdLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+                                    <Label text="Department" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
+                                    <Label fx:id="payslipDepartmentLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
+                                    <Label text="Position" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
+                                    <Label fx:id="payslipPositionLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+                                    <Label text="Period" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+                                    <Label fx:id="payslipPeriodLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
+                                    <Label text="Gross" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+                                    <Label fx:id="payslipGrossLabel" text="-" styleClass="financial-value" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+                                    <Label text="Deductions" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+                                    <Label fx:id="payslipDeductionsLabel" text="-" styleClass="data-line" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+                                    <Label text="Net Pay" styleClass="field-label" GridPane.columnIndex="0" GridPane.rowIndex="7"/>
+                                    <Label fx:id="payslipNetLabel" text="-" styleClass="financial-value" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
+                                </GridPane>
+                                <Button text="Preview" onAction="#handlePreviewPayslip" maxWidth="Infinity" styleClass="primary-button"/>
+                                <Button text="Export PDF" onAction="#handleExportPayslip" maxWidth="Infinity" styleClass="secondary-button"/>
+                                <Button text="Print" onAction="#handlePrintPayslip" maxWidth="Infinity" styleClass="secondary-button"/>
+                            </VBox>
+                            <VBox spacing="12" styleClass="content-card" HBox.hgrow="ALWAYS">
+                                <Label text="Payslip Preview" styleClass="section-title"/>
+                                <TextArea fx:id="payslipPreviewArea" editable="false" prefRowCount="18" wrapText="true" styleClass="input-field"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+
+                    <VBox fx:id="reportsView" managed="false" visible="false" spacing="18">
+                        <VBox spacing="14" styleClass="content-card">
+                            <Label text="Report Filters" styleClass="section-title"/>
+                            <GridPane hgap="14" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="22"/>
+                                    <ColumnConstraints percentWidth="18"/>
+                                    <ColumnConstraints percentWidth="20"/>
+                                    <ColumnConstraints percentWidth="14"/>
+                                    <ColumnConstraints percentWidth="14"/>
+                                    <ColumnConstraints percentWidth="12"/>
+                                </columnConstraints>
+                                <VBox spacing="6" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                    <Label text="Report Type" styleClass="field-label"/>
+                                    <ComboBox fx:id="reportTypeCombo" maxWidth="Infinity" styleClass="input-field"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                    <Label text="Department" styleClass="field-label"/>
+                                    <ComboBox fx:id="reportDepartmentCombo" maxWidth="Infinity" styleClass="input-field"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                                    <Label text="Payrun" styleClass="field-label"/>
+                                    <ComboBox fx:id="reportPayrunCombo" maxWidth="Infinity" styleClass="input-field"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="3" GridPane.rowIndex="0">
+                                    <Label text="Start Date" styleClass="field-label"/>
+                                    <DatePicker fx:id="reportStartDatePicker" maxWidth="Infinity" styleClass="period-picker"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="4" GridPane.rowIndex="0">
+                                    <Label text="End Date" styleClass="field-label"/>
+                                    <DatePicker fx:id="reportEndDatePicker" maxWidth="Infinity" styleClass="period-picker"/>
+                                </VBox>
+                                <VBox spacing="6" GridPane.columnIndex="5" GridPane.rowIndex="0">
+                                    <Label text="Employee Filter" styleClass="field-label"/>
+                                    <TextField fx:id="reportEmployeeField" promptText="Optional" styleClass="input-field"/>
+                                </VBox>
+                            </GridPane>
+                            <HBox spacing="12">
+                                <Button text="Generate Preview" onAction="#handleGenerateReport" styleClass="primary-button"/>
+                                <Button text="Export PDF" onAction="#handleExportReport" styleClass="secondary-button"/>
+                                <Button text="Print" onAction="#handlePrintReport" styleClass="secondary-button"/>
+                            </HBox>
+                        </VBox>
+
+                        <VBox spacing="12" styleClass="content-card">
+                            <Label text="Report Preview" styleClass="section-title"/>
+                            <TextArea fx:id="reportPreviewArea" editable="false" prefRowCount="18" wrapText="true" styleClass="input-field"/>
+                        </VBox>
+                    </VBox>
+
+                    <VBox fx:id="settingsView" managed="false" visible="false" spacing="18">
+                        <VBox spacing="16" styleClass="content-card">
+                            <Label text="Session Details" styleClass="section-title"/>
+                            <GridPane hgap="24" vgap="14">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="24"/>
+                                    <ColumnConstraints percentWidth="76"/>
+                                </columnConstraints>
+                                <Label text="Employee Name" styleClass="field-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <Label fx:id="settingsNameLabel" text="Finance Officer" styleClass="data-line" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                                <Label text="Active Role" styleClass="field-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <Label fx:id="settingsRoleLabel" text="FINANCE" styleClass="data-line" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                                <Label text="Company Email" styleClass="field-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <Label fx:id="settingsEmailLabel" text="finance@motorph.com" styleClass="data-line" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                                <Label text="Data Source" styleClass="field-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                <Label fx:id="settingsDataSourceLabel" text="Connected to persisted payroll data" styleClass="data-line" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+                            </GridPane>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </ScrollPane>
+
+            <HBox alignment="CENTER_LEFT" styleClass="footerbar">
+                <Label fx:id="footerStatusLabel" text="Welcome to your finance workspace." styleClass="success-message"/>
+            </HBox>
+        </VBox>
+    </HBox>
 </StackPane>
