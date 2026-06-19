@@ -42,7 +42,7 @@
 .special   { -fx-background-color: linear-gradient(to bottom right, rgba(120,40,200,0.88), rgba(80,20,150,0.95)); }
 .maternity { -fx-background-color: linear-gradient(to bottom right, rgba(220,100,10,0.88), rgba(170,70,5,0.95)); }
 
-.tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
+.tile-title, .tile-value { -fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 
 
 /* ── Data color values ───────────────────────────────── */
@@ -71,3 +71,13 @@
 }
 
 .bottom-value { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
+
+
+/* ══════════════════════════════════════════════════
+   LIGHT MODE — leave-tile text (extracted from the
+   theme's legacy `.light-mode .tile-*` group rule)
+   ══════════════════════════════════════════════════ */
+.light-mode .tile-title,
+.light-mode .tile-value {
+    -fx-text-fill: #111827;
+}

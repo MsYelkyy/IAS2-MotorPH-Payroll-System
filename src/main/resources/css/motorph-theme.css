@@ -136,22 +136,8 @@
 
 
 
-.leave-tile {
-    -fx-padding: 12;
-    -fx-background-radius: 8;
-    -fx-min-width: 100;
-    -fx-min-height: 104;
-}
-
-
-.tile-title,
-.tile-value {
-    -fx-font-size: 12px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-
+/* Employee Dashboard leave-tile styles moved to
+   modules/employee/dashboard.css (loaded after this file). */
 
 .chart-vertical-grid-lines,
 .chart-horizontal-grid-lines {
@@ -406,9 +392,7 @@
 .light-mode .bottom-value,
 .light-mode .page-title,
 .light-mode .sidebar-card-title,
-.light-mode .data-line,
-.light-mode .tile-title,
-.light-mode .tile-value {
+.light-mode .data-line {
     -fx-text-fill: #111827;
 }
 
@@ -1122,12 +1106,7 @@
 .workspace-scroll          { -fx-background-color: transparent; -fx-background: transparent; }
 .workspace-scroll > .viewport { -fx-background-color: transparent; }
 
-/* ── Leave tiles ──────────────────────────────────────────────────────── */
-.vacation  { -fx-background-color: linear-gradient(to bottom right, rgba(255,60,60,0.90), rgba(160,10,10,0.95)); }
-.sick      { -fx-background-color: linear-gradient(to bottom right, rgba(180,140,20,0.88), rgba(130,95,10,0.95)); }
-.emergency { -fx-background-color: linear-gradient(to bottom right, rgba(40,90,200,0.88), rgba(25,60,150,0.95)); }
-.special   { -fx-background-color: linear-gradient(to bottom right, rgba(120,40,200,0.88), rgba(80,20,150,0.95)); }
-.maternity { -fx-background-color: linear-gradient(to bottom right, rgba(220,100,10,0.88), rgba(170,70,5,0.95)); }
+/* Leave-tile color classes moved to modules/employee/dashboard.css. */
 
 /* Final typography and wrapping overrides to avoid clipped/cropped text */
 .root-canvas .form-card {
@@ -1262,9 +1241,6 @@
 .note-text, .muted-text { -fx-font-size: 12px; -fx-text-fill: rgba(255,200,200,0.58); }
 .bottom-value   { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
 .table-head, .stat-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: rgba(255,200,200,0.62); }
-
-/* Tile text */
-.tile-title, .tile-value { -fx-text-fill: #FFFFFF; -fx-font-weight: 900; }
 
 .root-canvas.light-mode .content-card .label {
     -fx-text-fill: #111827;
