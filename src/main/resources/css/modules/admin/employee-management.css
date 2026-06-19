@@ -234,7 +234,7 @@
 /* ── Form panel outer container ──────────────────────────────────── */
 .admin-add-form-panel.modal-panel,
 .admin-add-form-panel {
-    -fx-max-height: 88vh;
+    -fx-max-height: 800;
     -fx-padding: 0;
 }
 

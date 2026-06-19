@@ -94,6 +94,19 @@ public class EmployeeService {
         return employee;
     }
 
+    // returns any employee by id including inactive (for IT user account display only)
+    public Employee getEmployeeByIdAny(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        Employee employee = employeeRepository.findAnyById(employeeId);
+
+        if (employee == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        return employee;
+    }
+
     // returns all active employees
     public List<Employee> getAllActiveEmployees() {
         return employeeRepository.findAllActive();

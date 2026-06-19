@@ -1,6 +1,7 @@
 package motorph.application.service;
 
 import motorph.application.dto.user.UserAccountRowDTO;
+import motorph.application.exception.EntityNotFoundException;
 import motorph.domain.model.Employee;
 import motorph.domain.model.UserAccount;
 import motorph.infrastructure.repository.UserAccountRepository;
@@ -42,15 +43,13 @@ public class ITUserAccountService {
         String fullName = "Employee #" + account.getEmployeeId();
 
         try {
-            Employee employee = employeeService.getEmployeeById(account.getEmployeeId());
+            Employee employee = employeeService.getEmployeeByIdAny(account.getEmployeeId());
 
             if (employee != null) {
                 fullName = employee.getFullName();
             }
-        } catch (Exception ignored) {
-            System.err.println("Failed to fetch employee for user account ID " + account.getUserAccountId()
-                    + ": " + ignored.getMessage()
-                );
+        } catch (EntityNotFoundException ignored) {
+            // employee record missing entirely — keep placeholder name
         }
 
         return new UserAccountRowDTO(

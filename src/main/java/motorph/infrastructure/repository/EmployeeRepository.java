@@ -77,6 +77,30 @@ public class EmployeeRepository {
             FROM employee
             """;
 
+    // finds any employee by id regardless of active status (for IT display use only)
+    public Employee findAnyById(int employeeId) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = BASE_SELECT + "WHERE employee_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find employee by id.", e);
+        }
+
+        return null;
+    }
+
     // finds active employee by id
     public Employee findActiveById(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
