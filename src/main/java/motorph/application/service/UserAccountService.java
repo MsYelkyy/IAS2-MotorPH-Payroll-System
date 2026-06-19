@@ -77,6 +77,7 @@ public class UserAccountService {
         }
 
         emailService.sendEmployeeAccountCredentials(personalEmail, companyEmail, temporaryPassword);
+        emailService.sendTemporaryPassword(personalEmail, companyEmail, temporaryPassword);
 
         return savedAccount;
     }
@@ -300,6 +301,7 @@ public class UserAccountService {
     }
 
     // validates personal email input
+    // validate personal email input
     private void validatePersonalEmail(String personalEmail) {
         if (personalEmail == null || personalEmail.trim().isEmpty()) {
             throw new ValidationException("Personal email is required.");
@@ -351,3 +353,4 @@ public class UserAccountService {
         }
     }
 }
+

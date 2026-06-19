@@ -8,7 +8,6 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.UnauthorizedException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Employee;
-import motorph.domain.model.LeaveCredit;
 import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.EmploymentStatus;
