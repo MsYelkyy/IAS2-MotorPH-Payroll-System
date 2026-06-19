@@ -1,36 +1,65 @@
 /* ══════════════════════════════════════════════════
    MODULE — EMPLOYEE LEAVE
-   Leave-exclusive selectors extracted from
-   motorph-theme.css with exact winning values, in
-   source order. Loaded AFTER motorph-theme.css so
-   these win their ties; values are identical, so
-   appearance is unchanged. Light-mode is preserved by
-   motorph-theme's higher-specificity
-   .root-canvas.light-mode .leave-* rules (NOT copied).
+   Leave-exclusive selectors, extracted from
+   motorph-theme.css with exact values, in source
+   order (dark/default rules first, then light-mode).
+   Loaded AFTER motorph-theme.css (employee-main.fxml),
+   so these own the Leave screen outright; appearance
+   is unchanged from the pre-extraction theme.
 
-   NOT moved (shared with Support Tickets, stay global):
-     .leave-card, .leave-card-title, .leave-form-card
-       (+ .leave-form-card .X compounds),
-     .leave-reason-area (+ .content),
-     .required-asterisk, .field-error, .character-counter
-
-   NOT moved (leave-only but grouped with .leave-form-card
-   in motorph, can't split without editing the theme):
-     .leave-credits-card, .leave-history-card base rules,
-     the combined .leave-history-card .section-title rule
-
-   Source lines in motorph-theme.css: L3815–3988
+   NOT moved (shared with Support Tickets — stay in
+   motorph-theme.css so the IT shell keeps them):
+     .field-error, .required-asterisk, .character-counter
+     (base rules) and .root-canvas.light-mode .character-counter
    ══════════════════════════════════════════════════ */
 
-
+/* ── Containers ─────────────────────────────────────────────────────── */
 .leave-root {
     -fx-min-width: 760;
+}
+
+.leave-card {
+    -fx-padding: 22 24;
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
+        rgba(23,26,31,0.78);
+    -fx-background-radius: 16;
+    -fx-border-color: rgba(255,120,120,0.22);
+    -fx-border-width: 1;
+    -fx-border-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.24), 18, 0.20, 0, 9);
+}
+
+.leave-form-card,
+.leave-history-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
+        rgba(80,18,22,0.88);
+    -fx-border-color: rgba(255,120,120,0.25);
+}
+
+.leave-credits-card,
+.leave-form-card,
+.leave-history-card {
+    -fx-min-width: 720;
+}
+
+.leave-card-title {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FF6666;
+}
+
+.leave-form-card .leave-card-title,
+.leave-history-card .section-title {
+    -fx-text-fill: #FFFFFF;
 }
 
 .leave-history-card .note-text {
     -fx-text-fill: rgba(255,220,220,0.72);
 }
 
+/* ── Credits row ────────────────────────────────────────────────────── */
 .leave-credits-row {
     -fx-min-height: 96;
     -fx-pref-height: 100;
@@ -55,10 +84,46 @@
     -fx-text-fill: #FFFFFF;
 }
 
+/* ── Request form ───────────────────────────────────────────────────── */
 .leave-form-grid {
     -fx-min-height: 154;
 }
 
+.leave-form-card .field-label {
+    -fx-text-fill: rgba(255,210,210,0.72);
+}
+
+.leave-form-card .input-field,
+.leave-form-card .combo-box.input-field,
+.leave-form-card .date-picker,
+.leave-form-card .date-picker .text-field,
+.leave-form-card .date-picker .date-picker-display-node,
+.leave-form-card .leave-reason-area,
+.leave-form-card .leave-reason-area .content {
+    -fx-background-color: #111827;
+    -fx-border-color: rgba(255,255,255,0.13);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(235,238,245,0.58);
+}
+
+.leave-form-card .date-picker {
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+
+.leave-reason-area {
+    -fx-min-height: 92;
+    -fx-pref-height: 96;
+    -fx-padding: 8 12;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+}
+
+.leave-reason-area .content {
+    -fx-background-radius: 12;
+}
+
+/* ── History / status ───────────────────────────────────────────────── */
 .leave-status-filter {
     -fx-min-height: 40;
     -fx-pref-height: 40;
@@ -109,8 +174,130 @@
     -fx-text-fill: #FFFFFF;
 }
 
-/* dark/default status-filter dropdown cell (light variant stays in theme) */
 .leave-status-filter > .list-cell {
     -fx-text-fill: #F8FAFC;
     -fx-padding: 0 6 0 0;
+}
+
+/* ══════════════════════════════════════════════════
+   LIGHT MODE
+   ══════════════════════════════════════════════════ */
+.root-canvas.light-mode .leave-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.14, 0, 5);
+}
+
+.root-canvas.light-mode .leave-form-card,
+.root-canvas.light-mode .leave-history-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.14, 0, 5);
+}
+
+.root-canvas.light-mode .leave-card-title {
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .leave-form-card .leave-card-title,
+.root-canvas.light-mode .leave-history-card .section-title {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-history-card .note-text {
+    -fx-text-fill: #4B5563;
+}
+
+.root-canvas.light-mode .leave-credit-tile {
+    -fx-background-color: transparent;
+}
+
+.root-canvas.light-mode .leave-credit-divider {
+    -fx-background-color: rgba(17,24,39,0.10);
+}
+
+.root-canvas.light-mode .leave-credit-value {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-form-card .field-label {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-form-card .required-asterisk {
+    -fx-text-fill: #DC2626;
+    -fx-font-weight: 900;
+}
+
+.root-canvas.light-mode .leave-form-card .field-error {
+    -fx-text-fill: #DC2626;
+    -fx-font-weight: 900;
+}
+
+.root-canvas.light-mode .leave-form-card .input-field,
+.root-canvas.light-mode .leave-form-card .combo-box.input-field,
+.root-canvas.light-mode .leave-form-card .date-picker,
+.root-canvas.light-mode .leave-form-card .date-picker .text-field,
+.root-canvas.light-mode .leave-form-card .date-picker .date-picker-display-node,
+.root-canvas.light-mode .leave-reason-area,
+.root-canvas.light-mode .leave-reason-area .content {
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: rgba(17,24,39,0.16);
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: rgba(17,24,39,0.52);
+}
+
+.root-canvas.light-mode .leave-form-card .combo-box.input-field > .list-cell {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-form-card .date-picker .arrow-button .arrow {
+    -fx-background-color: #DC2626;
+}
+
+.root-canvas.light-mode .leave-status-filter {
+    -fx-background-color: #E5E7EB;
+    -fx-border-color: rgba(17,24,39,0.16);
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: rgba(17,24,39,0.52);
+}
+
+.root-canvas.light-mode .leave-status-filter .arrow {
+    -fx-background-color: #4B5563;
+}
+
+.root-canvas.light-mode .leave-status-filter > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-history-table .column-header .label {
+    -fx-text-fill: #1F2937;
+    -fx-font-weight: 900;
+}
+
+.root-canvas.light-mode .leave-history-table .column-header-background {
+    -fx-border-color: transparent transparent rgba(17,24,39,0.08) transparent;
+}
+
+.root-canvas.light-mode .leave-history-table .table-row-cell {
+    -fx-border-color: transparent transparent rgba(17,24,39,0.06) transparent;
+}
+
+.root-canvas.light-mode .leave-history-table .table-cell {
+    -fx-text-fill: #1F2937;
+}
+
+.root-canvas.light-mode .leave-history-table .placeholder .label {
+    -fx-text-fill: #4B5563;
+}
+
+.root-canvas.light-mode .leave-cancel-button {
+    -fx-border-color: rgba(185,28,28,0.35);
+    -fx-text-fill: #B91C1C;
+}
+
+.root-canvas.light-mode .leave-cancel-button:hover {
+    -fx-background-color: rgba(185,28,28,0.07);
+    -fx-border-color: rgba(185,28,28,0.58);
 }

@@ -15,7 +15,6 @@
     -fx-padding: 0;
 }
 
-.login-fullpage,
 .app-shell {
     -fx-background-color:
         radial-gradient(center 78% 92%, radius 95%, rgba(244,185,66,0.22), transparent),
@@ -24,157 +23,6 @@
 }
 
 
-.deco-circle-1 {
-    -fx-fill: rgba(59,130,246,0.08);
-    -fx-translate-x: 110;
-    -fx-translate-y: 150;
-}
-
-.deco-circle-2 {
-    -fx-fill: rgba(34,197,94,0.05);
-    -fx-translate-x: -80;
-    -fx-translate-y: 30;
-}
-
-.deco-circle-3 {
-    -fx-fill: rgba(255,255,255,0.035);
-    -fx-translate-x: -130;
-    -fx-translate-y: -140;
-}
-
-.brand-content-layer {
-    -fx-max-width: 370;
-    -fx-padding: 32;
-    -fx-background-color: rgba(13,15,18,0.72);
-    -fx-background-radius: 22;
-    -fx-border-color: rgba(255,255,255,0.08);
-    -fx-border-radius: 22;
-}
-
-.logo-ring-glow {
-    -fx-fill: rgba(11,37,69,0.25);
-}
-
-.logo-ring-outer,
-.form-logo-ring {
-    -fx-fill: transparent;
-    -fx-stroke: #0B2545;
-    -fx-stroke-width: 2.5;
-}
-
-.logo-ring-inner,
-.form-logo-inner {
-    -fx-fill: #171a1f;
-}
-
-.logo-letter,
-.form-logo-letter {
-    -fx-font-weight: 900;
-    -fx-text-fill: #FBBF24;
-}
-
-.logo-letter {
-    -fx-font-size: 44px;
-    -fx-translate-y: -6;
-}
-
-.logo-peso-icon {
-    -fx-font-size: 15px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FBBF24;
-    -fx-translate-y: 20;
-    -fx-translate-x: -4;
-}
-
-.brand-name-white,
-.form-brand-motor {
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.brand-name-white,
-.brand-name-green {
-    -fx-font-size: 40px;
-}
-
-.brand-name-green,
-.form-brand-ph {
-    -fx-font-weight: 900;
-    -fx-text-fill: #3B82F6;
-}
-
-.form-brand-motor,
-.form-brand-ph {
-    -fx-font-size: 20px;
-}
-
-
-.brand-divider-line {
-    -fx-pref-height: 1;
-    -fx-max-height: 1;
-    -fx-pref-width: 74;
-    -fx-max-width: 74;
-    -fx-background-color: rgba(255,255,255,0.16);
-}
-
-.brand-tagline {
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-alignment: CENTER;
-}
-
-.brand-copy-small {
-    -fx-font-size: 13px;
-    -fx-line-spacing: 4;
-    -fx-text-fill: #a5a8b0;
-    -fx-text-alignment: CENTER;
-}
-
-.feature-list {
-    -fx-max-width: 315;
-}
-
-.feature-card {
-    -fx-padding: 10 12;
-    -fx-background-color: rgba(255,255,255,0.055);
-    -fx-background-radius: 12;
-    -fx-border-color: rgba(255,255,255,0.08);
-    -fx-border-radius: 12;
-}
-
-.feature-title {
-    -fx-font-size: 12px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.feature-copy {
-    -fx-font-size: 11px;
-    -fx-text-fill: #a5a8b0;
-}
-
-.brand-build-tag,
-.form-footer-text {
-    -fx-font-size: 10px;
-    -fx-font-weight: 700;
-    -fx-text-fill: rgba(255,255,255,0.28);
-    -fx-padding: 0 0 20 0;
-}
-
-
-.form-panel-header {
-    -fx-padding: 22 0 14 0;
-}
-
-.form-logo-letter {
-    -fx-font-size: 18px;
-}
-
-
-
-.form-subheading,
-.form-security-note,
 .muted-text,
 .note-text,
 .data-line {
@@ -213,7 +61,6 @@
 }
 
 
-.signin-button,
 .primary-button,
 .success-button {
     -fx-min-height: 46;
@@ -228,11 +75,9 @@
 }
 
 
-.form-back-button,
 .secondary-button,
 .small-pill-button,
-.danger-outline-button,
-.period-selector {
+.danger-outline-button {
     -fx-min-height: 38;
     -fx-background-radius: 12;
     -fx-border-radius: 12;
@@ -247,20 +92,6 @@
     -fx-padding: 0 16;
 }
 
-.quiet-link,
-.password-toggle,
-.inline-link {
-    -fx-background-color: transparent;
-    -fx-border-color: transparent;
-    -fx-text-fill: #3B82F6;
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-    -fx-cursor: hand;
-}
-
-.password-toggle {
-    -fx-padding: 0 14 0 0;
-}
 
 
 
@@ -274,15 +105,6 @@
     -fx-border-color: transparent rgba(255,255,255,0.08) transparent transparent;
     -fx-border-width: 0 1 0 0;
 }
-
-.sidebar-title {
-    -fx-font-size: 28px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-
-
 
 
 
@@ -354,122 +176,6 @@
 
 
 
-.event-pill,
-.stat-card,
-.profile-card,
-.ring-card,
-.task-card,
-.schedule-card,
-.personal-stat,
-.accent-stat {
-    -fx-background-color: rgba(23,26,31,0.78);
-    -fx-background-radius: 16;
-    -fx-border-color: rgba(255,255,255,0.16);
-    -fx-border-radius: 16;
-}
-
-/* Login landing page revision */
-.login-fullpage {
-    -fx-background-color:
-        radial-gradient(center 23% 18%, radius 62%, rgba(59,130,246,0.12), transparent),
-        radial-gradient(center 48% 78%, radius 78%, rgba(11,37,69,0.18), transparent),
-        linear-gradient(to bottom right, #07111f, #0B1A2E 58%, #07111f);
-}
-
-
-.hero-content {
-    -fx-max-width: 620;
-}
-
-.hero-logo-peso {
-    -fx-font-size: 30px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FBBF24;
-}
-
-.hero-heading {
-    -fx-font-size: 46px;
-    -fx-font-weight: 900;
-    -fx-line-spacing: -1;
-    -fx-text-fill: #ffffff;
-}
-
-
-.feature-card {
-    -fx-padding: 14 16;
-    -fx-min-height: 66;
-    -fx-background-color: rgba(22,27,34,0.72);
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255,255,255,0.11);
-    -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 12, 0.16, 0, 6);
-}
-
-.feature-card:hover {
-    -fx-background-color: rgba(30,38,47,0.86);
-    -fx-border-color: rgba(59,130,246,0.36);
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.12), 18, 0.18, 0, 8);
-}
-
-.feature-title {
-    -fx-font-size: 13px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.feature-copy {
-    -fx-font-size: 12px;
-    -fx-text-fill: #aeb6c2;
-}
-
-.floating-widget {
-    -fx-padding: 14 16;
-    -fx-min-width: 150;
-    -fx-background-color: rgba(22,27,34,0.82);
-    -fx-background-radius: 18;
-    -fx-border-color: rgba(59,130,246,0.24);
-    -fx-border-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.30), 18, 0.20, 0, 10);
-}
-
-.floating-label {
-    -fx-font-size: 10px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #aeb6c2;
-}
-
-.floating-value {
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.widget-netpay {
-    -fx-translate-x: -48;
-    -fx-translate-y: 94;
-}
-
-.widget-attendance {
-    -fx-translate-x: -34;
-    -fx-translate-y: -20;
-}
-
-.widget-leave {
-    -fx-translate-x: -64;
-    -fx-translate-y: -88;
-}
-
-.widget-payday {
-    -fx-translate-x: 180;
-    -fx-translate-y: 34;
-}
-
-.widget-payslip {
-    -fx-translate-x: 160;
-    -fx-translate-y: -48;
-}
-
-
 .form-card {
     -fx-max-width: 420;
     -fx-min-width: 340;
@@ -481,38 +187,11 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.40), 34, 0.24, 0, 14);
 }
 
-.form-heading {
-    -fx-font-size: 34px;
-}
-
 .input-field,
 .combo-box.input-field {
     -fx-min-height: 50;
     -fx-background-color: rgba(255,255,255,0.055);
     -fx-border-color: rgba(174,182,194,0.22);
-}
-
-
-.security-icon {
-    -fx-font-size: 14px;
-    -fx-text-fill: #3B82F6;
-}
-
-.remember-check {
-    -fx-text-fill: #aeb6c2;
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-}
-
-.signin-button {
-    -fx-min-height: 50;
-    -fx-background-color: linear-gradient(to right, #0B2545, #3B82F6);
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.30), 18, 0.22, 0, 8);
-}
-
-.signin-button:hover {
-    -fx-background-color: linear-gradient(to right, #0F3A6B, #2563EB);
-    -fx-effect: dropshadow(gaussian, rgba(59,130,246,0.40), 22, 0.26, 0, 10);
 }
 
 
@@ -532,14 +211,6 @@
 .content-area {
     -fx-padding: 0 26 8 26;
     -fx-min-width: 1040;
-}
-
-.dashboard-watermark {
-    -fx-font-size: 96px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(255,255,255,0.035);
-    -fx-translate-x: -32;
-    -fx-translate-y: -16;
 }
 
 /* More (three-dots) side panel and small control styles */
@@ -586,9 +257,7 @@
 }
 
 /* Main containers */
-.light-mode .login-fullpage,
 .light-mode .app-shell,
-.light-mode .login-form-panel,
 .light-mode .form-card,
 .light-mode .chart-card,
 .light-mode .bottom-card,
@@ -599,10 +268,7 @@
 }
 
 /* Primary text */
-.light-mode .form-heading,
 .light-mode .page-title,
-.light-mode .brand-name-white,
-.light-mode .feature-title,
 .light-mode .metric-value,
 .light-mode .section-title,
 .light-mode .bottom-value,
@@ -612,9 +278,7 @@
 }
 
 /* Secondary text */
-.light-mode .form-subheading,
 .light-mode .muted-text,
-.light-mode .feature-copy,
 .light-mode .page-subtitle,
 .light-mode .note-text,
 .light-mode .metric-label,
@@ -628,7 +292,6 @@
     -fx-background-color: #1A1F36;
 }
 
-.light-mode .sidebar-title,
 .light-mode .sidebar-card-title,
 .light-mode .nav-button,
 .light-mode .selected-nav {
@@ -647,8 +310,7 @@
 .light-mode .input-field,
 .light-mode .combo-box.input-field,
 .light-mode .global-combo,
-.light-mode .global-toggle-button,
-.light-mode .period-selector {
+.light-mode .global-toggle-button {
     -fx-background-color: #f8fafc;
     -fx-text-fill: #111827;
     -fx-prompt-text-fill: #6b7280;
@@ -656,9 +318,6 @@
 }
 
 /* Links and accent text */
-.light-mode .quiet-link,
-.light-mode .password-toggle,
-.light-mode .inline-link,
 .light-mode .more-button {
     -fx-text-fill: #991b1b;
 }
@@ -674,28 +333,7 @@
     -fx-text-fill: #374151;
 }
 
-.light-mode .hero-statement {
-    -fx-text-fill: #374151;
-}
 
-.light-mode .hero-brand-motor {
-    -fx-text-fill: #132a50;
-}
-
-.light-mode .hero-brand-ph {
-    -fx-text-fill: #991b1b;
-}
-
-.light-mode .hero-statement-accent {
-    -fx-text-fill: #991b1b;
-}
-
-.light-mode .form-footer-text {
-    -fx-text-fill: #374151;
-}
-
-
-.login-fullpage,
 .app-shell {
     -fx-background-color:
         radial-gradient(center 0%   0%,  radius 72%, rgba(59,130,246,0.16), transparent),
@@ -703,135 +341,6 @@
         radial-gradient(center 55%  0%,  radius 85%, rgba(8,8,18,0.45), transparent),
         linear-gradient(to bottom right, #0E0E18, #09090F 55%, #070710);
 }
-
-
-
-.hero-content {
-    -fx-max-width: 580;
-}
-
-/* ── Hero statement typography ───────────────────────────────── */
-.hero-statement {
-    -fx-font-size: 54px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-line-spacing: -3;
-}
-
-.hero-statement-accent {
-    -fx-font-size: 54px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #3B82F6;
-    -fx-line-spacing: -3;
-}
-
-/* ── Stats row ───────────────────────────────────────────────── */
-.hero-stats-row {
-    -fx-padding: 24 0;
-    -fx-border-color: rgba(255,255,255,0.14) transparent rgba(255,255,255,0.14) transparent;
-    -fx-border-width: 1 0 1 0;
-}
-
-.hero-stat {
-    -fx-padding: 0 32 0 0;
-}
-
-.hero-stat-value {
-    -fx-font-size: 36px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-}
-
-.hero-stat-label {
-    -fx-font-size: 11px;
-    -fx-font-weight: 700;
-    -fx-text-fill: rgba(255,255,255,0.48);
-}
-
-.hero-stat-divider {
-    -fx-background-color: rgba(255,255,255,0.16);
-    -fx-min-width: 1;
-    -fx-max-width: 1;
-    -fx-pref-width: 1;
-    -fx-min-height: 48;
-    -fx-max-height: 48;
-    -fx-translate-y: 10;
-    -fx-margin: 0 24 0 0;
-}
-
-.brand-name-white,
-.brand-name-green {
-    -fx-font-size: 62px;
-    -fx-font-weight: 900;
-}
-
-.brand-name-white {
-    -fx-text-fill: rgba(255,255,255,0.88);
-}
-
-.brand-name-green {
-    -fx-text-fill: rgba(59,130,246,0.92);
-}
-
-
-.hero-logo-peso {
-    -fx-font-size: 34px;
-    -fx-text-fill: rgba(251,191,36,0.90);
-}
-
-.logo-ring-glow {
-    -fx-fill: rgba(11,37,69,0.20);
-}
-
-.logo-ring-outer,
-.form-logo-ring {
-    -fx-stroke: #0B2545;
-}
-
-.hero-heading {
-    -fx-font-size: 15px;
-    -fx-font-weight: 800;
-    -fx-text-fill: rgba(255,255,255,0.62);
-}
-
-.hero-subheading {
-    -fx-font-size: 13px;
-    -fx-line-spacing: 4;
-    -fx-text-fill: rgba(255,255,255,0.55);
-    -fx-max-width: 510;
-}
-
-.feature-card {
-    -fx-padding: 12 14;
-    -fx-min-height: 58;
-    -fx-background-color: rgba(13,17,23,0.70);
-    -fx-border-color: rgba(255,255,255,0.18);
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.16), 12, 0.12, 0, 5);
-}
-
-.feature-title {
-    -fx-text-fill: rgba(255,255,255,0.86);
-}
-
-.feature-copy {
-    -fx-text-fill: rgba(255,255,255,0.52);
-}
-
-.floating-widget {
-    -fx-background-color:
-        linear-gradient(to bottom right, rgba(22,27,34,0.50), rgba(13,17,23,0.30));
-    -fx-border-color: rgba(255,255,255,0.16);
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 18, 0.18, 0, 8);
-}
-
-.floating-label {
-    -fx-text-fill: rgba(255,255,255,0.76);
-}
-
-.floating-value {
-    -fx-text-fill: rgba(255,255,255,0.88);
-}
-
 
 
 
@@ -873,18 +382,7 @@
     -fx-text-fill: #111827;
 }
 
-.light-mode .login-brand-panel {
-    -fx-background-color:
-        linear-gradient(to right, rgba(246,248,251,0.94), rgba(246,248,251,0.76), rgba(246,248,251,0.28));
-}
-
-.light-mode .login-form-panel {
-    -fx-background-color:
-        linear-gradient(to left, rgba(246,248,251,0.96), rgba(246,248,251,0.72), rgba(246,248,251,0.24));
-}
-
 .light-mode .form-card,
-.light-mode .feature-card,
 .light-mode .chart-card,
 .light-mode .bottom-card,
 .light-mode .content-card,
@@ -901,16 +399,12 @@
     -fx-background-color: rgba(246,248,251,0.86);
 }
 
-.light-mode .brand-name-white,
-.light-mode .form-heading,
 .light-mode .field-label,
 .light-mode .section-title,
 .light-mode .metric-label,
 .light-mode .metric-value,
 .light-mode .bottom-value,
-.light-mode .feature-title,
 .light-mode .page-title,
-.light-mode .sidebar-title,
 .light-mode .sidebar-card-title,
 .light-mode .data-line,
 .light-mode .tile-title,
@@ -918,16 +412,10 @@
     -fx-text-fill: #111827;
 }
 
-.light-mode .brand-system-label,
-.light-mode .hero-heading,
-.light-mode .hero-subheading,
-.light-mode .form-subheading,
-.light-mode .feature-copy,
 .light-mode .muted-text,
 .light-mode .note-text,
 .light-mode .page-subtitle,
-.light-mode .sidebar-card-copy,
-.light-mode .remember-check {
+.light-mode .sidebar-card-copy {
     -fx-text-fill: #4b5563;
 }
 
@@ -968,21 +456,13 @@
 
 
 
-.dashboard-watermark {
-    -fx-opacity: 0;
-}
-
 /* Final light-mode overrides (placed at file end to take precedence) */
 .root-canvas.light-mode {
     -fx-background-color: linear-gradient(to bottom right, #fbfdff, #f3f7fb);
 }
 
-.root-canvas.light-mode .login-fullpage,
 .root-canvas.light-mode .app-shell,
-.root-canvas.light-mode .login-brand-panel,
-.root-canvas.light-mode .login-form-panel,
 .root-canvas.light-mode .form-card,
-.root-canvas.light-mode .feature-card,
 .root-canvas.light-mode .chart-card,
 .root-canvas.light-mode .bottom-card,
 .root-canvas.light-mode .content-card,
@@ -992,20 +472,12 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 8, 0.10, 0, 6);
 }
 
-.root-canvas.light-mode .form-heading,
 .root-canvas.light-mode .page-title,
-.root-canvas.light-mode .brand-name-white,
-.root-canvas.light-mode .sidebar-title,
-.root-canvas.light-mode .feature-title,
-.root-canvas.light-mode .metric-value,
-.root-canvas.light-mode .floating-label,
-.root-canvas.light-mode .floating-value {
+.root-canvas.light-mode .metric-value {
     -fx-text-fill: #0d1117;
 }
 
-.root-canvas.light-mode .form-subheading,
 .root-canvas.light-mode .muted-text,
-.root-canvas.light-mode .feature-copy,
 .root-canvas.light-mode .sidebar-card-copy,
 .root-canvas.light-mode .page-subtitle {
     -fx-text-fill: #4b5563;
@@ -1033,10 +505,7 @@
     -fx-background-color: #ffffff;
 }
 
-.root-canvas.light-mode .more-button,
-.root-canvas.light-mode .quiet-link,
-.root-canvas.light-mode .inline-link,
-.root-canvas.light-mode .password-toggle {
+.root-canvas.light-mode .more-button {
     -fx-text-fill: #2563eb;
 }
 
@@ -1044,11 +513,6 @@
 .root-canvas.light-mode .nav-button:hover {
     -fx-background-color: rgba(59,130,246,0.28);
     -fx-text-fill: #0d1117;
-}
-
-/* Ensure hero and brand contrasts remain visible */
-.root-canvas.light-mode .brand-name-green {
-    -fx-text-fill: #3B82F6;
 }
 
 /* Palette Override light-mode tail — dark-mode globals removed (Batch A);
@@ -1060,11 +524,7 @@
     -fx-background-color: linear-gradient(to bottom right, #fbfdff, #f3f7fb);
 }
 
-.root-canvas.light-mode .brand-name-green,
-.root-canvas.light-mode .more-button,
-.root-canvas.light-mode .quiet-link,
-.root-canvas.light-mode .inline-link,
-.root-canvas.light-mode .password-toggle {
+.root-canvas.light-mode .more-button {
     -fx-text-fill: #3B82F6;
 }
 
@@ -1077,55 +537,6 @@
     -fx-border-color: rgba(0,0,0,0.08);
 }
 
-/* Ensure hero contrast in light mode */
-.root-canvas.light-mode .brand-name-white {
-    -fx-text-fill: #0d1117;
-}
-
-
-.login-fullpage {
-    -fx-background-color: #EAEEF4;
-}
-
-
-
-/* ── Login panels ─────────────────────────────────────────────────────── */
-.login-brand-panel {
-    -fx-pref-width: 860;
-    -fx-min-width: 560;
-    -fx-max-width: 1100;
-    -fx-padding: 80 72 80 80;
-    -fx-background-color:
-        radial-gradient(center 5% 5%, radius 65%, rgba(232,67,67,0.18), transparent),
-        linear-gradient(to bottom right, #1E2340, #161B32 52%, #111628);
-    -fx-border-color: transparent rgba(255,255,255,0.06) transparent transparent;
-    -fx-border-width: 0 1 0 0;
-}
-
-.login-form-panel {
-    -fx-pref-width: 500;
-    -fx-min-width: 420;
-    -fx-max-width: 560;
-    -fx-padding: 0 52 0 20;
-    -fx-background-color: #F4F6FA;
-}
-
-
-
-
-.hero-stat-value   { -fx-text-fill: #ffffff; }
-.hero-stat-label   { -fx-text-fill: rgba(255,255,255,0.45); }
-.hero-stats-row {
-    -fx-border-color: rgba(255,255,255,0.12) transparent rgba(255,255,255,0.12) transparent;
-}
-
-.hero-heading      { -fx-text-fill: rgba(255,255,255,0.60); }
-
-
-
-
-/* Form panel header logo area */
-.form-panel-header { -fx-padding: 24 0 16 0; }
 
 /* ── Inputs on white form card ────────────────────────────────────────── */
 .input-field,
@@ -1171,35 +582,6 @@
     -fx-text-fill: #E84343;
 }
 
-.form-back-button {
-    -fx-background-color: #F4F6FA;
-    -fx-border-color: #DDE2EE;
-    -fx-border-width: 1;
-    -fx-text-fill: #8896A5;
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
-    -fx-font-weight: 700;
-    -fx-min-height: 42;
-    -fx-cursor: hand;
-    -fx-effect: none;
-}
-
-.form-back-button:hover {
-    -fx-background-color: #E8ECF4;
-    -fx-text-fill: #2C3A4A;
-}
-
-
-
-/* ── Links & toggles ──────────────────────────────────────────────────── */
-.quiet-link, .password-toggle, .inline-link {
-    -fx-text-fill: #E84343;
-    -fx-font-weight: 800;
-    -fx-border-color: transparent;
-}
-
-.quiet-link:hover  { -fx-text-fill: #C22B2B; }
-
 /* ── Sidebar (stays dark) ─────────────────────────────────────────────── */
 .sidebar {
     -fx-background-color: #1A1F36;
@@ -1234,7 +616,6 @@
 /* ── Message labels ───────────────────────────────────────────────────── */
 
 /* ── Selectors & controls (light bg) ─────────────────────────────────── */
-.period-selector,
 .global-combo,
 .global-toggle-button {
     -fx-background-color: #F4F6FA;
@@ -1258,7 +639,6 @@
 
 
 /* ── Root canvas light mode ───────────────────────────────────────────── */
-.root-canvas.light-mode .login-fullpage,
 .root-canvas.light-mode .app-shell { -fx-background-color: #EAEEF4; }
 .root-canvas.light-mode .topbar,
 .root-canvas.light-mode .footerbar { -fx-background-color: #FFFFFF; }
@@ -1266,7 +646,6 @@
 .root-canvas.light-mode .chart-card,
 .root-canvas.light-mode .bottom-card,
 .root-canvas.light-mode .content-card { -fx-background-color: #FFFFFF; -fx-border-color: transparent; }
-.root-canvas.light-mode .brand-name-green { -fx-text-fill: #E84343; }
 
 /* ══════════════════════════════════════════════════════════════════════
    POLISH PASS — Fix resizing · Toggle colors · Glass cards ·
@@ -1290,19 +669,6 @@
 
 
 /* ── Red & Silver brand typography ───────────────────────────────────── */
-/* Hero brand panel (dark bg) */
-.hero-brand-motor {
-    -fx-font-size: 54px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #C8D0E0;
-}
-
-.hero-brand-ph {
-    -fx-font-size: 54px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #E84343;
-}
-
 /* Sidebar brand (dark bg) */
 .sidebar-brand { -fx-padding: 4 0 8 4; }
 
@@ -1323,19 +689,6 @@
     -fx-font-weight: 900;
     -fx-text-fill: rgba(180,190,215,0.45);
     -fx-padding: 0 0 0 2;
-}
-
-/* Form panel brand (light bg) */
-.form-brand-motor {
-    -fx-font-size: 20px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #1A1F36;
-}
-
-.form-brand-ph {
-    -fx-font-size: 20px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #E84343;
 }
 
 /* ── Toggle / combo visibility fix ───────────────────────────────────── */
@@ -1424,14 +777,6 @@
 
 
 
-/* ── Sidebar brand-system label override ──────────────────────────────── */
-.brand-system-label {
-    -fx-font-size: 8px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(255,255,255,0.35);
-    -fx-padding: 0 0 0 2;
-}
-
 /* ══════════════════════════════════════════════════════════════════════
    METALLIC RED/SILVER THEME — Matches new logo: chrome ring · silver M · red PH
    Dark sidebar · Silver metallic topbar · Metallic red glass cards
@@ -1440,8 +785,6 @@
 
 /* ── Root & overall shell ─────────────────────────────────────────────── */
 .root-canvas { -fx-background-color: #1A1A1E; }
-
-.login-fullpage { -fx-background-color: #111114; }
 
 .app-shell {
     -fx-background-color: #111114;
@@ -1557,8 +900,7 @@
     -fx-text-fill: #FFFFFF;
 }
 
-/* ── Primary / Sign In — embossed metallic red ────────────────────────── */
-.signin-button,
+/* ── Primary — embossed metallic red ──────────────────────────────────── */
 .primary-button,
 .success-button {
     -fx-background-color:
@@ -1574,15 +916,12 @@
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.50), 8, 0.35, 0, 3);
 }
 
-.signin-button:hover,
 .primary-button:hover,
 .success-button:hover {
     -fx-background-color:
         linear-gradient(from 0% 0% to 0% 100%, #FF6060 0%, #E01818 45%, #B01414 100%);
     -fx-effect: dropshadow(gaussian, rgba(200,0,0,0.55), 12, 0.35, 0, 4);
 }
-
-.signin-button { -fx-min-height: 48; }
 
 .secondary-button {
     -fx-background-color:
@@ -1720,77 +1059,8 @@
     -fx-padding: 32;
 }
 
-.form-heading    { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #F0F0F4; }
-.form-subheading { -fx-font-size: 13px; -fx-text-fill: rgba(190,190,205,0.65); }
-.form-footer-text { -fx-text-fill: rgba(160,160,175,0.55); -fx-font-size: 10px; }
-
-/* ── Login brand panel — very dark, metallic feel ────────────────────── */
-.login-brand-panel {
-    -fx-min-width: 380;
-    -fx-background-color:
-        radial-gradient(center 8% 8%, radius 60%, rgba(200,15,15,0.22), transparent),
-        linear-gradient(to bottom right, #1A1A1E, #111114 55%, #0E0E12);
-    -fx-border-color: transparent rgba(255,40,40,0.18) transparent transparent;
-    -fx-border-width: 0 1 0 0;
-}
-
-.login-form-panel {
-    -fx-background-color:
-        linear-gradient(to left, rgba(14,14,18,0.96), rgba(10,10,14,0.75), rgba(8,8,12,0.22));
-}
-
-/* ── Hero brand text (dark panel) ────────────────────────────────────── */
-.hero-brand-motor { -fx-font-size: 52px; -fx-font-weight: 900; -fx-text-fill: #C8CDD6; }
-.hero-brand-ph    { -fx-font-size: 52px; -fx-font-weight: 900; -fx-text-fill: #CC1E1E; }
-.hero-statement   { -fx-font-size: 46px; -fx-font-weight: 900; -fx-text-fill: #E8E8EC; }
-.hero-statement-accent { -fx-font-size: 46px; -fx-font-weight: 900; -fx-text-fill: #CC1E1E; }
-.hero-subheading  { -fx-font-size: 13px; -fx-text-fill: rgba(200,200,212,0.50); }
-.brand-system-label {
-    -fx-font-size: 8px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(200,200,212,0.30);
-}
-
-/* ── Security badge ───────────────────────────────────────────────────── */
-.security-badge {
-    -fx-background-color: rgba(180,15,15,0.18);
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(255,60,60,0.30);
-    -fx-border-radius: 10;
-    -fx-border-width: 1;
-    -fx-padding: 10 14;
-}
-
-.security-icon       { -fx-text-fill: #FF6060; }
-.form-security-note  { -fx-text-fill: #FF8080; -fx-font-weight: 800; -fx-font-size: 12px; }
-
-/* ── Links & password toggle ──────────────────────────────────────────── */
-.quiet-link, .inline-link { -fx-text-fill: #FF6060; -fx-font-weight: 800; -fx-border-color: transparent; }
-.quiet-link:hover          { -fx-text-fill: #FF8080; }
-.password-toggle           { -fx-text-fill: rgba(180,180,195,0.55); -fx-font-weight: 700; }
-.password-toggle:hover     { -fx-text-fill: #FF6060; }
-.remember-check            { -fx-text-fill: rgba(180,180,200,0.65); -fx-font-size: 12px; }
-
-/* ── Form back button ─────────────────────────────────────────────────── */
-.form-back-button {
-    -fx-background-color: rgba(255,255,255,0.05);
-    -fx-border-color: rgba(255,255,255,0.12);
-    -fx-border-width: 1;
-    -fx-text-fill: rgba(180,180,200,0.60);
-    -fx-background-radius: 10;
-    -fx-border-radius: 10;
-    -fx-font-weight: 700;
-    -fx-min-height: 42;
-    -fx-cursor: hand;
-}
-
-.form-back-button:hover {
-    -fx-background-color: rgba(255,255,255,0.08);
-    -fx-text-fill: rgba(220,220,235,0.88);
-}
-
 /* ── Controls & combos ────────────────────────────────────────────────── */
-.global-combo, .global-toggle-button, .period-selector {
+.global-combo, .global-toggle-button {
     -fx-background-color:
         linear-gradient(to bottom, rgba(45,45,52,0.92), rgba(32,32,38,0.96));
     -fx-border-color: rgba(180,180,200,0.18);
@@ -1812,14 +1082,6 @@
 .more-button:hover { -fx-text-fill: #FF6060; }
 
 /* ── Date range pickers ───────────────────────────────────────────────── */
-.date-range-box { -fx-padding: 0; }
-
-.period-range-sep {
-    -fx-text-fill: rgba(200,200,215,0.55);
-    -fx-font-size: 14px;
-    -fx-font-weight: 700;
-}
-
 .period-picker {
     -fx-background-color:
         linear-gradient(to bottom, rgba(45,45,52,0.92), rgba(32,32,38,0.96));
@@ -1868,19 +1130,6 @@
 .maternity { -fx-background-color: linear-gradient(to bottom right, rgba(220,100,10,0.88), rgba(170,70,5,0.95)); }
 
 /* Final typography and wrapping overrides to avoid clipped/cropped text */
-.root-canvas .brand-name-white,
-.root-canvas .brand-name-green {
-    -fx-font-size: 48px;
-    -fx-font-weight: 900;
-    -fx-wrap-text: true;
-}
-
-.root-canvas .form-heading {
-    -fx-font-size: 28px;
-    -fx-font-weight: 900;
-    -fx-wrap-text: true;
-}
-
 .root-canvas .form-card {
     -fx-padding: 40;
 }
@@ -1893,11 +1142,7 @@
     -fx-padding: 0 14;
 }
 
-.root-canvas .feature-copy,
-.root-canvas .hero-heading,
-.root-canvas .hero-subheading,
 .root-canvas .page-subtitle,
-.root-canvas .feature-title,
 .root-canvas .metric-value,
 .root-canvas .label {
     -fx-wrap-text: true;
@@ -1905,7 +1150,6 @@
 
 /* Ensure buttons and toggles have comfortable sizes */
 .root-canvas .global-toggle-button,
-.root-canvas .signin-button,
 .root-canvas .primary-button {
     -fx-min-height: 44;
     -fx-font-size: 14px;
@@ -2415,80 +1659,10 @@
     -fx-text-fill: #B91C1C;
 }
 
-/* Employee leave request screen */
-.leave-root {
-    -fx-min-width: 760;
-}
-
-.leave-card {
-    -fx-padding: 22 24;
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
-        rgba(23,26,31,0.78);
-    -fx-background-radius: 16;
-    -fx-border-color: rgba(255,120,120,0.22);
-    -fx-border-width: 1;
-    -fx-border-radius: 16;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.24), 18, 0.20, 0, 9);
-}
-
-.leave-form-card,
-.leave-history-card {
-    -fx-background-color:
-        linear-gradient(from 0% 0% to 0% 18%, rgba(255,90,90,0.10), transparent),
-        rgba(80,18,22,0.88);
-    -fx-border-color: rgba(255,120,120,0.25);
-}
-
-.leave-credits-card,
-.leave-form-card,
-.leave-history-card {
-    -fx-min-width: 720;
-}
-
-.leave-card-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FF6666;
-}
-
-.leave-form-card .leave-card-title,
-.leave-history-card .section-title {
-    -fx-text-fill: #FFFFFF;
-}
-
-.leave-history-card .note-text {
-    -fx-text-fill: rgba(255,220,220,0.72);
-}
-
-.leave-credits-row {
-    -fx-min-height: 96;
-    -fx-pref-height: 100;
-}
-
-.leave-credit-tile {
-    -fx-padding: 12 18;
-    -fx-alignment: CENTER;
-    -fx-background-color: transparent;
-}
-
-.leave-credit-divider {
-    -fx-pref-width: 1;
-    -fx-max-width: 1;
-    -fx-min-height: 72;
-    -fx-background-color: rgba(255,95,95,0.16);
-}
-
-.leave-credit-value {
-    -fx-font-size: 25px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FFFFFF;
-}
-
-.leave-form-grid {
-    -fx-min-height: 154;
-}
-
+/* Shared form-validation helpers — used by Employee Leave AND Support
+   Tickets (the IT shell loads support-ticket.css but not leave.css), so
+   these base rules stay here. Leave-scoped light-mode overrides for
+   .required-asterisk / .field-error live in modules/employee/leave.css. */
 .field-error {
     -fx-font-size: 11px;
     -fx-font-weight: 900;
@@ -2507,220 +1681,10 @@
     -fx-text-fill: rgba(255,210,210,0.62);
 }
 
-.leave-form-card .field-label {
-    -fx-text-fill: rgba(255,210,210,0.72);
-}
-
-.leave-form-card .input-field,
-.leave-form-card .combo-box.input-field,
-.leave-form-card .date-picker,
-.leave-form-card .date-picker .text-field,
-.leave-form-card .date-picker .date-picker-display-node,
-.leave-form-card .leave-reason-area,
-.leave-form-card .leave-reason-area .content {
-    -fx-background-color: #111827;
-    -fx-border-color: rgba(255,255,255,0.13);
-    -fx-text-fill: #F8FAFC;
-    -fx-prompt-text-fill: rgba(235,238,245,0.58);
-}
-
-.leave-form-card .date-picker {
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-}
-
-.leave-reason-area {
-    -fx-min-height: 92;
-    -fx-pref-height: 96;
-    -fx-padding: 8 12;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-}
-
-.leave-reason-area .content {
-    -fx-background-radius: 12;
-}
-
-.leave-status-filter {
-    -fx-min-height: 40;
-    -fx-pref-height: 40;
-    -fx-background-color: #111827;
-    -fx-border-color: rgba(255,255,255,0.13);
-    -fx-text-fill: #F8FAFC;
-    -fx-prompt-text-fill: rgba(235,238,245,0.58);
-    -fx-padding: 0 12;
-}
-
-.leave-history-table .table-cell {
-    -fx-alignment: CENTER_LEFT;
-}
-
-.leave-status-pending {
-    -fx-text-fill: #FBBF24;
-    -fx-font-weight: 900;
-}
-
-.leave-status-approved {
-    -fx-text-fill: #86EFAC;
-    -fx-font-weight: 900;
-}
-
-.leave-status-rejected,
-.leave-status-cancelled {
-    -fx-text-fill: #FF8A8A;
-    -fx-font-weight: 900;
-}
-
-.leave-cancel-button {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(255,95,95,0.48);
-    -fx-border-width: 1;
-    -fx-text-fill: #FF7777;
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-    -fx-font-weight: 900;
-    -fx-font-size: 12px;
-    -fx-padding: 6 14;
-    -fx-cursor: hand;
-    -fx-min-height: 30;
-}
-
-.leave-cancel-button:hover {
-    -fx-background-color: rgba(232,67,67,0.10);
-    -fx-border-color: rgba(255,105,105,0.72);
-    -fx-text-fill: #FFFFFF;
-}
-
-/* Light mode */
-.root-canvas.light-mode .leave-card {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: transparent;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.14, 0, 5);
-}
-
-.root-canvas.light-mode .leave-form-card,
-.root-canvas.light-mode .leave-history-card {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: transparent;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0.14, 0, 5);
-}
-
-.root-canvas.light-mode .leave-card-title {
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .leave-form-card .leave-card-title,
-.root-canvas.light-mode .leave-history-card .section-title {
-    -fx-text-fill: #111827;
-}
-
-.root-canvas.light-mode .leave-history-card .note-text {
-    -fx-text-fill: #4B5563;
-}
-
-.root-canvas.light-mode .leave-credit-tile {
-    -fx-background-color: transparent;
-}
-
-.root-canvas.light-mode .leave-credit-divider {
-    -fx-background-color: rgba(17,24,39,0.10);
-}
-
-.root-canvas.light-mode .leave-credit-value {
-    -fx-text-fill: #111827;
-}
-
-.root-canvas.light-mode .leave-form-card .field-label {
-    -fx-text-fill: #111827;
-}
-
-.root-canvas.light-mode .leave-form-card .required-asterisk {
-    -fx-text-fill: #DC2626;
-    -fx-font-weight: 900;
-}
-
-.root-canvas.light-mode .leave-form-card .field-error {
-    -fx-text-fill: #DC2626;
-    -fx-font-weight: 900;
-}
-
+/* Shared light-mode character-counter (Leave + Support Tickets). The
+   Leave-scoped light-mode overrides moved to modules/employee/leave.css. */
 .root-canvas.light-mode .character-counter {
     -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .leave-form-card .input-field,
-.root-canvas.light-mode .leave-form-card .combo-box.input-field,
-.root-canvas.light-mode .leave-form-card .date-picker,
-.root-canvas.light-mode .leave-form-card .date-picker .text-field,
-.root-canvas.light-mode .leave-form-card .date-picker .date-picker-display-node,
-.root-canvas.light-mode .leave-reason-area,
-.root-canvas.light-mode .leave-reason-area .content {
-    -fx-background-color: #E5E7EB;
-    -fx-border-color: rgba(17,24,39,0.16);
-    -fx-text-fill: #111827;
-    -fx-prompt-text-fill: rgba(17,24,39,0.52);
-}
-
-.root-canvas.light-mode .leave-form-card .combo-box.input-field > .list-cell {
-    -fx-text-fill: #111827;
-}
-
-.root-canvas.light-mode .leave-form-card .date-picker .arrow-button .arrow {
-    -fx-background-color: #DC2626;
-}
-
-/* Light mode status filter */
-.root-canvas.light-mode .leave-status-filter {
-    -fx-background-color: #E5E7EB;
-    -fx-border-color: rgba(17,24,39,0.16);
-    -fx-text-fill: #111827;
-    -fx-prompt-text-fill: rgba(17,24,39,0.52);
-}
-
-.root-canvas.light-mode .leave-status-filter .arrow {
-    -fx-background-color: #4B5563;
-}
-
-.leave-status-filter > .list-cell {
-    -fx-text-fill: #F8FAFC;
-    -fx-padding: 0 6 0 0;
-}
-
-.root-canvas.light-mode .leave-status-filter > .list-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: #111827;
-}
-
-/* Light mode table */
-.root-canvas.light-mode .leave-history-table .column-header .label {
-    -fx-text-fill: #1F2937;
-    -fx-font-weight: 900;
-}
-
-.root-canvas.light-mode .leave-history-table .column-header-background {
-    -fx-border-color: transparent transparent rgba(17,24,39,0.08) transparent;
-}
-
-.root-canvas.light-mode .leave-history-table .table-row-cell {
-    -fx-border-color: transparent transparent rgba(17,24,39,0.06) transparent;
-}
-
-.root-canvas.light-mode .leave-history-table .table-cell {
-    -fx-text-fill: #1F2937;
-}
-
-.root-canvas.light-mode .leave-history-table .placeholder .label {
-    -fx-text-fill: #4B5563;
-}
-
-.root-canvas.light-mode .leave-cancel-button {
-    -fx-border-color: rgba(185,28,28,0.35);
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .leave-cancel-button:hover {
-    -fx-background-color: rgba(185,28,28,0.07);
-    -fx-border-color: rgba(185,28,28,0.58);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
