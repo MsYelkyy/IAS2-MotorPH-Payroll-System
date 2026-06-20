@@ -39,7 +39,7 @@
                 onAction="#handleNewPayrun" styleClass="primary-button"/>
     </HBox>
 
-    <StackPane VBox.vgrow="ALWAYS">
+    <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
 
         <!-- ░░░ LANDING: Pending / Completed tabs ░░░ -->
         <VBox fx:id="landingPanel" spacing="0" VBox.vgrow="ALWAYS">
@@ -167,7 +167,7 @@
                     <TableColumn fx:id="readyDaysColumn" text="Days Worked" prefWidth="110" minWidth="90"/>
                     <TableColumn fx:id="readyHoursColumn" text="Total Hours" prefWidth="110" minWidth="90"/>
                     <TableColumn fx:id="readyAttendanceColumn" text="Attendance Status" prefWidth="140" minWidth="120"/>
-                    <TableColumn fx:id="readyPayrollColumn" text="Payroll Status" prefWidth="130" minWidth="110"/>
+                    <TableColumn fx:id="readyActionColumn" text="Actions" prefWidth="130" minWidth="110"/>
                 </columns>
                 <placeholder>
                     <Label text="No employees found for this payroll date." styleClass="muted-text"/>

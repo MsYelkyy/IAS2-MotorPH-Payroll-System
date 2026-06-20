@@ -4,6 +4,7 @@ import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
 import motorph.application.dto.payroll.GovernmentRatesDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
+import motorph.application.dto.payroll.PayrollPreviewDTO;
 import motorph.application.dto.payroll.PayrollSummaryDTO;
 import motorph.application.dto.payroll.PayrunCreateDTO;
 import motorph.application.dto.payroll.PayrunReadinessDTO;
@@ -109,11 +110,68 @@ public class PayrollService {
         validate(payrunId, "Payrun ID");
 
         Payrun payrun = getPayrunOrThrow(payrunId);
-        Employee employee = employeeService.getEmployeeById(employeeId);
 
         if (payrollResultRepository.existsByEmployeeAndPayrunId(employeeId, payrunId)) {
             throw new BusinessRuleException("Payroll already generated for this employee and payrun.");
         }
+
+        ComputedPayroll computed = computeBreakdown(employeeId, payrun);
+        PayrollBreakdown breakdown = computed.breakdown;
+        double totalHoursWorked = computed.totalHoursWorked;
+
+        LocalDateTime generatedAt = LocalDateTime.now();
+
+        PayrollResult result = new PayrollResult(
+                null,
+                employeeId,
+                payrunId,
+                totalHoursWorked,
+                breakdown.getTotalEarnings(),
+                breakdown.getTotalDeductions(),
+                breakdown.getNetPay(),
+                generatedAt
+        );
+
+        int payrollResultId = payrollResultRepository.save(result);
+
+        savePayrollComponents(payrollResultId, breakdown);
+
+        return new PayrollResult(
+                payrollResultId,
+                employeeId,
+                payrunId,
+                totalHoursWorked,
+                breakdown.getTotalEarnings(),
+                breakdown.getTotalDeductions(),
+                breakdown.getNetPay(),
+                generatedAt
+        );
+    }
+
+    // computes a payroll preview without persisting any result
+    public PayrollPreviewDTO previewPayrollForEmployee(int employeeId, int payrunId) {
+        validate(employeeId, "Employee ID");
+        validate(payrunId, "Payrun ID");
+
+        Payrun payrun = getPayrunOrThrow(payrunId);
+        ComputedPayroll computed = computeBreakdown(employeeId, payrun);
+        PayrollBreakdown breakdown = computed.breakdown;
+
+        return new PayrollPreviewDTO(
+                employeeId,
+                resolveEmployeeName(employeeId),
+                payrun.getStartDate(),
+                payrun.getEndDate(),
+                computed.totalHoursWorked,
+                breakdown.getTotalEarnings(),
+                breakdown.getTotalDeductions(),
+                breakdown.getNetPay()
+        );
+    }
+
+    // fetches employee data and computes the payroll breakdown without saving
+    private ComputedPayroll computeBreakdown(int employeeId, Payrun payrun) {
+        Employee employee = employeeService.getEmployeeById(employeeId);
 
         List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(
                 employeeId,
@@ -165,33 +223,19 @@ public class PayrollService {
                 rates
         );
 
-        LocalDateTime generatedAt = LocalDateTime.now();
+        return new ComputedPayroll(breakdown, totalHoursWorked);
+    }
 
-        PayrollResult result = new PayrollResult(
-                null,
-                employeeId,
-                payrunId,
-                totalHoursWorked,
-                breakdown.getTotalEarnings(),
-                breakdown.getTotalDeductions(),
-                breakdown.getNetPay(),
-                generatedAt
-        );
+    // holds a computed breakdown and its total hours before persistence
+    private static final class ComputedPayroll {
+        private final PayrollBreakdown breakdown;
+        private final double totalHoursWorked;
 
-        int payrollResultId = payrollResultRepository.save(result);
-
-        savePayrollComponents(payrollResultId, breakdown);
-
-        return new PayrollResult(
-                payrollResultId,
-                employeeId,
-                payrunId,
-                totalHoursWorked,
-                breakdown.getTotalEarnings(),
-                breakdown.getTotalDeductions(),
-                breakdown.getNetPay(),
-                generatedAt
-        );
+        // constructors
+        private ComputedPayroll(PayrollBreakdown breakdown, double totalHoursWorked) {
+            this.breakdown = breakdown;
+            this.totalHoursWorked = totalHoursWorked;
+        }
     }
 
     // gets payroll results by payrun id
@@ -332,7 +376,7 @@ public class PayrollService {
         );
     }
 
-    // creates a new payrun; rejects duplicate periods
+    // creates a new payrun; rejects duplicate, overlapping, invalid, and future periods
     public Payrun createPayrun(PayrunCreateDTO dto) {
         if (dto == null) {
             throw new ValidationException("Payrun create data is required.");
@@ -340,13 +384,38 @@ public class PayrollService {
         if (dto.getStartDate() == null || dto.getEndDate() == null || dto.getPayDate() == null) {
             throw new ValidationException("Start date, end date, and pay date are required.");
         }
+        if (dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new ValidationException("End date cannot be before start date.");
+        }
+        if (dto.getEndDate().isAfter(LocalDate.now())) {
+            throw new ValidationException("Payrun period must be complete before it can be created.");
+        }
+        validateSemiMonthlyPeriod(dto.getStartDate(), dto.getEndDate());
         if (payrunRepository.existsByPeriod(dto.getStartDate(), dto.getEndDate())) {
             throw new BusinessRuleException("A payrun already exists for this period.");
+        }
+        if (payrunRepository.existsOverlapping(dto.getStartDate(), dto.getEndDate())) {
+            throw new BusinessRuleException("A payrun already overlaps with the selected period.");
         }
         Payrun payrun = new Payrun(null, dto.getStartDate(), dto.getEndDate(),
                 dto.getPayDate(), dto.getPayrollType());
         int id = payrunRepository.saveAndReturnId(payrun);
         return payrunRepository.findById(id);
+    }
+
+    // enforces standard semi-monthly cutoffs: 1st-15th or 16th-end of month
+    private void validateSemiMonthlyPeriod(LocalDate start, LocalDate end) {
+        if (start.getYear() != end.getYear() || start.getMonthValue() != end.getMonthValue()) {
+            throw new ValidationException(
+                    "Payroll period must stay within a single calendar month.");
+        }
+        boolean firstHalf = start.getDayOfMonth() == 1 && end.getDayOfMonth() == 15;
+        boolean secondHalf = start.getDayOfMonth() == 16
+                && end.getDayOfMonth() == end.lengthOfMonth();
+        if (!firstHalf && !secondHalf) {
+            throw new ValidationException(
+                    "Payroll period must be the 1st-15th or 16th-end of the month.");
+        }
     }
 
     // returns payroll summaries for a payrun enriched with employee full names

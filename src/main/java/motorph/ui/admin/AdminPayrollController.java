@@ -1,17 +1,20 @@
 package motorph.ui.admin;
 
 import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
+import motorph.application.dto.payroll.PayrollPreviewDTO;
 import motorph.application.dto.payroll.PayrollSummaryDTO;
 import motorph.application.dto.payroll.PayrunCreateDTO;
 import motorph.application.dto.payroll.PayrunReadinessDTO;
 import motorph.application.dto.payroll.PayslipDTO;
 import motorph.application.dto.payroll.PendingPayrunSummaryDTO;
 import motorph.application.service.PayrollService;
+import motorph.application.service.report.PayrollReportService;
 import motorph.domain.model.Payrun;
 import motorph.domain.value.PayrollType;
 import motorph.domain.value.ReadinessStatus;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.util.UiFormatter;
+import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -34,6 +37,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
@@ -50,6 +54,7 @@ public class AdminPayrollController {
     private static final String FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.46);";
 
     private PayrollService payrollService;
+    private PayrollReportService payrollReportService;
 
     private Payrun selectedPayrun;
     private List<PayrollSummaryDTO> selectedPayrunSummaries;
@@ -63,6 +68,7 @@ public class AdminPayrollController {
     private FilteredList<PayrollSummaryDTO> filteredResults;
 
     // toolbar
+    @FXML private StackPane toastRoot;
     @FXML private Button backButton;
     @FXML private VBox detailHeaderBox;
     @FXML private Label detailTitleLabel;
@@ -123,7 +129,7 @@ public class AdminPayrollController {
     @FXML private TableColumn<PayrunReadinessDTO, Number> readyDaysColumn;
     @FXML private TableColumn<PayrunReadinessDTO, Number> readyHoursColumn;
     @FXML private TableColumn<PayrunReadinessDTO, String> readyAttendanceColumn;
-    @FXML private TableColumn<PayrunReadinessDTO, String> readyPayrollColumn;
+    @FXML private TableColumn<PayrunReadinessDTO, Void> readyActionColumn;
 
     // completed detail
     @FXML private VBox completedDetailPanel;
@@ -169,7 +175,9 @@ public class AdminPayrollController {
 
     @FXML
     private void initialize() {
-        payrollService = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        EmployeeUIServiceFactory factory = EmployeeUIServiceFactory.getInstance();
+        payrollService = factory.getPayrollService();
+        payrollReportService = factory.getPayrollReportService();
 
         payrunTypeCombo.getItems().setAll(PayrollType.values());
         payrunTypeCombo.setConverter(new StringConverter<>() {
@@ -222,6 +230,11 @@ public class AdminPayrollController {
     private void handleGenerate() {
         if (selectedPayrun == null) return;
 
+        if (isAlreadyCompleted(selectedPayrun.getPayrunId())) {
+            showAlreadyGeneratedAlert();
+            return;
+        }
+
         PendingPayrunSummaryDTO summary = findPendingSummary(selectedPayrun.getPayrunId());
         int ready = summary != null ? summary.getReadyEmployees() : 0;
         int incomplete = summary != null ? summary.getIncompleteEmployees() : 0;
@@ -244,12 +257,19 @@ public class AdminPayrollController {
         if (res.isPresent() && res.get() == ButtonType.YES) {
             try {
                 int generated = payrollService.generatePayrollForReadyEmployees(selectedPayrun.getPayrunId());
-                setMessage("Payroll generated for " + generated + " employee(s).");
                 showCompletedDetail(selectedPayrun);
+                UiMessageUtil.showToast(toastRoot, "Payroll generated for " + generated + " employee(s).");
             } catch (Exception e) {
-                setMessage("Error: " + e.getMessage());
+                showGenerateErrorAlert(UiMessageUtil.toUserMessage(e));
             }
         }
+    }
+
+    private void showGenerateErrorAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
+        alert.setTitle("Generate Payroll");
+        alert.setHeaderText("Could Not Generate Payroll");
+        alert.showAndWait();
     }
 
     private void showCannotGeneratePayrollAlert() {
@@ -262,23 +282,79 @@ public class AdminPayrollController {
         alert.showAndWait();
     }
 
-    @FXML
-    private void handlePrint() {
-        if (currentPayslip == null) return;
+    // checks if the payrun already has generated payroll results
+    private boolean isAlreadyCompleted(int payrunId) {
+        return completedItems.stream().anyMatch(c -> c.getPayrunId() == payrunId);
+    }
 
-        javafx.scene.control.TextArea area = new javafx.scene.control.TextArea(buildPayslipText(currentPayslip));
-        area.setEditable(false);
-        area.setWrapText(false);
-        area.setPrefRowCount(28);
-        area.setPrefColumnCount(60);
-        area.setStyle("-fx-font-family: 'Courier New', monospace; -fx-font-size: 12;");
+    private void showAlreadyGeneratedAlert() {
+        Alert alert = new Alert(Alert.AlertType.WARNING,
+                "Payroll has already been generated for this payroll period.\n\n"
+                        + "Open it from the Completed tab to view the results.",
+                ButtonType.OK);
+        alert.setTitle("Payroll Already Generated");
+        alert.setHeaderText("Payroll Already Generated");
+        alert.showAndWait();
+    }
+
+    // shows a non-persisted payroll preview for a ready employee
+    private void showPayrollPreview(PayrunReadinessDTO row) {
+        if (selectedPayrun == null || row == null || !row.isReady()) return;
+
+        PayrollPreviewDTO preview;
+        try {
+            preview = payrollService.previewPayrollForEmployee(
+                    row.getEmployeeId(), selectedPayrun.getPayrunId());
+        } catch (Exception e) {
+            setMessage("Failed to compute preview: " + e.getMessage());
+            return;
+        }
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Payslip - " + currentPayslip.getFullName());
-        alert.setHeaderText(null);
-        alert.getDialogPane().setContent(area);
-        alert.getDialogPane().setPrefWidth(640);
+        alert.setTitle("Payroll Preview");
+        alert.setHeaderText("Preview Only — Not Generated");
+        alert.getDialogPane().setContent(buildPreviewContent(preview));
+        alert.getDialogPane().setPrefWidth(420);
         alert.showAndWait();
+    }
+
+    // builds the preview modal body
+    private VBox buildPreviewContent(PayrollPreviewDTO preview) {
+        VBox box = new VBox(6);
+        box.getChildren().addAll(
+                previewLine("Employee", preview.getFullName() + " (#" + preview.getEmployeeId() + ")"),
+                previewLine("Pay Period",
+                        preview.getPeriodStart().format(DATE_FMT) + " - " + preview.getPeriodEnd().format(DATE_FMT)),
+                previewLine("Total Hours", String.format("%.2f", preview.getTotalHours())),
+                previewLine("Gross Pay", UiFormatter.formatPeso(preview.getGrossPay())),
+                previewLine("Total Deductions", UiFormatter.formatPeso(preview.getTotalDeductions())),
+                previewLine("Net Pay", UiFormatter.formatPeso(preview.getNetPay())));
+        return box;
+    }
+
+    // builds one label/value row for the preview modal
+    private HBox previewLine(String label, String value) {
+        Label name = new Label(label);
+        name.setMinWidth(140);
+        name.setStyle("-fx-font-weight: bold;");
+        HBox line = new HBox(8, name, new Label(value));
+        line.setAlignment(Pos.CENTER_LEFT);
+        return line;
+    }
+
+    @FXML
+    private void handlePrint() {
+        if (currentPayslip == null || selectedPayrun == null) return;
+        printPayslip(currentPayslip.getEmployeeId(), selectedPayrun.getPayrunId());
+    }
+
+    // opens the Jasper payslip preview for a generated payslip
+    private void printPayslip(int employeeId, int payrunId) {
+        try {
+            payrollReportService.previewPayslipReport(employeeId, payrunId);
+        } catch (Exception e) {
+            setMessage("Failed to open payslip: " + e.getMessage());
+        }
     }
 
     // ── New payrun modal ──────────────────────────────────────────────
@@ -578,7 +654,26 @@ public class AdminPayrollController {
         readyAttendanceColumn.setCellValueFactory(d ->
                 new SimpleStringProperty(d.getValue().getStatus().label()));
         readyAttendanceColumn.setCellFactory(c -> attendanceBadgeCell());
-        readyPayrollColumn.setCellValueFactory(d -> new SimpleStringProperty("Not Generated"));
+
+        readyActionColumn.setSortable(false);
+        readyActionColumn.setCellFactory(col -> new TableCell<>() {
+            private final Button previewButton = new Button("Preview");
+            {
+                previewButton.getStyleClass().addAll("table-action-button", "neutral-table-button");
+                previewButton.setOnAction(e -> {
+                    PayrunReadinessDTO row = getTableRow().getItem();
+                    if (row != null) showPayrollPreview(row);
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setAlignment(Pos.CENTER_RIGHT);
+                PayrunReadinessDTO row = getTableRow() == null ? null : getTableRow().getItem();
+                setGraphic(empty || row == null || !row.isReady() ? null : previewButton);
+            }
+        });
     }
 
     private void setupResultTable() {
@@ -612,12 +707,7 @@ public class AdminPayrollController {
                 printButton.setOnAction(e -> {
                     PayrollSummaryDTO summary = getTableRow().getItem();
                     if (summary != null) {
-                        try {
-                            currentPayslip = payrollService.buildPayslip(summary.getEmployeeId(), summary.getPayrunId());
-                            handlePrint();
-                        } catch (Exception ex) {
-                            setMessage("Failed to load payslip: " + ex.getMessage());
-                        }
+                        printPayslip(summary.getEmployeeId(), summary.getPayrunId());
                     }
                 });
             }
@@ -835,39 +925,5 @@ public class AdminPayrollController {
         slipUndertimeDedLabel.setText(UiFormatter.formatPeso(payslip.getUndertimeDeduction()));
         slipTotalDedLabel.setText(UiFormatter.formatPeso(payslip.getTotalDeductions()));
         slipNetPayLabel.setText(UiFormatter.formatPeso(payslip.getNetPay()));
-    }
-
-    private String buildPayslipText(PayslipDTO payslip) {
-        return ("MOTORPH PAYROLL MANAGEMENT SYSTEM\n"
-                + "Employee Payslip\n"
-                + "==========================================\n"
-                + "Employee : " + payslip.getFullName() + "\n"
-                + "Position : " + payslip.getPosition() + "\n"
-                + "Supervisor: " + payslip.getSupervisor() + "\n"
-                + "Period   : " + payslip.getPeriodStart().format(DATE_FMT)
-                + " to " + payslip.getPeriodEnd().format(DATE_FMT) + "\n"
-                + "Pay Date : " + payslip.getPayrollDate().format(DATE_FMT) + "\n"
-                + "------------------------------------------\n"
-                + "SSS No.       : " + payslip.getSssNumber() + "\n"
-                + "PhilHealth No.: " + payslip.getPhilhealthNumber() + "\n"
-                + "Pag-IBIG No.  : " + payslip.getPagibigNumber() + "\n"
-                + "TIN No.       : " + payslip.getTinNumber() + "\n"
-                + "------------------------------------------\n"
-                + "EARNINGS\n"
-                + "  Basic Pay          : " + UiFormatter.formatPeso(payslip.getBasicPay()) + "\n"
-                + "  Rice Subsidy       : " + UiFormatter.formatPeso(payslip.getRiceSubsidy()) + "\n"
-                + "  Phone Allowance    : " + UiFormatter.formatPeso(payslip.getPhoneAllowance()) + "\n"
-                + "  Clothing Allowance : " + UiFormatter.formatPeso(payslip.getClothingAllowance()) + "\n"
-                + "  Total Compensation : " + UiFormatter.formatPeso(payslip.getTotalCompensation()) + "\n"
-                + "DEDUCTIONS\n"
-                + "  SSS               : " + UiFormatter.formatPeso(payslip.getSssDeduction()) + "\n"
-                + "  PhilHealth        : " + UiFormatter.formatPeso(payslip.getPhilhealthDeduction()) + "\n"
-                + "  Pag-IBIG          : " + UiFormatter.formatPeso(payslip.getPagibigDeduction()) + "\n"
-                + "  Withholding Tax   : " + UiFormatter.formatPeso(payslip.getTaxDeduction()) + "\n"
-                + "  Late              : " + UiFormatter.formatPeso(payslip.getLateDeduction()) + "\n"
-                + "  Undertime         : " + UiFormatter.formatPeso(payslip.getUndertimeDeduction()) + "\n"
-                + "  Total Deductions  : " + UiFormatter.formatPeso(payslip.getTotalDeductions()) + "\n"
-                + "==========================================\n"
-                + "NET PAY: " + UiFormatter.formatPeso(payslip.getNetPay()) + "\n");
     }
 }

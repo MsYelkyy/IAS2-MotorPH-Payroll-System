@@ -168,6 +168,33 @@ public class PayrunRepository {
         return false;
     }
 
+    // checks if any existing payrun overlaps with the given period
+    public boolean existsOverlapping(LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM payrun
+                WHERE start_date <= ? AND end_date >= ?
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, Date.valueOf(endDate));
+            stmt.setDate(2, Date.valueOf(startDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to check overlapping payruns.", e);
+        }
+
+        return false;
+    }
+
     // saves a payrun and returns the generated id
     public int saveAndReturnId(Payrun payrun) {
         String sql = """

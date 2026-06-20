@@ -218,7 +218,7 @@ public class ReportsController {
         });
 
         try {
-            List<Payrun> payruns = payrollService.getAllPayruns();
+            List<Payrun> payruns = payrollService.getPayrunsWithPayrollData();
             payrunCombo.getItems().add(null);
             payrunCombo.getItems().addAll(payruns);
         } catch (Exception ex) {

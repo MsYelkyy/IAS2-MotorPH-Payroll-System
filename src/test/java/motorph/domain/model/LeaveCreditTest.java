@@ -1,7 +1,5 @@
 package motorph.domain.model;
 
-
-import motorph.domain.model.LeaveCredit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
