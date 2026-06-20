@@ -152,6 +152,79 @@
     -fx-background-color: #ffffff;
 }
 
+/* Reports fixed filter grid */
+.report-filter-slot {
+    -fx-min-height: 62;
+    -fx-pref-height: 62;
+}
+
+.report-filter-slot:disabled {
+    -fx-opacity: 1;
+}
+
+.report-filter-slot:disabled .field-label {
+    -fx-text-fill: rgba(170,180,198,0.48);
+}
+
+.report-filter-slot .input-field:disabled,
+.report-filter-slot .combo-box.input-field:disabled,
+.report-filter-slot .date-picker:disabled,
+.report-filter-slot .date-picker:disabled .text-field,
+.report-filter-slot .date-picker:disabled .date-picker-display-node {
+    -fx-opacity: 1;
+    -fx-background-color: rgba(148,163,184,0.10);
+    -fx-border-color: rgba(148,163,184,0.14);
+    -fx-text-fill: rgba(203,213,225,0.52);
+    -fx-prompt-text-fill: rgba(203,213,225,0.52);
+}
+
+.report-filter-slot .combo-box.input-field:disabled > .list-cell {
+    -fx-text-fill: rgba(203,213,225,0.52);
+}
+
+.report-filter-slot .combo-box.input-field:disabled .arrow,
+.report-filter-slot .date-picker:disabled .arrow-button .arrow {
+    -fx-background-color: rgba(203,213,225,0.38);
+}
+
+.report-action-grid .secondary-button:disabled {
+    -fx-opacity: 1;
+    -fx-background-color: rgba(148,163,184,0.12);
+    -fx-border-color: rgba(148,163,184,0.16);
+    -fx-text-fill: rgba(203,213,225,0.50);
+    -fx-effect: none;
+}
+
+.root-canvas.light-mode .report-filter-slot:disabled .field-label {
+    -fx-text-fill: #9CA3AF;
+}
+
+.root-canvas.light-mode .report-filter-slot .input-field:disabled,
+.root-canvas.light-mode .report-filter-slot .combo-box.input-field:disabled,
+.root-canvas.light-mode .report-filter-slot .date-picker:disabled,
+.root-canvas.light-mode .report-filter-slot .date-picker:disabled .text-field,
+.root-canvas.light-mode .report-filter-slot .date-picker:disabled .date-picker-display-node {
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #D1D5DB;
+    -fx-text-fill: #9CA3AF;
+    -fx-prompt-text-fill: #9CA3AF;
+}
+
+.root-canvas.light-mode .report-filter-slot .combo-box.input-field:disabled > .list-cell {
+    -fx-text-fill: #9CA3AF;
+}
+
+.root-canvas.light-mode .report-filter-slot .combo-box.input-field:disabled .arrow,
+.root-canvas.light-mode .report-filter-slot .date-picker:disabled .arrow-button .arrow {
+    -fx-background-color: #9CA3AF;
+}
+
+.root-canvas.light-mode .report-action-grid .secondary-button:disabled {
+    -fx-background-color: #F3F4F6;
+    -fx-border-color: #D1D5DB;
+    -fx-text-fill: #9CA3AF;
+}
+
 /* ── Add-rate / add-record form panel (red border = add mode) ─────── */
 .admin-add-form-panel {
     -fx-background-color: #111827;

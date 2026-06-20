@@ -48,15 +48,6 @@ public class EmployeeService {
     public EmployeeService(EmployeeRepository employeeRepository,
                            UserAccountService userAccountService,
                            DepartmentRepository departmentRepository,
-                           PositionRepository positionRepository) {
-        this(employeeRepository, userAccountService, departmentRepository, positionRepository,
-                new SalaryHistoryRepository(), new EmployeeBenefitRepository(),
-                new GovernmentDetailsRepository());
-    }
-
-    public EmployeeService(EmployeeRepository employeeRepository,
-                           UserAccountService userAccountService,
-                           DepartmentRepository departmentRepository,
                            PositionRepository positionRepository,
                            SalaryHistoryRepository salaryHistoryRepository,
                            EmployeeBenefitRepository employeeBenefitRepository,
@@ -69,16 +60,33 @@ public class EmployeeService {
             throw new IllegalArgumentException("UserAccountService is required.");
         }
 
+        if (departmentRepository == null) {
+            throw new IllegalArgumentException("DepartmentRepository is required.");
+        }
+
+        if (positionRepository == null) {
+            throw new IllegalArgumentException("PositionRepository is required.");
+        }
+
+        if (salaryHistoryRepository == null) {
+            throw new IllegalArgumentException("SalaryHistoryRepository is required.");
+        }
+
+        if (employeeBenefitRepository == null) {
+            throw new IllegalArgumentException("EmployeeBenefitRepository is required.");
+        }
+
+        if (governmentDetailsRepository == null) {
+            throw new IllegalArgumentException("GovernmentDetailsRepository is required.");
+        }
+
         this.employeeRepository = employeeRepository;
         this.userAccountService = userAccountService;
-        this.departmentRepository = departmentRepository != null ? departmentRepository : new DepartmentRepository();
-        this.positionRepository   = positionRepository   != null ? positionRepository   : new PositionRepository();
-        this.salaryHistoryRepository = salaryHistoryRepository != null
-                ? salaryHistoryRepository : new SalaryHistoryRepository();
-        this.employeeBenefitRepository = employeeBenefitRepository != null
-                ? employeeBenefitRepository : new EmployeeBenefitRepository();
-        this.governmentDetailsRepository = governmentDetailsRepository != null
-                ? governmentDetailsRepository : new GovernmentDetailsRepository();
+        this.departmentRepository = departmentRepository;
+        this.positionRepository = positionRepository;
+        this.salaryHistoryRepository = salaryHistoryRepository;
+        this.employeeBenefitRepository = employeeBenefitRepository;
+        this.governmentDetailsRepository = governmentDetailsRepository;
     }
 
     // returns an active employee by id
@@ -170,6 +178,12 @@ public class EmployeeService {
     public GovernmentDetails getGovernmentDetails(int employeeId) {
         validateEmployeeId(employeeId);
         return governmentDetailsRepository.findByEmployeeId(employeeId);
+    }
+
+    // returns the personal email address for an active employee
+    public String getPersonalEmail(int employeeId) {
+        validateEmployeeId(employeeId);
+        return employeeRepository.findPersonalEmailByEmployeeId(employeeId);
     }
 
     private EmployeeProfileDTO toProfileDTO(EmployeeRepository.ProfileQueryResult result) {

@@ -3,8 +3,6 @@ package motorph.ui.util;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.Locale;
 
 /** Provides helpers for field validation and input parsing in UI controllers. */
@@ -55,35 +53,4 @@ public final class UiValidationUtil {
         return email != null && email.trim().toLowerCase(Locale.ROOT).matches(MOTORPH_EMAIL_PATTERN);
     }
 
-    // parses a date from the field value, marks the field invalid and throws on failure
-    public static LocalDate parseDate(TextField field) {
-        clearInvalid(field);
-        String value = getText(field);
-        if (value.isBlank()) {
-            markInvalid(field);
-            throw new DateTimeParseException("Date is required.", value, 0);
-        }
-        try {
-            return LocalDate.parse(value);
-        } catch (DateTimeParseException e) {
-            markInvalid(field);
-            throw e;
-        }
-    }
-
-    // parses a positive double from the field, marks the field invalid and throws on failure
-    public static double parsePositiveDouble(TextField field, String errorMessage) {
-        clearInvalid(field);
-        try {
-            double value = Double.parseDouble(getText(field));
-            if (value <= 0) {
-                markInvalid(field);
-                throw new IllegalArgumentException(errorMessage);
-            }
-            return value;
-        } catch (NumberFormatException e) {
-            markInvalid(field);
-            throw new IllegalArgumentException(errorMessage);
-        }
-    }
 }

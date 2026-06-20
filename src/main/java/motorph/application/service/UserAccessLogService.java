@@ -142,6 +142,8 @@ public class UserAccessLogService {
 
     // logs database backup created action
     public void logDatabaseBackupCreated(int userAccountId, String filename) {
+        validateUserAccountId(userAccountId);
+
         UserAccessLog log = new UserAccessLog(
                 userAccountId,
                 ACTION_DATABASE_BACKUP_CREATED,
@@ -154,6 +156,8 @@ public class UserAccessLogService {
 
     // logs database restore action
     public void logDatabaseRestore(int userAccountId, String filename) {
+        validateUserAccountId(userAccountId);
+
         UserAccessLog log = new UserAccessLog(
                 userAccountId,
                 ACTION_DATABASE_RESTORE,

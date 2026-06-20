@@ -6,7 +6,6 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
-import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 
@@ -27,7 +26,7 @@ public class PasswordResetService {
 
     private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final UserAccountRepository userAccountRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
     private final TwoFactorService twoFactorService;
     private final EmailService emailService;
     private final UserAccessLogService userAccessLogService;
@@ -36,7 +35,7 @@ public class PasswordResetService {
     // constructors
     public PasswordResetService(PasswordResetRequestRepository passwordResetRequestRepository,
                                 UserAccountRepository userAccountRepository,
-                                EmployeeRepository employeeRepository,
+                                EmployeeService employeeService,
                                 TwoFactorService twoFactorService,
                                 EmailService emailService,
                                 UserAccessLogService userAccessLogService) {
@@ -46,7 +45,7 @@ public class PasswordResetService {
                 "PasswordResetRequestRepository is required."
         );
         this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
-        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.employeeService = require(employeeService, "EmployeeService is required.");
         this.twoFactorService = require(twoFactorService, "TwoFactorService is required.");
         this.emailService = require(emailService, "EmailService is required.");
         this.userAccessLogService = require(userAccessLogService, "UserAccessLogService is required.");
@@ -66,7 +65,7 @@ public class PasswordResetService {
             throw new BusinessRuleException("Account is locked.");
         }
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+        String personalEmail = employeeService.getPersonalEmail(account.getEmployeeId());
 
         if (personalEmail == null || personalEmail.isBlank()) {
             throw new ValidationException("Registered personal email is required for password reset.");
@@ -134,7 +133,7 @@ public class PasswordResetService {
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
         UserAccount account = getActiveAccountOrThrow(request.getUserAccountId());
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+        String personalEmail = employeeService.getPersonalEmail(account.getEmployeeId());
 
         if (personalEmail == null || personalEmail.isBlank()) {
             throw new ValidationException("Registered personal email is required for password reset.");
@@ -157,11 +156,6 @@ public class PasswordResetService {
         emailService.sendPasswordResetTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
 
         logPasswordReset(resolverEmployeeId, account.getEmployeeId());
-    }
-
-    // keeps old method name as wrapper for IT/Admin approval
-    public void approvePasswordReset(int resetRequestId, int approverEmployeeId) {
-        processPasswordResetRequest(resetRequestId, approverEmployeeId);
     }
 
     // cancels a pending password reset request

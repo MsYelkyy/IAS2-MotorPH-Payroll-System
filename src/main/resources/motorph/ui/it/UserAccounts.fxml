@@ -86,14 +86,14 @@
                 </VBox>
 
                 <!-- Role assignment -->
-                <VBox spacing="6" style="-fx-padding: 8 0 0 0;">
+                <VBox fx:id="roleAssignmentSection" spacing="6" style="-fx-padding: 8 0 0 0;">
                     <Label text="ASSIGN ROLES" styleClass="field-label"/>
                     <CheckBox fx:id="roleAdminCheck"    text="ADMIN"    styleClass="data-line"/>
                     <CheckBox fx:id="roleHrCheck"       text="HR"       styleClass="data-line"/>
                     <CheckBox fx:id="roleFinanceCheck"  text="FINANCE"  styleClass="data-line"/>
                     <CheckBox fx:id="roleItCheck"       text="IT"       styleClass="data-line"/>
                     <CheckBox fx:id="roleEmployeeCheck" text="EMPLOYEE" styleClass="data-line"/>
-                    <Button text="Save Roles" onAction="#handleSaveRoles"
+                    <Button fx:id="saveRolesButton" text="Save Roles" onAction="#handleSaveRoles"
                             styleClass="primary-button" maxWidth="Infinity"
                             style="-fx-padding: 6 12;"/>
                 </VBox>

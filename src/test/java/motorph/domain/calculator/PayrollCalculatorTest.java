@@ -1,7 +1,12 @@
 package motorph.domain.calculator;
 
 
+import motorph.application.dto.payroll.GovernmentRatesDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
+import motorph.application.dto.systemconfig.PagIbigRateDTO;
+import motorph.application.dto.systemconfig.PhilHealthRateDTO;
+import motorph.application.dto.systemconfig.SssRateDTO;
+import motorph.application.dto.systemconfig.WithholdingTaxBracketDTO;
 import motorph.domain.model.Attendance;
 import motorph.domain.model.PayrollBreakdown;
 import motorph.domain.value.AttendanceStatus;
@@ -38,7 +43,8 @@ class PayrollCalculatorTest {
                 input,
                 List.of(),
                 0,
-                LocalDate.of(2025, 6, 15)
+                LocalDate.of(2025, 6, 15),
+                createRates()
         );
 
 
@@ -63,7 +69,8 @@ class PayrollCalculatorTest {
                 input,
                 List.of(),
                 2,
-                LocalDate.of(2025, 6, 15)
+                LocalDate.of(2025, 6, 15),
+                createRates()
         );
 
 
@@ -84,7 +91,8 @@ class PayrollCalculatorTest {
                 input,
                 List.of(),
                 0,
-                LocalDate.of(2025, 6, 30)
+                LocalDate.of(2025, 6, 30),
+                createRates()
         );
 
 
@@ -118,7 +126,8 @@ class PayrollCalculatorTest {
                 input,
                 List.of(attendance),
                 0,
-                LocalDate.of(2025, 6, 15)
+                LocalDate.of(2025, 6, 15),
+                createRates()
         );
 
 
@@ -150,7 +159,8 @@ class PayrollCalculatorTest {
                 input,
                 List.of(outsideCutoffAttendance),
                 0,
-                LocalDate.of(2025, 6, 15)
+                LocalDate.of(2025, 6, 15),
+                createRates()
         );
 
 
@@ -185,7 +195,7 @@ class PayrollCalculatorTest {
     @Test
     @DisplayName("computeMonthlyTax should return zero for tax-free bracket")
     void computeMonthlyTaxShouldReturnZeroForTaxFreeBracket() {
-        double tax = PayrollCalculator.computeMonthlyTax(20833, 0);
+        double tax = PayrollCalculator.computeMonthlyTax(20833, 0, createRates().getTaxBrackets());
 
 
         assertEquals(0.00, tax, 0.01);
@@ -201,7 +211,8 @@ class PayrollCalculatorTest {
                         null,
                         List.of(),
                         0,
-                        LocalDate.of(2025, 6, 15)
+                        LocalDate.of(2025, 6, 15),
+                        createRates()
                 ));
     }
 
@@ -218,7 +229,8 @@ class PayrollCalculatorTest {
                         input,
                         List.of(),
                         -1,
-                        LocalDate.of(2025, 6, 15)
+                        LocalDate.of(2025, 6, 15),
+                        createRates()
                 ));
     }
 
@@ -248,5 +260,51 @@ class PayrollCalculatorTest {
                 phoneAllowance,
                 clothingAllowance
         );
+    }
+
+    // creates government rates matching the values previously hardcoded in PayrollCalculator
+    private GovernmentRatesDTO createRates() {
+        LocalDate start = LocalDate.of(2020, 1, 1);
+
+        // employeeShare stores the fixed max SSS contribution (1125.00); calculator prorates below maxSalary
+        SssRateDTO sss = new SssRateDTO(
+                1, 1,
+                0.0, 24750.0,
+                1125.0, 1125.0,
+                start, null
+        );
+
+        PhilHealthRateDTO philHealth = new PhilHealthRateDTO(
+                1, 2,
+                0.03,
+                10000.0, 60000.0,
+                0.5, 0.5,
+                start, null
+        );
+
+        PagIbigRateDTO tierLow = new PagIbigRateDTO(
+                1, 3,
+                1000.0, 1500.0,
+                0.01, 0.02,
+                100.0, null,
+                start, null
+        );
+
+        PagIbigRateDTO tierHigh = new PagIbigRateDTO(
+                2, 3,
+                1500.01, Double.MAX_VALUE,
+                0.02, 0.02,
+                100.0, null,
+                start, null
+        );
+
+        WithholdingTaxBracketDTO b1 = new WithholdingTaxBracketDTO(1, 4, 0.0,     20833.0,  0.0,     0.00, 0.0,     start, null);
+        WithholdingTaxBracketDTO b2 = new WithholdingTaxBracketDTO(2, 4, 20833.0, 33333.0,  0.0,     0.15, 20833.0, start, null);
+        WithholdingTaxBracketDTO b3 = new WithholdingTaxBracketDTO(3, 4, 33333.0, 66667.0,  1875.0,  0.20, 33333.0, start, null);
+        WithholdingTaxBracketDTO b4 = new WithholdingTaxBracketDTO(4, 4, 66667.0, 166667.0, 8541.67, 0.25, 66667.0, start, null);
+        WithholdingTaxBracketDTO b5 = new WithholdingTaxBracketDTO(5, 4, 166667.0,666667.0, 33541.67,0.30, 166667.0,start, null);
+        WithholdingTaxBracketDTO b6 = new WithholdingTaxBracketDTO(6, 4, 666667.0,0.0,      183541.67,0.35,666667.0,start, null);
+
+        return new GovernmentRatesDTO(sss, philHealth, List.of(tierLow, tierHigh), List.of(b1, b2, b3, b4, b5, b6));
     }
 }

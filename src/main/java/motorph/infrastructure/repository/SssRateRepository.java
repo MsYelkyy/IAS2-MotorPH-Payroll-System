@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages SSS contribution rate records in the database. */
 public class SssRateRepository {
 
     private static final String SELECT_COLS = """
@@ -17,6 +18,7 @@ public class SssRateRepository {
             FROM sss_contribution_rate
             """;
 
+    // returns all SSS rates ordered by most recent effective date
     public List<SssRateDTO> findAll() {
         String sql = SELECT_COLS + "ORDER BY effective_start_date DESC";
         List<SssRateDTO> list = new ArrayList<>();
@@ -30,6 +32,27 @@ public class SssRateRepository {
         return list;
     }
 
+    // returns the single SSS rate effective on the given date
+    public SssRateDTO findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY effective_start_date DESC
+                LIMIT 1
+                """;
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load effective SSS rate.", e);
+        }
+    }
+
+    // inserts a new SSS rate record
     public void save(SssRateDTO dto) {
         String sql = """
                 INSERT INTO sss_contribution_rate
@@ -53,6 +76,7 @@ public class SssRateRepository {
         }
     }
 
+    // updates an existing SSS rate record
     public void update(SssRateDTO dto) {
         String sql = """
                 UPDATE sss_contribution_rate
@@ -76,6 +100,7 @@ public class SssRateRepository {
         }
     }
 
+    // closes all open-ended SSS rates by setting their end date
     public void closeAllOpenEnded(LocalDate endDate) {
         String sql = "UPDATE sss_contribution_rate SET effective_end_date = ? WHERE effective_end_date IS NULL";
         try (Connection c = DatabaseConnection.getConnection();

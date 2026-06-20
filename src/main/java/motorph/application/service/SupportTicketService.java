@@ -1,10 +1,14 @@
 package motorph.application.service;
 
+import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
+import motorph.application.exception.UnauthorizedException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.SupportTicket;
+import motorph.domain.value.Role;
 import motorph.domain.value.RoutingTeam;
 import motorph.domain.value.SupportTicketCategory;
+import motorph.domain.value.SupportTicketStatus;
 import motorph.infrastructure.repository.SupportTicketRepository;
 
 import java.util.List;
@@ -87,20 +91,58 @@ public class SupportTicketService {
         return supportTicketRepository.findOpenTickets();
     }
 
-    // resolves an open support ticket
-    public void resolveTicket(int ticketId, int resolvedByUserAccountId) {
+    // resolves an open support ticket; only IT, HR, ADMIN, or PAYROLL roles may resolve
+    public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
         validateTicketId(ticketId);
 
         if (resolvedByUserAccountId <= 0) {
             throw new ValidationException("Resolved by user account ID is required.");
         }
 
+        if (resolverRole == null) {
+            throw new UnauthorizedException("Resolver role is required.");
+        }
+
+        if (resolverRole != Role.IT && resolverRole != Role.HR
+                && resolverRole != Role.ADMIN && resolverRole != Role.FINANCE) {
+            throw new UnauthorizedException("Only IT, HR, Admin, or Finance roles can resolve tickets.");
+        }
+
+        SupportTicket ticket = getTicketById(ticketId);
+
+        if (ticket.getStatus() != SupportTicketStatus.OPEN) {
+            throw new BusinessRuleException("Only open tickets can be resolved.");
+        }
+
         supportTicketRepository.markResolved(ticketId, resolvedByUserAccountId);
     }
 
-    // cancels an open support ticket
-    public void cancelTicket(int ticketId) {
+    // cancels an open ticket; owner may cancel their own, IT/Admin/HR may cancel any
+    public void cancelTicket(int ticketId, int actorEmployeeId, Role actorRole) {
         validateTicketId(ticketId);
+
+        if (actorEmployeeId <= 0) {
+            throw new ValidationException("Actor employee ID is required.");
+        }
+
+        if (actorRole == null) {
+            throw new UnauthorizedException("Actor role is required.");
+        }
+
+        SupportTicket ticket = getTicketById(ticketId);
+
+        boolean isPrivileged = actorRole == Role.IT
+                || actorRole == Role.ADMIN
+                || actorRole == Role.HR;
+
+        if (!isPrivileged && ticket.getEmployeeId() != actorEmployeeId) {
+            throw new UnauthorizedException("You can only cancel your own support ticket.");
+        }
+
+        if (ticket.getStatus() != SupportTicketStatus.OPEN) {
+            throw new BusinessRuleException("Only open tickets can be cancelled.");
+        }
+
         supportTicketRepository.markCancelled(ticketId);
     }
 

@@ -1,6 +1,7 @@
 package motorph.ui.employee;
 
 import motorph.application.service.PayrollService;
+import motorph.application.service.report.PayrollReportService;
 import motorph.domain.model.PayrollResult;
 import motorph.domain.model.Payrun;
 import motorph.ui.factory.EmployeeUIServiceFactory;
@@ -31,6 +32,7 @@ public class EmployeePayslipController {
     private static final DateTimeFormatter MONTH_DAY_YEAR = DateTimeFormatter.ofPattern("MMMM d, yyyy");
 
     private PayrollService payrollService;
+    private PayrollReportService payrollReportService;
     private final List<PayrollRowItem> allRows = new ArrayList<>();
     private int currentPage = 1;
 
@@ -48,7 +50,9 @@ public class EmployeePayslipController {
 
     @FXML
     private void initialize() {
-        payrollService = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        EmployeeUIServiceFactory factory = EmployeeUIServiceFactory.getInstance();
+        payrollService       = factory.getPayrollService();
+        payrollReportService = factory.getPayrollReportService();
 
         payrollTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
@@ -183,9 +187,9 @@ public class EmployeePayslipController {
         });
     }
 
-    // logs the view request; connect to PayslipService / JasperReports when ready
     private void handleViewPayslip(PayrollRowItem row) {
-        LOG.info("View Payslip requested — payrunId=" + row.getPayrunId()
-                + "  period=" + row.getPeriodStart() + " to " + row.getPeriodEnd());
+        int employeeId = CurrentUserSession.getEmployeeId();
+        if (employeeId <= 0) return;
+        payrollReportService.previewPayslipReport(employeeId, row.getPayrunId());
     }
 }

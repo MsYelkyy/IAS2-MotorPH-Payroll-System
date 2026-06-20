@@ -2,6 +2,7 @@ package motorph.application.service;
 
 import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
+import motorph.application.dto.payroll.GovernmentRatesDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
 import motorph.application.dto.payroll.PayrollSummaryDTO;
 import motorph.application.dto.payroll.PayrunCreateDTO;
@@ -26,13 +27,18 @@ import motorph.domain.model.SalaryHistory;
 import motorph.domain.value.ReadinessStatus;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
+import motorph.infrastructure.repository.PagIbigRateRepository;
 import motorph.infrastructure.repository.PayrollBenefitRepository;
 import motorph.infrastructure.repository.PayrollDeductionRepository;
 import motorph.infrastructure.repository.PayrollEarningRepository;
 import motorph.infrastructure.repository.PayrollResultRepository;
 import motorph.infrastructure.repository.PayrunRepository;
+import motorph.infrastructure.repository.PhilHealthRateRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
+import motorph.infrastructure.repository.SssRateRepository;
+import motorph.infrastructure.repository.WithholdingTaxBracketRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,6 +58,10 @@ public class PayrollService {
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
     private final GovernmentDetailsRepository governmentDetailsRepository;
+    private final SssRateRepository sssRateRepository;
+    private final PhilHealthRateRepository philHealthRateRepository;
+    private final PagIbigRateRepository pagIbigRateRepository;
+    private final WithholdingTaxBracketRepository withholdingTaxBracketRepository;
     private final AttendanceService attendanceService;
     private final OvertimeService overtimeService;
     private final EmployeeService employeeService;
@@ -66,6 +76,10 @@ public class PayrollService {
                           SalaryHistoryRepository salaryHistoryRepository,
                           EmployeeBenefitRepository employeeBenefitRepository,
                           GovernmentDetailsRepository governmentDetailsRepository,
+                          SssRateRepository sssRateRepository,
+                          PhilHealthRateRepository philHealthRateRepository,
+                          PagIbigRateRepository pagIbigRateRepository,
+                          WithholdingTaxBracketRepository withholdingTaxBracketRepository,
                           AttendanceService attendanceService,
                           OvertimeService overtimeService,
                           EmployeeService employeeService,
@@ -79,6 +93,10 @@ public class PayrollService {
         this.salaryHistoryRepository = require(salaryHistoryRepository, "SalaryHistoryRepository is required.");
         this.employeeBenefitRepository = require(employeeBenefitRepository, "EmployeeBenefitRepository is required.");
         this.governmentDetailsRepository = require(governmentDetailsRepository, "GovernmentDetailsRepository is required.");
+        this.sssRateRepository = require(sssRateRepository, "SssRateRepository is required.");
+        this.philHealthRateRepository = require(philHealthRateRepository, "PhilHealthRateRepository is required.");
+        this.pagIbigRateRepository = require(pagIbigRateRepository, "PagIbigRateRepository is required.");
+        this.withholdingTaxBracketRepository = require(withholdingTaxBracketRepository, "WithholdingTaxBracketRepository is required.");
         this.attendanceService = require(attendanceService, "AttendanceService is required.");
         this.overtimeService = require(overtimeService, "OvertimeService is required.");
         this.employeeService = require(employeeService, "EmployeeService is required.");
@@ -137,11 +155,14 @@ public class PayrollService {
 
         PayrollInputDTO input = buildPayrollInput(employee, salary, governmentDetails, benefits);
 
+        GovernmentRatesDTO rates = fetchEffectiveRates(payrun.getEndDate());
+
         PayrollBreakdown breakdown = payrollCalculator.computeDeductions(
                 input,
                 logs,
                 approvedOvertimeHours,
-                payrun.getEndDate()
+                payrun.getEndDate(),
+                rates
         );
 
         LocalDateTime generatedAt = LocalDateTime.now();
@@ -242,6 +263,31 @@ public class PayrollService {
         if (amount > 0) {
             payrollDeductionRepository.save(new PayrollDeduction(null, payrollResultId, deductionTypeId, amount, taxable));
         }
+    }
+
+    // fetches government contribution rates effective on the given cutoff date
+    private GovernmentRatesDTO fetchEffectiveRates(LocalDate cutoffDate) {
+        var sss = sssRateRepository.findEffectiveOn(cutoffDate);
+        if (sss == null) {
+            throw new EntityNotFoundException("No effective SSS rate found for " + cutoffDate + ".");
+        }
+
+        var philHealth = philHealthRateRepository.findEffectiveOn(cutoffDate);
+        if (philHealth == null) {
+            throw new EntityNotFoundException("No effective PhilHealth rate found for " + cutoffDate + ".");
+        }
+
+        var pagIbig = pagIbigRateRepository.findEffectiveOn(cutoffDate);
+        if (pagIbig.isEmpty()) {
+            throw new EntityNotFoundException("No effective Pag-IBIG rates found for " + cutoffDate + ".");
+        }
+
+        var taxBrackets = withholdingTaxBracketRepository.findEffectiveOn(cutoffDate);
+        if (taxBrackets.isEmpty()) {
+            throw new EntityNotFoundException("No effective withholding tax brackets found for " + cutoffDate + ".");
+        }
+
+        return new GovernmentRatesDTO(sss, philHealth, pagIbig, taxBrackets);
     }
 
     // builds payroll input from employee, salary, government details, and benefits

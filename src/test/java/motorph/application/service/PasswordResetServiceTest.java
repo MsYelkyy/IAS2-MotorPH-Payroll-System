@@ -4,8 +4,13 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.infrastructure.config.EmailConfig;
+import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
+import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 import motorph.infrastructure.repository.TwoFactorCodeRepository;
 import motorph.infrastructure.repository.UserAccessLogRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
@@ -36,7 +41,7 @@ class PasswordResetServiceTest {
                 () -> new PasswordResetService(
                         null,
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         createTwoFactorService(),
                         createEmailService(),
                         createUserAccessLogService()
@@ -55,7 +60,7 @@ class PasswordResetServiceTest {
                 () -> new PasswordResetService(
                         new PasswordResetRequestRepository(),
                         null,
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         createTwoFactorService(),
                         createEmailService(),
                         createUserAccessLogService()
@@ -63,11 +68,11 @@ class PasswordResetServiceTest {
         );
     }
 
-    // UT-PRS-003: constructor rejects missing employee repository
+    // UT-PRS-003: constructor rejects missing employee service
     @Test
-    @DisplayName("UT-PRS-003 - Negative - constructor should reject null employee repository")
-    void constructorShouldRejectNullEmployeeRepository() {
-        logger.info("UT-PRS-003 Testing null employee repository validation.");
+    @DisplayName("UT-PRS-003 - Negative - constructor should reject null employee service")
+    void constructorShouldRejectNullEmployeeService() {
+        logger.info("UT-PRS-003 Testing null employee service validation.");
 
         assertThrows(
                 IllegalArgumentException.class,
@@ -93,7 +98,7 @@ class PasswordResetServiceTest {
                 () -> new PasswordResetService(
                         new PasswordResetRequestRepository(),
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         null,
                         createEmailService(),
                         createUserAccessLogService()
@@ -112,7 +117,7 @@ class PasswordResetServiceTest {
                 () -> new PasswordResetService(
                         new PasswordResetRequestRepository(),
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         createTwoFactorService(),
                         null,
                         createUserAccessLogService()
@@ -131,7 +136,7 @@ class PasswordResetServiceTest {
                 () -> new PasswordResetService(
                         new PasswordResetRequestRepository(),
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         createTwoFactorService(),
                         createEmailService(),
                         null
@@ -236,17 +241,17 @@ class PasswordResetServiceTest {
         );
     }
 
-    // UT-PRS-014: rejects invalid reset request id for approval wrapper
+    // UT-PRS-014: rejects invalid reset request id for processing (approver path)
     @Test
-    @DisplayName("UT-PRS-014 - Negative - approvePasswordReset should reject invalid reset request ID")
-    void approvePasswordResetShouldRejectInvalidResetRequestId() {
+    @DisplayName("UT-PRS-014 - Negative - processPasswordResetRequest should reject invalid reset request ID")
+    void processPasswordResetRequestShouldRejectInvalidResetRequestIdApproverPath() {
         PasswordResetService passwordResetService = createPasswordResetService();
 
-        logger.info("UT-PRS-014 Testing invalid reset request ID for approval wrapper.");
+        logger.info("UT-PRS-014 Testing invalid reset request ID for approver path.");
 
         assertThrows(
                 ValidationException.class,
-                () -> passwordResetService.approvePasswordReset(0, 10001)
+                () -> passwordResetService.processPasswordResetRequest(0, 10001)
         );
     }
 
@@ -283,10 +288,23 @@ class PasswordResetServiceTest {
         return new PasswordResetService(
                 new PasswordResetRequestRepository(),
                 new UserAccountRepository(),
-                new EmployeeRepository(),
+                createEmployeeService(),
                 createTwoFactorService(),
                 createEmailService(),
                 createUserAccessLogService()
+        );
+    }
+
+    // creates employee service with real dependencies
+    private EmployeeService createEmployeeService() {
+        return new EmployeeService(
+                new EmployeeRepository(),
+                new UserAccountService(new UserAccountRepository(), createEmailService()),
+                new DepartmentRepository(),
+                new PositionRepository(),
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository()
         );
     }
 

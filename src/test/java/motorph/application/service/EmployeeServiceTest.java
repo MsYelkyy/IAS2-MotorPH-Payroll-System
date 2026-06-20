@@ -7,8 +7,11 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Employee;
 import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -197,7 +200,10 @@ class EmployeeServiceTest {
                 new EmployeeRepository(),
                 createUserAccountService(),
                 new DepartmentRepository(),
-                new PositionRepository()
+                new PositionRepository(),
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository()
         );
     }
 

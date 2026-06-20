@@ -77,7 +77,6 @@ public class UserAccountService {
         }
 
         emailService.sendEmployeeAccountCredentials(personalEmail, companyEmail, temporaryPassword);
-        emailService.sendTemporaryPassword(personalEmail, companyEmail, temporaryPassword);
 
         return savedAccount;
     }

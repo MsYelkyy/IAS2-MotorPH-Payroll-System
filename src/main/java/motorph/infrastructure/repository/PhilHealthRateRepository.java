@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages PhilHealth contribution rate records in the database. */
 public class PhilHealthRateRepository {
 
     private static final String SELECT_COLS = """
@@ -18,6 +19,7 @@ public class PhilHealthRateRepository {
             FROM philhealth_contribution_rate
             """;
 
+    // returns all PhilHealth rates ordered by most recent effective date
     public List<PhilHealthRateDTO> findAll() {
         String sql = SELECT_COLS + "ORDER BY effective_start_date DESC";
         List<PhilHealthRateDTO> list = new ArrayList<>();
@@ -31,6 +33,27 @@ public class PhilHealthRateRepository {
         return list;
     }
 
+    // returns the single PhilHealth rate effective on the given date
+    public PhilHealthRateDTO findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY effective_start_date DESC
+                LIMIT 1
+                """;
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load effective PhilHealth rate.", e);
+        }
+    }
+
+    // inserts a new PhilHealth rate record
     public void save(PhilHealthRateDTO dto) {
         String sql = """
                 INSERT INTO philhealth_contribution_rate
@@ -55,6 +78,7 @@ public class PhilHealthRateRepository {
         }
     }
 
+    // updates an existing PhilHealth rate record
     public void update(PhilHealthRateDTO dto) {
         String sql = """
                 UPDATE philhealth_contribution_rate
@@ -79,6 +103,7 @@ public class PhilHealthRateRepository {
         }
     }
 
+    // closes all open-ended PhilHealth rates by setting their end date
     public void closeAllOpenEnded(LocalDate endDate) {
         String sql = """
                 UPDATE philhealth_contribution_rate

@@ -457,7 +457,9 @@ public class ITSupportTicketController {
                     "Resolve Ticket",
                     "Resolve ticket #" + row.getTicketId() + " for " + row.getEmployeeName() + "?",
                     () -> supportTicketService.resolveTicket(
-                            row.getTicketId(), CurrentUserSession.getUserAccountId()),
+                            row.getTicketId(),
+                            CurrentUserSession.getUserAccountId(),
+                            CurrentUserSession.getActiveRole()),
                     "Ticket #" + row.getTicketId() + " resolved.",
                     overlay));
 
@@ -466,7 +468,10 @@ public class ITSupportTicketController {
             cancelBtn.setOnAction(e -> performAction(
                     "Cancel Ticket",
                     "Cancel ticket #" + row.getTicketId() + " for " + row.getEmployeeName() + "?",
-                    () -> supportTicketService.cancelTicket(row.getTicketId()),
+                    () -> supportTicketService.cancelTicket(
+                            row.getTicketId(),
+                            CurrentUserSession.getEmployeeId(),
+                            CurrentUserSession.getActiveRole()),
                     "Ticket #" + row.getTicketId() + " cancelled.",
                     overlay));
 

@@ -92,16 +92,6 @@ public class PermissionService {
         );
     }
 
-    // checks if the active role can view a module
-    public boolean canView(String permissionKey) {
-        return hasPermission(permissionKey);
-    }
-
-    // checks if the active role can manage a module
-    public boolean canManage(String permissionKey) {
-        return hasPermission(permissionKey);
-    }
-
     // gets active role from user session
     private Role getActiveRoleOrThrow() {
         if (!userSession.isLoggedIn()) {

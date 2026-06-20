@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages withholding tax bracket records in the database. */
 public class WithholdingTaxBracketRepository {
 
     private static final String SELECT_COLS = """
@@ -17,6 +18,7 @@ public class WithholdingTaxBracketRepository {
             FROM withholding_tax_bracket
             """;
 
+    // returns all tax brackets ordered by most recent effective date then by min salary
     public List<WithholdingTaxBracketDTO> findAll() {
         String sql = SELECT_COLS + "ORDER BY effective_start_date DESC, min_salary ASC";
         List<WithholdingTaxBracketDTO> list = new ArrayList<>();
@@ -30,6 +32,28 @@ public class WithholdingTaxBracketRepository {
         return list;
     }
 
+    // returns all tax brackets effective on the given date, ordered by min_salary
+    public List<WithholdingTaxBracketDTO> findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY min_salary ASC
+                """;
+        List<WithholdingTaxBracketDTO> list = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load effective tax brackets.", e);
+        }
+        return list;
+    }
+
+    // inserts a new withholding tax bracket record
     public void save(WithholdingTaxBracketDTO dto) {
         String sql = """
                 INSERT INTO withholding_tax_bracket
@@ -54,6 +78,7 @@ public class WithholdingTaxBracketRepository {
         }
     }
 
+    // updates an existing withholding tax bracket record
     public void update(WithholdingTaxBracketDTO dto) {
         String sql = """
                 UPDATE withholding_tax_bracket
@@ -78,6 +103,7 @@ public class WithholdingTaxBracketRepository {
         }
     }
 
+    // closes all open-ended tax brackets by setting their end date
     public void closeAllOpenEnded(LocalDate endDate) {
         String sql = "UPDATE withholding_tax_bracket SET effective_end_date = ? WHERE effective_end_date IS NULL";
         try (Connection c = DatabaseConnection.getConnection();

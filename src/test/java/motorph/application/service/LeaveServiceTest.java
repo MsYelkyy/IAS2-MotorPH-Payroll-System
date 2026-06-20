@@ -8,10 +8,13 @@ import motorph.domain.model.LeaveRequest;
 import motorph.domain.value.RequestStatus;
 import motorph.infrastructure.config.EmailConfig;
 import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.LeaveCreditRepository;
 import motorph.infrastructure.repository.LeaveRepository;
 import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -431,7 +434,10 @@ class LeaveServiceTest {
                 new EmployeeRepository(),
                 createUserAccountService(),
                 new DepartmentRepository(),
-                new PositionRepository()
+                new PositionRepository(),
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository()
         );
     }
 

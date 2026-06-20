@@ -66,7 +66,7 @@ class UserAccountServiceMockTest {
 
 
         verify(userAccountRepository).save(any(UserAccount.class));
-        verify(emailService).sendTemporaryPassword(
+        verify(emailService).sendEmployeeAccountCredentials(
                 "juan.personal@email.com",
                 "juan.delacruz@motorph.com",
                 "MotorPH@10006"

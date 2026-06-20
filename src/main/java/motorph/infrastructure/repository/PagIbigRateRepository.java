@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/** Manages Pag-IBIG contribution rate records in the database. */
 public class PagIbigRateRepository {
 
     private static final String SELECT_COLS = """
@@ -19,6 +20,7 @@ public class PagIbigRateRepository {
             FROM pagibig_contribution_rate
             """;
 
+    // returns all Pag-IBIG rates ordered by most recent effective date
     public List<PagIbigRateDTO> findAll() {
         String sql = SELECT_COLS + "ORDER BY effective_start_date DESC";
         List<PagIbigRateDTO> list = new ArrayList<>();
@@ -32,6 +34,28 @@ public class PagIbigRateRepository {
         return list;
     }
 
+    // returns all Pag-IBIG salary tiers effective on the given date, ordered by min_salary
+    public List<PagIbigRateDTO> findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY min_salary ASC
+                """;
+        List<PagIbigRateDTO> list = new ArrayList<>();
+        try (Connection c = DatabaseConnection.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load effective Pag-IBIG rates.", e);
+        }
+        return list;
+    }
+
+    // inserts a new Pag-IBIG rate record
     public void save(PagIbigRateDTO dto) {
         String sql = """
                 INSERT INTO pagibig_contribution_rate
@@ -58,6 +82,7 @@ public class PagIbigRateRepository {
         }
     }
 
+    // updates an existing Pag-IBIG rate record
     public void update(PagIbigRateDTO dto) {
         String sql = """
                 UPDATE pagibig_contribution_rate
@@ -84,6 +109,7 @@ public class PagIbigRateRepository {
         }
     }
 
+    // closes all open-ended Pag-IBIG rates by setting their end date
     public void closeAllOpenEnded(LocalDate endDate) {
         String sql = "UPDATE pagibig_contribution_rate SET effective_end_date = ? WHERE effective_end_date IS NULL";
         try (Connection c = DatabaseConnection.getConnection();

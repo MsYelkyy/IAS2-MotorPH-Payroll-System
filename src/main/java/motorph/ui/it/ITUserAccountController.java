@@ -93,6 +93,8 @@ public class ITUserAccountController {
     @FXML private CheckBox roleItCheck;
     @FXML private CheckBox roleEmployeeCheck;
 
+    @FXML private VBox roleAssignmentSection;
+    @FXML private Button saveRolesButton;
     @FXML private Button lockButton;
     @FXML private Button enableButton;
 
@@ -144,9 +146,9 @@ public class ITUserAccountController {
     private boolean matchesFilter(UserAccountRowDTO row, String filter) {
         if (filter == null || STATUS_ALL.equals(filter)) return true;
         return switch (filter) {
-            case STATUS_ACTIVE -> isActiveUnlocked(row);
-            case STATUS_LOCKED -> isLocked(row);
-            case STATUS_DISABLED -> isDisabled(row);
+            case STATUS_ACTIVE -> row.isActive() && !isLocked(row);
+            case STATUS_LOCKED -> row.isActive() && isLocked(row);
+            case STATUS_DISABLED -> !row.isActive();
             default -> true;
         };
     }
@@ -273,12 +275,17 @@ public class ITUserAccountController {
         roleItCheck.setSelected(current.contains(Role.IT));
         roleEmployeeCheck.setSelected(current.contains(Role.EMPLOYEE));
 
+        boolean disabled = isDisabled(row);
+        setVisible(roleAssignmentSection, !disabled);
+        setVisible(saveRolesButton, !disabled);
+        setVisible(lockButton, !disabled);
+        setVisible(enableButton, !disabled);
+
         boolean locked = isLocked(row);
         lockButton.setText(locked ? "Unlock Account" : "Lock Account");
         lockButton.getStyleClass().removeAll("danger-outline-button", "secondary-button");
         lockButton.getStyleClass().add(locked ? "secondary-button" : "danger-outline-button");
 
-        boolean disabled = isDisabled(row);
         enableButton.setText(disabled ? "Enable Account" : "Disable Account");
         enableButton.getStyleClass().removeAll("danger-outline-button", "secondary-button");
         enableButton.getStyleClass().add(disabled ? "secondary-button" : "danger-outline-button");
@@ -286,7 +293,7 @@ public class ITUserAccountController {
 
     @FXML
     private void handleToggleLock() {
-        if (selectedAccount == null) return;
+        if (selectedAccount == null || isDisabled(selectedAccount)) return;
         int id = selectedAccount.getUserAccountId();
         try {
             if (isLocked(selectedAccount)) {
@@ -304,7 +311,7 @@ public class ITUserAccountController {
 
     @FXML
     private void handleToggleEnable() {
-        if (selectedAccount == null) return;
+        if (selectedAccount == null || isDisabled(selectedAccount)) return;
         int id = selectedAccount.getUserAccountId();
         boolean disabled = isDisabled(selectedAccount);
         String action = disabled ? "enable" : "disable";
@@ -336,7 +343,7 @@ public class ITUserAccountController {
 
     @FXML
     private void handleSaveRoles() {
-        if (selectedAccount == null) return;
+        if (selectedAccount == null || isDisabled(selectedAccount)) return;
 
         List<Role> roles = new ArrayList<>();
         if (roleAdminCheck.isSelected())    roles.add(Role.ADMIN);
@@ -383,17 +390,13 @@ public class ITUserAccountController {
                 .ifPresentOrElse(this::selectAccount, this::closeDetail);
     }
 
-    // Status helpers (AccountStatus-aware; preserved from prior IT logic)
-    private boolean isActiveUnlocked(UserAccountRowDTO row) {
-        return row.isActive() && !row.isLocked() && row.getAccountStatus() == AccountStatus.ACTIVE;
-    }
-
+    // Status helpers
     private boolean isLocked(UserAccountRowDTO row) {
         return row.isLocked() || row.getAccountStatus() == AccountStatus.LOCKED;
     }
 
     private boolean isDisabled(UserAccountRowDTO row) {
-        return !row.isActive() || row.getAccountStatus() == AccountStatus.DISABLED;
+        return !row.isActive();
     }
 
     private String formatDate(LocalDateTime dateTime) {
