@@ -1,0 +1,8 @@
+/* MODULE — HR DASHBOARD */
+/* HR-only dashboard tweaks. Shared cards, tables, and metrics
+   come from the theme and shared-components stylesheets. */
+
+/* Spacing for the pending leave rows container. */
+#pendingLeaveRows {
+    -fx-padding: 4 0 0 0;
+}

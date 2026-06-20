@@ -92,7 +92,7 @@ public class LoginController {
 
         if (roles.contains(Role.HR)) {
             CurrentUserSession.switchRole(Role.HR);
-            NavigationUtil.goToAdminApp(rootPane.getScene());
+            NavigationUtil.goToHrApp(rootPane.getScene());
             return;
         }
 

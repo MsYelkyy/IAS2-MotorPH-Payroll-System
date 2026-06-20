@@ -55,8 +55,9 @@ public final class RoleSwitchHelper {
     }
 
     private static void navigate(Role role, Scene scene) {
-        if (role == Role.EMPLOYEE)                      NavigationUtil.goToEmployeeApp(scene);
-        else if (role == Role.IT)                       NavigationUtil.goToITApp(scene);
-        else if (role == Role.ADMIN || role == Role.HR) NavigationUtil.goToAdminApp(scene);
+        if (role == Role.EMPLOYEE)         NavigationUtil.goToEmployeeApp(scene);
+        else if (role == Role.IT)          NavigationUtil.goToITApp(scene);
+        else if (role == Role.HR)          NavigationUtil.goToHrApp(scene);
+        else if (role == Role.ADMIN)       NavigationUtil.goToAdminApp(scene);
     }
 }

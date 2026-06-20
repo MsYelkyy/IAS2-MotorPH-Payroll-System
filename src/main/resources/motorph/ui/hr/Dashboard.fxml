@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.hr.HrDashboardController">
+
+    <!-- Row 1: Workforce metric cards -->
+    <HBox spacing="14">
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="totalEmployeesLabel" text="0" styleClass="metric-value"/>
+            <Label text="All employee records" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="activeEmployeesLabel" text="0" styleClass="metric-value"/>
+            <Label text="Currently employed" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="PENDING LEAVE" styleClass="metric-label"/>
+            <Label fx:id="pendingLeaveLabel" text="0" styleClass="metric-value"/>
+            <Label text="Requests awaiting review" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="ON LEAVE TODAY" styleClass="metric-label"/>
+            <Label fx:id="onLeaveTodayLabel" text="0" styleClass="metric-value"/>
+            <Label text="Approved leave today" styleClass="muted-text"/>
+        </VBox>
+
+    </HBox>
+
+    <!-- Row 2: Pending leave requests table -->
+    <HBox spacing="14">
+
+        <VBox spacing="10" styleClass="chart-card" HBox.hgrow="ALWAYS">
+
+            <Label text="PENDING LEAVE REQUESTS" styleClass="section-title"/>
+
+            <!-- Table header -->
+            <HBox styleClass="table-header-row" spacing="0">
+                <Label text="REQUEST ID" styleClass="table-head" prefWidth="90"/>
+                <Label text="EMPLOYEE"   styleClass="table-head" prefWidth="120"/>
+                <Label text="LEAVE DATES" styleClass="table-head" HBox.hgrow="ALWAYS"/>
+                <Label text="STATUS"     styleClass="table-head" prefWidth="90"/>
+            </HBox>
+
+            <!-- Populated by HrDashboardController -->
+            <VBox fx:id="pendingLeaveRows" spacing="0"/>
+
+        </VBox>
+
+    </HBox>
+
+</VBox>

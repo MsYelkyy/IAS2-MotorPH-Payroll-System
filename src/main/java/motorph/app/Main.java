@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import motorph.ui.common.EmailPreviewDialog;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.factory.HrUIServiceFactory;
 import motorph.ui.factory.ITUIServiceFactory;
 
 /**
@@ -21,6 +22,7 @@ public class Main extends Application {
         // Initialize all application services before any FXML controller is loaded.
         EmployeeUIServiceFactory.initialize();
         ITUIServiceFactory.initialize();
+        HrUIServiceFactory.initialize();
 
         Parent root = FXMLLoader.load(
                 Main.class.getResource("/motorph/ui/auth/login.fxml")
