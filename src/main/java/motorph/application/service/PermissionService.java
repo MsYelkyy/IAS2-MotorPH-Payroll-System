@@ -2,15 +2,17 @@ package motorph.application.service;
 
 import motorph.application.session.UserSession;
 import motorph.application.dto.permission.MenuPermissionDTO;
+import motorph.application.exception.UnauthorizedException;
+import motorph.application.exception.ValidationException;
+import motorph.domain.model.Permission;
 import motorph.domain.value.PermissionKey;
 import motorph.domain.value.Role;
 import motorph.infrastructure.repository.PermissionRepository;
 
+import java.util.List;
 import java.util.Set;
 
-/**
- * Handles permission checks based on the active user role.
- */
+/** Handles permission checks for the active user role. */
 public class PermissionService {
 
     private final PermissionRepository permissionRepository;
@@ -90,26 +92,16 @@ public class PermissionService {
         );
     }
 
-    // checks if the active role can view a module
-    public boolean canView(String permissionKey) {
-        return hasPermission(permissionKey);
-    }
-
-    // checks if the active role can manage a module
-    public boolean canManage(String permissionKey) {
-        return hasPermission(permissionKey);
-    }
-
     // gets active role from user session
     private Role getActiveRoleOrThrow() {
         if (!userSession.isLoggedIn()) {
-            throw new IllegalStateException("User must be logged in.");
+            throw new UnauthorizedException("User must be logged in.");
         }
 
         Role activeRole = userSession.getActiveRole();
 
         if (activeRole == null) {
-            throw new IllegalStateException("Active role is required.");
+            throw new UnauthorizedException("Active role is required.");
         }
 
         return activeRole;
@@ -118,14 +110,32 @@ public class PermissionService {
     // validates permission key input
     private void validatePermissionKey(String permissionKey) {
         if (permissionKey == null || permissionKey.trim().isEmpty()) {
-            throw new IllegalArgumentException("Permission key is required.");
+            throw new ValidationException("Permission key is required.");
         }
+    }
+
+    // returns all permissions assigned to a specific role (for admin role editor)
+    public Set<Permission> getPermissionsByRole(Role role) {
+        if (role == null) throw new ValidationException("Role is required.");
+        return permissionRepository.findPermissionsByRole(role);
+    }
+
+    // returns all permissions defined in the system (for admin role editor)
+    public List<Permission> getAllPermissions() {
+        return permissionRepository.findAllPermissions();
+    }
+
+    // replaces the full permission set for a role (admin-only operation)
+    public void updateRolePermissions(Role role, Set<PermissionKey> permissionKeys) {
+        if (role == null) throw new ValidationException("Role is required.");
+        if (permissionKeys == null) throw new ValidationException("Permission keys are required.");
+        permissionRepository.updateRolePermissions(role, permissionKeys);
     }
 
     // checks if the active role has the permission key
     public boolean hasPermission(PermissionKey permissionKey) {
         if (permissionKey == null) {
-            throw new IllegalArgumentException("Permission key is required.");
+            throw new ValidationException("Permission key is required.");
         }
 
         return hasPermission(permissionKey.name());

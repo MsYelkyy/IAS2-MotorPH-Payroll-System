@@ -1,6 +1,9 @@
 package motorph.domain.calculator;
 
+import motorph.application.dto.payroll.GovernmentRatesDTO;
 import motorph.application.dto.payroll.PayrollInputDTO;
+import motorph.application.dto.systemconfig.PagIbigRateDTO;
+import motorph.application.dto.systemconfig.WithholdingTaxBracketDTO;
 import motorph.domain.model.Attendance;
 import motorph.domain.model.PayrollBreakdown;
 
@@ -21,12 +24,13 @@ public class PayrollCalculator {
     private static final double UNPAID_LUNCH_HOURS = 1.0;
     private static final double MAX_REGULAR_HOURS_PER_DAY = 8.0;
 
-    // computes payroll breakdown for the given cutoff date
+    // computes payroll breakdown for the given cutoff date using effective government rates
     public PayrollBreakdown computeDeductions(
             PayrollInputDTO input,
             List<Attendance> logs,
             double approvedOvertimeHours,
-            LocalDate cutoffDate) {
+            LocalDate cutoffDate,
+            GovernmentRatesDTO rates) {
 
         if (input == null) {
             throw new IllegalArgumentException("Payroll input is required.");
@@ -38,6 +42,10 @@ public class PayrollCalculator {
 
         if (cutoffDate == null) {
             throw new IllegalArgumentException("Cutoff date is required.");
+        }
+
+        if (rates == null) {
+            throw new IllegalArgumentException("Government rates are required.");
         }
 
         requireNonNegative(input.getBasicSalary(), "Basic salary cannot be negative.");
@@ -79,9 +87,9 @@ public class PayrollCalculator {
         if (payPeriod == 2) {
             double monthlyBasic = input.getBasicSalary();
 
-            sss = calculateSSS(monthlyBasic);
-            philhealth = calculatePhilHealth(monthlyBasic);
-            pagibig = calculatePagIbig(monthlyBasic);
+            sss = calculateSSS(monthlyBasic, rates);
+            philhealth = calculatePhilHealth(monthlyBasic, rates);
+            pagibig = calculatePagIbig(monthlyBasic, rates);
 
             double mandatory = sss + philhealth + pagibig;
             double taxable = Math.max(
@@ -89,7 +97,7 @@ public class PayrollCalculator {
                     monthlyBasic + overtimePay - mandatory - lateDeduction - undertimeDeduction
             );
 
-            tax = computeMonthlyTax(taxable, 0.0);
+            tax = computeMonthlyTax(taxable, 0.0, rates.getTaxBrackets());
         }
 
         double totalDeductions = lateDeduction + undertimeDeduction + sss + philhealth + pagibig + tax;
@@ -205,29 +213,53 @@ public class PayrollCalculator {
         return Math.max(0.0, Math.min(paidHours, MAX_REGULAR_HOURS_PER_DAY));
     }
 
-    // calculates the employee share of SSS
-    private static double calculateSSS(double monthlyBasic) {
-        if (monthlyBasic > 24750.0) {
-            return 1125.00;
-        }
-
-        return monthlyBasic * 0.045;
-    }
-
-    // calculates the employee share of PhilHealth
-    private static double calculatePhilHealth(double monthlyBasic) {
-        double salary = Math.max(10000.0, Math.min(monthlyBasic, 60000.0));
-        return (salary * 0.03) / 2.0;
-    }
-
-    // calculates the employee share of Pag-IBIG
-    private static double calculatePagIbig(double monthlySalary) {
-        if (monthlySalary < 1000) {
+    // calculates the employee SSS share; uses fixed cap contribution when salary exceeds max_salary, otherwise prorates
+    private static double calculateSSS(double monthlyBasic, GovernmentRatesDTO rates) {
+        var rate = rates.getSssRate();
+        if (rate == null) {
             return 0.0;
         }
 
-        double rate = monthlySalary <= 1500 ? 0.01 : 0.02;
-        return Math.min(monthlySalary * rate, 100.0);
+        double maxContribution = rate.getEmployeeShare();
+
+        if (monthlyBasic >= rate.getMaxSalary()) {
+            return maxContribution;
+        }
+
+        double prorated = (rate.getMaxSalary() > 0)
+                ? monthlyBasic * (maxContribution / rate.getMaxSalary())
+                : 0.0;
+
+        return Math.min(prorated, maxContribution);
+    }
+
+    // calculates the employee PhilHealth share using the effective rate
+    private static double calculatePhilHealth(double monthlyBasic, GovernmentRatesDTO rates) {
+        var rate = rates.getPhilHealthRate();
+        if (rate == null) {
+            return 0.0;
+        }
+
+        double salary = Math.max(rate.getSalaryFloor(), Math.min(monthlyBasic, rate.getSalaryCeiling()));
+        return (salary * rate.getPremiumRate()) * rate.getEmployeeShareRatio();
+    }
+
+    // calculates the employee Pag-IBIG share using the effective salary tiers
+    private static double calculatePagIbig(double monthlySalary, GovernmentRatesDTO rates) {
+        List<PagIbigRateDTO> tiers = rates.getPagIbigRates();
+        if (tiers == null || tiers.isEmpty()) {
+            return 0.0;
+        }
+
+        for (PagIbigRateDTO tier : tiers) {
+            if (monthlySalary >= tier.getMinSalary() && monthlySalary <= tier.getMaxSalary()) {
+                double share = monthlySalary * tier.getEmployeeShareRate();
+                Double cap = tier.getMaxEmployeeShare();
+                return cap != null ? Math.min(share, cap) : share;
+            }
+        }
+
+        return 0.0;
     }
 
     // validates that a numeric value is not negative
@@ -239,30 +271,27 @@ public class PayrollCalculator {
         return value;
     }
 
-    // computes withholding tax from monthly taxable income
-    public static double computeMonthlyTax(double monthlyGross, double monthlyDeductions) {
+    // computes withholding tax from monthly taxable income using the effective tax brackets
+    public static double computeMonthlyTax(
+            double monthlyGross,
+            double monthlyDeductions,
+            List<WithholdingTaxBracketDTO> brackets) {
+
         double taxable = Math.max(0.0, monthlyGross - monthlyDeductions);
 
-        if (taxable <= 20833) {
+        if (brackets == null || brackets.isEmpty()) {
             return 0.0;
         }
 
-        if (taxable <= 33333) {
-            return (taxable - 20833) * 0.15;
+        for (WithholdingTaxBracketDTO bracket : brackets) {
+            boolean withinMin = taxable >= bracket.getMinSalary();
+            boolean withinMax = bracket.getMaxSalary() <= 0 || taxable <= bracket.getMaxSalary();
+
+            if (withinMin && withinMax) {
+                return bracket.getBaseTax() + (taxable - bracket.getExcessOver()) * bracket.getTaxRate();
+            }
         }
 
-        if (taxable <= 66667) {
-            return 1875 + (taxable - 33333) * 0.20;
-        }
-
-        if (taxable <= 166667) {
-            return 8541.67 + (taxable - 66667) * 0.25;
-        }
-
-        if (taxable <= 666667) {
-            return 33541.67 + (taxable - 166667) * 0.30;
-        }
-
-        return 183541.67 + (taxable - 666667) * 0.35;
+        return 0.0;
     }
 }

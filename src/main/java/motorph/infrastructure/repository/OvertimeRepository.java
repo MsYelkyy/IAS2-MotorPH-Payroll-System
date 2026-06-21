@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Handles database operations for overtime request records.
  */
-public class OvertimeRepository {
+public class OvertimeRepository implements Repository<OvertimeRequest, Integer> {
 
     private static final String BASE_SELECT = """
             SELECT overtime_request_id,
@@ -38,13 +38,15 @@ public class OvertimeRepository {
             """;
 
     // finds all overtime requests
+    @Override
     public List<OvertimeRequest> findAll() {
         String sql = BASE_SELECT + " ORDER BY created_at DESC";
         return executeListQuery(sql, null);
     }
 
     // finds overtime request by id
-    public OvertimeRequest findById(int overtimeRequestId) {
+    @Override
+    public OvertimeRequest findById(Integer overtimeRequestId) {
         validatePositive(overtimeRequestId, "Overtime request ID must be positive.");
 
         String sql = BASE_SELECT + " WHERE overtime_request_id = ?";
@@ -155,6 +157,7 @@ public class OvertimeRepository {
     }
 
     // saves an overtime request
+    @Override
     public void save(OvertimeRequest request) {
         validateRequest(request);
 

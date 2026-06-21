@@ -4,6 +4,10 @@ import motorph.application.dto.login.LoginResultDTO;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.Role;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Stores the logged-in user and selected active role.
  */
@@ -15,6 +19,7 @@ public class UserSession {
     private Integer userAccountId;
     private int employeeId;
     private String companyEmail;
+    private List<Role> roles = new ArrayList<>();
     private Role activeRole;
     private boolean loggedIn;
 
@@ -38,6 +43,7 @@ public class UserSession {
         this.userAccountId = currentUser.getUserAccountId();
         this.employeeId = currentUser.getEmployeeId();
         this.companyEmail = currentUser.getCompanyEmail();
+        this.roles = new ArrayList<>(currentUser.getRoles());
         this.activeRole = currentUser.getActiveRole();
         this.loggedIn = true;
     }
@@ -52,6 +58,7 @@ public class UserSession {
         this.userAccountId = result.getUserAccountId();
         this.employeeId = result.getEmployeeId();
         this.companyEmail = result.getCompanyEmail();
+        this.roles = new ArrayList<>(result.getRoles());
         this.activeRole = result.getRole();
         this.loggedIn = true;
     }
@@ -77,6 +84,14 @@ public class UserSession {
         return activeRole;
     }
 
+    public List<Role> getRoles() {
+        if (currentUser != null) {
+            return currentUser.getRoles();
+        }
+
+        return Collections.unmodifiableList(roles);
+    }
+
     public boolean isLoggedIn() {
         return loggedIn;
     }
@@ -91,12 +106,16 @@ public class UserSession {
             return currentUser.hasRole(role);
         }
 
-        return activeRole == role;
+        return roles.contains(role);
     }
 
     // checks if the logged-in user has multiple roles
     public boolean hasMultipleRoles() {
-        return currentUser != null && currentUser.hasMultipleRoles();
+        if (currentUser != null) {
+            return currentUser.hasMultipleRoles();
+        }
+
+        return roles.size() > 1;
     }
 
     // checks if the logged-in user is using the given role
@@ -124,9 +143,11 @@ public class UserSession {
             return;
         }
 
-        if (activeRole != role) {
-            throw new IllegalArgumentException("Cannot switch role because only one role is available.");
+        if (!roles.contains(role)) {
+            throw new IllegalArgumentException("Cannot switch to a role that is not assigned to this account.");
         }
+
+        this.activeRole = role;
     }
 
     // sets the current user account
@@ -156,6 +177,7 @@ public class UserSession {
         this.userAccountId = null;
         this.employeeId = 0;
         this.companyEmail = null;
+        this.roles.clear();
         this.activeRole = null;
         this.loggedIn = false;
     }

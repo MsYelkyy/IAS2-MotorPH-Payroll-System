@@ -6,20 +6,20 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
-import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.PasswordResetRequestRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/**
- * Handles forgot password requests and IT/Admin temporary password processing.
- */
+/** Handles password reset requests and temporary password processing. */
 public class PasswordResetService {
 
-    private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 5;
+    private static final Logger LOGGER = Logger.getLogger(PasswordResetService.class.getName());
+    private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 60;
     private static final int TEMPORARY_PASSWORD_LENGTH = 10;
     private static final String TEMPORARY_PASSWORD_PREFIX = "MPH-";
     private static final String TEMPORARY_PASSWORD_CHARACTERS =
@@ -27,7 +27,8 @@ public class PasswordResetService {
 
     private final PasswordResetRequestRepository passwordResetRequestRepository;
     private final UserAccountRepository userAccountRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
+    private final TwoFactorService twoFactorService;
     private final EmailService emailService;
     private final UserAccessLogService userAccessLogService;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -35,7 +36,8 @@ public class PasswordResetService {
     // constructors
     public PasswordResetService(PasswordResetRequestRepository passwordResetRequestRepository,
                                 UserAccountRepository userAccountRepository,
-                                EmployeeRepository employeeRepository,
+                                EmployeeService employeeService,
+                                TwoFactorService twoFactorService,
                                 EmailService emailService,
                                 UserAccessLogService userAccessLogService) {
 
@@ -44,7 +46,8 @@ public class PasswordResetService {
                 "PasswordResetRequestRepository is required."
         );
         this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
-        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.employeeService = require(employeeService, "EmployeeService is required.");
+        this.twoFactorService = require(twoFactorService, "TwoFactorService is required.");
         this.emailService = require(emailService, "EmailService is required.");
         this.userAccessLogService = require(userAccessLogService, "UserAccessLogService is required.");
     }
@@ -63,7 +66,7 @@ public class PasswordResetService {
             throw new BusinessRuleException("Account is locked.");
         }
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+        String personalEmail = employeeService.getPersonalEmail(account.getEmployeeId());
 
         if (personalEmail == null || personalEmail.isBlank()) {
             throw new ValidationException("Registered personal email is required for password reset.");
@@ -77,12 +80,50 @@ public class PasswordResetService {
         }
 
         PasswordResetRequest request = new PasswordResetRequest(account.getUserAccountId());
-        return passwordResetRequestRepository.saveAndReturnId(request);
+        int requestId = passwordResetRequestRepository.saveAndReturnId(request);
+
+        return requestId;
+    }
+
+    // verifies the OTP for a self-service password reset
+    public void verifyResetOtp(int resetRequestId, String rawOtp) {
+        validateResetRequestId(resetRequestId);
+        twoFactorService.verifyPasswordResetOtp(resetRequestId, rawOtp);
+    }
+
+    // completes a self-service password reset after OTP is verified
+    public void resetPassword(int resetRequestId, String newPassword, String confirmPassword) {
+        validateResetRequestId(resetRequestId);
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new ValidationException("Password must be at least 8 characters.");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ValidationException("Passwords do not match.");
+        }
+
+        PasswordResetRequest request = passwordResetRequestRepository.findById(resetRequestId);
+
+        if (request == null || !request.isPending()) {
+            throw new BusinessRuleException("Password reset request is invalid or already completed.");
+        }
+
+        UserAccount account = getActiveAccountOrThrow(request.getUserAccountId());
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(newPassword, salt);
+        userAccountRepository.updatePassword(account.getUserAccountId(), hash, salt);
+        passwordResetRequestRepository.markCompleted(resetRequestId);
     }
 
     // returns pending password reset requests for IT/Admin review
     public List<PasswordResetRequest> listPendingRequests() {
         return passwordResetRequestRepository.findPendingRequests();
+    }
+
+    // returns pending password reset request count
+    public int getPendingRequestCount() {
+        return listPendingRequests().size();
     }
 
     // processes a pending request and emails a temporary password
@@ -93,7 +134,7 @@ public class PasswordResetService {
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
         UserAccount account = getActiveAccountOrThrow(request.getUserAccountId());
 
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+        String personalEmail = employeeService.getPersonalEmail(account.getEmployeeId());
 
         if (personalEmail == null || personalEmail.isBlank()) {
             throw new ValidationException("Registered personal email is required for password reset.");
@@ -113,14 +154,9 @@ public class PasswordResetService {
 
         passwordResetRequestRepository.markManuallyResolved(resetRequestId, resolverEmployeeId);
 
-        emailService.sendTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
+        emailService.sendPasswordResetTemporaryPassword(personalEmail, account.getCompanyEmail(), temporaryPassword);
 
         logPasswordReset(resolverEmployeeId, account.getEmployeeId());
-    }
-
-    // keeps old method name as wrapper for IT/Admin approval
-    public void approvePasswordReset(int resetRequestId, int approverEmployeeId) {
-        processPasswordResetRequest(resetRequestId, approverEmployeeId);
     }
 
     // cancels a pending password reset request
@@ -178,8 +214,8 @@ public class PasswordResetService {
     private void logPasswordReset(int resolverEmployeeId, int targetEmployeeId) {
         try {
             userAccessLogService.logPasswordReset(resolverEmployeeId, targetEmployeeId);
-        } catch (RuntimeException ignored) {
-            // Logging failure should not block password reset processing.
+        } catch (RuntimeException exception) {
+            LOGGER.log(Level.WARNING, "Failed to write password reset audit log.", exception);
         }
     }
 

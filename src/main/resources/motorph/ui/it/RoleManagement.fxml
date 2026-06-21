@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  IT-owned Role Management view. Root is VBox so it fits the showView(VBox)
+  pattern used by both the IT and Admin shells.
+-->
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.it.ITRolesController"
+      VBox.vgrow="ALWAYS">
+
+    <HBox spacing="16" alignment="TOP_LEFT" VBox.vgrow="ALWAYS">
+
+        <!-- Left: Role selector -->
+        <VBox styleClass="content-card" prefWidth="180" minWidth="180" spacing="8">
+            <Label text="ROLES" styleClass="section-title"/>
+            <Separator/>
+            <Button fx:id="roleAdminBtn"    text="ADMIN"    onAction="#selectAdmin"    maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
+            <Button fx:id="roleHrBtn"       text="HR"       onAction="#selectHr"       maxWidth="Infinity" styleClass="nav-button"/>
+            <Button fx:id="roleFinanceBtn"  text="FINANCE"  onAction="#selectFinance"  maxWidth="Infinity" styleClass="nav-button"/>
+            <Button fx:id="roleItBtn"       text="IT"       onAction="#selectIt"       maxWidth="Infinity" styleClass="nav-button"/>
+            <Button fx:id="roleEmployeeBtn" text="EMPLOYEE" onAction="#selectEmployee" maxWidth="Infinity" styleClass="nav-button"/>
+        </VBox>
+
+        <!-- Right: Permission matrix -->
+        <VBox styleClass="content-card" spacing="12" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label text="PERMISSIONS FOR:" styleClass="field-label"/>
+                <Label fx:id="selectedRoleLabel" text="ADMIN" styleClass="section-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="moduleMessageLabel" styleClass="muted-text" wrapText="true" maxWidth="260"/>
+            </HBox>
+
+            <Separator/>
+
+            <ScrollPane fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"
+                        styleClass="workspace-scroll" VBox.vgrow="ALWAYS" prefHeight="460">
+                <content>
+                    <VBox fx:id="permissionMatrix" spacing="2" style="-fx-padding: 4 8;"/>
+                </content>
+            </ScrollPane>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Select All"       onAction="#handleSelectAll" styleClass="secondary-button"/>
+                <Button text="Clear All"        onAction="#handleClearAll"  styleClass="secondary-button"/>
+                <Button text="Save Permissions" onAction="#handleSave"      styleClass="primary-button"/>
+            </HBox>
+
+        </VBox>
+    </HBox>
+</VBox>

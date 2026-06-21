@@ -1,0 +1,568 @@
+/* ══════════════════════════════════════════════════════════════════
+   ADMIN EMPLOYEE MANAGEMENT
+   Loaded via admin-main.fxml after shared-components.css.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Print Payslip button — blue accent, same shape as primary-button ── */
+.print-payslip-button {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 100%, #3B82F6 0%, #2563EB 45%, #1D4ED8 100%);
+    -fx-border-color: rgba(147,197,253,0.55) rgba(29,78,216,0.80) rgba(23,60,180,0.90) rgba(147,197,253,0.55);
+    -fx-border-width: 1;
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: 900;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-min-height: 44;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.50), 8, 0.35, 0, 3);
+}
+
+.print-payslip-button:hover {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 100%, #60A5FA 0%, #3B82F6 45%, #2563EB 100%);
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.55), 12, 0.35, 0, 4);
+}
+
+.root-canvas.light-mode .print-payslip-button {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 100%, #3B82F6 0%, #2563EB 45%, #1D4ED8 100%);
+    -fx-border-color: rgba(96,165,250,0.55) rgba(29,78,216,0.80) rgba(23,60,180,0.90) rgba(96,165,250,0.55);
+}
+
+/* Payroll workflow refinements */
+.payroll-module .module-toolbar {
+    -fx-padding: 0 0 4 0;
+}
+
+.payroll-module .payroll-tab-pane {
+    -fx-background-color: transparent;
+    -fx-tab-min-height: 40;
+    -fx-tab-max-height: 40;
+}
+
+.payroll-module .payroll-tab-pane > .tab-header-area {
+    -fx-padding: 0 0 0 20;
+}
+
+.payroll-module .payroll-tab-pane > .tab-header-area > .headers-region {
+    -fx-background-color: transparent;
+}
+
+.payroll-module .payroll-tab-pane > .tab-header-area > .tab-header-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.06) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.payroll-module .payroll-tab-pane > .tab-content-area {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.payroll-module .payroll-tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 8 8 0 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 2 0;
+    -fx-padding: 0 14 0 14;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.payroll-module .payroll-tab-pane .tab:selected {
+    -fx-background-color: rgba(255,255,255,0.035);
+    -fx-border-color: transparent transparent #EF4444 transparent;
+}
+
+.payroll-module .payroll-tab-pane .tab:hover {
+    -fx-background-color: rgba(255,255,255,0.045);
+}
+
+.payroll-module .payroll-tab-pane .tab .tab-label {
+    -fx-text-fill: rgba(190,205,230,0.62);
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+}
+
+.payroll-module .payroll-tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #F8FAFC;
+}
+
+.payroll-module .payroll-tab-pane .tab .focus-indicator {
+    -fx-border-color: transparent;
+}
+
+.payroll-module .payroll-tab-card {
+    -fx-background-radius: 10 10 14 14;
+    -fx-border-radius: 10 10 14 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.28), 10, 0.16, 0, 4);
+}
+
+.payroll-module .payroll-summary-card {
+    -fx-background-color: rgba(255,255,255,0.045);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-effect: none;
+    -fx-padding: 14 16;
+    -fx-min-height: 92;
+}
+
+.payroll-module .payroll-summary-card .metric-value {
+    -fx-font-size: 24px;
+}
+
+.payroll-module .payroll-primary-action {
+    -fx-min-width: 156;
+    -fx-pref-width: 156;
+}
+
+.payroll-module .primary-table-button {
+    -fx-padding: 0 12;
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 100%, #DC2626 0%, #B91C1C 100%);
+    -fx-border-color: rgba(248,113,113,0.45);
+    -fx-border-width: 1;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-cursor: hand;
+}
+
+.payroll-module .primary-table-button:hover {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 100%, #EF4444 0%, #DC2626 100%);
+}
+
+.payroll-module .neutral-table-button {
+    -fx-background-color: rgba(148,163,184,0.10);
+    -fx-border-color: rgba(148,163,184,0.26);
+    -fx-text-fill: #CBD5E1;
+}
+
+.payroll-module .neutral-table-button:hover {
+    -fx-background-color: rgba(148,163,184,0.18);
+    -fx-border-color: rgba(148,163,184,0.42);
+    -fx-text-fill: #F8FAFC;
+}
+
+.payroll-module .compact-print-button {
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-padding: 0 12;
+    -fx-font-size: 11px;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+    -fx-effect: none;
+}
+
+.payroll-module .payroll-table .table-cell {
+    -fx-padding: 0 12;
+}
+
+.root-canvas.light-mode .payroll-module .payroll-summary-card {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane > .tab-header-area > .tab-header-background {
+    -fx-border-color: transparent transparent rgba(15,23,42,0.08) transparent;
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane .tab {
+    -fx-background-color: transparent;
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane .tab:selected {
+    -fx-background-color: rgba(37,99,235,0.06);
+    -fx-border-color: transparent transparent #2563EB transparent;
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane .tab:hover {
+    -fx-background-color: rgba(15,23,42,0.04);
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane .tab .tab-label {
+    -fx-text-fill: #64748B;
+}
+
+.root-canvas.light-mode .payroll-module .payroll-tab-pane .tab:selected .tab-label {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .payroll-module .neutral-table-button {
+    -fx-background-color: rgba(107,114,128,0.07);
+    -fx-border-color: rgba(107,114,128,0.20);
+    -fx-text-fill: #374151;
+}
+
+.root-canvas.light-mode .payroll-module .neutral-table-button:hover {
+    -fx-background-color: rgba(107,114,128,0.12);
+    -fx-border-color: rgba(107,114,128,0.32);
+    -fx-text-fill: #111827;
+}
+
+/* ── Inactive employee status badge ─────────────────────────────── */
+.status-badge-inactive {
+    -fx-padding: 2 8;
+    -fx-background-color: rgba(156,163,175,0.16);
+    -fx-background-radius: 4;
+    -fx-text-fill: #9CA3AF;
+    -fx-font-size: 10px;
+    -fx-font-weight: 900;
+}
+
+.root-canvas.light-mode .status-badge-inactive {
+    -fx-background-color: rgba(107,114,128,0.12);
+    -fx-text-fill: #6B7280;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   ADD / EDIT EMPLOYEE — 4-section modal form
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Form panel outer container ──────────────────────────────────── */
+.admin-add-form-panel.modal-panel,
+.admin-add-form-panel {
+    -fx-max-height: 800;
+    -fx-padding: 0;
+}
+
+/* ── Header (title + subtitle, fixed above scroll) ───────────────── */
+.emp-form-header {
+    -fx-padding: 26 34 16 34;
+    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.root-canvas.light-mode .emp-form-header {
+    -fx-border-color: transparent transparent rgba(0,0,0,0.08) transparent;
+}
+
+/* ── Scroll pane — no border, transparent bg ─────────────────────── */
+.emp-form-scroll {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.emp-form-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.emp-form-scroll .scroll-bar:vertical {
+    -fx-pref-width: 7;
+    -fx-background-color: transparent;
+}
+
+.emp-form-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(255,255,255,0.12);
+    -fx-background-radius: 999;
+}
+
+.emp-form-scroll .scroll-bar:vertical .track,
+.emp-form-scroll .scroll-bar:vertical .increment-button,
+.emp-form-scroll .scroll-bar:vertical .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.root-canvas.light-mode .emp-form-scroll .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(0,0,0,0.14);
+}
+
+/* ── Scrollable body padding ─────────────────────────────────────── */
+.emp-form-body {
+    -fx-padding: 20 34 10 34;
+}
+
+/* ── Individual section card ─────────────────────────────────────── */
+.emp-form-section {
+    -fx-background-color: rgba(255,255,255,0.028);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255,255,255,0.07);
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 18 20 20 20;
+}
+
+.root-canvas.light-mode .emp-form-section {
+    -fx-background-color: rgba(0,0,0,0.018);
+    -fx-border-color: rgba(0,0,0,0.08);
+}
+
+/* ── Section heading (PERSONAL INFORMATION, etc.) ────────────────── */
+.emp-section-heading {
+    -fx-font-size: 11px;
+    -fx-font-weight: 900;
+    -fx-text-fill: rgba(130,158,210,0.75);
+    -fx-padding: 0 0 2 0;
+}
+
+.root-canvas.light-mode .emp-section-heading {
+    -fx-text-fill: #6B7280;
+}
+
+/* Personal Information is a strict two-column field grid. Each row's
+   left and right controls share the same footprint, including composite
+   controls such as ComboBox and DatePicker. */
+.personal-info-row {
+    -fx-alignment: TOP_LEFT;
+}
+
+.personal-info-field {
+    -fx-min-width: 0;
+}
+
+.admin-add-form-panel .personal-info-control,
+.admin-add-form-panel .combo-box.personal-info-control,
+.admin-add-form-panel .date-picker.personal-info-control {
+    -fx-min-width: 0;
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-max-height: 42;
+}
+
+.admin-add-form-panel .combo-box.personal-info-control > .list-cell {
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+    -fx-padding: 0 4;
+}
+
+.admin-add-form-panel .date-picker.personal-info-control > .text-field,
+.admin-add-form-panel .date-picker.personal-info-control .date-picker-display-node {
+    -fx-min-width: 0;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+}
+
+.admin-add-form-panel .date-picker.personal-info-control > .arrow-button {
+    -fx-min-width: 42;
+    -fx-pref-width: 42;
+    -fx-max-width: 42;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+    -fx-padding: 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FIXED FIELD SIZING — every input control in the modal shares one
+   locked height (pref = min = max) so nothing shifts, resizes, or
+   jumps on focus, validation, typing, or dropdown selection.
+   ══════════════════════════════════════════════════════════════════ */
+.admin-add-form-panel .input-field,
+.admin-add-form-panel .combo-box.input-field,
+.admin-add-form-panel .date-picker {
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-max-height: 42;
+}
+
+/* DatePicker is a composite control: pin its editor too so the inner
+   text field matches the outer control height exactly. */
+.admin-add-form-panel .date-picker > .text-field,
+.admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+}
+
+/* ComboBox cell sits inside the 42px frame without inflating it. */
+.admin-add-form-panel .combo-box.input-field > .list-cell {
+    -fx-padding: 0 4;
+    -fx-text-overrun: ellipsis;
+    -fx-ellipsis-string: "...";
+}
+
+.admin-add-form-panel .dept-position-field {
+    -fx-min-width: 270;
+    -fx-pref-width: 270;
+    -fx-max-width: 270;
+}
+
+.admin-add-form-panel .dept-position-field .combo-box.input-field {
+    -fx-min-width: 270;
+    -fx-pref-width: 270;
+    -fx-max-width: 270;
+}
+
+.admin-add-form-panel .dept-position-field .combo-box.input-field > .list-cell {
+    -fx-text-overrun: ellipsis;
+    -fx-ellipsis-string: "...";
+    -fx-wrap-text: false;
+}
+
+/* Focus must not change the layout footprint: keep the border at 1px
+   and drop the glow effect (effects can nudge perceived bounds). */
+.admin-add-form-panel .input-field:focused,
+.admin-add-form-panel .combo-box.input-field:focused,
+.admin-add-form-panel .date-picker:focused,
+.admin-add-form-panel .date-picker .text-field:focused {
+    -fx-border-width: 1;
+    -fx-effect: null;
+}
+
+/* ── Validation row beside the field label ───────────────────────────
+   The label HBox always reserves its line height whether or not the
+   error label is visible, so toggling the error never moves the row. */
+.emp-field-label-row {
+    -fx-min-height: 16;
+    -fx-pref-height: 16;
+}
+
+/* ── Read-only field (auto-computed hourly rate) ─────────────────────
+   Must look like a normal dark input field — same fill, border, radius,
+   padding, font — just dimmed text. Never white, never focus-styled. */
+.admin-add-form-panel .input-field.readonly-field {
+    -fx-background-color: #1F2937;
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-text-fill: rgba(248,250,252,0.55);
+    -fx-opacity: 1;
+}
+
+.admin-add-form-panel .input-field.readonly-field:focused,
+.admin-add-form-panel .input-field.readonly-field:hover {
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-background-color: #1F2937;
+    -fx-effect: null;
+}
+
+.root-canvas.light-mode .admin-add-form-panel .input-field.readonly-field {
+    -fx-background-color: #EEF1F6;
+    -fx-text-fill: #9CA3AF;
+}
+
+/* ── Actions row (Cancel / Save, fixed below scroll) ─────────────── */
+.emp-form-actions {
+    -fx-padding: 14 34 22 34;
+    -fx-border-color: rgba(255,255,255,0.07) transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.root-canvas.light-mode .emp-form-actions {
+    -fx-border-color: rgba(0,0,0,0.08) transparent transparent transparent;
+}
+
+/* New Payrun compact modal */
+.payrun-form-panel.payrun-form-active,
+.payrun-form-panel {
+    -fx-padding: 24 28 22 28;
+    -fx-background-color: #111827;
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(239,68,68,0.48);
+    -fx-border-radius: 10;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.72), 34, 0.24, 0, 14);
+}
+
+.root-canvas.light-mode .payrun-form-panel.payrun-form-active,
+.root-canvas.light-mode .payrun-form-panel {
+    -fx-background-color: #FFFFFF;
+    -fx-border-color: rgba(220,38,38,0.30);
+}
+
+.payrun-form-header {
+    -fx-padding: 0 0 4 0;
+}
+
+.payrun-form-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+}
+
+.payrun-form-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: rgba(226,232,240,0.68);
+}
+
+.root-canvas.light-mode .payrun-form-title {
+    -fx-text-fill: #0d1117;
+}
+
+.root-canvas.light-mode .payrun-form-subtitle {
+    -fx-text-fill: #4b5563;
+}
+
+.payrun-form-fields {
+    -fx-padding: 2 0 0 0;
+}
+
+.payrun-form-panel .field-label {
+    -fx-font-size: 10px;
+}
+
+.payrun-form-panel .input-field,
+.payrun-form-panel .combo-box.input-field,
+.payrun-form-panel .date-picker {
+    -fx-background-color: #1F2937;
+    -fx-border-color: rgba(255,255,255,0.18);
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(226,232,240,0.56);
+    -fx-min-height: 42;
+    -fx-pref-height: 42;
+    -fx-max-height: 42;
+}
+
+.payrun-form-panel .date-picker > .text-field,
+.payrun-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #1F2937;
+    -fx-border-color: transparent;
+    -fx-text-fill: #F8FAFC;
+    -fx-prompt-text-fill: rgba(226,232,240,0.56);
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+}
+
+.root-canvas.light-mode .payrun-form-panel .input-field,
+.root-canvas.light-mode .payrun-form-panel .combo-box.input-field,
+.root-canvas.light-mode .payrun-form-panel .date-picker,
+.root-canvas.light-mode .payrun-form-panel .date-picker > .text-field,
+.root-canvas.light-mode .payrun-form-panel .date-picker .date-picker-display-node {
+    -fx-background-color: #F8FAFC;
+    -fx-border-color: #D8DEE9;
+    -fx-text-fill: #111827;
+    -fx-prompt-text-fill: #7B8794;
+}
+
+.payrun-form-panel .combo-box.input-field > .list-cell {
+    -fx-padding: 0 4;
+    -fx-text-overrun: ellipsis;
+    -fx-ellipsis-string: "...";
+}
+
+.payrun-form-panel .error-message {
+    -fx-min-height: 18;
+    -fx-pref-height: 18;
+}
+
+.payrun-form-actions {
+    -fx-padding: 2 0 0 0;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+.payrun-form-button {
+    -fx-min-width: 132;
+    -fx-pref-width: 132;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+}
+
+.payrun-create-button {
+    -fx-min-width: 148;
+    -fx-pref-width: 148;
+}

@@ -35,6 +35,11 @@ public class PayrollEarning extends PayrollComponent {
         this.earningTypeId = earningTypeId;
     }
 
+    @Override
+    public String getComponentType() {
+        return "EARNING";
+    }
+
     // returns the payroll earning summary
     @Override
     public String toString() {

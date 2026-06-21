@@ -1,74 +1,54 @@
 package motorph.app;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
-import motorph.application.service.report.AttendanceReportService;
-import motorph.application.service.report.PayrollReportService;
-import motorph.infrastructure.repository.report.AttendanceReportRepository;
-import motorph.infrastructure.repository.report.PayrollReportRepository;
-import motorph.infrastructure.reporting.JasperReportGenerator;
-
-import java.time.LocalDate;
+import motorph.ui.common.EmailPreviewDialog;
+import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.factory.FinanceUIServiceFactory;
+import motorph.ui.factory.HrUIServiceFactory;
+import motorph.ui.factory.ITUIServiceFactory;
 
 /**
- * Main entry point used temporarily for testing organization payroll report generation.
+ * Main entry point of the MotorPH JavaFX application.
  */
 public class Main extends Application {
 
     @Override
-    public void start(Stage stage) {
-        PayrollReportService payrollReportService = new PayrollReportService(
-                new PayrollReportRepository(),
-                new JasperReportGenerator()
-        );
-        AttendanceReportService attendanceReportService = new AttendanceReportService(
-                new AttendanceReportRepository(),
-                new JasperReportGenerator()
-        );
+    public void start(Stage stage) throws Exception {
+        // Initialize all application services before any FXML controller is loaded.
+        EmployeeUIServiceFactory.initialize();
+        ITUIServiceFactory.initialize();
+        HrUIServiceFactory.initialize();
+        FinanceUIServiceFactory.initialize();
 
-        payrollReportService.previewOrganizationPayrollReport(
-                null,
-                null,
-                null,
-                LocalDate.of(2024, 6, 3),
-                LocalDate.of(2024, 12, 31)
+        Parent root = FXMLLoader.load(
+                Main.class.getResource("/motorph/ui/auth/login.fxml")
         );
 
+        Scene scene = new Scene(root, 1360, 880);
 
+        stage.setTitle("MotorPH Payroll System");
+        stage.setScene(scene);
 
-        payrollReportService.previewPayrollSummaryReport(
-                null,
-                null,
-                LocalDate.of(2024, 6, 3),
-                LocalDate.of(2024, 12, 31)
-        );
+        stage.setMinWidth(1360);
+        stage.setMinHeight(820);
 
+        stage.centerOnScreen();
+        stage.show();
 
+        EmployeeUIServiceFactory.getInstance()
+                .getEmailPreviewService()
+                .addListener(preview -> Platform.runLater(() ->
+                        EmailPreviewDialog.show(stage, preview, isLightMode(scene.getRoot()))));
+    }
 
-        payrollReportService.previewDepartmentPayrollReport(
-                2,
-                null,
-                LocalDate.of(2024, 6, 3),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        payrollReportService.previewDepartmentPayrollReport(
-                4,
-                null,
-                LocalDate.of(2024, 6, 3),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        attendanceReportService.previewEmployeeTimecardReport(
-                10001,
-                LocalDate.of(2024, 12, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-
-
-        payrollReportService.previewPayslipReport(10001, 11);
-        payrollReportService.previewPayslipReport(10001, 12);
+    private boolean isLightMode(Node root) {
+        return root != null && root.getStyleClass().contains("light-mode");
     }
 
     public static void main(String[] args) {

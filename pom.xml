@@ -72,6 +72,13 @@
             <version>${jasperreports.version}</version>
         </dependency>
 
+        <!-- JasperReports PDF export extension (required for exportReportToPdfFile) -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports-pdf</artifactId>
+            <version>${jasperreports.version}</version>
+        </dependency>
+
         <!-- JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

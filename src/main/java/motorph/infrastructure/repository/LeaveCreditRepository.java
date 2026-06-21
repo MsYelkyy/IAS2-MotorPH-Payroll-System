@@ -1,12 +1,14 @@
 package motorph.infrastructure.repository;
 
+import motorph.domain.model.LeaveCredit;
 import motorph.infrastructure.config.DatabaseConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-
+import java.util.ArrayList;
+import java.util.List;
 /**
  * Handles database operations for employee leave credit records.
  */
@@ -166,6 +168,48 @@ public class LeaveCreditRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Failed to restore leave credits.", e);
         }
+    }
+
+    // finds all leave credits for an employee in a given year
+    public List<LeaveCredit> findByEmployeeId(int employeeId, int year) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validateYear(year);
+
+        String sql = """
+                SELECT leave_credit_id, employee_id, leave_type_id,
+                    total_credits, used_credits, year
+                FROM leave_credit
+                WHERE employee_id = ?
+                AND year = ?
+                ORDER BY leave_type_id
+                """;
+
+        List<LeaveCredit> results = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setInt(2, year);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    results.add(new LeaveCredit(
+                            rs.getInt("leave_credit_id"),
+                            rs.getInt("employee_id"),
+                            rs.getInt("leave_type_id"),
+                            rs.getDouble("total_credits"),
+                            rs.getDouble("used_credits"),
+                            rs.getInt("year")
+                    ));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to load leave credits for employee.", e);
+        }
+
+        return results;
     }
 
     // converts leave hours to leave credits

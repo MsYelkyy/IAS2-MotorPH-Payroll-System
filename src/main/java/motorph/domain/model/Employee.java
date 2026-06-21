@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.util.Objects;
 import motorph.domain.value.EmploymentStatus;
 
+import motorph.domain.value.Gender;
+
 /**
  * Represents the core employee profile and maps to the employee table in the database.
  */
@@ -13,6 +15,7 @@ public class Employee {
     private String firstName;
     private String lastName;
     private LocalDate birthDate;
+    private Gender gender;
     private String address;
     private String civilStatus;
     private String phoneNumber;
@@ -31,6 +34,7 @@ public class Employee {
             String firstName,
             String lastName,
             LocalDate birthDate,
+            Gender gender,
             String address,
             String civilStatus,
             String phoneNumber,
@@ -47,6 +51,7 @@ public class Employee {
         setFirstName(firstName);
         setLastName(lastName);
         setBirthDate(birthDate);
+        setGender(gender);
         setAddress(address);
         setCivilStatus(civilStatus);
         setPhoneNumber(phoneNumber);
@@ -79,6 +84,10 @@ public class Employee {
 
     public String getAddress() {
         return address;
+    }
+
+    public Gender getGender() {
+        return gender;
     }
 
     public String getCivilStatus() {
@@ -151,6 +160,10 @@ public class Employee {
 
     public void setFirstName(String firstName) {
         this.firstName = requireNonBlank(firstName, "First name is required.");
+    }
+
+    public void setGender(Gender gender) {
+        this.gender = Objects.requireNonNull(gender, "Gender is required.");
     }
 
     public void setLastName(String lastName) {
@@ -232,6 +245,7 @@ public class Employee {
     public String toString() {
         return "Employee{employeeId=" + employeeId
                 + ", fullName='" + getFullName() + '\''
+                + ", gender=" + gender
                 + ", employmentStatus=" + employmentStatus
                 + ", positionId=" + positionId
                 + ", departmentId=" + departmentId

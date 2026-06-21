@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="16"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.employee.EmployeeProfileController">
+
+    <!-- ── Profile header: photo left | name/ID right ─────────────── -->
+    <HBox spacing="28" alignment="CENTER_LEFT" styleClass="profile-header-section">
+
+        <!-- Photo column — fixed width, avatar on top, upload button below -->
+        <VBox spacing="10" alignment="CENTER" minWidth="174" maxWidth="174">
+            <StackPane fx:id="profilePhotoFrame"
+                       prefWidth="174" prefHeight="220"
+                       minWidth="174" minHeight="220"
+                       maxWidth="174" maxHeight="220"
+                       styleClass="profile-photo-frame">
+                <ImageView fx:id="profilePhotoView"
+                           fitWidth="174" fitHeight="220"
+                           preserveRatio="false" smooth="true"
+                           visible="false" managed="false"/>
+                <Label fx:id="profilePhotoInitials"
+                       text="?"
+                       visible="false" managed="false"
+                       styleClass="profile-initials"/>
+            </StackPane>
+
+            <!--
+                managed="true" always → space is reserved whether visible or not.
+                visible toggles between edit/view mode so layout never shifts.
+            -->
+            <Button fx:id="uploadImageButton"
+                    text="⬆  Upload Image"
+                    onAction="#handleUploadImage"
+                    styleClass="upload-image-button"
+                    visible="false"
+                    maxWidth="174" minWidth="174"/>
+        </VBox>
+
+        <!-- Name / Employee ID column -->
+        <VBox spacing="10" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+            <Label fx:id="profileFullNameLabel" text="—" styleClass="profile-name-large" wrapText="true"/>
+            <HBox spacing="6" alignment="CENTER_LEFT">
+                <Label fx:id="profileEmployeeIdLabel" text="Employee ID: —" styleClass="profile-id-value"/>
+            </HBox>
+        </VBox>
+
+    </HBox>
+
+    <!-- ── Personal Information ────────────────────────────────────── -->
+    <VBox spacing="0" styleClass="profile-section-card">
+
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+            <Label text="👤" styleClass="profile-section-icon"/>
+            <Label text="Personal Information" styleClass="profile-section-title"/>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="First Name" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileFirstNameLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Last Name" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileLastNameLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Birth Date" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileBirthDateLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Civil Status" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileCivilStatusLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+
+    </VBox>
+
+    <!-- ── Employment Details ──────────────────────────────────────── -->
+    <VBox spacing="0" styleClass="profile-section-card">
+
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+            <Label text="💼" styleClass="profile-section-icon"/>
+            <Label text="Employment Details" styleClass="profile-section-title"/>
+        </HBox>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Employment Status" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileEmploymentStatusLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Position" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profilePositionLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Department" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileDepartmentLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Supervisor" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileSupervisorLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+
+    </VBox>
+
+    <!-- ── Contact Information ─────────────────────────────────────── -->
+    <VBox spacing="0" styleClass="profile-section-card">
+
+        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
+            <Label text="✉" styleClass="profile-section-icon"/>
+            <Label text="Contact Information" styleClass="profile-section-title"/>
+        </HBox>
+
+        <!-- Company Email — read-only always -->
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Company Email" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileCompanyEmailLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <!-- Personal Email — read-only always -->
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Personal Email" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profilePersonalEmailLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <!-- Phone Number: label in view mode, input field in edit mode -->
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Phone Number" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profilePhoneDisplayLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+            <TextField fx:id="profilePhoneField"
+                       promptText="000-000-000"
+                       styleClass="input-field"
+                       visible="false" managed="false"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+        <Separator styleClass="profile-row-divider"/>
+
+        <!-- Address: label in view mode, input field in edit mode -->
+        <HBox alignment="CENTER_LEFT" styleClass="profile-data-row">
+            <Label text="Address" styleClass="profile-field-label" minWidth="180" maxWidth="180"/>
+            <Label fx:id="profileAddressDisplayLabel" text="—" styleClass="profile-field-value" HBox.hgrow="ALWAYS" wrapText="true"/>
+            <TextField fx:id="profileAddressField"
+                       promptText="Address"
+                       styleClass="input-field"
+                       visible="false" managed="false"
+                       HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <!-- Note row -->
+        <HBox spacing="6" alignment="CENTER_LEFT" styleClass="profile-note-row">
+            <Label text="ⓘ" styleClass="profile-note-icon"/>
+            <Label text="Only phone number and address can be updated."
+                   styleClass="note-text" wrapText="true" HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+    </VBox>
+
+    <!-- ── Bottom action row ───────────────────────────────────────── -->
+    <HBox spacing="12" alignment="CENTER_LEFT">
+        <Button fx:id="editProfileButton"
+                text="Edit Profile"
+                onAction="#handleEditProfile"
+                styleClass="profile-edit-button"/>
+        <Button fx:id="saveChangesButton"
+                text="Save Changes"
+                onAction="#handleSaveChanges"
+                styleClass="primary-button"
+                visible="false" managed="false"/>
+        <Button fx:id="cancelButton"
+                text="Cancel"
+                onAction="#handleCancel"
+                styleClass="secondary-button"
+                visible="false" managed="false"/>
+    </HBox>
+
+    <!-- ── Status / error message ─────────────────────────────────── -->
+    <Label fx:id="profileMessageLabel" wrapText="true" styleClass="message-label"/>
+
+</VBox>

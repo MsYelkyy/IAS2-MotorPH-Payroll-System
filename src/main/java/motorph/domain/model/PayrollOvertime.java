@@ -63,6 +63,11 @@ public class PayrollOvertime extends PayrollComponent {
         this.hourlyRate = hourlyRate;
     }
 
+    @Override
+    public String getComponentType() {
+        return "OVERTIME";
+    }
+
     // returns the expected overtime amount
     public double calculateExpectedAmount() {
         return hoursWorked * hourlyRate;

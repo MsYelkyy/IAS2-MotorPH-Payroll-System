@@ -5,7 +5,12 @@ import motorph.application.dto.login.LoginRequestDTO;
 import motorph.application.exception.AuthenticationException;
 import motorph.application.exception.ValidationException;
 import motorph.infrastructure.config.EmailConfig;
+import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
+import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 import motorph.infrastructure.repository.TwoFactorCodeRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -167,7 +172,7 @@ class AuthenticationServiceTest {
                 IllegalArgumentException.class,
                 () -> new AuthenticationService(
                         null,
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         new TwoFactorService(new TwoFactorCodeRepository()),
                         createEmailService(),
                         null
@@ -176,10 +181,10 @@ class AuthenticationServiceTest {
     }
 
 
-    // constructor requires employee repository
+    // constructor requires employee service
     @Test
-    @DisplayName("Negative - constructor should require EmployeeRepository")
-    void constructorShouldRequireEmployeeRepository() {
+    @DisplayName("Negative - constructor should require EmployeeService")
+    void constructorShouldRequireEmployeeService() {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new AuthenticationService(
@@ -201,7 +206,7 @@ class AuthenticationServiceTest {
                 IllegalArgumentException.class,
                 () -> new AuthenticationService(
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         null,
                         createEmailService(),
                         null
@@ -218,7 +223,7 @@ class AuthenticationServiceTest {
                 IllegalArgumentException.class,
                 () -> new AuthenticationService(
                         new UserAccountRepository(),
-                        new EmployeeRepository(),
+                        createEmployeeService(),
                         new TwoFactorService(new TwoFactorCodeRepository()),
                         null,
                         null
@@ -231,17 +236,28 @@ class AuthenticationServiceTest {
     private AuthenticationService createAuthenticationService() {
         return new AuthenticationService(
                 new UserAccountRepository(),
-                new EmployeeRepository(),
+                createEmployeeService(),
                 new TwoFactorService(new TwoFactorCodeRepository()),
                 createEmailService(),
                 null
         );
     }
 
+    // creates employee service with real dependencies
+    private EmployeeService createEmployeeService() {
+        return new EmployeeService(
+                new EmployeeRepository(),
+                new UserAccountService(new UserAccountRepository(), createEmailService()),
+                new DepartmentRepository(),
+                new PositionRepository(),
+                new SalaryHistoryRepository(),
+                new EmployeeBenefitRepository(),
+                new GovernmentDetailsRepository()
+        );
+    }
 
     // creates email service using Mailtrap configuration
     private EmailService createEmailService() {
         return new EmailService(EmailConfig.mailtrapSandbox());
     }
 }
-

@@ -7,7 +7,6 @@ import motorph.application.exception.ValidationException;
 import motorph.application.security.PasswordHasher;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.OtpPurpose;
-import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.UserAccountRepository;
 
 /**
@@ -16,20 +15,20 @@ import motorph.infrastructure.repository.UserAccountRepository;
 public class AuthenticationService {
 
     private final UserAccountRepository userAccountRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
     private final TwoFactorService twoFactorService;
     private final EmailService emailService;
     private final UserAccessLogService userAccessLogService;
 
     // constructors
     public AuthenticationService(UserAccountRepository userAccountRepository,
-                                 EmployeeRepository employeeRepository,
+                                 EmployeeService employeeService,
                                  TwoFactorService twoFactorService,
                                  EmailService emailService,
                                  UserAccessLogService userAccessLogService) {
 
         this.userAccountRepository = require(userAccountRepository, "UserAccountRepository is required.");
-        this.employeeRepository = require(employeeRepository, "EmployeeRepository is required.");
+        this.employeeService = require(employeeService, "EmployeeService is required.");
         this.twoFactorService = require(twoFactorService, "TwoFactorService is required.");
         this.emailService = require(emailService, "EmailService is required.");
         this.userAccessLogService = userAccessLogService;
@@ -53,6 +52,8 @@ public class AuthenticationService {
         if (account.mustChangePassword()) {
             return buildTemporaryPasswordResult(account);
         }
+
+        String personalEmail = getPersonalEmailOrThrow(account);
 
         String rawOtp = twoFactorService.createOtp(
                 account.getUserAccountId(),
@@ -98,7 +99,7 @@ public class AuthenticationService {
 
     // gets the personal email for OTP sending
     private String getPersonalEmailOrThrow(UserAccount account) {
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
+        String personalEmail = employeeService.getPersonalEmail(account.getEmployeeId());
 
         if (personalEmail == null || personalEmail.isBlank()) {
             throw new ValidationException("Registered personal email is required for OTP verification.");
@@ -170,7 +171,7 @@ public class AuthenticationService {
             throw new AuthenticationException("Password is required.");
         }
     }
-
+    
     // validates account status before login
     private void validateAccountStatus(UserAccount account) {
         if (!account.isActive()) {

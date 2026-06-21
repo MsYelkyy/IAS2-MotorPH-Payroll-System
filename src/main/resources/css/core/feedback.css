@@ -1,0 +1,92 @@
+/* Feedback/message labels shared by Admin, IT, and Employee app shells. */
+
+.message-label {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #3B82F6;
+}
+
+.error-message {
+    -fx-text-fill: #FCA5A5;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
+.success-message {
+    -fx-text-fill: #86EFAC;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
+.positive-text {
+    -fx-text-fill: #86EFAC;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
+.light-mode .error-message,
+.light-mode .error-text,
+.light-mode .danger-text,
+.light-mode .warning-text {
+    -fx-text-fill: #991b1b;
+}
+
+.light-mode .success-message {
+    -fx-text-fill: #166534;
+}
+
+.root-canvas.light-mode .error-message,
+.root-canvas.light-mode .error-text,
+.root-canvas.light-mode .danger-text,
+.root-canvas.light-mode .warning-text,
+.root-canvas.light-mode .content-card .error-message,
+.root-canvas.light-mode .content-card .error-text,
+.root-canvas.light-mode .content-card .danger-text,
+.root-canvas.light-mode .content-card .warning-text {
+    -fx-text-fill: #991b1b;
+}
+
+.root-canvas.light-mode .success-message,
+.root-canvas.light-mode .content-card .success-message {
+    -fx-text-fill: #166534;
+}
+
+.root-canvas.light-mode .positive-text,
+.root-canvas.light-mode .content-card .positive-text {
+    -fx-text-fill: #16A34A;
+}
+
+/* ── Toast notification ─────────────────────────────────────────── */
+.toast-label {
+    -fx-background-color: #1E2736;
+    -fx-background-radius: 8;
+    -fx-text-fill: #86EFAC;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+}
+
+.root-canvas.light-mode .toast-label {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #166534;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
+}
+
+/* Error toast variant */
+.toast-label-error {
+    -fx-background-color: #1E2736;
+    -fx-background-radius: 8;
+    -fx-text-fill: #FCA5A5;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+}
+
+/* Error toast in light mode */
+.root-canvas.light-mode .toast-label-error {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #B91C1C;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
+}

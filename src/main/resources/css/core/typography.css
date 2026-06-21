@@ -1,0 +1,7 @@
+/* Shared typography helpers for Admin, IT, and Employee app shells. */
+
+.section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+}

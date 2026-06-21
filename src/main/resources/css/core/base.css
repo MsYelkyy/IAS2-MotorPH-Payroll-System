@@ -1,0 +1,17 @@
+/* ══════════════════════════════════════════════════
+   CORE — BASE
+   Font face declaration and .root defaults.
+   Loaded first; establishes the Inter font and
+   focus/text defaults for the whole application.
+   ══════════════════════════════════════════════════ */
+@font-face {
+    font-family: "Inter";
+    src: url("../../fonts/Roboto.ttf");
+}
+
+.root {
+    -fx-font-family: "Inter";
+    -fx-text-fill: #ffffff;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}

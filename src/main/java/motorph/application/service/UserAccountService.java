@@ -76,7 +76,7 @@ public class UserAccountService {
             throw new IllegalStateException("User account was not created successfully.");
         }
 
-        emailService.sendTemporaryPassword(personalEmail, companyEmail, temporaryPassword);
+        emailService.sendEmployeeAccountCredentials(personalEmail, companyEmail, temporaryPassword);
 
         return savedAccount;
     }
@@ -93,6 +93,14 @@ public class UserAccountService {
 
         userAccountRepository.updateLockStatus(account.getUserAccountId(), true);
         userAccountRepository.updateActiveStatus(account.getUserAccountId(), false);
+    }
+
+    // returns the company email linked to an employee, or blank when no account exists
+    public String getCompanyEmailByEmployeeId(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        UserAccount account = userAccountRepository.findByEmployeeId(employeeId);
+        return account != null ? account.getCompanyEmail() : "";
     }
 
     // locks a user account
@@ -125,6 +133,31 @@ public class UserAccountService {
         validateRoles(roles);
 
         userAccountRepository.updateRoles(userAccountId, roles);
+    }
+
+    // changes a user password after verifying the current password; throws AuthenticationException if old password is wrong
+    public void changeOwnPassword(int userAccountId, String currentPassword, String newPassword) {
+        validateUserAccountId(userAccountId);
+
+        if (currentPassword == null || currentPassword.trim().isEmpty()) {
+            throw new ValidationException("Current password is required.");
+        }
+
+        validatePassword(newPassword);
+
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+
+        if (!PasswordHasher.verify(currentPassword, account.getPasswordSalt(), account.getPasswordHash())) {
+            throw new motorph.application.exception.AuthenticationException("Current password is incorrect.");
+        }
+
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(newPassword.trim(), salt);
+        userAccountRepository.updatePassword(userAccountId, hash, salt);
     }
 
     // changes a user password and clears temporary password status
@@ -190,6 +223,83 @@ public class UserAccountService {
                 .replaceAll("[^a-z0-9]", "");
     }
 
+    // completes temporary password setup after login
+    public void completeTemporaryPasswordChange(
+            int userAccountId,
+            String newPassword,
+            String confirmPassword) {
+
+        validateUserAccountId(userAccountId);
+
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new ValidationException("New password is required.");
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ValidationException("Passwords do not match.");
+        }
+
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(newPassword.trim(), salt);
+
+        userAccountRepository.updatePassword(
+                userAccountId,
+                hash,
+                salt
+        );
+    }
+
+    // returns a user account by its ID
+    public UserAccount getById(int userAccountId) {
+        validateUserAccountId(userAccountId);
+        UserAccount account = userAccountRepository.findById(userAccountId);
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+        return account;
+    }
+
+    public List<UserAccount> findAll() {
+        return userAccountRepository.findAll();
+    }
+
+    // returns all active unlocked accounts
+    public List<UserAccount> findAllActive() {
+        return userAccountRepository.findAllActive();
+    }
+
+    // returns all locked accounts
+    public List<UserAccount> findAllLocked() {
+        return userAccountRepository.findAllLocked();
+    }
+
+    // returns all disabled accounts
+    public List<UserAccount> findAllDisabled() {
+        return userAccountRepository.findAllDisabled();
+    }
+
+        // returns active unlocked account count
+    public int getActiveAccountCount() {
+        return userAccountRepository.findAllActive().size();
+    }
+
+    // returns locked account count
+    public int getLockedAccountCount() {
+        return userAccountRepository.findAllLocked().size();
+    }
+
+    // returns disabled account count
+    public int getDisabledAccountCount() {
+        return userAccountRepository.findAllDisabled().size();
+    }
+
+    // validates personal email input
     // validate personal email input
     private void validatePersonalEmail(String personalEmail) {
         if (personalEmail == null || personalEmail.trim().isEmpty()) {
@@ -242,3 +352,4 @@ public class UserAccountService {
         }
     }
 }
+

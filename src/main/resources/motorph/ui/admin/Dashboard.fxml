@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      styleClass="admin-dashboard-view"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.admin.AdminDashboardController">
+
+    <Label text="PEOPLE" styleClass="section-title"/>
+    <HBox spacing="14" minHeight="116" prefHeight="116">
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="totalActiveEmployeesLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Currently employed" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="totalAllEmployeesLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Including inactive" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="ON LEAVE TODAY" styleClass="metric-label"/>
+            <Label fx:id="onLeaveTodayLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Approved leave today" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="PENDING LEAVE" styleClass="metric-label"/>
+            <Label fx:id="pendingLeaveLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Awaiting approval" styleClass="muted-text"/>
+        </VBox>
+    </HBox>
+
+    <Label text="LATEST PAYROLL RUN" styleClass="section-title"/>
+    <HBox spacing="14" minHeight="128" prefHeight="128">
+        <VBox spacing="6" styleClass="content-card"
+              minHeight="128" prefHeight="128" maxHeight="128" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="PERIOD" styleClass="metric-label"/>
+            <Label fx:id="latestPayrunPeriodLabel" text="&#8212;" wrapText="true"
+                   styleClass="metric-value" style="-fx-font-size:16px;"/>
+            <Label text="Pay period covered" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card"
+              minHeight="128" prefHeight="128" maxHeight="128" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="TOTAL GROSS PAY" styleClass="metric-label"/>
+            <Label fx:id="latestPayrunGrossPayLabel" text="&#8212;" styleClass="metric-value" style="-fx-font-size:18px;"/>
+            <Label text="Before deductions" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card"
+              minHeight="128" prefHeight="128" maxHeight="128" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="TOTAL NET PAY" styleClass="metric-label"/>
+            <Label fx:id="latestPayrunNetPayLabel" text="&#8212;" styleClass="metric-value" style="-fx-font-size:18px;"/>
+            <Label text="Employees take-home" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="content-card"
+              minHeight="128" prefHeight="128" maxHeight="128" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="EMPLOYEES PROCESSED" styleClass="metric-label"/>
+            <Label fx:id="latestPayrunHeadcountLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="In this pay run" styleClass="muted-text"/>
+        </VBox>
+    </HBox>
+
+    <Label text="ACCOUNTS &amp; SECURITY" styleClass="section-title"/>
+    <HBox spacing="14" minHeight="116" prefHeight="116">
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="ACTIVE ACCOUNTS" styleClass="metric-label"/>
+            <Label fx:id="activeAccountsLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Unlocked active users" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="LOCKED ACCOUNTS" styleClass="metric-label"/>
+            <Label fx:id="lockedAccountsLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Accounts locked" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="DISABLED ACCOUNTS" styleClass="metric-label"/>
+            <Label fx:id="disabledAccountsLabel" text="&#8212;" styleClass="metric-value"/>
+            <Label text="Inactive accounts" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card"
+              minHeight="116" prefHeight="116" maxHeight="116" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <Label text="LOGIN ACTIVITY (TODAY)" styleClass="metric-label"/>
+            <HBox spacing="18" alignment="CENTER_LEFT" maxWidth="-Infinity"
+                  styleClass="admin-login-metrics">
+                <VBox spacing="4" alignment="CENTER_LEFT" minWidth="76" prefWidth="76"
+                      styleClass="admin-login-metric-group">
+                    <Label fx:id="successLoginsLabel" text="&#8212;" styleClass="stat-success"/>
+                    <Label text="Successful" styleClass="admin-login-label-success"/>
+                </VBox>
+                <VBox spacing="4" alignment="CENTER_LEFT" minWidth="76" prefWidth="76"
+                      styleClass="admin-login-metric-group">
+                    <Label fx:id="failedLoginsLabel" text="&#8212;" styleClass="stat-danger"/>
+                    <Label text="Failed" styleClass="admin-login-label-danger"/>
+                </VBox>
+            </HBox>
+        </VBox>
+    </HBox>
+
+    <Label text="QUICK ACCESS" styleClass="section-title"/>
+    <HBox spacing="12" minHeight="72" prefHeight="72">
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileEmployees"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128101;" styleClass="module-tile-icon"/>
+                <Label text="Employees" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Manage workforce" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTilePayroll"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128176;" styleClass="module-tile-icon"/>
+                <Label text="Payroll" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Process pay runs" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileReports"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128202;" styleClass="module-tile-icon"/>
+                <Label text="Reports" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Generate reports" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileLeaveOvertime"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128198;" styleClass="module-tile-icon"/>
+                <Label text="Leave &amp; OT" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Approve requests" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileUserMgmt"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128273;" styleClass="module-tile-icon"/>
+                <Label text="User Mgmt" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Accounts &amp; access" styleClass="module-tile-sub"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileRoleMgmt"
+              minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
+              HBox.hgrow="ALWAYS">
+            <HBox spacing="8" alignment="CENTER_LEFT">
+                <Label text="&#128737;" styleClass="module-tile-icon"/>
+                <Label text="Role Mgmt" styleClass="module-tile-label"/>
+            </HBox>
+            <Label text="Permissions" styleClass="module-tile-sub"/>
+        </VBox>
+    </HBox>
+
+    <Separator/>
+
+    <VBox spacing="10" styleClass="chart-card"
+          minHeight="238" prefHeight="238" maxHeight="238" maxWidth="Infinity">
+        <HBox alignment="CENTER_LEFT">
+            <Label text="RECENT SYSTEM ACTIVITY" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+
+        <HBox styleClass="table-header-row" spacing="0">
+            <Label text="ACTION" styleClass="table-head" prefWidth="200"/>
+            <Label text="DETAILS" styleClass="table-head" HBox.hgrow="ALWAYS"/>
+            <Label text="TIMESTAMP" styleClass="table-head" prefWidth="160"/>
+        </HBox>
+
+        <ScrollPane fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    vbarPolicy="AS_NEEDED"
+                    minHeight="142"
+                    prefHeight="142"
+                    maxHeight="142"
+                    styleClass="workspace-scroll">
+            <content>
+                <VBox fx:id="activityRows" spacing="0"/>
+            </content>
+        </ScrollPane>
+    </VBox>
+
+</VBox>

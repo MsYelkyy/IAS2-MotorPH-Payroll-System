@@ -1,0 +1,40 @@
+/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE PAYSLIP
+   Payslip-exclusive selectors. Loaded after
+   shared-components.css (which owns payroll-table).
+
+   NOTE: .net-pay-cell (0,1,0) is overridden by
+   .payroll-table .table-cell (0,2,0) for -fx-text-fill —
+   gold intentionally does not render; do not raise specificity.
+   Light-mode overrides for net-pay-cell and view-payslip-button
+   live in shared-components.css.
+   ══════════════════════════════════════════════════ */
+
+
+/* Net pay cells — gold text */
+.net-pay-cell {
+    -fx-text-fill: #FBBF24;
+    -fx-font-weight: 900;
+    -fx-font-size: 13px;
+}
+
+/* View Payslip action button */
+.view-payslip-button {
+    -fx-background-color: transparent;
+    -fx-border-color: rgba(200,45,45,0.38);
+    -fx-border-width: 1;
+    -fx-text-fill: rgba(210,65,65,0.82);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+    -fx-padding: 6 14;
+    -fx-cursor: hand;
+    -fx-min-height: 32;
+}
+
+.view-payslip-button:hover {
+    -fx-background-color: rgba(232,67,67,0.09);
+    -fx-border-color: rgba(232,67,67,0.65);
+    -fx-text-fill: #E84343;
+}

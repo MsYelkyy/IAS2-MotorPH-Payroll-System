@@ -25,9 +25,6 @@ public class PayrollReportService {
     private static final String PAYROLL_SUMMARY_REPORT =
             "/motorph/reports/payroll/payroll_summary_report.jrxml";
 
-    private static final String DEPARTMENT_PAYROLL_REPORT =
-            "/motorph/reports/payroll/department_payroll_report.jrxml";
-
     private static final String PAYSLIP_REPORT =
             "/motorph/reports/payroll/payslip_report.jrxml";
 
@@ -47,7 +44,6 @@ public class PayrollReportService {
                 jasperReportGenerator,
                 "JasperReportGenerator is required."
         );
-
     }
 
     // returns organization payroll report data
@@ -159,29 +155,19 @@ public class PayrollReportService {
         jasperReportGenerator.showPreview(jasperPrint);
     }
 
-    // previews department payroll report
-    public void previewDepartmentPayrollReport(Integer departmentId,
-                                               Integer payrunId,
-                                               LocalDate startDate,
-                                               LocalDate endDate) {
+    // exports payslip report to PDF
+    public void exportPayslipReportToPdf(int employeeId, int payrunId, String outputPath) {
+        validateOutputPath(outputPath);
 
-        validateDepartmentId(departmentId);
-
-        List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
-                departmentId,
-                null,
-                payrunId,
-                startDate,
-                endDate
-        );
+        PayslipReportDTO payslip = getPayslipReport(employeeId, payrunId);
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
-                DEPARTMENT_PAYROLL_REPORT,
-                buildDepartmentPayrollParameters(startDate, endDate),
-                reportData
+                PAYSLIP_REPORT,
+                buildPayslipParameters(payslip),
+                List.of(payslip)
         );
 
-        jasperReportGenerator.showPreview(jasperPrint);
+        jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
     }
 
     // exports payroll summary report to PDF
@@ -203,33 +189,6 @@ public class PayrollReportService {
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 PAYROLL_SUMMARY_REPORT,
                 buildPayrollSummaryParameters(startDate, endDate),
-                reportData
-        );
-
-        jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
-    }
-
-    // exports department payroll report to PDF
-    public void exportDepartmentPayrollReportToPdf(Integer departmentId,
-                                                   Integer payrunId,
-                                                   LocalDate startDate,
-                                                   LocalDate endDate,
-                                                   String outputPath) {
-
-        validateDepartmentId(departmentId);
-        validateOutputPath(outputPath);
-
-        List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
-                departmentId,
-                null,
-                payrunId,
-                startDate,
-                endDate
-        );
-
-        JasperPrint jasperPrint = jasperReportGenerator.generateReport(
-                DEPARTMENT_PAYROLL_REPORT,
-                buildDepartmentPayrollParameters(startDate, endDate),
                 reportData
         );
 
@@ -263,62 +222,30 @@ public class PayrollReportService {
         jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
     }
 
-    // exports payslip report to PDF
-    public void exportPayslipReportToPdf(int employeeId, int payrunId, String outputPath) {
-        validateOutputPath(outputPath);
-
-        PayslipReportDTO payslip = getPayslipReport(employeeId, payrunId);
-
-        JasperPrint jasperPrint = jasperReportGenerator.generateReport(
-                PAYSLIP_REPORT,
-                buildPayslipParameters(payslip),
-                List.of(payslip)
-        );
-
-        jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
-    }
-
     // builds organization payroll report parameters
     private Map<String, Object> buildOrganizationPayrollParameters(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> parameters = new HashMap<>();
-
-        parameters.put("REPORT_TITLE", "Organizational Payroll Report");
+        parameters.put("REPORT_TITLE", "Payroll Register");
         parameters.put("START_DATE", startDate);
         parameters.put("END_DATE", endDate);
-
         return parameters;
     }
 
     // builds payroll summary report parameters
     private Map<String, Object> buildPayrollSummaryParameters(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> parameters = new HashMap<>();
-
         parameters.put("REPORT_TITLE", "Payroll Summary Report");
         parameters.put("START_DATE", startDate);
         parameters.put("END_DATE", endDate);
-
-        return parameters;
-    }
-
-    // builds department payroll report parameters
-    private Map<String, Object> buildDepartmentPayrollParameters(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> parameters = new HashMap<>();
-
-        parameters.put("REPORT_TITLE", "Department Payroll Report");
-        parameters.put("START_DATE", startDate);
-        parameters.put("END_DATE", endDate);
-
         return parameters;
     }
 
     // builds payslip report parameters
     private Map<String, Object> buildPayslipParameters(PayslipReportDTO payslip) {
         Map<String, Object> parameters = new HashMap<>();
-
         parameters.put("REPORT_TITLE", "Employee Payslip Report");
         parameters.put("START_DATE", payslip.getStartDate());
         parameters.put("END_DATE", payslip.getEndDate());
-
         return parameters;
     }
 
@@ -333,13 +260,6 @@ public class PayrollReportService {
     private void validatePayrunId(int payrunId) {
         if (payrunId <= 0) {
             throw new ValidationException("Payrun is required.");
-        }
-    }
-
-    // validates department id input
-    private void validateDepartmentId(Integer departmentId) {
-        if (departmentId == null || departmentId <= 0) {
-            throw new ValidationException("Department is required.");
         }
     }
 
@@ -366,7 +286,6 @@ public class PayrollReportService {
         if (value == null) {
             throw new IllegalArgumentException(message);
         }
-
         return value;
     }
 }

@@ -44,6 +44,9 @@ public abstract class PayrollComponent {
         return amount > 0;
     }
 
+    // returns the type label for this payroll component
+    public abstract String getComponentType();
+
     // validates a required positive number
     protected int validatePositive(int value, String message) {
         if (value <= 0) {

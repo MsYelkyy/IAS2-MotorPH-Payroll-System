@@ -19,6 +19,8 @@ public class UserAccessLogService {
     public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
     public static final String ACTION_ACCOUNT_STATUS_CHANGED = "ACCOUNT_STATUS_CHANGED";
     public static final String ACTION_DATABASE_BACKUP_DOWNLOADED = "DATABASE_BACKUP_DOWNLOADED";
+    public static final String ACTION_DATABASE_BACKUP_CREATED    = "DATABASE_BACKUP_CREATED";
+    public static final String ACTION_DATABASE_RESTORE           = "DATABASE_RESTORE";
     public static final String ACTION_GENERATED_REPORT = "GENERATED_REPORT";
 
     private final UserAccessLogRepository repository;
@@ -135,6 +137,34 @@ public class UserAccessLogService {
                 ""
         );
 
+        repository.save(log);
+    }
+
+    // logs database backup created action
+    public void logDatabaseBackupCreated(int userAccountId, String filename) {
+        validateUserAccountId(userAccountId);
+
+        UserAccessLog log = new UserAccessLog(
+                userAccountId,
+                ACTION_DATABASE_BACKUP_CREATED,
+                "Created backup: " + filename,
+                "",
+                ""
+        );
+        repository.save(log);
+    }
+
+    // logs database restore action
+    public void logDatabaseRestore(int userAccountId, String filename) {
+        validateUserAccountId(userAccountId);
+
+        UserAccessLog log = new UserAccessLog(
+                userAccountId,
+                ACTION_DATABASE_RESTORE,
+                "Restored from backup: " + filename,
+                "",
+                ""
+        );
         repository.save(log);
     }
 

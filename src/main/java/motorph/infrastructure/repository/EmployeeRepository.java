@@ -2,6 +2,7 @@ package motorph.infrastructure.repository;
 
 import motorph.domain.model.Employee;
 import motorph.domain.value.EmploymentStatus;
+import motorph.domain.value.Gender;
 import motorph.infrastructure.config.DatabaseConnection;
 
 import java.sql.Connection;
@@ -19,11 +20,49 @@ import java.util.List;
  */
 public class EmployeeRepository {
 
+    /** Holds the joined employee profile data including resolved names. */
+    public static class ProfileQueryResult {
+
+        private final Employee employee;
+        private final String positionName;
+        private final String departmentName;
+        private final String supervisorName;
+
+        // constructors
+        public ProfileQueryResult(Employee employee,
+                                  String positionName,
+                                  String departmentName,
+                                  String supervisorName) {
+            this.employee = employee;
+            this.positionName = positionName;
+            this.departmentName = departmentName;
+            this.supervisorName = supervisorName;
+        }
+
+        // getters
+        public Employee getEmployee() {
+            return employee;
+        }
+
+        public String getPositionName() {
+            return positionName;
+        }
+
+        public String getDepartmentName() {
+            return departmentName;
+        }
+
+        public String getSupervisorName() {
+            return supervisorName;
+        }
+    }
+
     private static final String BASE_SELECT = """
             SELECT employee_id,
                    first_name,
                    last_name,
                    birth_date,
+                   gender,
                    address,
                    civil_status,
                    phone_number,
@@ -37,6 +76,30 @@ public class EmployeeRepository {
                    photo_path
             FROM employee
             """;
+
+    // finds any employee by id regardless of active status (for IT display use only)
+    public Employee findAnyById(int employeeId) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = BASE_SELECT + "WHERE employee_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapRow(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find employee by id.", e);
+        }
+
+        return null;
+    }
 
     // finds active employee by id
     public Employee findActiveById(int employeeId) {
@@ -119,6 +182,7 @@ public class EmployeeRepository {
                     first_name,
                     last_name,
                     birth_date,
+                    gender,
                     address,
                     civil_status,
                     phone_number,
@@ -131,7 +195,7 @@ public class EmployeeRepository {
                     is_active,
                     photo_path
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -154,6 +218,7 @@ public class EmployeeRepository {
                     first_name,
                     last_name,
                     birth_date,
+                    gender,
                     address,
                     civil_status,
                     phone_number,
@@ -166,7 +231,7 @@ public class EmployeeRepository {
                     is_active,
                     photo_path
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -201,6 +266,7 @@ public class EmployeeRepository {
                 SET first_name = ?,
                     last_name = ?,
                     birth_date = ?,
+                    gender = ?,
                     address = ?,
                     civil_status = ?,
                     phone_number = ?,
@@ -219,7 +285,7 @@ public class EmployeeRepository {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             bindEmployeeFields(stmt, employee);
-            stmt.setInt(15, employee.getEmployeeId());
+            stmt.setInt(16, employee.getEmployeeId());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -315,6 +381,97 @@ public class EmployeeRepository {
         }
     }
 
+    // finds employee profile with joined position, department, and supervisor names (active only)
+    public ProfileQueryResult findProfileById(int employeeId) {
+        return findProfileQuery(employeeId, true);
+    }
+
+    // finds employee profile including inactive employees (for admin use)
+    public ProfileQueryResult findProfileByIdAny(int employeeId) {
+        return findProfileQuery(employeeId, false);
+    }
+
+    private ProfileQueryResult findProfileQuery(int employeeId, boolean activeOnly) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = """
+                SELECT e.employee_id,
+                       e.first_name,
+                       e.last_name,
+                       e.birth_date,
+                       e.gender,
+                       e.address,
+                       e.civil_status,
+                       e.phone_number,
+                       e.personal_email,
+                       e.employment_status,
+                       e.position_id,
+                       e.department_id,
+                       e.hire_date,
+                       e.supervisor_id,
+                       e.is_active,
+                       e.photo_path,
+                       p.position_name,
+                       d.department_name,
+                       CONCAT(sup.first_name, ' ', sup.last_name) AS supervisor_name
+                FROM employee e
+                LEFT JOIN position p ON e.position_id = p.position_id
+                LEFT JOIN department d ON e.department_id = d.department_id
+                LEFT JOIN employee sup ON e.supervisor_id = sup.employee_id
+                WHERE e.employee_id = ?
+                """
+                + (activeOnly ? "  AND e.is_active = 1" : "");
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Employee employee = mapRow(rs);
+                    String positionName   = rs.getString("position_name");
+                    String departmentName = rs.getString("department_name");
+                    String supervisorName = rs.getString("supervisor_name");
+                    return new ProfileQueryResult(employee, positionName, departmentName, supervisorName);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find employee profile.", e);
+        }
+
+        return null;
+    }
+
+    // updates only the photo path for an active employee
+    public void updatePhotoPath(int employeeId, String photoPath) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = """
+                UPDATE employee
+                SET photo_path = ?
+                WHERE employee_id = ?
+                  AND is_active = 1
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, photoPath);
+            stmt.setInt(2, employeeId);
+
+            int affectedRows = stmt.executeUpdate();
+
+            if (affectedRows == 0) {
+                throw new IllegalArgumentException("Active employee not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to update employee photo path.", e);
+        }
+    }
+
     // executes a list query and maps all rows
     private List<Employee> executeListQuery(String sql, StatementBinder binder) {
         List<Employee> employees = new ArrayList<>();
@@ -344,17 +501,18 @@ public class EmployeeRepository {
         stmt.setString(1, employee.getFirstName());
         stmt.setString(2, employee.getLastName());
         setNullableDate(stmt, 3, employee.getBirthDate());
-        stmt.setString(4, employee.getAddress());
-        stmt.setString(5, employee.getCivilStatus());
-        stmt.setString(6, employee.getPhoneNumber());
-        stmt.setString(7, employee.getPersonalEmail());
-        stmt.setString(8, employee.getEmploymentStatus().name());
-        stmt.setInt(9, employee.getPositionId());
-        stmt.setInt(10, employee.getDepartmentId());
-        stmt.setDate(11, Date.valueOf(employee.getHireDate()));
-        setNullableInteger(stmt, 12, employee.getSupervisorId());
-        stmt.setBoolean(13, employee.isActive());
-        stmt.setString(14, employee.getPhotoPath());
+        stmt.setString(4, employee.getGender().name());
+        stmt.setString(5, employee.getAddress());
+        stmt.setString(6, employee.getCivilStatus());
+        stmt.setString(7, employee.getPhoneNumber());
+        stmt.setString(8, employee.getPersonalEmail());
+        stmt.setString(9, employee.getEmploymentStatus().name());
+        stmt.setInt(10, employee.getPositionId());
+        stmt.setInt(11, employee.getDepartmentId());
+        stmt.setDate(12, Date.valueOf(employee.getHireDate()));
+        setNullableInteger(stmt, 13, employee.getSupervisorId());
+        stmt.setBoolean(14, employee.isActive());
+        stmt.setString(15, employee.getPhotoPath());
     }
 
     // maps the result set to an employee
@@ -364,6 +522,7 @@ public class EmployeeRepository {
                 rs.getString("first_name"),
                 rs.getString("last_name"),
                 getLocalDate(rs, "birth_date"),
+                Gender.fromValue(rs.getString("gender")),
                 rs.getString("address"),
                 rs.getString("civil_status"),
                 rs.getString("phone_number"),
