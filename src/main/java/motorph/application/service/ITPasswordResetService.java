@@ -2,6 +2,7 @@ package motorph.application.service;
 
 import motorph.application.dto.it.PasswordResetRequestDTO;
 import motorph.application.dto.it.PasswordResetRequestRowDTO;
+import motorph.application.exception.EntityNotFoundException;
 import motorph.domain.model.Employee;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.model.UserAccount;
@@ -88,7 +89,7 @@ public class ITPasswordResetService {
             try {
                 Employee employee = employeeService.getEmployeeById(account.getEmployeeId());
                 employeeName = employee.getFullName();
-            } catch (Exception ignored) {
+            } catch (EntityNotFoundException ignored) {
                 employeeName = "Employee #" + account.getEmployeeId();
             }
         }

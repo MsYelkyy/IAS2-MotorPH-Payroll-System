@@ -15,6 +15,7 @@ import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.calculator.PayrollCalculator;
 import motorph.domain.model.Attendance;
+import motorph.domain.model.DeductionType;
 import motorph.domain.model.Employee;
 import motorph.domain.model.EmployeeBenefit;
 import motorph.domain.model.GovernmentDetails;
@@ -26,7 +27,10 @@ import motorph.domain.model.PayrollResult;
 import motorph.domain.model.Payrun;
 import motorph.domain.model.SalaryHistory;
 import motorph.domain.value.ReadinessStatus;
+import motorph.infrastructure.repository.BenefitTypeRepository;
+import motorph.infrastructure.repository.DeductionTypeRepository;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
+import motorph.infrastructure.repository.EarningTypeRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.PagIbigRateRepository;
 import motorph.infrastructure.repository.PayrollBenefitRepository;
@@ -51,11 +55,26 @@ import java.util.Map;
  */
 public class PayrollService {
 
+    private static final String BASIC_PAY_CODE = "BASIC_PAY";
+    private static final String OVERTIME_PAY_CODE = "OVERTIME_PAY";
+    private static final String RICE_SUBSIDY_CODE = "RICE_SUBSIDY";
+    private static final String PHONE_ALLOWANCE_CODE = "PHONE_ALLOWANCE";
+    private static final String CLOTHING_ALLOWANCE_CODE = "CLOTHING_ALLOWANCE";
+    private static final String SSS_CODE = "SSS";
+    private static final String PHILHEALTH_CODE = "PHILHEALTH";
+    private static final String PAGIBIG_CODE = "PAGIBIG";
+    private static final String WITHHOLDING_TAX_CODE = "WITHHOLDING_TAX";
+    private static final String LATE_CODE = "LATE";
+    private static final String UNDERTIME_CODE = "UNDERTIME";
+
     private final PayrunRepository payrunRepository;
     private final PayrollResultRepository payrollResultRepository;
     private final PayrollEarningRepository payrollEarningRepository;
     private final PayrollBenefitRepository payrollBenefitRepository;
     private final PayrollDeductionRepository payrollDeductionRepository;
+    private final EarningTypeRepository earningTypeRepository;
+    private final BenefitTypeRepository benefitTypeRepository;
+    private final DeductionTypeRepository deductionTypeRepository;
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
     private final GovernmentDetailsRepository governmentDetailsRepository;
@@ -74,6 +93,9 @@ public class PayrollService {
                           PayrollEarningRepository payrollEarningRepository,
                           PayrollBenefitRepository payrollBenefitRepository,
                           PayrollDeductionRepository payrollDeductionRepository,
+                          EarningTypeRepository earningTypeRepository,
+                          BenefitTypeRepository benefitTypeRepository,
+                          DeductionTypeRepository deductionTypeRepository,
                           SalaryHistoryRepository salaryHistoryRepository,
                           EmployeeBenefitRepository employeeBenefitRepository,
                           GovernmentDetailsRepository governmentDetailsRepository,
@@ -91,6 +113,9 @@ public class PayrollService {
         this.payrollEarningRepository = require(payrollEarningRepository, "PayrollEarningRepository is required.");
         this.payrollBenefitRepository = require(payrollBenefitRepository, "PayrollBenefitRepository is required.");
         this.payrollDeductionRepository = require(payrollDeductionRepository, "PayrollDeductionRepository is required.");
+        this.earningTypeRepository = require(earningTypeRepository, "EarningTypeRepository is required.");
+        this.benefitTypeRepository = require(benefitTypeRepository, "BenefitTypeRepository is required.");
+        this.deductionTypeRepository = require(deductionTypeRepository, "DeductionTypeRepository is required.");
         this.salaryHistoryRepository = require(salaryHistoryRepository, "SalaryHistoryRepository is required.");
         this.employeeBenefitRepository = require(employeeBenefitRepository, "EmployeeBenefitRepository is required.");
         this.governmentDetailsRepository = require(governmentDetailsRepository, "GovernmentDetailsRepository is required.");
@@ -115,7 +140,8 @@ public class PayrollService {
             throw new BusinessRuleException("Payroll already generated for this employee and payrun.");
         }
 
-        ComputedPayroll computed = computeBreakdown(employeeId, payrun);
+        ComponentTypes componentTypes = resolveComponentTypes();
+        ComputedPayroll computed = computeBreakdown(employeeId, payrun, componentTypes);
         PayrollBreakdown breakdown = computed.breakdown;
         double totalHoursWorked = computed.totalHoursWorked;
 
@@ -134,7 +160,7 @@ public class PayrollService {
 
         int payrollResultId = payrollResultRepository.save(result);
 
-        savePayrollComponents(payrollResultId, breakdown);
+        savePayrollComponents(payrollResultId, breakdown, componentTypes);
 
         return new PayrollResult(
                 payrollResultId,
@@ -154,7 +180,8 @@ public class PayrollService {
         validate(payrunId, "Payrun ID");
 
         Payrun payrun = getPayrunOrThrow(payrunId);
-        ComputedPayroll computed = computeBreakdown(employeeId, payrun);
+        ComponentTypes componentTypes = resolveComponentTypes();
+        ComputedPayroll computed = computeBreakdown(employeeId, payrun, componentTypes);
         PayrollBreakdown breakdown = computed.breakdown;
 
         return new PayrollPreviewDTO(
@@ -170,7 +197,7 @@ public class PayrollService {
     }
 
     // fetches employee data and computes the payroll breakdown without saving
-    private ComputedPayroll computeBreakdown(int employeeId, Payrun payrun) {
+    private ComputedPayroll computeBreakdown(int employeeId, Payrun payrun, ComponentTypes componentTypes) {
         Employee employee = employeeService.getEmployeeById(employeeId);
 
         List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(
@@ -211,7 +238,7 @@ public class PayrollService {
 
         double totalHoursWorked = regularHoursWorked + approvedOvertimeHours;
 
-        PayrollInputDTO input = buildPayrollInput(employee, salary, governmentDetails, benefits);
+        PayrollInputDTO input = buildPayrollInput(employee, salary, governmentDetails, benefits, componentTypes);
 
         GovernmentRatesDTO rates = fetchEffectiveRates(payrun.getEndDate());
 
@@ -271,21 +298,22 @@ public class PayrollService {
     }
 
     // saves payroll component records for reporting
-    private void savePayrollComponents(int payrollResultId, PayrollBreakdown breakdown) {
-        payrollEarningRepository.save(new PayrollEarning(null, payrollResultId, 1, breakdown.getBasicPay()));
+    private void savePayrollComponents(int payrollResultId, PayrollBreakdown breakdown, ComponentTypes componentTypes) {
+        payrollEarningRepository.save(new PayrollEarning(
+                null, payrollResultId, componentTypes.basicPayEarningTypeId, breakdown.getBasicPay()));
 
-        saveEarningIfPresent(payrollResultId, 2, breakdown.getOvertimePay());
+        saveEarningIfPresent(payrollResultId, componentTypes.overtimePayEarningTypeId, breakdown.getOvertimePay());
 
-        saveBenefitIfPresent(payrollResultId, 1, breakdown.getRiceSubsidy());
-        saveBenefitIfPresent(payrollResultId, 2, breakdown.getPhoneAllowance());
-        saveBenefitIfPresent(payrollResultId, 3, breakdown.getClothingAllowance());
+        saveBenefitIfPresent(payrollResultId, componentTypes.riceSubsidyBenefitTypeId, breakdown.getRiceSubsidy());
+        saveBenefitIfPresent(payrollResultId, componentTypes.phoneAllowanceBenefitTypeId, breakdown.getPhoneAllowance());
+        saveBenefitIfPresent(payrollResultId, componentTypes.clothingAllowanceBenefitTypeId, breakdown.getClothingAllowance());
 
-        saveDeductionIfPresent(payrollResultId, 1, breakdown.getSssDeduction(), false);
-        saveDeductionIfPresent(payrollResultId, 2, breakdown.getPhilhealthDeduction(), false);
-        saveDeductionIfPresent(payrollResultId, 3, breakdown.getPagibigDeduction(), false);
-        saveDeductionIfPresent(payrollResultId, 4, breakdown.getWithholdingTax(), true);
-        saveDeductionIfPresent(payrollResultId, 5, breakdown.getLateDeduction(), true);
-        saveDeductionIfPresent(payrollResultId, 6, breakdown.getUndertimeDeduction(), true);
+        saveDeductionIfPresent(payrollResultId, componentTypes.sssDeductionType, breakdown.getSssDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.philhealthDeductionType, breakdown.getPhilhealthDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.pagibigDeductionType, breakdown.getPagibigDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.withholdingTaxDeductionType, breakdown.getWithholdingTax());
+        saveDeductionIfPresent(payrollResultId, componentTypes.lateDeductionType, breakdown.getLateDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.undertimeDeductionType, breakdown.getUndertimeDeduction());
     }
 
     // saves earning only when amount exists
@@ -303,10 +331,100 @@ public class PayrollService {
     }
 
     // saves deduction only when amount exists
-    private void saveDeductionIfPresent(int payrollResultId, int deductionTypeId, double amount, boolean taxable) {
+    private void saveDeductionIfPresent(int payrollResultId, DeductionType deductionType, double amount) {
         if (amount > 0) {
-            payrollDeductionRepository.save(new PayrollDeduction(null, payrollResultId, deductionTypeId, amount, taxable));
+            payrollDeductionRepository.save(new PayrollDeduction(
+                    null,
+                    payrollResultId,
+                    deductionType.getDeductionTypeId(),
+                    amount,
+                    deductionType.isTaxable()
+            ));
         }
+    }
+
+    /** Holds resolved identifiers for required payroll component types. */
+    private static final class ComponentTypes {
+        private final int basicPayEarningTypeId;
+        private final int overtimePayEarningTypeId;
+        private final int riceSubsidyBenefitTypeId;
+        private final int phoneAllowanceBenefitTypeId;
+        private final int clothingAllowanceBenefitTypeId;
+        private final DeductionType sssDeductionType;
+        private final DeductionType philhealthDeductionType;
+        private final DeductionType pagibigDeductionType;
+        private final DeductionType withholdingTaxDeductionType;
+        private final DeductionType lateDeductionType;
+        private final DeductionType undertimeDeductionType;
+
+        // constructors
+        private ComponentTypes(int basicPayEarningTypeId,
+                               int overtimePayEarningTypeId,
+                               int riceSubsidyBenefitTypeId,
+                               int phoneAllowanceBenefitTypeId,
+                               int clothingAllowanceBenefitTypeId,
+                               DeductionType sssDeductionType,
+                               DeductionType philhealthDeductionType,
+                               DeductionType pagibigDeductionType,
+                               DeductionType withholdingTaxDeductionType,
+                               DeductionType lateDeductionType,
+                               DeductionType undertimeDeductionType) {
+            this.basicPayEarningTypeId = basicPayEarningTypeId;
+            this.overtimePayEarningTypeId = overtimePayEarningTypeId;
+            this.riceSubsidyBenefitTypeId = riceSubsidyBenefitTypeId;
+            this.phoneAllowanceBenefitTypeId = phoneAllowanceBenefitTypeId;
+            this.clothingAllowanceBenefitTypeId = clothingAllowanceBenefitTypeId;
+            this.sssDeductionType = sssDeductionType;
+            this.philhealthDeductionType = philhealthDeductionType;
+            this.pagibigDeductionType = pagibigDeductionType;
+            this.withholdingTaxDeductionType = withholdingTaxDeductionType;
+            this.lateDeductionType = lateDeductionType;
+            this.undertimeDeductionType = undertimeDeductionType;
+        }
+    }
+
+    // resolves all required payroll component types before result persistence
+    private ComponentTypes resolveComponentTypes() {
+        return new ComponentTypes(
+                requireEarningTypeId(BASIC_PAY_CODE),
+                requireEarningTypeId(OVERTIME_PAY_CODE),
+                requireBenefitTypeId(RICE_SUBSIDY_CODE),
+                requireBenefitTypeId(PHONE_ALLOWANCE_CODE),
+                requireBenefitTypeId(CLOTHING_ALLOWANCE_CODE),
+                requireDeductionType(SSS_CODE),
+                requireDeductionType(PHILHEALTH_CODE),
+                requireDeductionType(PAGIBIG_CODE),
+                requireDeductionType(WITHHOLDING_TAX_CODE),
+                requireDeductionType(LATE_CODE),
+                requireDeductionType(UNDERTIME_CODE)
+        );
+    }
+
+    // requires an earning type identifier for a stable code
+    private int requireEarningTypeId(String code) {
+        Integer typeId = earningTypeRepository.findIdByCode(code);
+        if (typeId == null) {
+            throw new EntityNotFoundException("Earning type not found for code: " + code + ".");
+        }
+        return typeId;
+    }
+
+    // requires a benefit type identifier for a stable code
+    private int requireBenefitTypeId(String code) {
+        Integer typeId = benefitTypeRepository.findIdByCode(code);
+        if (typeId == null) {
+            throw new EntityNotFoundException("Benefit type not found for code: " + code + ".");
+        }
+        return typeId;
+    }
+
+    // requires a deduction type for a stable code
+    private DeductionType requireDeductionType(String code) {
+        DeductionType deductionType = deductionTypeRepository.findByCode(code);
+        if (deductionType == null) {
+            throw new EntityNotFoundException("Deduction type not found for code: " + code + ".");
+        }
+        return deductionType;
     }
 
     // fetches government contribution rates effective on the given cutoff date
@@ -338,20 +456,20 @@ public class PayrollService {
     private PayrollInputDTO buildPayrollInput(Employee employee,
                                               SalaryHistory salary,
                                               GovernmentDetails governmentDetails,
-                                              List<EmployeeBenefit> benefits) {
+                                              List<EmployeeBenefit> benefits,
+                                              ComponentTypes componentTypes) {
 
         double rice = 0.0;
         double phone = 0.0;
         double clothing = 0.0;
 
         for (EmployeeBenefit benefit : benefits) {
-            switch (benefit.getBenefitTypeId()) {
-                case 1 -> rice += benefit.getAmount();
-                case 2 -> phone += benefit.getAmount();
-                case 3 -> clothing += benefit.getAmount();
-                default -> {
-                    // ignore other benefit types
-                }
+            if (benefit.getBenefitTypeId() == componentTypes.riceSubsidyBenefitTypeId) {
+                rice += benefit.getAmount();
+            } else if (benefit.getBenefitTypeId() == componentTypes.phoneAllowanceBenefitTypeId) {
+                phone += benefit.getAmount();
+            } else if (benefit.getBenefitTypeId() == componentTypes.clothingAllowanceBenefitTypeId) {
+                clothing += benefit.getAmount();
             }
         }
 

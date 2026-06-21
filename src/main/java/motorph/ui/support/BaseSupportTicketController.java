@@ -21,7 +21,6 @@ import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -351,6 +350,8 @@ public abstract class BaseSupportTicketController {
         card.getStyleClass().add("it-ticket-dialog-card");
         card.setMaxWidth(660);
         card.setMinWidth(520);
+        // hug the content's height so the centered card has no empty space below it
+        card.setMaxHeight(Region.USE_PREF_SIZE);
 
         // header row
         HBox header = new HBox(10);
@@ -372,7 +373,7 @@ public abstract class BaseSupportTicketController {
 
         header.getChildren().addAll(idLabel, spacer, statusBadge, closeBtn);
 
-        // scrollable body
+        // body — wraps its content naturally; the popup has no scrollbar of its own
         VBox body = new VBox(16);
         body.getStyleClass().add("it-ticket-dialog-body");
 
@@ -418,19 +419,10 @@ public abstract class BaseSupportTicketController {
 
         body.getChildren().addAll(infoRow, subjectSection, descSection);
 
-        ScrollPane scroll = new ScrollPane(body);
-        scroll.setFitToWidth(true);
-        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        scroll.setPrefHeight(380);
-        scroll.setMaxHeight(440);
-        scroll.getStyleClass().add("it-ticket-dialog-scroll");
-        VBox.setVgrow(scroll, Priority.ALWAYS);
-
         // actions footer
         HBox actions = buildActionsBar(row, overlay);
 
-        card.getChildren().addAll(header, scroll, actions);
+        card.getChildren().addAll(header, body, actions);
         return card;
     }
 

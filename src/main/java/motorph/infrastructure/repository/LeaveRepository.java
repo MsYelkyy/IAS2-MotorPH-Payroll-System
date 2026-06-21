@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * Handles database operations for leave request records.
  */
-public class LeaveRepository {
+public class LeaveRepository implements Repository<LeaveRequest, Integer> {
 
     private static final String BASE_SELECT = """
             SELECT lr.leave_request_id,
@@ -40,13 +40,15 @@ public class LeaveRepository {
             """;
 
     // finds all leave requests
+    @Override
     public List<LeaveRequest> findAll() {
         String sql = BASE_SELECT + " ORDER BY lr.date_submitted DESC";
         return executeListQuery(sql, null);
     }
 
     // finds leave request by id
-    public LeaveRequest findById(int leaveRequestId) {
+    @Override
+    public LeaveRequest findById(Integer leaveRequestId) {
         validatePositive(leaveRequestId, "Leave request ID must be positive.");
 
         String sql = BASE_SELECT + " WHERE lr.leave_request_id = ?";
@@ -147,6 +149,7 @@ public class LeaveRepository {
     }
 
     // saves a leave request
+    @Override
     public void save(LeaveRequest request) {
         validateRequest(request);
 

@@ -30,12 +30,8 @@
                   prefWidth="210" styleClass="input-field"/>
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="moduleMessageLabel" styleClass="muted-text"/>
-        <Button fx:id="addSalaryButton" text="+ Add Salary" onAction="#handleAddSalary"
-                visible="false" managed="false" styleClass="primary-button"/>
         <Button fx:id="editSalaryButton" text="Edit Dates" onAction="#handleEditSalary"
                 visible="false" managed="false" styleClass="secondary-button"/>
-        <Button fx:id="addBenefitButton" text="+ Add Benefit" onAction="#handleAddBenefit"
-                visible="false" managed="false" styleClass="primary-button"/>
         <Button fx:id="endBenefitButton" text="End Benefit" onAction="#handleEndBenefit"
                 visible="false" managed="false" styleClass="danger-outline-button"/>
     </HBox>
@@ -149,45 +145,6 @@
             <HBox spacing="12" alignment="CENTER_RIGHT">
                 <Button text="Cancel" onAction="#handleBack" styleClass="secondary-button"/>
                 <Button text="Save" onAction="#saveSalaryRecord" styleClass="primary-button"/>
-            </HBox>
-        </VBox>
-
-        <!-- Benefit form -->
-        <VBox fx:id="benefitFormPanel" styleClass="content-card modal-panel"
-              maxWidth="640" spacing="14" StackPane.alignment="TOP_CENTER"
-              style="-fx-translate-y: 8;" visible="false" managed="false">
-            <Label text="Add Benefit / Allowance" styleClass="section-title"/>
-            <Label text="Benefit assignments apply monthly unless an end date is provided."
-                   styleClass="muted-text" wrapText="true"/>
-
-            <HBox spacing="16">
-                <VBox spacing="4" HBox.hgrow="ALWAYS">
-                    <Label text="BENEFIT TYPE" styleClass="field-label"/>
-                    <ComboBox fx:id="benefitTypeCombo" styleClass="input-field" maxWidth="Infinity"/>
-                </VBox>
-                <VBox spacing="4" HBox.hgrow="ALWAYS">
-                    <Label text="AMOUNT" styleClass="field-label"/>
-                    <TextField fx:id="benefitAmountField" promptText="Monthly amount"
-                               styleClass="input-field" maxWidth="Infinity"/>
-                </VBox>
-            </HBox>
-
-            <HBox spacing="16">
-                <VBox spacing="4" HBox.hgrow="ALWAYS">
-                    <Label text="START DATE" styleClass="field-label"/>
-                    <DatePicker fx:id="benefitStartDatePicker" styleClass="input-field" maxWidth="Infinity"/>
-                </VBox>
-                <VBox spacing="4" HBox.hgrow="ALWAYS">
-                    <Label text="END DATE" styleClass="field-label"/>
-                    <DatePicker fx:id="benefitEndDatePicker" styleClass="input-field" maxWidth="Infinity"/>
-                </VBox>
-            </HBox>
-
-            <Label fx:id="benefitFormErrorLabel" styleClass="error-message" wrapText="true"/>
-
-            <HBox spacing="12" alignment="CENTER_RIGHT">
-                <Button text="Cancel" onAction="#handleBack" styleClass="secondary-button"/>
-                <Button text="Add Benefit" onAction="#saveBenefit" styleClass="primary-button"/>
             </HBox>
         </VBox>
 

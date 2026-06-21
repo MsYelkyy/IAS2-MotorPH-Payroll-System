@@ -6,7 +6,10 @@ import motorph.application.service.OvertimeService;
 import motorph.application.service.PayrollService;
 import motorph.application.service.SalaryBenefitService;
 import motorph.domain.calculator.PayrollCalculator;
+import motorph.infrastructure.repository.BenefitTypeRepository;
+import motorph.infrastructure.repository.DeductionTypeRepository;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
+import motorph.infrastructure.repository.EarningTypeRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
 import motorph.infrastructure.repository.OvertimeRepository;
 import motorph.infrastructure.repository.PagIbigRateRepository;
@@ -40,6 +43,9 @@ class PayrollServiceGroup {
                 new PayrollEarningRepository(),
                 new PayrollBenefitRepository(),
                 new PayrollDeductionRepository(),
+                new EarningTypeRepository(),
+                new BenefitTypeRepository(),
+                new DeductionTypeRepository(),
                 new SalaryHistoryRepository(),
                 new EmployeeBenefitRepository(),
                 new GovernmentDetailsRepository(),

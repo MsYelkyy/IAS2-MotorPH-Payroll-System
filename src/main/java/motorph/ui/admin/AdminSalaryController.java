@@ -1,7 +1,6 @@
 package motorph.ui.admin;
 
 import motorph.application.dto.employee.EmployeeSummaryDTO;
-import motorph.application.dto.salary.EmployeeBenefitDTO;
 import motorph.application.dto.salary.SalaryHistoryDTO;
 import motorph.application.service.EmployeeService;
 import motorph.application.service.SalaryBenefitService;
@@ -31,7 +30,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
@@ -50,8 +48,6 @@ import java.util.Optional;
 public class AdminSalaryController {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
-    private static final String ADD_FORM_PANEL_CLASS = "admin-add-form-panel";
-    private static final String ADD_FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.46);";
     private static final String DEFAULT_FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.72);";
     private static final String[] BENEFIT_NAMES = {"-", "Rice Subsidy", "Phone Allowance", "Clothing Allowance"};
 
@@ -75,9 +71,7 @@ public class AdminSalaryController {
     @FXML private ComboBox<String> statusFilterCombo;
     @FXML private ComboBox<String> departmentFilterCombo;
     @FXML private Label moduleMessageLabel;
-    @FXML private Button addSalaryButton;
     @FXML private Button editSalaryButton;
-    @FXML private Button addBenefitButton;
     @FXML private Button endBenefitButton;
 
     @FXML private VBox employeeListPanel;
@@ -116,13 +110,6 @@ public class AdminSalaryController {
     @FXML private DatePicker salaryEndDatePicker;
     @FXML private Label salaryFormErrorLabel;
 
-    @FXML private VBox benefitFormPanel;
-    @FXML private ComboBox<String> benefitTypeCombo;
-    @FXML private TextField benefitAmountField;
-    @FXML private DatePicker benefitStartDatePicker;
-    @FXML private DatePicker benefitEndDatePicker;
-    @FXML private Label benefitFormErrorLabel;
-
     @FXML
     private void initialize() {
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
@@ -138,7 +125,6 @@ public class AdminSalaryController {
                 return null;
             }
         });
-        benefitTypeCombo.getItems().addAll("Rice Subsidy", "Phone Allowance", "Clothing Allowance");
         searchField.textProperty().addListener((obs, old, val) -> applyEmployeeFilter());
 
         loadDepartmentNames();
@@ -154,7 +140,7 @@ public class AdminSalaryController {
 
     @FXML
     private void handleBack() {
-        if (salaryFormPanel.isVisible() || benefitFormPanel.isVisible()) {
+        if (salaryFormPanel.isVisible()) {
             if (selectedEmployee != null) {
                 showEmployeeDetail(selectedEmployee);
             } else {
@@ -163,14 +149,6 @@ public class AdminSalaryController {
         } else {
             showEmployeeList();
         }
-    }
-
-    @FXML
-    private void handleAddSalary() {
-        clearSalaryForm();
-        salaryFormTitle.setText("Add Salary Record");
-        editSalaryMode = false;
-        showPanel(Panel.SALARY_FORM);
     }
 
     @FXML
@@ -193,12 +171,6 @@ public class AdminSalaryController {
         salaryStartDatePicker.setValue(selectedSalary.getStartDate());
         salaryEndDatePicker.setValue(selectedSalary.getEndDate());
         showPanel(Panel.SALARY_FORM);
-    }
-
-    @FXML
-    private void handleAddBenefit() {
-        clearBenefitForm();
-        showPanel(Panel.BENEFIT_FORM);
     }
 
     @FXML
@@ -263,67 +235,24 @@ public class AdminSalaryController {
         }
     }
 
-    @FXML
-    private void saveBenefit() {
-        benefitFormErrorLabel.setText("");
-        if (benefitTypeCombo.getValue() == null) {
-            benefitFormErrorLabel.setText("Benefit type is required.");
-            return;
-        }
-        if (benefitAmountField.getText().isBlank()) {
-            benefitFormErrorLabel.setText("Amount is required.");
-            return;
-        }
-        Double amount = parseDouble(benefitAmountField.getText());
-        if (amount == null || amount <= 0) {
-            benefitFormErrorLabel.setText("Amount must be a positive number.");
-            return;
-        }
-        if (benefitStartDatePicker.getValue() == null) {
-            benefitFormErrorLabel.setText("Start date is required.");
-            return;
-        }
-
-        int typeId = benefitTypeCombo.getItems().indexOf(benefitTypeCombo.getValue()) + 1;
-        EmployeeBenefitDTO dto = new EmployeeBenefitDTO(
-                selectedEmployee.getEmployeeId(),
-                typeId,
-                amount,
-                benefitStartDatePicker.getValue(),
-                benefitEndDatePicker.getValue());
-        try {
-            salaryBenefitService.addBenefit(dto);
-            showEmployeeDetail(selectedEmployee);
-            setMessage("Benefit added.");
-        } catch (Exception e) {
-            benefitFormErrorLabel.setText(e.getMessage());
-        }
-    }
-
-    private enum Panel { EMPLOYEE_LIST, EMPLOYEE_DETAIL, SALARY_FORM, BENEFIT_FORM }
+    private enum Panel { EMPLOYEE_LIST, EMPLOYEE_DETAIL, SALARY_FORM }
 
     private void showPanel(Panel active) {
-        boolean formOpen = active == Panel.SALARY_FORM || active == Panel.BENEFIT_FORM;
-        boolean addFormOpen = (active == Panel.SALARY_FORM && !editSalaryMode) || active == Panel.BENEFIT_FORM;
+        boolean formOpen = active == Panel.SALARY_FORM;
 
         setPane(employeeListPanel, active == Panel.EMPLOYEE_LIST);
         setPane(employeeDetailPanel, active == Panel.EMPLOYEE_DETAIL || formOpen);
         setPane(formBackdrop, formOpen);
         setPane(salaryFormPanel, active == Panel.SALARY_FORM);
-        setPane(benefitFormPanel, active == Panel.BENEFIT_FORM);
-        applyAddFormVisuals(salaryFormPanel, active == Panel.SALARY_FORM && !editSalaryMode);
-        applyAddFormVisuals(benefitFormPanel, active == Panel.BENEFIT_FORM);
         if (formBackdrop != null) {
-            formBackdrop.setStyle(addFormOpen ? ADD_FORM_BACKDROP_STYLE : DEFAULT_FORM_BACKDROP_STYLE);
+            formBackdrop.setStyle(DEFAULT_FORM_BACKDROP_STYLE);
         }
 
         setVis(backButton, active != Panel.EMPLOYEE_LIST);
         setVis(searchField, active == Panel.EMPLOYEE_LIST);
         setVis(statusFilterCombo, active == Panel.EMPLOYEE_LIST);
         setVis(departmentFilterCombo, active == Panel.EMPLOYEE_LIST);
-        setVis(addSalaryButton, active == Panel.EMPLOYEE_DETAIL);
         setVis(editSalaryButton, active == Panel.EMPLOYEE_DETAIL && selectedSalary != null);
-        setVis(addBenefitButton, active == Panel.EMPLOYEE_DETAIL);
         setVis(endBenefitButton, active == Panel.EMPLOYEE_DETAIL && selectedBenefit != null && isActive(selectedBenefit));
     }
 
@@ -338,15 +267,6 @@ public class AdminSalaryController {
         if (node != null) {
             node.setVisible(show);
             node.setManaged(show);
-        }
-    }
-
-    private void applyAddFormVisuals(VBox panel, boolean addMode) {
-        if (panel == null) return;
-
-        panel.getStyleClass().remove(ADD_FORM_PANEL_CLASS);
-        if (addMode) {
-            panel.getStyleClass().add(ADD_FORM_PANEL_CLASS);
         }
     }
 
@@ -621,16 +541,6 @@ public class AdminSalaryController {
         salaryEndDatePicker.setValue(null);
         salaryFormErrorLabel.setText("");
         editSalaryMode = false;
-    }
-
-    private void clearBenefitForm() {
-        if (!benefitTypeCombo.getItems().isEmpty()) {
-            benefitTypeCombo.setValue(benefitTypeCombo.getItems().get(0));
-        }
-        benefitAmountField.clear();
-        benefitStartDatePicker.setValue(LocalDate.now());
-        benefitEndDatePicker.setValue(null);
-        benefitFormErrorLabel.setText("");
     }
 
     private boolean isActive(EmployeeBenefit benefit) {

@@ -2,6 +2,8 @@ package motorph.application.service;
 
 
 import motorph.application.dto.permission.MenuPermissionDTO;
+import motorph.application.exception.UnauthorizedException;
+import motorph.application.exception.ValidationException;
 import motorph.application.session.UserSession;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.PermissionKey;
@@ -196,7 +198,7 @@ class PermissionServiceTest {
 
 
         assertThrows(
-                IllegalStateException.class,
+                UnauthorizedException.class,
                 () -> permissionService.hasPermission(PermissionKey.VIEW_DASHBOARD)
         );
     }
@@ -214,7 +216,7 @@ class PermissionServiceTest {
 
 
         assertThrows(
-                IllegalArgumentException.class,
+                ValidationException.class,
                 () -> permissionService.hasPermission((PermissionKey) null)
         );
     }

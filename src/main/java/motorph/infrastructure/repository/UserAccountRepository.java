@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Handles database operations for user account records.
  */
-public class UserAccountRepository {
+public class UserAccountRepository implements Repository<UserAccount, Integer> {
 
     private static final String BASE_SELECT = """
             SELECT ua.user_account_id,
@@ -85,7 +85,8 @@ public class UserAccountRepository {
     }
 
     // finds an account by user account id
-    public UserAccount findById(int userAccountId) {
+    @Override
+    public UserAccount findById(Integer userAccountId) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
         String sql = BASE_SELECT + """
@@ -168,6 +169,7 @@ public class UserAccountRepository {
     }
 
     // finds all accounts
+    @Override
     public List<UserAccount> findAll() {
         String sql = BASE_SELECT + """
                 ORDER BY ua.user_account_id
@@ -177,6 +179,7 @@ public class UserAccountRepository {
     }
 
     // saves a new account and assigns its roles
+    @Override
     public void save(UserAccount userAccount) {
         validateUserAccount(userAccount);
 

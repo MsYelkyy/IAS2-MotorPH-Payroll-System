@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="18"
+<VBox spacing="18" VBox.vgrow="ALWAYS"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.it.ITSupportTicketController">
@@ -87,7 +87,8 @@
 
         <Region prefHeight="16"/>
 
-        <TableView fx:id="ticketsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+        <TableView fx:id="ticketsTable" VBox.vgrow="ALWAYS"
+                   minHeight="200" prefHeight="200" maxHeight="Infinity"
                    styleClass="payroll-table, attendance-table">
             <columns>
                 <TableColumn fx:id="ticketIdColumn"  text="Ticket ID"      prefWidth="90"  minWidth="70"/>

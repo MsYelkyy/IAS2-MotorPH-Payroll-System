@@ -13,9 +13,10 @@ import java.util.List;
 /**
  * Handles database operations for support ticket records.
  */
-public class SupportTicketRepository {
+public class SupportTicketRepository implements Repository<SupportTicket, Integer> {
 
     // saves a new support ticket
+    @Override
     public void save(SupportTicket ticket) {
         validateTicket(ticket);
 
@@ -47,7 +48,8 @@ public class SupportTicketRepository {
     }
 
     // finds a support ticket by id
-    public SupportTicket findById(int ticketId) {
+    @Override
+    public SupportTicket findById(Integer ticketId) {
         validatePositive(ticketId, "Ticket ID must be positive.");
 
         String sql = baseSelect() + """
@@ -97,6 +99,7 @@ public class SupportTicketRepository {
     }
 
     // finds all support tickets across every routing team
+    @Override
     public List<SupportTicket> findAll() {
         String sql = baseSelect() + """
                 ORDER BY created_at DESC

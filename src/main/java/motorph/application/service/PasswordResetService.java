@@ -12,12 +12,13 @@ import motorph.infrastructure.repository.UserAccountRepository;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-/**
- * Handles forgot password requests and IT/Admin temporary password processing.
- */
+/** Handles password reset requests and temporary password processing. */
 public class PasswordResetService {
 
+    private static final Logger LOGGER = Logger.getLogger(PasswordResetService.class.getName());
     private static final int TEMPORARY_PASSWORD_EXPIRY_MINUTES = 60;
     private static final int TEMPORARY_PASSWORD_LENGTH = 10;
     private static final String TEMPORARY_PASSWORD_PREFIX = "MPH-";
@@ -213,8 +214,8 @@ public class PasswordResetService {
     private void logPasswordReset(int resolverEmployeeId, int targetEmployeeId) {
         try {
             userAccessLogService.logPasswordReset(resolverEmployeeId, targetEmployeeId);
-        } catch (RuntimeException ignored) {
-            // Logging failure should not block password reset processing.
+        } catch (RuntimeException exception) {
+            LOGGER.log(Level.WARNING, "Failed to write password reset audit log.", exception);
         }
     }
 

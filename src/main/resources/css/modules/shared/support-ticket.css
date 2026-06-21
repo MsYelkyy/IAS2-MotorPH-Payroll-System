@@ -210,17 +210,6 @@
     -fx-border-color: rgba(239,68,68,0.28);
 }
 
-.it-ticket-dialog-scroll {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-    -fx-border-color: transparent;
-    -fx-padding: 0;
-}
-
-.it-ticket-dialog-scroll .viewport {
-    -fx-background-color: transparent;
-}
-
 .it-ticket-dialog-body {
     -fx-padding: 16 20 10 20;
 }
@@ -334,15 +323,6 @@
     -fx-background-color: rgba(239,68,68,0.08);
     -fx-text-fill: #DC2626;
     -fx-border-color: rgba(239,68,68,0.20);
-}
-
-.root-canvas.light-mode .it-ticket-dialog-scroll {
-    -fx-background: transparent;
-    -fx-background-color: transparent;
-}
-
-.root-canvas.light-mode .it-ticket-dialog-scroll .viewport {
-    -fx-background-color: transparent;
 }
 
 .root-canvas.light-mode .it-ticket-info-section {

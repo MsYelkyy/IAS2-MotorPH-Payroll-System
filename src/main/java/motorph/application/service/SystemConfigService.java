@@ -1,11 +1,13 @@
 package motorph.application.service;
 
 import motorph.application.dto.systemconfig.*;
+import motorph.application.exception.ValidationException;
 import motorph.infrastructure.repository.*;
 
 import java.time.LocalDate;
 import java.util.List;
 
+/** Manages government rate configuration. */
 public class SystemConfigService {
 
     private final PhilHealthRateRepository     philRepo;
@@ -114,8 +116,8 @@ public class SystemConfigService {
 
     private void validateDates(LocalDate start, LocalDate end) {
         if (start == null)
-            throw new IllegalArgumentException("Effective Start Date is required.");
+            throw new ValidationException("Effective Start Date is required.");
         if (end != null && !end.isAfter(start))
-            throw new IllegalArgumentException("Effective End Date must be after Start Date.");
+            throw new ValidationException("Effective End Date must be after Start Date.");
     }
 }
