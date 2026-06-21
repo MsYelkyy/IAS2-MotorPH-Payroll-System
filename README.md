@@ -218,7 +218,7 @@ mvn test
 
 Developed as the AOOP-term group project for the MotorPH Payroll Management System.
 
-**Group 5 — Section H2101**
+**H2101 - Group 5**
 
 - **Joyce Mariel Poblete** — Project Lead / Integration
 - **Harty Joy Villegas** — UI Lead
