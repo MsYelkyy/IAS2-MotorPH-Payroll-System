@@ -59,5 +59,6 @@ public final class RoleSwitchHelper {
         else if (role == Role.IT)          NavigationUtil.goToITApp(scene);
         else if (role == Role.HR)          NavigationUtil.goToHrApp(scene);
         else if (role == Role.ADMIN)       NavigationUtil.goToAdminApp(scene);
+        else if (role == Role.FINANCE)     NavigationUtil.goToFinanceApp(scene);
     }
 }

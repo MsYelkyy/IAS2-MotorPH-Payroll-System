@@ -25,9 +25,6 @@ public class PayrollReportService {
     private static final String PAYROLL_SUMMARY_REPORT =
             "/motorph/reports/payroll/payroll_summary_report.jrxml";
 
-    private static final String DEPARTMENT_PAYROLL_REPORT =
-            "/motorph/reports/payroll/department_payroll_report.jrxml";
-
     private static final String PAYSLIP_REPORT =
             "/motorph/reports/payroll/payslip_report.jrxml";
 
@@ -158,31 +155,6 @@ public class PayrollReportService {
         jasperReportGenerator.showPreview(jasperPrint);
     }
 
-    // previews department payroll report
-    public void previewDepartmentPayrollReport(Integer departmentId,
-                                               Integer payrunId,
-                                               LocalDate startDate,
-                                               LocalDate endDate) {
-
-        validateDepartmentId(departmentId);
-
-        List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
-                departmentId,
-                null,
-                payrunId,
-                startDate,
-                endDate
-        );
-
-        JasperPrint jasperPrint = jasperReportGenerator.generateReport(
-                DEPARTMENT_PAYROLL_REPORT,
-                buildDepartmentPayrollParameters(startDate, endDate),
-                reportData
-        );
-
-        jasperReportGenerator.showPreview(jasperPrint);
-    }
-
     // exports payslip report to PDF
     public void exportPayslipReportToPdf(int employeeId, int payrunId, String outputPath) {
         validateOutputPath(outputPath);
@@ -223,33 +195,6 @@ public class PayrollReportService {
         jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
     }
 
-    // exports department payroll report to PDF
-    public void exportDepartmentPayrollReportToPdf(Integer departmentId,
-                                                   Integer payrunId,
-                                                   LocalDate startDate,
-                                                   LocalDate endDate,
-                                                   String outputPath) {
-
-        validateDepartmentId(departmentId);
-        validateOutputPath(outputPath);
-
-        List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
-                departmentId,
-                null,
-                payrunId,
-                startDate,
-                endDate
-        );
-
-        JasperPrint jasperPrint = jasperReportGenerator.generateReport(
-                DEPARTMENT_PAYROLL_REPORT,
-                buildDepartmentPayrollParameters(startDate, endDate),
-                reportData
-        );
-
-        jasperReportGenerator.exportToPdf(jasperPrint, outputPath);
-    }
-
     // exports the organization payroll report to PDF
     public void exportOrganizationPayrollReportToPdf(Integer departmentId,
                                                      Integer employeeId,
@@ -280,7 +225,7 @@ public class PayrollReportService {
     // builds organization payroll report parameters
     private Map<String, Object> buildOrganizationPayrollParameters(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("REPORT_TITLE", "Organizational Payroll Report");
+        parameters.put("REPORT_TITLE", "Payroll Register");
         parameters.put("START_DATE", startDate);
         parameters.put("END_DATE", endDate);
         return parameters;
@@ -290,15 +235,6 @@ public class PayrollReportService {
     private Map<String, Object> buildPayrollSummaryParameters(LocalDate startDate, LocalDate endDate) {
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("REPORT_TITLE", "Payroll Summary Report");
-        parameters.put("START_DATE", startDate);
-        parameters.put("END_DATE", endDate);
-        return parameters;
-    }
-
-    // builds department payroll report parameters
-    private Map<String, Object> buildDepartmentPayrollParameters(LocalDate startDate, LocalDate endDate) {
-        Map<String, Object> parameters = new HashMap<>();
-        parameters.put("REPORT_TITLE", "Department Payroll Report");
         parameters.put("START_DATE", startDate);
         parameters.put("END_DATE", endDate);
         return parameters;
@@ -324,13 +260,6 @@ public class PayrollReportService {
     private void validatePayrunId(int payrunId) {
         if (payrunId <= 0) {
             throw new ValidationException("Payrun is required.");
-        }
-    }
-
-    // validates department id input
-    private void validateDepartmentId(Integer departmentId) {
-        if (departmentId == null || departmentId <= 0) {
-            throw new ValidationException("Department is required.");
         }
     }
 

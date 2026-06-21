@@ -57,7 +57,7 @@
                 <Label text="Employee" styleClass="field-label"/>
                 <ComboBox fx:id="employeeCombo" promptText="Select Employee"
                           styleClass="input-field"
-                          minWidth="0" maxWidth="Infinity"/>
+                          minWidth="0" prefWidth="10" maxWidth="Infinity"/>
             </VBox>
 
             <VBox fx:id="payrunRow" spacing="6"
@@ -66,7 +66,7 @@
                 <Label text="Payrun" styleClass="field-label"/>
                 <ComboBox fx:id="payrunCombo" promptText="Any Payrun"
                           styleClass="input-field"
-                          minWidth="0" maxWidth="Infinity"/>
+                          minWidth="0" prefWidth="10" maxWidth="Infinity"/>
             </VBox>
 
             <StackPane minWidth="0" maxWidth="Infinity"
@@ -144,8 +144,8 @@
                 <VBox spacing="6" minWidth="0" maxWidth="Infinity"
                       GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="Export" styleClass="field-label"/>
-                    <Button text="Export PDF"
-                            disable="true"
+                    <Button fx:id="exportButton" text="Export PDF"
+                            onAction="#handleExport"
                             styleClass="secondary-button"
                             minWidth="0" maxWidth="Infinity"/>
                 </VBox>

@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="18"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.finance.FinanceSupportTicketController">
+
+    <!-- Summary metric cards -->
+    <HBox spacing="14">
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="OPEN TICKETS" styleClass="metric-label"/>
+            <Label fx:id="openTicketsLabel" text="0" styleClass="metric-value"/>
+            <Label text="Awaiting resolution" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="RESOLVED TICKETS" styleClass="metric-label"/>
+            <Label fx:id="resolvedTicketsLabel" text="0" styleClass="metric-value"/>
+            <Label text="Successfully resolved" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="CANCELLED TICKETS" styleClass="metric-label"/>
+            <Label fx:id="cancelledTicketsLabel" text="0" styleClass="metric-value"/>
+            <Label text="Cancelled tickets" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
+            <Label text="TOTAL TICKETS" styleClass="metric-label"/>
+            <Label fx:id="totalTicketsLabel" text="0" styleClass="metric-value"/>
+            <Label text="All time tickets" styleClass="muted-text"/>
+        </VBox>
+
+    </HBox>
+
+    <!-- Status tabs + search/filter bar -->
+    <VBox spacing="12" styleClass="content-card">
+
+        <!-- Status tab buttons — populated programmatically in controller -->
+        <HBox fx:id="tabsRow" spacing="8" alignment="CENTER_LEFT"/>
+
+        <!-- Search and filter row -->
+        <HBox alignment="BOTTOM_LEFT" spacing="12">
+
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Search" styleClass="metric-label"/>
+                <TextField fx:id="searchField"
+                           promptText="Search by ticket ID, employee, or title..."
+                           maxWidth="Infinity"
+                           styleClass="input-field"/>
+            </VBox>
+
+            <VBox spacing="6">
+                <Label text="Category" styleClass="metric-label"/>
+                <ComboBox fx:id="categoryFilterCombo" prefWidth="165" styleClass="input-field"/>
+            </VBox>
+
+            <Region HBox.hgrow="NEVER"/>
+            <Button text="Refresh" onAction="#handleRefresh" styleClass="primary-button"/>
+
+        </HBox>
+
+        <Label fx:id="messageLabel" wrapText="true" styleClass="message-label"/>
+
+    </VBox>
+
+    <!-- Tickets table -->
+    <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity"
+          styleClass="content-card, attendance-history-card"
+          VBox.vgrow="ALWAYS">
+
+        <VBox spacing="4">
+            <Label text="Tickets List" styleClass="section-title"/>
+            <Label text="List of support tickets" styleClass="note-text"/>
+        </VBox>
+
+        <Region prefHeight="16"/>
+
+        <TableView fx:id="ticketsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                   styleClass="payroll-table, attendance-table">
+            <columns>
+                <TableColumn fx:id="ticketIdColumn"  text="Ticket ID"      prefWidth="90"  minWidth="70"/>
+                <TableColumn fx:id="employeeColumn"  text="Employee"        prefWidth="155" minWidth="110"/>
+                <TableColumn fx:id="categoryColumn"  text="Category"        prefWidth="110" minWidth="80"/>
+                <TableColumn fx:id="subjectColumn"   text="Title / Subject" prefWidth="260" minWidth="140"/>
+                <TableColumn fx:id="statusColumn"    text="Status"          prefWidth="110" minWidth="80"/>
+                <TableColumn fx:id="createdAtColumn" text="Date Created"    prefWidth="160" minWidth="120"/>
+                <TableColumn fx:id="viewColumn"      text=""                prefWidth="55"  minWidth="40"/>
+            </columns>
+            <placeholder>
+                <Label text="No support tickets found." styleClass="note-text"/>
+            </placeholder>
+        </TableView>
+
+        <Region prefHeight="14"/>
+
+        <HBox alignment="CENTER_LEFT" spacing="10">
+            <Button fx:id="ticketsPrevButton" text="&#8592; Previous" onAction="#handleTicketsPrevPage"
+                    styleClass="secondary-button"/>
+            <Label fx:id="ticketsPageLabel" text="Page 1 of 1" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Label fx:id="ticketsRecordInfoLabel" text="" styleClass="note-text"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="ticketsNextButton" text="Next &#8594;" onAction="#handleTicketsNextPage"
+                    styleClass="secondary-button"/>
+        </HBox>
+
+    </VBox>
+
+</VBox>

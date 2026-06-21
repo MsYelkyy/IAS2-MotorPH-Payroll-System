@@ -16,6 +16,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -88,7 +89,7 @@ public class EmployeeMainController {
     private VBox payslipView;
 
     @FXML
-    private VBox supportTicketsView;
+    private StackPane supportTicketsView;
 
     @FXML
     private VBox settingsView;
@@ -213,7 +214,7 @@ public class EmployeeMainController {
     }
 
     // makes only the target view visible and marks the matching nav button as selected
-    private void showView(VBox target, Button selectedBtn, String title, String subtitle) {
+    private void showView(Region target, Button selectedBtn, String title, String subtitle) {
         boolean leavingLeaveView = leaveView != null
                 && leaveView.isVisible()
                 && target != leaveView;
@@ -235,7 +236,7 @@ public class EmployeeMainController {
             supportTicketsViewController.resetForm();
         }
 
-        for (VBox view : List.of(dashboardView, profileView, attendanceView, leaveView,
+        for (Region view : List.of(dashboardView, profileView, attendanceView, leaveView,
                 payslipView, supportTicketsView, settingsView)) {
             boolean active = view == target;
             view.setVisible(active);

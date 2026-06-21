@@ -2,6 +2,7 @@ package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
 import motorph.ui.common.GlobalControlsHelper;
+import motorph.ui.finance.PayrollManagementController;
 import motorph.ui.hr.HrEmployeeController;
 import motorph.ui.hr.HrLeaveController;
 import motorph.ui.it.ITAccessLogsController;
@@ -64,9 +65,9 @@ public class AdminMainController {
     @FXML private VBox                   employeeView;
     @FXML private HrEmployeeController   employeeViewController;
 
-    // Payroll sub-view
-    @FXML private VBox                    payrollView;
-    @FXML private AdminPayrollController  payrollViewController;
+    // Payroll sub-view (Finance-owned screen)
+    @FXML private VBox                        payrollView;
+    @FXML private PayrollManagementController  payrollViewController;
 
     // Salary & Benefits sub-view
     @FXML private VBox                    salaryView;

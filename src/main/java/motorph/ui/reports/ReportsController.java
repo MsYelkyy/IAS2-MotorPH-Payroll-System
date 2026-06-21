@@ -20,9 +20,13 @@ import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.OverrunStyle;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -42,11 +46,10 @@ public class ReportsController {
     private enum ReportType {
         ATTENDANCE("Attendance Report"),
         EMPLOYEE_TIMECARD("Employee Timecard Report"),
-        ORG_PAYROLL("Organization Payroll Report"),
+        ORG_PAYROLL("Payroll Register"),
         PAYROLL_SUMMARY("Payroll Summary Report"),
-        DEPT_PAYROLL("Department Payroll Report"),
         PAYSLIP("Payslip"),
-        AUDIT_LOG("Audit Log Report"),
+        AUDIT_LOG("Audit Trail Report"),
         SUPPORT_TICKET("Support Ticket Report");
 
         private final String label;
@@ -103,6 +106,7 @@ public class ReportsController {
     @FXML private DatePicker dateToPicker;
 
     @FXML private Button previewButton;
+    @FXML private Button exportButton;
 
     // --- Services ---------------------------------------------------------
 
@@ -259,10 +263,48 @@ public class ReportsController {
                 "All Teams", "HR", "Payroll", "IT", "Admin");
         routingTeamCombo.setValue("All Teams");
 
+        // Routing team follows the chosen category: tickets are routed to a fixed team
+        // at creation time, so a free-choice team would let users build a contradictory
+        // filter (e.g. Payroll + IT) that returns nothing. Auto-set and lock the team
+        // when a specific category is picked; re-enable it for "All Categories".
+        categoryCombo.setOnAction(e -> syncRoutingTeamToCategory());
+
         // Ticket status
         ticketStatusCombo.getItems().setAll(
                 "All Statuses", "Open", "Resolved", "Cancelled");
         ticketStatusCombo.setValue("All Statuses");
+    }
+
+    // Drives the routing team from the selected category, mirroring the routing rule
+    // applied when a ticket is created (see SupportTicketService.resolveRoutingTeam).
+    // For "All Categories" the team is freed and reset to "All Teams".
+    private void syncRoutingTeamToCategory() {
+        String team = routingTeamForCategory(categoryCombo.getValue());
+
+        if (team == null) {
+            // "All Categories" — let the user pick any team
+            routingTeamCombo.setValue("All Teams");
+            routingTeamCombo.setDisable(false);
+        } else {
+            routingTeamCombo.setValue(team);
+            routingTeamCombo.setDisable(true);
+        }
+        refreshComboButtonText(routingTeamCombo);
+    }
+
+    // Maps a category label to its routing team label, or null for "All Categories".
+    // Mirrors SupportTicketService.resolveRoutingTeam so the report filter stays
+    // consistent with how tickets were actually routed.
+    private String routingTeamForCategory(String category) {
+        if (category == null || "All Categories".equals(category)) return null;
+        return switch (category) {
+            case "Payroll"    -> "Payroll";
+            case "Attendance" -> "HR";
+            case "Account",
+                 "System"     -> "IT";
+            case "Other"      -> "Admin";
+            default           -> null;
+        };
     }
 
     private void setupDateRangeCombo() {
@@ -329,11 +371,6 @@ public class ReportsController {
                 usesPayrun = true;
                 setDateRangeOptions(true);
             }
-            case DEPT_PAYROLL -> {
-                usesDepartment = true;
-                usesPayrun = true;
-                setDateRangeOptions(true);
-            }
             case PAYSLIP -> {
                 usesEmployee = true;
                 usesPayrun = true;
@@ -388,8 +425,7 @@ public class ReportsController {
 
     private boolean isPayrollReport(ReportType type) {
         return type == ReportType.ORG_PAYROLL
-                || type == ReportType.PAYROLL_SUMMARY
-                || type == ReportType.DEPT_PAYROLL;
+                || type == ReportType.PAYROLL_SUMMARY;
     }
 
     private boolean usesDateRange(ReportType type) {
@@ -424,7 +460,7 @@ public class ReportsController {
     }
 
     private <T> void refreshComboButtonText(ComboBox<T> combo) {
-        combo.setButtonCell(new ListCell<>() {
+        ListCell<T> buttonCell = new ListCell<>() {
             @Override
             protected void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
@@ -437,7 +473,14 @@ public class ReportsController {
                 StringConverter<T> converter = combo.getConverter();
                 setText(converter == null ? item.toString() : converter.toString(item));
             }
-        });
+        };
+
+        // Let the button cell shrink and clip long values (e.g. a payrun period string)
+        // instead of widening the combo and shifting the surrounding grid layout.
+        buttonCell.setMinWidth(0);
+        buttonCell.setPrefWidth(0);
+        buttonCell.setTextOverrun(OverrunStyle.ELLIPSIS);
+        combo.setButtonCell(buttonCell);
     }
 
     // --- Date resolution --------------------------------------------------
@@ -501,7 +544,6 @@ public class ReportsController {
                 case EMPLOYEE_TIMECARD -> previewEmployeeTimecard();
                 case ORG_PAYROLL       -> previewOrgPayroll();
                 case PAYROLL_SUMMARY   -> previewPayrollSummary();
-                case DEPT_PAYROLL      -> previewDeptPayroll();
                 case PAYSLIP           -> previewPayslip();
                 case AUDIT_LOG         -> previewAuditLog();
                 case SUPPORT_TICKET    -> previewSupportTicket();
@@ -566,24 +608,6 @@ public class ReportsController {
         payrollReportService.previewPayrollSummaryReport(deptId, payrunId, from, to);
     }
 
-    private void previewDeptPayroll() {
-        Integer deptId = selectedDeptId();
-        if (deptId == null) {
-            throw new ValidationException("Department is required for the Department Payroll Report.");
-        }
-
-        LocalDate[] dates = resolveDates();
-        if (dates[0] == null) {
-            throw new ValidationException("No payrun data found. Cannot resolve date range.");
-        }
-        LocalDate from = dates[0];
-        LocalDate to   = requireDateRange(from, dates[1]);
-
-        Integer payrunId = selectedPayrunId();
-
-        payrollReportService.previewDepartmentPayrollReport(deptId, payrunId, from, to);
-    }
-
     private void previewPayslip() {
         int empId    = requireEmployee();
         int payrunId = requirePayrun();
@@ -622,6 +646,171 @@ public class ReportsController {
         String  status      = toRawEnumValue(ticketStatusCombo.getValue(), "All Statuses");
 
         ticketReportService.previewTicketReport(deptId, empId, category, routingTeam, status, from, to);
+    }
+
+    // --- Export action ----------------------------------------------------
+
+    @FXML
+    private void handleExport() {
+        UiMessageUtil.clearMessage(moduleMessageLabel);
+        ReportType type = reportTypeCombo.getValue();
+        if (type == null) {
+            UiMessageUtil.setError(moduleMessageLabel, "Select a report type first.");
+            return;
+        }
+
+        try {
+            switch (type) {
+                case ATTENDANCE        -> exportAttendance();
+                case EMPLOYEE_TIMECARD -> exportEmployeeTimecard();
+                case ORG_PAYROLL       -> exportOrgPayroll();
+                case PAYROLL_SUMMARY   -> exportPayrollSummary();
+                case PAYSLIP           -> exportPayslip();
+                case AUDIT_LOG         -> exportAuditLog();
+                case SUPPORT_TICKET    -> exportSupportTicket();
+            }
+        } catch (ValidationException ex) {
+            showError("Validation Error", ex.getMessage());
+        } catch (Exception ex) {
+            showError("Report Error", "Could not export report:\n" + ex.getMessage());
+        }
+    }
+
+    // --- Per-report export methods ----------------------------------------
+
+    private void exportAttendance() {
+        LocalDate[] dates = resolveDates();
+        LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
+        LocalDate to   = requireDateRange(from, dates[1]);
+
+        Integer deptId = selectedDeptId();
+        Integer empId  = selectedEmpId();
+        String  status = toAttendanceStatusRaw(statusCombo.getValue());
+
+        String path = chooseExportFile("Attendance_Report.pdf");
+        if (path == null) return;
+        attendanceReportService.exportAttendanceReportToPdf(deptId, empId, status, from, to, path);
+        reportExported(path);
+    }
+
+    private void exportEmployeeTimecard() {
+        int empId = requireEmployee();
+
+        LocalDate[] dates = resolveDates();
+        LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
+        LocalDate to   = requireDateRange(from, dates[1]);
+
+        String path = chooseExportFile("Employee_Timecard_Report.pdf");
+        if (path == null) return;
+        attendanceReportService.exportEmployeeTimecardReportToPdf(empId, from, to, path);
+        reportExported(path);
+    }
+
+    private void exportOrgPayroll() {
+        LocalDate[] dates = resolveDates();
+        if (dates[0] == null) {
+            throw new ValidationException("No payrun data found. Cannot resolve date range.");
+        }
+        LocalDate from = dates[0];
+        LocalDate to   = requireDateRange(from, dates[1]);
+
+        Integer deptId   = selectedDeptId();
+        Integer empId    = selectedEmpId();
+        Integer payrunId = selectedPayrunId();
+
+        String path = chooseExportFile("Organization_Payroll_Report.pdf");
+        if (path == null) return;
+        payrollReportService.exportOrganizationPayrollReportToPdf(deptId, empId, payrunId, from, to, path);
+        reportExported(path);
+    }
+
+    private void exportPayrollSummary() {
+        LocalDate[] dates = resolveDates();
+        if (dates[0] == null) {
+            throw new ValidationException("No payrun data found. Cannot resolve date range.");
+        }
+        LocalDate from = dates[0];
+        LocalDate to   = requireDateRange(from, dates[1]);
+
+        Integer deptId   = selectedDeptId();
+        Integer payrunId = selectedPayrunId();
+
+        String path = chooseExportFile("Payroll_Summary_Report.pdf");
+        if (path == null) return;
+        payrollReportService.exportPayrollSummaryReportToPdf(deptId, payrunId, from, to, path);
+        reportExported(path);
+    }
+
+    private void exportPayslip() {
+        int empId    = requireEmployee();
+        int payrunId = requirePayrun();
+
+        String path = chooseExportFile("Payslip_" + empId + "_Payrun" + payrunId + ".pdf");
+        if (path == null) return;
+        payrollReportService.exportPayslipReportToPdf(empId, payrunId, path);
+        reportExported(path);
+    }
+
+    private void exportAuditLog() {
+        LocalDate[] dates = resolveDates();
+        LocalDate from = dates[0];
+        LocalDate to   = dates[1];
+
+        if (DR_CUSTOM.equals(dateRangeCombo.getValue()) && (from == null) != (to == null)) {
+            throw new ValidationException("Provide both Date From and Date To, or leave both empty.");
+        }
+
+        String action = toAuditActionRaw(actionCombo.getValue());
+
+        String path = chooseExportFile("Audit_Log_Report.pdf");
+        if (path == null) return;
+        auditReportService.exportAuditReportToPdf(null, action, from, to, path);
+        reportExported(path);
+    }
+
+    private void exportSupportTicket() {
+        LocalDate[] dates = resolveDates();
+        LocalDate from = dates[0];
+        LocalDate to   = dates[1];
+
+        if (DR_CUSTOM.equals(dateRangeCombo.getValue()) && (from != null) != (to != null)) {
+            throw new ValidationException("Provide both Date From and Date To, or leave both empty.");
+        }
+
+        Integer deptId      = selectedDeptId();
+        Integer empId       = selectedEmpId();
+        String  category    = toRawEnumValue(categoryCombo.getValue(), "All Categories");
+        String  routingTeam = toRawEnumValue(routingTeamCombo.getValue(), "All Teams");
+        String  status      = toRawEnumValue(ticketStatusCombo.getValue(), "All Statuses");
+
+        String path = chooseExportFile("Support_Ticket_Report.pdf");
+        if (path == null) return;
+        ticketReportService.exportTicketReportToPdf(deptId, empId, category, routingTeam, status, from, to, path);
+        reportExported(path);
+    }
+
+    // opens a save dialog and returns the chosen path, or null when cancelled
+    private String chooseExportFile(String defaultName) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Export Report PDF");
+        chooser.setInitialFileName(defaultName);
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF Files", "*.pdf"));
+
+        File target = exportButton.getScene() != null
+                ? chooser.showSaveDialog(exportButton.getScene().getWindow())
+                : chooser.showSaveDialog(null);
+        return target != null ? target.getAbsolutePath() : null;
+    }
+
+    // shows a success toast after a report PDF is written
+    private void reportExported(String path) {
+        String message = "Report exported to " + new File(path).getName() + ".";
+        if (exportButton.getScene() != null
+                && exportButton.getScene().getRoot() instanceof StackPane root) {
+            UiMessageUtil.showToast(root, message);
+        } else {
+            UiMessageUtil.setSuccess(moduleMessageLabel, message);
+        }
     }
 
     // --- Value translation helpers ----------------------------------------

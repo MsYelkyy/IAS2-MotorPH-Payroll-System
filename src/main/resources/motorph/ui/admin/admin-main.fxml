@@ -87,7 +87,7 @@
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView"  source="Dashboard.fxml"/>
                             <fx:include fx:id="employeeView"   source="../hr/EmployeeManagement.fxml" visible="false" managed="false"/>
-                            <fx:include fx:id="payrollView"    source="Payroll.fxml"  visible="false" managed="false"/>
+                            <fx:include fx:id="payrollView"    source="../finance/PayrollManagement.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="salaryView"       source="Salary.fxml"                    visible="false" managed="false"/>
                             <fx:include fx:id="userAccountView" source="../it/UserAccounts.fxml"                   visible="false" managed="false"/>
                             <fx:include fx:id="rolesView"       source="../it/RoleManagement.fxml"                 visible="false" managed="false"/>

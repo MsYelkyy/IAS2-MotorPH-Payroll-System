@@ -102,6 +102,12 @@ public class LoginController {
             return;
         }
 
+        if (roles.contains(Role.FINANCE)) {
+            CurrentUserSession.switchRole(Role.FINANCE);
+            NavigationUtil.goToFinanceApp(rootPane.getScene());
+            return;
+        }
+
         NavigationUtil.goToEmployeeApp(rootPane.getScene());
     }
 

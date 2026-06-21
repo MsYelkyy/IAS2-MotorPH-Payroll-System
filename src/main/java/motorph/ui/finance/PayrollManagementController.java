@@ -1,4 +1,4 @@
-package motorph.ui.admin;
+package motorph.ui.finance;
 
 import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
 import motorph.application.dto.payroll.PayrollPreviewDTO;
@@ -12,7 +12,7 @@ import motorph.application.service.report.PayrollReportService;
 import motorph.domain.model.Payrun;
 import motorph.domain.value.PayrollType;
 import motorph.domain.value.ReadinessStatus;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.factory.FinanceUIServiceFactory;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
 
@@ -46,8 +46,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
-/** Manages the admin payroll module organized around payroll dates / payruns. */
-public class AdminPayrollController {
+/** Manages the shared payroll management module owned by Finance and reused by Admin. */
+public class PayrollManagementController {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final String FORM_PANEL_CLASS = "payrun-form-active";
@@ -175,7 +175,7 @@ public class AdminPayrollController {
 
     @FXML
     private void initialize() {
-        EmployeeUIServiceFactory factory = EmployeeUIServiceFactory.getInstance();
+        FinanceUIServiceFactory factory = FinanceUIServiceFactory.getInstance();
         payrollService = factory.getPayrollService();
         payrollReportService = factory.getPayrollReportService();
 

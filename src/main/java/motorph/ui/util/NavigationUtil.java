@@ -32,6 +32,11 @@ public final class NavigationUtil {
         replaceRoot(scene, "/motorph/ui/hr/hr-main.fxml");
     }
 
+    // replaces the scene root with the finance main shell
+    public static void goToFinanceApp(Scene scene) {
+        replaceRoot(scene, "/motorph/ui/finance/finance-main.fxml");
+    }
+
     // replaces the scene root with the auth login page
     public static void goToLogin(Scene scene) {
         replaceRoot(scene, "/motorph/ui/auth/login.fxml");

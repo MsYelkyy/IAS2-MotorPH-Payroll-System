@@ -17,7 +17,7 @@
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.admin.AdminPayrollController"
+      fx:controller="motorph.ui.finance.PayrollManagementController"
       VBox.vgrow="ALWAYS" spacing="6" styleClass="payroll-module">
 
     <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
