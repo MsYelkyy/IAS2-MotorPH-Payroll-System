@@ -84,6 +84,34 @@
 
 /* IT support ticket module */
 
+/* Summary metric cards.
+   The base theme sets .metric-card { -fx-min-height: 0 }, which lets the three-line
+   summary cards collapse and overlap the card below on shells that don't load a
+   module stylesheet with a taller override (HR, Admin). Loaded after the theme, this
+   restores the same fixed height the IT screen uses so the cards render identically. */
+.metric-card {
+    -fx-min-height: 116;
+}
+
+/* Status badge colour variants used by the ticket table and detail dialog.
+   shared-components.css only defines the base .status-badge shape; these colours
+   otherwise live in it-common.css, which HR and Admin shells don't load. Kept here so
+   every ticket screen colours OPEN/RESOLVED/CANCELLED badges the same way. */
+.status-badge-success {
+    -fx-background-color: rgba(34,197,94,0.16);
+    -fx-text-fill: #16A34A;
+}
+
+.status-badge-danger {
+    -fx-background-color: rgba(239,68,68,0.16);
+    -fx-text-fill: #EF4444;
+}
+
+.status-badge-neutral {
+    -fx-background-color: rgba(156,163,175,0.14);
+    -fx-text-fill: #9CA3AF;
+}
+
 /* Status tab buttons */
 .ticket-tab-button {
     -fx-background-color: rgba(255,255,255,0.06);

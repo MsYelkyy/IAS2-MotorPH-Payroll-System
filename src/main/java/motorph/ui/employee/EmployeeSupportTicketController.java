@@ -19,6 +19,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -45,6 +46,9 @@ public class EmployeeSupportTicketController {
     private int currentPage = 1;
     private boolean titleDirty = false;
     private boolean messageDirty = false;
+
+    // Toast host
+    @FXML private StackPane toastRoot;
 
     // Form
     @FXML private ComboBox<String> categoryComboBox;
@@ -117,8 +121,8 @@ public class EmployeeSupportTicketController {
             supportTicketService.submitTicket(employeeId, category, subject, description);
 
             resetForm();
-            UiMessageUtil.setSuccess(formMessageLabel, "Support ticket submitted successfully.");
             loadTickets();
+            UiMessageUtil.showToast(toastRoot, "Support ticket submitted successfully.");
         } catch (Exception e) {
             UiMessageUtil.setError(formMessageLabel, userMessage(e));
         }

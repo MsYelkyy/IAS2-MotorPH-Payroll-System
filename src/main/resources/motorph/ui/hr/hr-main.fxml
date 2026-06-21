@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.hr.HrMainController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/hr/dashboard.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/shared/support-ticket.css, @../../../css/modules/hr/dashboard.css, @../../../css/modules/hr/employee-management.css, @../../../css/modules/hr/attendance-management.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -35,7 +35,11 @@
                 <Separator/>
 
                 <!-- Navigation -->
-                <Button fx:id="dashboardNavButton" text="Dashboard" onAction="#showDashboard" maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
+                <Button fx:id="dashboardNavButton"     text="Dashboard"           onAction="#showDashboard"     maxWidth="Infinity" styleClass="nav-button, selected-nav"/>
+                <Button fx:id="attendanceNavButton"    text="Attendance Logs"     onAction="#showAttendance"    maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="employeesNavButton"     text="Employee Management" onAction="#showEmployees"     maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="leaveOvertimeNavButton" text="Leave &amp; Overtime" onAction="#showLeaveOvertime" maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="supportTicketsNavButton" text="Support Tickets" onAction="#showSupportTickets" maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Region VBox.vgrow="ALWAYS"/>
 
@@ -74,7 +78,11 @@
                             styleClass="workspace-scroll" VBox.vgrow="ALWAYS">
                     <content>
                         <StackPane styleClass="content-area">
-                            <fx:include fx:id="dashboardView" source="Dashboard.fxml"/>
+                            <fx:include fx:id="dashboardView"  source="Dashboard.fxml"/>
+                            <fx:include fx:id="employeeView"   source="EmployeeManagement.fxml"   visible="false" managed="false"/>
+                            <fx:include fx:id="attendanceView" source="AttendanceManagement.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="leaveView"      source="LeaveManagement.fxml"      visible="false" managed="false"/>
+                            <fx:include fx:id="supportTicketsView" source="SupportTickets.fxml"   visible="false" managed="false"/>
                         </StackPane>
                     </content>
                 </ScrollPane>

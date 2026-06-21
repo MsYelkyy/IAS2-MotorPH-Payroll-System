@@ -14,7 +14,7 @@
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.admin.AdminLeaveController"
+      fx:controller="motorph.ui.hr.HrLeaveController"
       VBox.vgrow="ALWAYS">
 
     <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
@@ -30,7 +30,7 @@
         <Label fx:id="moduleMessageLabel" styleClass="muted-text"/>
     </HBox>
 
-    <StackPane VBox.vgrow="ALWAYS">
+    <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
 
         <VBox fx:id="listPanel" styleClass="content-card" spacing="12">
             <TableView fx:id="leaveTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
@@ -82,7 +82,6 @@
                     <HBox><Label text="Date Submitted" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailSubmittedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
                     <HBox><Label text="Reviewed By" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailApproverLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
                     <HBox><Label text="Reviewed On" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailReviewedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
-                    <HBox><Label text="Remarks" prefWidth="130" styleClass="muted-text"/><Label fx:id="detailRemarksLabel" styleClass="data-line" HBox.hgrow="ALWAYS" wrapText="true"/></HBox>
                 </VBox>
             </HBox>
 
@@ -94,16 +93,10 @@
                    visible="false" managed="false"/>
 
             <HBox spacing="10" alignment="CENTER_LEFT">
-                <Button fx:id="approveButton" text="Approve" onAction="#handleApprove"
+                <Button fx:id="approveButton" text="Approve Leave" onAction="#handleApprove"
                         styleClass="primary-button"/>
-                <Button fx:id="rejectButton" text="Reject" onAction="#handleReject"
+                <Button fx:id="rejectButton" text="Reject Leave" onAction="#handleReject"
                         styleClass="danger-outline-button"/>
-                <Button fx:id="reverseToRejectButton" text="Override to Rejected"
-                        onAction="#handleReverseToReject" styleClass="danger-outline-button"
-                        visible="false" managed="false"/>
-                <Button fx:id="reverseToCancelButton" text="Override to Cancelled"
-                        onAction="#handleReverseToCancel" styleClass="secondary-button"
-                        visible="false" managed="false"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button fx:id="viewCreditsButton" text="View Credits"
                         onAction="#handleViewCredits" styleClass="secondary-button"/>

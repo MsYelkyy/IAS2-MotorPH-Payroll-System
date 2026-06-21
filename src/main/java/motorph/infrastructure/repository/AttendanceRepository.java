@@ -50,6 +50,31 @@ public class AttendanceRepository {
         return attendances;
     }
 
+    // finds all attendance records
+    public List<Attendance> findAll() {
+        List<Attendance> attendances = new ArrayList<>();
+
+        String sql = """
+                SELECT attendance_id, employee_id, work_date, time_in, time_out, attendance_status
+                FROM attendance
+                ORDER BY work_date DESC, employee_id
+                """;
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                attendances.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find all attendance records.", e);
+        }
+
+        return attendances;
+    }
+
     // finds attendance within date range
     public List<Attendance> findByDateRange(LocalDate startDate, LocalDate endDate) {
         List<Attendance> attendances = new ArrayList<>();

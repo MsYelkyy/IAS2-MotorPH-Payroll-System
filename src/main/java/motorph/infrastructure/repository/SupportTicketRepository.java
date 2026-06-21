@@ -96,6 +96,15 @@ public class SupportTicketRepository {
         return executeListQuery(sql, stmt -> stmt.setString(1, routingTeam.name()));
     }
 
+    // finds all support tickets across every routing team
+    public List<SupportTicket> findAll() {
+        String sql = baseSelect() + """
+                ORDER BY created_at DESC
+                """;
+
+        return executeListQuery(sql, null);
+    }
+
     // finds all open support tickets
     public List<SupportTicket> findOpenTickets() {
         String sql = baseSelect() + """

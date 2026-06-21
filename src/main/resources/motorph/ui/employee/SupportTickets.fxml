@@ -12,9 +12,10 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="0"
+<StackPane fx:id="toastRoot"
       styleClass="support-ticket-root"
       maxWidth="Infinity"
       maxHeight="Infinity"
@@ -22,7 +23,7 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.employee.EmployeeSupportTicketController">
 
-    <GridPane hgap="18" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity">
+    <GridPane hgap="18" maxWidth="Infinity" maxHeight="Infinity">
         <columnConstraints>
             <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
             <ColumnConstraints percentWidth="38" hgrow="ALWAYS"/>
@@ -146,4 +147,4 @@
 
         </VBox>
     </GridPane>
-</VBox>
+</StackPane>

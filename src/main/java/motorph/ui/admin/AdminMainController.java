@@ -2,6 +2,8 @@ package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
 import motorph.ui.common.GlobalControlsHelper;
+import motorph.ui.hr.HrEmployeeController;
+import motorph.ui.hr.HrLeaveController;
 import motorph.ui.it.ITAccessLogsController;
 import motorph.ui.it.ITUserAccountController;
 import motorph.ui.it.ITRolesController;
@@ -44,6 +46,7 @@ public class AdminMainController {
     @FXML private Button userManagementNavButton;
     @FXML private Button roleManagementNavButton;
     @FXML private Button accessLogsNavButton;
+    @FXML private Button supportTicketsNavButton;
     @FXML private Button databaseToolsNavButton;
     @FXML private Button settingsNavButton;
     @FXML private Button switchRoleButton;
@@ -57,9 +60,9 @@ public class AdminMainController {
     @FXML private VBox                     dashboardView;
     @FXML private AdminDashboardController dashboardViewController;
 
-    // Employee sub-view
-    @FXML private VBox                      employeeView;
-    @FXML private AdminEmployeeController   employeeViewController;
+    // Employee sub-view (HR-owned screen)
+    @FXML private VBox                   employeeView;
+    @FXML private HrEmployeeController   employeeViewController;
 
     // Payroll sub-view
     @FXML private VBox                    payrollView;
@@ -85,9 +88,9 @@ public class AdminMainController {
     @FXML private VBox               reportsView;
     @FXML private ReportsController  reportsViewController;
 
-    // Leave & Overtime sub-view
-    @FXML private VBox                 leaveView;
-    @FXML private AdminLeaveController leaveViewController;
+    // Leave & Overtime sub-view (HR-owned screen)
+    @FXML private VBox              leaveView;
+    @FXML private HrLeaveController leaveViewController;
 
     // System Config sub-view
     @FXML private VBox                          systemConfigView;
@@ -96,6 +99,10 @@ public class AdminMainController {
     // Database Tools sub-view
     @FXML private VBox                          databaseToolsView;
     @FXML private AdminDatabaseToolsController  databaseToolsViewController;
+
+    // Support Tickets sub-view
+    @FXML private VBox                          supportTicketsView;
+    @FXML private AdminSupportTicketController  supportTicketsViewController;
 
     // Module placeholder (shown for unbuilt modules)
     @FXML private VBox modulePlaceholder;
@@ -205,6 +212,14 @@ public class AdminMainController {
         if (systemConfigViewController != null) systemConfigViewController.refresh();
     }
 
+    @FXML
+    private void showSupportTickets() {
+        setNavSelected(supportTicketsNavButton);
+        setHeader("Support Tickets", "View and respond to all employee support requests");
+        showView(ActiveView.SUPPORT_TICKETS);
+        if (supportTicketsViewController != null) supportTicketsViewController.refresh();
+    }
+
     // Auth handlers
     @FXML
     private void handleLogout() {
@@ -228,7 +243,7 @@ public class AdminMainController {
     public void navigateToRoleManagement() { showRoleManagement(); }
     public void navigateToAccessLogs()     { showAccessLogs(); }
 
-    private enum ActiveView { DASHBOARD, EMPLOYEES, PAYROLL, SALARY, REPORTS, USER_ACCOUNTS, ROLES, ACCESS_LOGS, LEAVE, SYSTEM_CONFIG, DATABASE_TOOLS, PLACEHOLDER }
+    private enum ActiveView { DASHBOARD, EMPLOYEES, PAYROLL, SALARY, REPORTS, USER_ACCOUNTS, ROLES, ACCESS_LOGS, LEAVE, SYSTEM_CONFIG, DATABASE_TOOLS, SUPPORT_TICKETS, PLACEHOLDER }
 
     private void showView(ActiveView active) {
         setPane(dashboardView,     active == ActiveView.DASHBOARD);
@@ -242,6 +257,7 @@ public class AdminMainController {
         setPane(leaveView,         active == ActiveView.LEAVE);
         setPane(systemConfigView,    active == ActiveView.SYSTEM_CONFIG);
         setPane(databaseToolsView,   active == ActiveView.DATABASE_TOOLS);
+        setPane(supportTicketsView,  active == ActiveView.SUPPORT_TICKETS);
         setPane(modulePlaceholder,   active == ActiveView.PLACEHOLDER);
     }
 
@@ -262,7 +278,7 @@ public class AdminMainController {
         NavigationHelper.setNavSelected(selected,
                 dashboardNavButton, employeesNavButton, payrollNavButton, salaryNavButton, reportsNavButton,
                 leaveOvertimeNavButton, userManagementNavButton, roleManagementNavButton,
-                accessLogsNavButton, databaseToolsNavButton, settingsNavButton);
+                accessLogsNavButton, supportTicketsNavButton, databaseToolsNavButton, settingsNavButton);
     }
 
     private void setHeader(String title, String subtitle) {

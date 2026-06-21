@@ -16,7 +16,7 @@
 <VBox spacing="16"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.admin.AdminEmployeeController">
+      fx:controller="motorph.ui.hr.HrEmployeeController">
 
     <!-- Toolbar -->
     <HBox alignment="CENTER_LEFT" spacing="12">

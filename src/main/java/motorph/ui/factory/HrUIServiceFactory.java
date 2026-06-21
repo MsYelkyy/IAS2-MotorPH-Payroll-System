@@ -1,5 +1,6 @@
 package motorph.ui.factory;
 
+import motorph.application.service.AttendanceService;
 import motorph.application.service.EmployeeService;
 import motorph.application.service.LeaveService;
 
@@ -10,11 +11,13 @@ public final class HrUIServiceFactory {
 
     private final EmployeeService employeeService;
     private final LeaveService leaveService;
+    private final AttendanceService attendanceService;
 
     // constructors
     private HrUIServiceFactory(EmployeeUIServiceFactory shared) {
-        this.employeeService = shared.getEmployeeService();
-        this.leaveService    = shared.getLeaveService();
+        this.employeeService   = shared.getEmployeeService();
+        this.leaveService      = shared.getLeaveService();
+        this.attendanceService = shared.getAttendanceService();
     }
 
     // initializes the singleton from the shared factory; must be called after EmployeeUIServiceFactory.initialize()
@@ -39,5 +42,9 @@ public final class HrUIServiceFactory {
 
     public LeaveService getLeaveService() {
         return leaveService;
+    }
+
+    public AttendanceService getAttendanceService() {
+        return attendanceService;
     }
 }

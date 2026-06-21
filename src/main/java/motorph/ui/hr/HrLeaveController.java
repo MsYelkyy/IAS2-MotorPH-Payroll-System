@@ -1,7 +1,8 @@
-package motorph.ui.admin;
+package motorph.ui.hr;
 
 import motorph.application.dto.leave.LeaveCreditRowDTO;
 import motorph.application.dto.leave.LeaveRequestRowDTO;
+import motorph.application.service.EmployeeService;
 import motorph.application.service.LeaveService;
 import motorph.application.service.UserAccountService;
 import motorph.domain.model.UserAccount;
@@ -26,6 +27,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -34,14 +36,15 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Manages the Admin Leave & Overtime module: request list, detail view, and employee credits panel. */
-public class AdminLeaveController {
+/** Manages the HR Leave & Overtime module: request list, detail view, and employee credits panel. */
+public class HrLeaveController {
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
     private LeaveService leaveService;
     private UserAccountService userAccountService;
+    private EmployeeService employeeService;
 
     private List<LeaveRequestRowDTO> allRows = new ArrayList<>();
     private final ObservableList<LeaveRequestRowDTO> leaveItems = FXCollections.observableArrayList();
@@ -51,6 +54,7 @@ public class AdminLeaveController {
 
     @FXML private Button backButton;
     @FXML private Label moduleMessageLabel;
+    @FXML private StackPane toastRoot;
 
     @FXML private VBox listPanel;
     @FXML private ComboBox<String> statusFilterCombo;
@@ -77,12 +81,9 @@ public class AdminLeaveController {
     @FXML private Label detailSubmittedLabel;
     @FXML private Label detailApproverLabel;
     @FXML private Label detailReviewedLabel;
-    @FXML private Label detailRemarksLabel;
     @FXML private Label detailSelfNoteLabel;
     @FXML private Button approveButton;
     @FXML private Button rejectButton;
-    @FXML private Button reverseToRejectButton;
-    @FXML private Button reverseToCancelButton;
     @FXML private Button viewCreditsButton;
 
     @FXML private VBox creditsPanel;
@@ -97,6 +98,7 @@ public class AdminLeaveController {
     private void initialize() {
         leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
         userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
+        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
         setupFilters();
         setupLeaveTable();
         setupCreditTable();
@@ -159,12 +161,11 @@ public class AdminLeaveController {
         try {
             UserAccount actor = resolveActorAccount();
             leaveService.approveLeaveRequest(actor, selectedRow.getLeaveRequestId());
-            UiMessageUtil.setSuccess(moduleMessageLabel,
-                    "Leave approved for " + selectedRow.getEmployeeFullName() + ".");
             loadRows();
             showList();
+            UiMessageUtil.showSuccessToastTop(toastRoot, "Leave request approved.");
         } catch (Exception e) {
-            UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
+            UiMessageUtil.showErrorToastTop(toastRoot, userMessage(e));
         }
     }
 
@@ -174,42 +175,11 @@ public class AdminLeaveController {
         try {
             UserAccount actor = resolveActorAccount();
             leaveService.rejectLeaveRequest(actor, selectedRow.getLeaveRequestId());
-            UiMessageUtil.setSuccess(moduleMessageLabel,
-                    "Leave rejected for " + selectedRow.getEmployeeFullName() + ".");
             loadRows();
             showList();
+            UiMessageUtil.showSuccessToastTop(toastRoot, "Leave request rejected.");
         } catch (Exception e) {
-            UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
-        }
-    }
-
-    @FXML
-    private void handleReverseToReject() {
-        if (selectedRow == null) return;
-        try {
-            UserAccount actor = resolveActorAccount();
-            leaveService.reverseApprovedLeave(actor, selectedRow.getLeaveRequestId(), RequestStatus.REJECTED);
-            UiMessageUtil.setSuccess(moduleMessageLabel,
-                    "Approved leave reversed to rejected. Credits restored.");
-            loadRows();
-            showList();
-        } catch (Exception e) {
-            UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
-        }
-    }
-
-    @FXML
-    private void handleReverseToCancel() {
-        if (selectedRow == null) return;
-        try {
-            UserAccount actor = resolveActorAccount();
-            leaveService.reverseApprovedLeave(actor, selectedRow.getLeaveRequestId(), RequestStatus.CANCELLED);
-            UiMessageUtil.setSuccess(moduleMessageLabel,
-                    "Approved leave reversed to cancelled. Credits restored.");
-            loadRows();
-            showList();
-        } catch (Exception e) {
-            UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
+            UiMessageUtil.showErrorToastTop(toastRoot, userMessage(e));
         }
     }
 
@@ -280,25 +250,31 @@ public class AdminLeaveController {
         setText(detailSubmittedLabel, row.getDateSubmitted() != null
                 ? row.getDateSubmitted().format(DATETIME_FMT)
                 : "-");
-        setText(detailApproverLabel, row.getApproverAccountId() != null
-                ? "Account #" + row.getApproverAccountId()
-                : "-");
+        setText(detailApproverLabel, resolveReviewerName(row.getApproverAccountId()));
         setText(detailReviewedLabel, row.getDateReviewed() != null
                 ? row.getDateReviewed().format(DATETIME_FMT)
-                : "-");
-        setText(detailRemarksLabel, row.getRemarks() != null && !row.getRemarks().isBlank()
-                ? row.getRemarks()
                 : "-");
 
         boolean isSelf = CurrentUserSession.getEmployeeId() == row.getEmployeeId();
         RequestStatus status = row.getStatus();
 
-        setLabelVisible(detailSelfNoteLabel, isSelf);
-        setButtonVisible(approveButton, status == RequestStatus.PENDING && !isSelf);
-        setButtonVisible(rejectButton, status == RequestStatus.PENDING && !isSelf);
-        setButtonVisible(reverseToRejectButton, status == RequestStatus.APPROVED && !isSelf);
-        setButtonVisible(reverseToCancelButton, status == RequestStatus.APPROVED && !isSelf);
+        // only pending requests are actionable; reviewed requests are read-only
+        boolean actionable = status == RequestStatus.PENDING && !isSelf;
+        setLabelVisible(detailSelfNoteLabel, isSelf && status == RequestStatus.PENDING);
+        setButtonVisible(approveButton, actionable);
+        setButtonVisible(rejectButton, actionable);
         setButtonVisible(viewCreditsButton, true);
+    }
+
+    // resolves the reviewer's full name from the approver account id, or "-" when not reviewed
+    private String resolveReviewerName(Integer approverAccountId) {
+        if (approverAccountId == null) return "-";
+        try {
+            UserAccount reviewer = userAccountService.getById(approverAccountId);
+            return employeeService.getEmployeeByIdAny(reviewer.getEmployeeId()).getFullName();
+        } catch (Exception e) {
+            return "Account #" + approverAccountId;
+        }
     }
 
     private void populateCredits(LeaveRequestRowDTO row) {
@@ -456,7 +432,9 @@ public class AdminLeaveController {
         if (accountId <= 0) {
             throw new IllegalStateException("No active session found. Please log in again.");
         }
-        return userAccountService.getById(accountId);
+        UserAccount actor = userAccountService.getById(accountId);
+        actor.setActiveRole(CurrentUserSession.getActiveRole());
+        return actor;
     }
 
     private void setText(Label label, String text) {

@@ -26,6 +26,11 @@ public class AttendanceService {
         this.attendanceRepository = attendanceRepository;
     }
 
+    // returns all attendance records
+    public List<Attendance> getAllAttendance() {
+        return attendanceRepository.findAll();
+    }
+
     // returns attendance records of one employee
     public List<Attendance> getAttendanceByEmployeeId(int employeeId) {
         validateEmployeeId(employeeId);

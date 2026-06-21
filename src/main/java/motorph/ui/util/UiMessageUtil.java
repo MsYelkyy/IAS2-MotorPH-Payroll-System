@@ -46,11 +46,29 @@ public final class UiMessageUtil {
      * fades out and removes itself — it never participates in layout flow.
      */
     public static void showToast(StackPane root, String message) {
+        showToast(root, message, Pos.BOTTOM_RIGHT, "toast-label");
+    }
+
+    // shows a success toast pinned to the top-right of the content area
+    public static void showSuccessToastTop(StackPane root, String message) {
+        showToast(root, message, Pos.TOP_RIGHT, "toast-label");
+    }
+
+    // shows an error toast pinned to the top-right of the content area
+    public static void showErrorToastTop(StackPane root, String message) {
+        showToast(root, message, Pos.TOP_RIGHT, "toast-label-error");
+    }
+
+    // injects a transient toast that fades in, holds, then removes itself
+    private static void showToast(StackPane root, String message, Pos alignment, String styleClass) {
+        if (root == null) return;
+
         Label toast = new Label(message);
-        toast.getStyleClass().add("toast-label");
+        toast.getStyleClass().add(styleClass);
+        toast.setWrapText(true);
         toast.setMouseTransparent(true);
-        StackPane.setAlignment(toast, Pos.BOTTOM_RIGHT);
-        StackPane.setMargin(toast, new Insets(0, 24, 28, 0));
+        StackPane.setAlignment(toast, alignment);
+        StackPane.setMargin(toast, new Insets(28, 24, 28, 24));
 
         root.getChildren().add(toast);
 

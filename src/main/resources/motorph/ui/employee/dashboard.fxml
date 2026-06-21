@@ -31,11 +31,11 @@
             </VBox>
             <VBox spacing="6" styleClass="metric-card">
                 <Label text="ATTENDANCE RATE" styleClass="metric-label"/>
-                <Label text="98.20%" styleClass="metric-value, attendance-value"/>
+                <Label fx:id="dashboardAttendanceRateLabel" text="—" styleClass="metric-value, attendance-value"/>
             </VBox>
             <VBox spacing="6" styleClass="metric-card">
                 <Label text="DAYS WORKED" styleClass="metric-label"/>
-                <Label text="11 / 11" styleClass="metric-value, attendance-value"/>
+                <Label fx:id="dashboardDaysWorkedLabel" text="—" styleClass="metric-value, attendance-value"/>
             </VBox>
             <VBox spacing="6" styleClass="metric-card">
                 <Label text="AVAILABLE LEAVE" styleClass="metric-label"/>
@@ -70,7 +70,7 @@
                 </VBox>
                 <VBox spacing="10" minWidth="320" maxWidth="Infinity"
                       styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-                    <Label text="EARNINGS BREAKDOWN" styleClass="section-title"/>
+                    <Label text="LATEST PAYSLIP BREAKDOWN" styleClass="section-title"/>
                     <BarChart fx:id="earningsBreakdownChart" animated="false" legendVisible="false"
                               minWidth="0" maxWidth="Infinity"
                               styleClass="portal-chart" VBox.vgrow="ALWAYS">
@@ -99,33 +99,7 @@
                 <VBox spacing="12" minWidth="300" maxWidth="Infinity"
                       styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="LEAVE SUMMARY" styleClass="section-title"/>
-                    <VBox spacing="9" styleClass="leave-summary-list" VBox.vgrow="ALWAYS">
-                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
-                            <Label text="Vacation Leave" styleClass="leave-summary-name"/>
-                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
-                            <Label text="12.5 days" styleClass="leave-summary-value"/>
-                        </HBox>
-                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
-                            <Label text="Sick Leave" styleClass="leave-summary-name"/>
-                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
-                            <Label text="2 days" styleClass="leave-summary-value"/>
-                        </HBox>
-                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
-                            <Label text="Emergency Leave" styleClass="leave-summary-name"/>
-                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
-                            <Label text="0 days" styleClass="leave-summary-value"/>
-                        </HBox>
-                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
-                            <Label text="Special Leave" styleClass="leave-summary-name"/>
-                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
-                            <Label text="3 days" styleClass="leave-summary-value"/>
-                        </HBox>
-                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="leave-summary-row">
-                            <Label text="Maternity Leave" styleClass="leave-summary-name"/>
-                            <Region HBox.hgrow="ALWAYS" styleClass="leave-summary-leader"/>
-                            <Label text="1 day" styleClass="leave-summary-value"/>
-                        </HBox>
-                    </VBox>
+                    <VBox fx:id="leaveSummaryList" spacing="9" styleClass="leave-summary-list" VBox.vgrow="ALWAYS"/>
                 </VBox>
             </GridPane>
 
@@ -144,10 +118,10 @@
                       GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
                     <Label text="UPCOMING PAYDAY" styleClass="metric-label"/>
                     <VBox spacing="6" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
-                        <Label text="June 30, 2026" maxWidth="Infinity"
+                        <Label fx:id="upcomingPaydayLabel" text="—" maxWidth="Infinity"
                                styleClass="bottom-value, financial-value"/>
                         <Label text="Next scheduled payroll release" wrapText="true" styleClass="muted-text"/>
-                        <Label text="In 26 days" styleClass="positive-text"/>
+                        <Label fx:id="upcomingPaydayCountdownLabel" text="" styleClass="positive-text"/>
                     </VBox>
                 </VBox>
                 <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, recent-payslip-card"
@@ -155,7 +129,7 @@
                       GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                     <Label text="RECENT PAYSLIP"          styleClass="metric-label"/>
                     <VBox spacing="8" styleClass="bottom-card-content, recent-payslip-content" VBox.vgrow="ALWAYS">
-                        <Label text="May 16 – May 31, 2026"   styleClass="bottom-value"/>
+                        <Label fx:id="recentPayslipPeriodLabel" text="—"   styleClass="bottom-value"/>
                         <Label text="Latest available payslip" wrapText="true" styleClass="muted-text"/>
                         <Region VBox.vgrow="ALWAYS"/>
                         <Button text="View Payslip" onAction="#navigateToPayslip" maxWidth="Infinity" styleClass="small-pill-button"/>
@@ -166,12 +140,10 @@
                       GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
                     <Label text="PAYROLL STATUS"                      styleClass="metric-label"/>
                     <VBox spacing="8" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
-                        <Label text="Pending Processing" maxWidth="Infinity"
+                        <Label fx:id="payrollStatusLabel" text="—" maxWidth="Infinity"
                                styleClass="bottom-value"/>
-                        <Label text="Your payroll for the current payroll period is still being processed by Finance Team."
-                               wrapText="true" styleClass="muted-text"/>
-                        <Label text="Please wait until payroll generation is completed."
-                               wrapText="true" styleClass="muted-text"/>
+                        <Label fx:id="payrollStatusDetailLabel"
+                               text="" wrapText="true" styleClass="muted-text"/>
                     </VBox>
                 </VBox>
             </GridPane>

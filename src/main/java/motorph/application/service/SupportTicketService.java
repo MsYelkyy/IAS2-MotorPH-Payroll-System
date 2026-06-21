@@ -91,6 +91,11 @@ public class SupportTicketService {
         return supportTicketRepository.findOpenTickets();
     }
 
+    // returns all tickets across every routing team (admin-wide view)
+    public List<SupportTicket> getAllTickets() {
+        return supportTicketRepository.findAll();
+    }
+
     // resolves an open support ticket; only IT, HR, ADMIN, or PAYROLL roles may resolve
     public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
         validateTicketId(ticketId);

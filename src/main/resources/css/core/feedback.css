@@ -72,3 +72,21 @@
     -fx-text-fill: #166534;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
 }
+
+/* Error toast variant */
+.toast-label-error {
+    -fx-background-color: #1E2736;
+    -fx-background-radius: 8;
+    -fx-text-fill: #FCA5A5;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+}
+
+/* Error toast in light mode */
+.root-canvas.light-mode .toast-label-error {
+    -fx-background-color: #FFFFFF;
+    -fx-text-fill: #B91C1C;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
+}

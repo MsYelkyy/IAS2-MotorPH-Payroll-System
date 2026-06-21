@@ -12,7 +12,6 @@ import motorph.ui.util.ThemeManager;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -33,6 +32,10 @@ public class HrMainController {
 
     // Navigation buttons
     @FXML private Button dashboardNavButton;
+    @FXML private Button employeesNavButton;
+    @FXML private Button attendanceNavButton;
+    @FXML private Button leaveOvertimeNavButton;
+    @FXML private Button supportTicketsNavButton;
     @FXML private Button switchRoleButton;
 
     // Topbar
@@ -41,8 +44,24 @@ public class HrMainController {
     @FXML private HBox  globalControlsHost;
 
     // Dashboard sub-view
-    @FXML private VBox                dashboardView;
+    @FXML private VBox                 dashboardView;
     @FXML private HrDashboardController dashboardViewController;
+
+    // Employee Management sub-view
+    @FXML private VBox                employeeView;
+    @FXML private HrEmployeeController employeeViewController;
+
+    // Attendance sub-view
+    @FXML private VBox                  attendanceView;
+    @FXML private HrAttendanceController attendanceViewController;
+
+    // Leave & Overtime sub-view
+    @FXML private VBox             leaveView;
+    @FXML private HrLeaveController leaveViewController;
+
+    // Support Tickets sub-view
+    @FXML private VBox                    supportTicketsView;
+    @FXML private HrSupportTicketController supportTicketsViewController;
 
     // Footer
     @FXML private Label appMessageLabel;
@@ -54,6 +73,7 @@ public class HrMainController {
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
+        wireDashboard();
         showDashboard();
         loadSidebarData();
         configureSwitchRoleButton();
@@ -66,8 +86,44 @@ public class HrMainController {
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
         setHeader("Dashboard", "HR MANAGEMENT SYSTEM");
-        showView(dashboardView);
+        showView(ActiveView.DASHBOARD);
         if (dashboardViewController != null) dashboardViewController.refresh();
+    }
+
+    // shows the employee management view
+    @FXML
+    private void showEmployees() {
+        setNavSelected(employeesNavButton);
+        setHeader("Employee Management", "View and manage all employees");
+        showView(ActiveView.EMPLOYEES);
+        if (employeeViewController != null) employeeViewController.refresh();
+    }
+
+    // shows the attendance view
+    @FXML
+    private void showAttendance() {
+        setNavSelected(attendanceNavButton);
+        setHeader("Attendance", "Monitor employee attendance logs");
+        showView(ActiveView.ATTENDANCE);
+        if (attendanceViewController != null) attendanceViewController.refresh();
+    }
+
+    // shows the leave and overtime view
+    @FXML
+    private void showLeaveOvertime() {
+        setNavSelected(leaveOvertimeNavButton);
+        setHeader("Leave & Overtime", "Review and approve leave requests");
+        showView(ActiveView.LEAVE);
+        if (leaveViewController != null) leaveViewController.refresh();
+    }
+
+    // shows the support tickets view
+    @FXML
+    private void showSupportTickets() {
+        setNavSelected(supportTicketsNavButton);
+        setHeader("Support Tickets", "Review and respond to employee support requests");
+        showView(ActiveView.SUPPORT_TICKETS);
+        if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
 
     // switches to the next assigned role
@@ -83,25 +139,43 @@ public class HrMainController {
         NavigationUtil.goToLogin(rootPane.getScene());
     }
 
+    // identifies which sub-view is currently shown
+    private enum ActiveView { DASHBOARD, EMPLOYEES, ATTENDANCE, LEAVE, SUPPORT_TICKETS }
+
+    // shows the active view and hides the others
+    private void showView(ActiveView active) {
+        setPane(dashboardView,      active == ActiveView.DASHBOARD);
+        setPane(employeeView,       active == ActiveView.EMPLOYEES);
+        setPane(attendanceView,     active == ActiveView.ATTENDANCE);
+        setPane(leaveView,          active == ActiveView.LEAVE);
+        setPane(supportTicketsView, active == ActiveView.SUPPORT_TICKETS);
+    }
+
+    // toggles a single sub-view's visibility
+    private void setPane(javafx.scene.Node node, boolean visible) {
+        if (node != null) {
+            node.setVisible(visible);
+            node.setManaged(visible);
+        }
+    }
+
+    // links the dashboard view back to this shell
+    private void wireDashboard() {
+        if (dashboardViewController != null) {
+            dashboardViewController.setMainController(this);
+        }
+    }
+
     // highlights the active navigation button
     private void setNavSelected(Button selected) {
-        NavigationHelper.setNavSelected(selected, dashboardNavButton);
+        NavigationHelper.setNavSelected(selected,
+                dashboardNavButton, employeesNavButton, attendanceNavButton, leaveOvertimeNavButton,
+                supportTicketsNavButton);
     }
 
     // updates the topbar title and subtitle
     private void setHeader(String title, String subtitle) {
         NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
-    }
-
-    // shows the given view and hides the others
-    private void showView(Node view) {
-        Node[] views = { dashboardView };
-        for (Node current : views) {
-            if (current == null) continue;
-            boolean selected = current == view;
-            current.setVisible(selected);
-            current.setManaged(selected);
-        }
     }
 
     // loads the logged-in HR user's identity into the sidebar

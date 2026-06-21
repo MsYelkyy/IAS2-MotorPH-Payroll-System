@@ -15,7 +15,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.admin.AdminMainController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/admin/dashboard.css, @../../../css/modules/admin/employee-management.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/core/typography.css, @../../../css/modules/shared/shared-components.css, @../../../css/modules/shared/support-ticket.css, @../../../css/modules/admin/dashboard.css, @../../../css/modules/hr/employee-management.css, @../../../css/modules/it/user-access-logs.css, @../../../css/modules/it/user-accounts.css, @../../../css/core/utilities.css">
 
     <BorderPane styleClass="app-shell">
 
@@ -44,6 +44,7 @@
                 <Button fx:id="userManagementNavButton"  text="User Management"      onAction="#showUserManagement"  maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="roleManagementNavButton"  text="Role Management"      onAction="#showRoleManagement"  maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="accessLogsNavButton"      text="Access Logs"          onAction="#showAccessLogs"      maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="supportTicketsNavButton"  text="Support Tickets"      onAction="#showSupportTickets"  maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="databaseToolsNavButton"   text="Database Backup"      onAction="#showDatabaseTools"   maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="settingsNavButton"        text="Settings"             onAction="#showSettings"        maxWidth="Infinity" styleClass="nav-button"/>
 
@@ -85,16 +86,17 @@
                     <content>
                         <StackPane styleClass="content-area">
                             <fx:include fx:id="dashboardView"  source="Dashboard.fxml"/>
-                            <fx:include fx:id="employeeView"   source="AdminEmployee.fxml" visible="false" managed="false"/>
-                            <fx:include fx:id="payrollView"    source="AdminPayroll.fxml"  visible="false" managed="false"/>
-                            <fx:include fx:id="salaryView"       source="AdminSalary.fxml"                    visible="false" managed="false"/>
+                            <fx:include fx:id="employeeView"   source="../hr/EmployeeManagement.fxml" visible="false" managed="false"/>
+                            <fx:include fx:id="payrollView"    source="Payroll.fxml"  visible="false" managed="false"/>
+                            <fx:include fx:id="salaryView"       source="Salary.fxml"                    visible="false" managed="false"/>
                             <fx:include fx:id="userAccountView" source="../it/UserAccounts.fxml"                   visible="false" managed="false"/>
                             <fx:include fx:id="rolesView"       source="../it/RoleManagement.fxml"                 visible="false" managed="false"/>
                             <fx:include fx:id="accessLogsView"  source="../it/UserAccessLogs.fxml"                visible="false" managed="false"/>
                             <fx:include fx:id="reportsView"     source="../reports/reports.fxml"                    visible="false" managed="false"/>
-                            <fx:include fx:id="leaveView"       source="AdminLeave.fxml"                      visible="false" managed="false"/>
-                            <fx:include fx:id="systemConfigView"    source="AdminSystemConfig.fxml"           visible="false" managed="false"/>
-                            <fx:include fx:id="databaseToolsView"  source="AdminDatabaseTools.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="leaveView"       source="../hr/LeaveManagement.fxml"                   visible="false" managed="false"/>
+                            <fx:include fx:id="systemConfigView"    source="SystemConfig.fxml"           visible="false" managed="false"/>
+                            <fx:include fx:id="databaseToolsView"  source="DatabaseTools.fxml"          visible="false" managed="false"/>
+                            <fx:include fx:id="supportTicketsView" source="SupportTickets.fxml"         visible="false" managed="false"/>
                             <VBox fx:id="modulePlaceholder" alignment="CENTER" spacing="12"
                                   visible="false" managed="false">
                                 <Label text="Coming Soon" styleClass="page-title"/>

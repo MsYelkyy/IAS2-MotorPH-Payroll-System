@@ -1,10 +1,12 @@
 package motorph.ui.employee;
 
-import motorph.application.service.EmployeeService;
+import motorph.application.dto.leave.LeaveCreditRowDTO;
+import motorph.application.service.AttendanceService;
 import motorph.application.service.LeaveService;
 import motorph.application.service.PayrollService;
-import motorph.domain.model.Employee;
+import motorph.domain.model.Attendance;
 import motorph.domain.model.PayrollResult;
+import motorph.domain.model.Payrun;
 import motorph.domain.value.RequestStatus;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
@@ -16,46 +18,64 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
-/** Displays the employee dashboard: metrics, charts, and quick-action cards. */
+/** Displays the employee dashboard: metrics, charts, and quick-action cards, all backed by real data for the logged-in employee. */
 public class EmployeeDashboardController {
 
-    private EmployeeService employeeService;
+    private static final DateTimeFormatter PERIOD_FMT = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH);
+    private static final DateTimeFormatter PERIOD_FMT_YEAR = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
+    private static final int VACATION_LEAVE_TYPE_ID = 1;
+    private static final int ATTENDANCE_WINDOW_DAYS = 30;
+
     private LeaveService leaveService;
     private PayrollService payrollService;
+    private AttendanceService attendanceService;
     private Runnable onNavigateToPayslip;
 
-    @FXML
-    private Label dashboardNetPayLabel;
+    // Metric cards
+    @FXML private Label dashboardNetPayLabel;
+    @FXML private Label dashboardAttendanceRateLabel;
+    @FXML private Label dashboardDaysWorkedLabel;
+    @FXML private Label dashboardLeaveCreditsLabel;
+    @FXML private Label dashboardTaskPercentLabel;
 
-    @FXML
-    private Label dashboardLeaveCreditsLabel;
+    // Charts
+    @FXML private LineChart<String, Number> payrollTrendChart;
+    @FXML private BarChart<String, Number> earningsBreakdownChart;
+    @FXML private BarChart<String, Number> attendanceSummaryChart;
 
-    @FXML
-    private Label dashboardTaskPercentLabel;
+    // Leave summary
+    @FXML private VBox leaveSummaryList;
 
-    @FXML
-    private Label dashboardMessageLabel;
+    // Bottom cards
+    @FXML private Label upcomingPaydayLabel;
+    @FXML private Label upcomingPaydayCountdownLabel;
+    @FXML private Label recentPayslipPeriodLabel;
+    @FXML private Label payrollStatusLabel;
+    @FXML private Label payrollStatusDetailLabel;
 
-    @FXML
-    private LineChart<String, Number> payrollTrendChart;
-
-    @FXML
-    private BarChart<String, Number> earningsBreakdownChart;
-
-    @FXML
-    private BarChart<String, Number> attendanceSummaryChart;
+    @FXML private Label dashboardMessageLabel;
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
-        payrollService  = EmployeeUIServiceFactory.getInstance().getPayrollService();
-        leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
-        seedCharts();
+        payrollService    = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        leaveService      = EmployeeUIServiceFactory.getInstance().getLeaveService();
+        attendanceService = EmployeeUIServiceFactory.getInstance().getAttendanceService();
     }
 
     // stores a callback invoked when the user clicks "View Payslip"
@@ -66,7 +86,6 @@ public class EmployeeDashboardController {
     // refreshes all dashboard data for the current session's employee
     public void refresh() {
         int employeeId = CurrentUserSession.getEmployeeId();
-
         if (employeeId <= 0) {
             return;
         }
@@ -74,45 +93,43 @@ public class EmployeeDashboardController {
         try { refreshNetPay(); } catch (Throwable ignored) {}
         try { refreshPendingRequests(); } catch (Throwable ignored) {}
         try { refreshLeaveCredits(); } catch (Throwable ignored) {}
+        try { refreshAttendanceMetrics(employeeId); } catch (Throwable ignored) {}
+        try { refreshPayrollTrendChart(employeeId); } catch (Throwable ignored) {}
+        try { refreshEarningsBreakdownChart(employeeId); } catch (Throwable ignored) {}
+        try { refreshAttendanceSummaryChart(employeeId); } catch (Throwable ignored) {}
+        try { refreshLeaveSummary(employeeId); } catch (Throwable ignored) {}
+        try { refreshBottomCards(employeeId); } catch (Throwable ignored) {}
     }
+
+    // ----- Metric cards -----
 
     // updates the net pay label from the latest persisted payroll result
     public void refreshNetPay() {
         int employeeId = CurrentUserSession.getEmployeeId();
         if (employeeId <= 0) {
-            if (dashboardNetPayLabel != null) dashboardNetPayLabel.setText("PHP 0.00");
+            setText(dashboardNetPayLabel, "PHP 0.00");
             return;
         }
         try {
-            Optional<PayrollResult> latest = payrollService.getPayrollResultsByEmployee(employeeId)
-                    .stream()
-                    .max(Comparator.comparing(PayrollResult::getGeneratedAt));
-            if (dashboardNetPayLabel != null) {
-                dashboardNetPayLabel.setText(
-                        latest.map(r -> UiFormatter.formatPeso(r.getNetPay())).orElse("PHP 0.00"));
-            }
+            Optional<PayrollResult> latest = latestResult(employeeId);
+            setText(dashboardNetPayLabel,
+                    latest.map(r -> UiFormatter.formatPeso(r.getNetPay())).orElse("PHP 0.00"));
         } catch (Throwable t) {
-            if (dashboardNetPayLabel != null) dashboardNetPayLabel.setText("PHP 0.00");
+            setText(dashboardNetPayLabel, "PHP 0.00");
         }
     }
 
     // updates the pending request count for the current employee
     private void refreshPendingRequests() {
         int employeeId = CurrentUserSession.getEmployeeId();
-
         try {
             long pendingCount = leaveService.getLeaveRequestsByEmployeeId(employeeId)
                     .stream()
                     .filter(request -> request.getStatus() == RequestStatus.PENDING)
                     .count();
-
-            if (dashboardTaskPercentLabel != null) {
-                dashboardTaskPercentLabel.setText(String.valueOf(pendingCount));
-            }
+            setText(dashboardTaskPercentLabel, String.valueOf(pendingCount));
         } catch (Exception e) {
-            if (dashboardTaskPercentLabel != null) {
-                dashboardTaskPercentLabel.setText("0");
-            }
+            setText(dashboardTaskPercentLabel, "0");
         }
     }
 
@@ -124,28 +141,246 @@ public class EmployeeDashboardController {
     // updates available vacation leave credits for the current employee
     private void refreshLeaveCredits() {
         int employeeId = CurrentUserSession.getEmployeeId();
-
         if (employeeId <= 0) {
-            if (dashboardLeaveCreditsLabel != null) {
-                dashboardLeaveCreditsLabel.setText("0");
+            setText(dashboardLeaveCreditsLabel, "0");
+            return;
+        }
+        try {
+            double credits = leaveService.getRemainingLeaveCredits(
+                    employeeId, VACATION_LEAVE_TYPE_ID, LocalDate.now().getYear());
+            setText(dashboardLeaveCreditsLabel, String.format(Locale.ENGLISH, "%.0f", credits));
+        } catch (Throwable t) {
+            setText(dashboardLeaveCreditsLabel, "0");
+        }
+    }
+
+    // computes attendance rate and days worked over the trailing window from real attendance logs
+    private void refreshAttendanceMetrics(int employeeId) {
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate start = today.minusDays(ATTENDANCE_WINDOW_DAYS - 1);
+            List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(employeeId, start, today);
+
+            long total   = logs.size();
+            long worked  = logs.stream().filter(a -> a.isPresent() || a.isLate()).count();
+
+            if (total == 0) {
+                setText(dashboardAttendanceRateLabel, "—");
+                setText(dashboardDaysWorkedLabel, "0 / 0");
+                return;
             }
+
+            double rate = (worked * 100.0) / total;
+            setText(dashboardAttendanceRateLabel, String.format(Locale.ENGLISH, "%.2f%%", rate));
+            setText(dashboardDaysWorkedLabel, worked + " / " + total);
+        } catch (Exception e) {
+            setText(dashboardAttendanceRateLabel, "—");
+            setText(dashboardDaysWorkedLabel, "—");
+        }
+    }
+
+    // ----- Charts -----
+
+    // plots net pay across the employee's payroll history, oldest to newest
+    private void refreshPayrollTrendChart(int employeeId) {
+        if (payrollTrendChart == null) return;
+        try {
+            List<PayrollResult> results = payrollService.getPayrollResultsByEmployee(employeeId).stream()
+                    .sorted(Comparator.comparing(PayrollResult::getGeneratedAt))
+                    .toList();
+
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Net Pay (PHP)");
+            for (PayrollResult r : results) {
+                addPoint(series, periodLabelForResult(r), r.getNetPay());
+            }
+            payrollTrendChart.getData().setAll(series);
+        } catch (Exception e) {
+            payrollTrendChart.getData().clear();
+        }
+    }
+
+    // plots gross / deductions / net for the latest payroll result
+    private void refreshEarningsBreakdownChart(int employeeId) {
+        if (earningsBreakdownChart == null) return;
+        try {
+            Optional<PayrollResult> latest = latestResult(employeeId);
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Amount (PHP)");
+            if (latest.isPresent()) {
+                PayrollResult r = latest.get();
+                addPoint(series, "Gross Pay",  r.getGrossPay());
+                addPoint(series, "Deductions", r.getTotalDeductions());
+                addPoint(series, "Net Pay",    r.getNetPay());
+            }
+            earningsBreakdownChart.getData().setAll(series);
+        } catch (Exception e) {
+            earningsBreakdownChart.getData().clear();
+        }
+    }
+
+    // plots present/late/absent per day over the trailing window from real attendance logs
+    private void refreshAttendanceSummaryChart(int employeeId) {
+        if (attendanceSummaryChart == null) return;
+        try {
+            LocalDate today = LocalDate.now();
+            LocalDate start = today.minusDays(ATTENDANCE_WINDOW_DAYS - 1);
+            List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(employeeId, start, today);
+
+            // For a single employee each day is at most one record; counts are 0/1 per status.
+            Map<LocalDate, int[]> byDay = new TreeMap<>();
+            for (Attendance a : logs) {
+                int[] counts = byDay.computeIfAbsent(a.getWorkDate(), k -> new int[3]);
+                if (a.isPresent())     counts[0]++;
+                else if (a.isLate())   counts[1]++;
+                else if (a.isAbsent()) counts[2]++;
+            }
+
+            XYChart.Series<String, Number> present = new XYChart.Series<>();
+            XYChart.Series<String, Number> late    = new XYChart.Series<>();
+            XYChart.Series<String, Number> absent  = new XYChart.Series<>();
+            present.setName("Present");
+            late.setName("Late");
+            absent.setName("Absent");
+
+            byDay.forEach((day, counts) -> {
+                String label = dayLabel(day);
+                addPoint(present, label, counts[0]);
+                addPoint(late,    label, counts[1]);
+                addPoint(absent,  label, counts[2]);
+            });
+
+            attendanceSummaryChart.getData().setAll(present, late, absent);
+        } catch (Exception e) {
+            attendanceSummaryChart.getData().clear();
+        }
+    }
+
+    // ----- Leave summary -----
+
+    // builds the leave summary list from this employee's remaining leave credits per type
+    private void refreshLeaveSummary(int employeeId) {
+        if (leaveSummaryList == null) return;
+        leaveSummaryList.getChildren().clear();
+        try {
+            List<LeaveCreditRowDTO> credits = leaveService.getLeaveCreditsForEmployee(employeeId);
+            for (LeaveCreditRowDTO row : credits) {
+                leaveSummaryList.getChildren().add(
+                        buildLeaveSummaryRow(row.getLeaveTypeName(), row.getRemainingCredits()));
+            }
+        } catch (Exception ignored) {
+            // leave summary stays empty on service error
+        }
+    }
+
+    // builds a single "Leave Type ......... N days" row
+    private HBox buildLeaveSummaryRow(String name, double days) {
+        HBox row = new HBox(10);
+        row.getStyleClass().add("leave-summary-row");
+
+        Label nameLabel = new Label(name);
+        nameLabel.getStyleClass().add("leave-summary-name");
+
+        Region leader = new Region();
+        leader.getStyleClass().add("leave-summary-leader");
+        HBox.setHgrow(leader, Priority.ALWAYS);
+
+        Label valueLabel = new Label(formatDays(days));
+        valueLabel.getStyleClass().add("leave-summary-value");
+
+        row.getChildren().addAll(nameLabel, leader, valueLabel);
+        return row;
+    }
+
+    // ----- Bottom cards -----
+
+    // populates upcoming payday, recent payslip period, and payroll status from real payrun/result data
+    private void refreshBottomCards(int employeeId) {
+        List<Payrun> payruns;
+        try {
+            payruns = payrollService.getAllPayruns();
+        } catch (Exception e) {
+            payruns = List.of();
+        }
+
+        refreshUpcomingPayday(payruns);
+        refreshRecentPayslipAndStatus(employeeId, payruns);
+    }
+
+    // shows the nearest future pay date from the payrun table
+    private void refreshUpcomingPayday(List<Payrun> payruns) {
+        try {
+            LocalDate today = LocalDate.now();
+            Optional<Payrun> next = payruns.stream()
+                    .filter(p -> p.getPayDate() != null && !p.getPayDate().isBefore(today))
+                    .min(Comparator.comparing(Payrun::getPayDate));
+
+            if (next.isEmpty()) {
+                setText(upcomingPaydayLabel, "No scheduled payday");
+                setText(upcomingPaydayCountdownLabel, "");
+                return;
+            }
+
+            LocalDate payDate = next.get().getPayDate();
+            setText(upcomingPaydayLabel, PERIOD_FMT_YEAR.format(payDate));
+            long days = ChronoUnit.DAYS.between(today, payDate);
+            setText(upcomingPaydayCountdownLabel,
+                    days == 0 ? "Today" : ("In " + days + (days == 1 ? " day" : " days")));
+        } catch (Exception e) {
+            setText(upcomingPaydayLabel, "—");
+            setText(upcomingPaydayCountdownLabel, "");
+        }
+    }
+
+    // shows the latest payslip period and derives payroll status for the latest payrun
+    private void refreshRecentPayslipAndStatus(int employeeId, List<Payrun> payruns) {
+        Optional<PayrollResult> latest = Optional.empty();
+        try {
+            latest = latestResult(employeeId);
+        } catch (Exception ignored) {
+        }
+
+        // Recent payslip period label
+        if (latest.isPresent()) {
+            try {
+                Payrun payrun = payrollService.getPayrun(latest.get().getPayrunId());
+                setText(recentPayslipPeriodLabel, periodLabel(payrun));
+            } catch (Exception e) {
+                setText(recentPayslipPeriodLabel, "Latest payslip");
+            }
+        } else {
+            setText(recentPayslipPeriodLabel, "No payslip yet");
+        }
+
+        // Payroll status: derive from the latest payrun and whether this employee has a result for it
+        if (payruns.isEmpty()) {
+            setText(payrollStatusLabel, "No Payroll Data");
+            setText(payrollStatusDetailLabel, "There is no payroll period available yet.");
             return;
         }
 
-        try {
-            double credits = leaveService.getRemainingLeaveCredits(
-                    employeeId,
-                    1,
-                    LocalDate.now().getYear()
-            );
+        Payrun latestPayrun = payruns.stream()
+                .max(Comparator.comparing(Payrun::getEndDate))
+                .orElse(null);
 
-            if (dashboardLeaveCreditsLabel != null) {
-                dashboardLeaveCreditsLabel.setText(String.format("%.0f", credits));
-            }
-        } catch (Throwable t) {
-            if (dashboardLeaveCreditsLabel != null) {
-                dashboardLeaveCreditsLabel.setText("0");
-            }
+        if (latestPayrun == null) {
+            setText(payrollStatusLabel, "No Payroll Data");
+            setText(payrollStatusDetailLabel, "There is no payroll period available yet.");
+            return;
+        }
+
+        boolean processed = latest.isPresent()
+                && latestPayrun.getPayrunId() != null
+                && latest.get().getPayrunId() == latestPayrun.getPayrunId();
+
+        if (processed) {
+            setText(payrollStatusLabel, "Processed");
+            setText(payrollStatusDetailLabel,
+                    "Your payroll for " + periodLabel(latestPayrun) + " has been processed.");
+        } else {
+            setText(payrollStatusLabel, "Pending");
+            setText(payrollStatusDetailLabel,
+                    "Your payroll for " + periodLabel(latestPayrun) + " is still being processed.");
         }
     }
 
@@ -154,43 +389,59 @@ public class EmployeeDashboardController {
         if (onNavigateToPayslip != null) onNavigateToPayslip.run();
     }
 
-    // seeds placeholder chart data until real data is loaded from the backend
-    private void seedCharts() {
-        if (payrollTrendChart != null) {
-            payrollTrendChart.getData().setAll(series(
-                    "Net Pay (PHP)",
-                    new String[]{"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun"},
-                    new double[]{27000, 34000, 29500, 27500, 12500, 29000, 31500, 28500, 23500, 26000, 24500, 23000}
-            ));
-        }
-        if (earningsBreakdownChart != null) {
-            earningsBreakdownChart.getData().setAll(series(
-                    "Earnings",
-                    new String[]{"Basic", "Allowances", "Overtime", "Night Diff", "Holiday", "Bonus"},
-                    new double[]{17500, 6000, 3250, 1750, 1250, 750}
-            ));
-        }
-        if (attendanceSummaryChart != null) {
-            String[] dates = {"Jun 1", "Jun 3", "Jun 5", "Jun 7", "Jun 9", "Jun 11", "Jun 13", "Jun 15"};
-            attendanceSummaryChart.getData().setAll(
-                    series("Present", dates, new double[]{7, 9, 9, 10, 9, 6, 6, 6}),
-                    series("Late",    dates, new double[]{2, 3, 6, 5, 0, 1, 0, 4}),
-                    series("Absent",  dates, new double[]{0, 0, 0, 0, 0, 1, 0, 0})
-            );
-        }
+    // ----- Helpers -----
+
+    // returns the latest payroll result for the employee, by generation time
+    private Optional<PayrollResult> latestResult(int employeeId) {
+        return payrollService.getPayrollResultsByEmployee(employeeId).stream()
+                .max(Comparator.comparing(PayrollResult::getGeneratedAt));
     }
 
-    // builds a named chart series with tooltip support
-    private XYChart.Series<String, Number> series(String name, String[] categories, double[] values) {
-        XYChart.Series<String, Number> s = new XYChart.Series<>();
-        s.setName(name);
-        for (int i = 0; i < categories.length; i++) {
-            XYChart.Data<String, Number> data = new XYChart.Data<>(categories[i], values[i]);
-            s.getData().add(data);
-            data.nodeProperty().addListener((obs, old, node) -> {
-                if (node != null) Tooltip.install(node, new Tooltip(data.getXValue() + ": " + data.getYValue()));
-            });
+    // "May 16 – May 31, 2026" for a payrun period
+    private String periodLabel(Payrun payrun) {
+        if (payrun == null || payrun.getStartDate() == null || payrun.getEndDate() == null) {
+            return "—";
         }
-        return s;
+        return PERIOD_FMT.format(payrun.getStartDate()) + " – " + PERIOD_FMT_YEAR.format(payrun.getEndDate());
+    }
+
+    // short period label for a result's payrun, used as a chart category; falls back to generation date
+    private String periodLabelForResult(PayrollResult result) {
+        try {
+            Payrun payrun = payrollService.getPayrun(result.getPayrunId());
+            if (payrun != null && payrun.getEndDate() != null) {
+                return PERIOD_FMT.format(payrun.getEndDate());
+            }
+        } catch (Exception ignored) {
+        }
+        return result.getGeneratedAt().toLocalDate().format(PERIOD_FMT);
+    }
+
+    // "Jun 15" for attendance summary categories
+    private String dayLabel(LocalDate day) {
+        return day.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH) + " " + day.getDayOfMonth();
+    }
+
+    // "1 day" / "12.5 days", trimming trailing ".0"
+    private String formatDays(double days) {
+        String number = (days == Math.floor(days))
+                ? String.valueOf((long) days)
+                : String.format(Locale.ENGLISH, "%.1f", days);
+        String unit = (days == 1.0) ? " day" : " days";
+        return number + unit;
+    }
+
+    // adds a data point with a hover tooltip, matching the existing chart idiom
+    private void addPoint(XYChart.Series<String, Number> series, String category, Number value) {
+        XYChart.Data<String, Number> data = new XYChart.Data<>(category, value);
+        series.getData().add(data);
+        data.nodeProperty().addListener((obs, old, node) -> {
+            if (node != null) Tooltip.install(node, new Tooltip(data.getXValue() + ": " + data.getYValue()));
+        });
+    }
+
+    // sets label text when the label is present
+    private void setText(Label label, String text) {
+        if (label != null) label.setText(text);
     }
 }

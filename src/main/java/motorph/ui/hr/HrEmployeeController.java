@@ -1,4 +1,4 @@
-package motorph.ui.admin;
+package motorph.ui.hr;
 
 import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.employee.EmployeeSummaryDTO;
@@ -59,9 +59,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 /** Manages the Employee Management sub-view: list, unified view/edit/add modal. */
-public class AdminEmployeeController {
+public class HrEmployeeController {
 
-    private static final Logger LOGGER = Logger.getLogger(AdminEmployeeController.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(HrEmployeeController.class.getName());
     private static final DateTimeFormatter BIRTH_DATE_FMT = DateTimeFormatter.ofPattern("MM-dd-yyyy");
     private static final String FORM_PANEL_CLASS    = "admin-add-form-panel";
     private static final String FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.46);";
