@@ -165,7 +165,7 @@ The following employee numbers are assigned to specific system roles:
 | Role    | Employee Numbers |
 | ------- | ---------------- |
 | Admin   | 10001, 10015     |
-| Finance | 10010            |
+| Finance | 10010, 10011     |
 | IT      | 10005            |
 | HR      | 10006, 10007     |
 
@@ -220,8 +220,8 @@ Developed as the AOOP-term group project for the MotorPH Payroll Management Syst
 
 **Group 5 — Section H2101**
 
-- **Joyce Poblete** — Project Lead / Integration
-- **Heart Villegas** — UI Lead
-- **Erma Alvester** — Backend & Reports
+- **Joyce Mariel Poblete** — Project Lead / Integration
+- **Harty Joy Villegas** — UI Lead
+- **Erma Janna Alvester** — Backend & Reports
 - **Mizzy Guaro** — HR UI
-- **Shaira Darantinao** — Finance UI
+- **Shaira Marie Darantinao** — Finance UI
