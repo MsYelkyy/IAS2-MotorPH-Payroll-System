@@ -138,7 +138,7 @@
                     <Button fx:id="previewButton" text="Preview Report"
                             onAction="#handlePreview"
                             styleClass="primary-button"
-                            minWidth="0" maxWidth="Infinity"/>
+                            minWidth="0" maxWidth="Infinity" prefHeight="44" minHeight="44"/>
                 </VBox>
 
                 <VBox spacing="6" minWidth="0" maxWidth="Infinity"
@@ -147,7 +147,7 @@
                     <Button fx:id="exportButton" text="Export PDF"
                             onAction="#handleExport"
                             styleClass="secondary-button"
-                            minWidth="0" maxWidth="Infinity"/>
+                            minWidth="0" maxWidth="Infinity" prefHeight="44" minHeight="44"/>
                 </VBox>
             </GridPane>
 

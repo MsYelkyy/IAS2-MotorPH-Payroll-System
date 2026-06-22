@@ -51,6 +51,9 @@ public class EmployeeMainController {
     private Button leaveNavButton;
 
     @FXML
+    private Button overtimeNavButton;
+
+    @FXML
     private Button payslipNavButton;
 
     @FXML
@@ -86,6 +89,9 @@ public class EmployeeMainController {
     private VBox leaveView;
 
     @FXML
+    private StackPane overtimeView;
+
+    @FXML
     private VBox payslipView;
 
     @FXML
@@ -106,6 +112,9 @@ public class EmployeeMainController {
 
     @FXML
     private EmployeeLeaveController leaveViewController;
+
+    @FXML
+    private EmployeeOvertimeController overtimeViewController;
 
     @FXML
     private EmployeePayslipController payslipViewController;
@@ -170,6 +179,16 @@ public class EmployeeMainController {
     }
 
     @FXML
+    private void showOvertime() {
+        showView(overtimeView, overtimeNavButton, "Overtime Request", "File overtime against recent attendance and track requests");
+
+        if (overtimeViewController != null) {
+            overtimeViewController.resetForm();
+            overtimeViewController.refresh();
+        }
+    }
+
+    @FXML
     private void showPayslip() {
         showView(payslipView, payslipNavButton, "Payslip / Payroll", "View persisted payroll results and payslips");
         if (payslipViewController != null) payslipViewController.refresh();
@@ -222,6 +241,13 @@ public class EmployeeMainController {
             leaveViewController.resetForm();
         }
 
+        boolean leavingOvertimeView = overtimeView != null
+                && overtimeView.isVisible()
+                && target != overtimeView;
+        if (leavingOvertimeView && overtimeViewController != null) {
+            overtimeViewController.resetForm();
+        }
+
         boolean leavingProfileView = profileView != null
                 && profileView.isVisible()
                 && target != profileView;
@@ -237,14 +263,14 @@ public class EmployeeMainController {
         }
 
         for (Region view : List.of(dashboardView, profileView, attendanceView, leaveView,
-                payslipView, supportTicketsView, settingsView)) {
+                overtimeView, payslipView, supportTicketsView, settingsView)) {
             boolean active = view == target;
             view.setVisible(active);
             view.setManaged(active);
         }
         NavigationHelper.setNavSelected(selectedBtn,
                 dashboardNavButton, profileNavButton, attendanceNavButton,
-                leaveNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton);
+                leaveNavButton, overtimeNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton);
         NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
     }
 

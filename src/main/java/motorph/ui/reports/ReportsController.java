@@ -361,8 +361,8 @@ public class ReportsController {
                 setDateRangeOptions(false);
             }
             case ORG_PAYROLL -> {
+                // Payroll Register is a department-scoped report; employee selection does not apply
                 usesDepartment = true;
-                usesEmployee = true;
                 usesPayrun = true;
                 setDateRangeOptions(true);
             }

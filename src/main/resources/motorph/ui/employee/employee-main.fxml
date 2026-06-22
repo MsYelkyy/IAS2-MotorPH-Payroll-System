@@ -39,6 +39,7 @@
                 <Button fx:id="profileNavButton"    text="Profile"            onAction="#showProfile"    maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="attendanceNavButton"  text="Attendance"         onAction="#showAttendance" maxWidth="Infinity" styleClass="nav-button"/>
                 <Button fx:id="leaveNavButton"       text="Leave Requests"     onAction="#showLeave"      maxWidth="Infinity" styleClass="nav-button"/>
+                <Button fx:id="overtimeNavButton"    text="Overtime Requests"  onAction="#showOvertime"   maxWidth="Infinity" styleClass="nav-button"/>
 
                 <Button fx:id="payslipNavButton" text="Payslip / Payroll"
                         onAction="#showPayslip"
@@ -101,6 +102,7 @@
                             <fx:include fx:id="profileView"    source="Profile.fxml"    visible="false" managed="false"/>
                             <fx:include fx:id="attendanceView" source="Attendance.fxml" visible="false" managed="false"/>
                             <fx:include fx:id="leaveView"      source="Leave.fxml"      visible="false" managed="false"/>
+                            <fx:include fx:id="overtimeView"   source="Overtime.fxml"   visible="false" managed="false"/>
                             <fx:include fx:id="payslipView"
                                         source="Payslip.fxml"
                                         visible="false"

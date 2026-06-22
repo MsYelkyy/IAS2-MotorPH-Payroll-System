@@ -4,6 +4,8 @@
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
@@ -15,6 +17,7 @@
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.hr.HrLeaveController"
+      styleClass="payroll-module"
       VBox.vgrow="ALWAYS">
 
     <HBox styleClass="module-toolbar" spacing="10" alignment="CENTER_LEFT">
@@ -29,6 +32,13 @@
         <Region HBox.hgrow="ALWAYS"/>
         <Label fx:id="moduleMessageLabel" styleClass="muted-text"/>
     </HBox>
+
+    <TabPane fx:id="segmentTabPane" tabClosingPolicy="UNAVAILABLE" styleClass="payroll-tab-pane">
+        <tabs>
+            <Tab fx:id="leaveTab" text="Leave Requests"/>
+            <Tab fx:id="overtimeTab" text="Overtime Requests"/>
+        </tabs>
+    </TabPane>
 
     <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
 
@@ -120,6 +130,77 @@
                     <Label text="No leave credit records found for this employee." styleClass="muted-text"/>
                 </placeholder>
             </TableView>
+        </VBox>
+
+        <VBox fx:id="overtimeListPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="12">
+            <TableView fx:id="overtimeTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
+                       styleClass="payroll-table">
+                <columns>
+                    <TableColumn fx:id="otIdColumn" text="ID" prefWidth="70" minWidth="60"/>
+                    <TableColumn fx:id="otEmployeeColumn" text="Employee" prefWidth="200" minWidth="150"/>
+                    <TableColumn fx:id="otDepartmentColumn" text="Department" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="otDateColumn" text="Date" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="otTypeColumn" text="Overtime Type" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="otHoursColumn" text="Hrs" prefWidth="80" minWidth="70"/>
+                    <TableColumn fx:id="otStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="otActionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                </columns>
+                <placeholder>
+                    <Label text="No overtime requests match the current filters." styleClass="muted-text"/>
+                </placeholder>
+            </TableView>
+        </VBox>
+
+        <VBox fx:id="overtimeDetailPanel" visible="false" managed="false"
+              styleClass="content-card" spacing="16">
+
+            <HBox spacing="0">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="EMPLOYEE" styleClass="field-label"/>
+                    <Label fx:id="otDetailEmployeeLabel" styleClass="section-title"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="OVERTIME TYPE" styleClass="field-label"/>
+                    <Label fx:id="otDetailTypeLabel" styleClass="section-title"/>
+                </VBox>
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="STATUS" styleClass="field-label"/>
+                    <Label fx:id="otDetailStatusLabel" styleClass="section-title"/>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <HBox spacing="32">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <HBox><Label text="Request ID" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailIdLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Department" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailDepartmentLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Date" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailDateLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Requested Hours" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailHoursLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reason" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailReasonLabel" styleClass="data-line" HBox.hgrow="ALWAYS" wrapText="true"/></HBox>
+                </VBox>
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <HBox><Label text="Date Submitted" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailSubmittedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reviewed By" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailApproverLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                    <HBox><Label text="Reviewed On" prefWidth="130" styleClass="muted-text"/><Label fx:id="otDetailReviewedLabel" styleClass="data-line" HBox.hgrow="ALWAYS"/></HBox>
+                </VBox>
+            </HBox>
+
+            <Separator/>
+
+            <Label fx:id="otDetailSelfNoteLabel"
+                   text="You cannot action your own overtime request."
+                   styleClass="muted-text"
+                   visible="false" managed="false"/>
+
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Button fx:id="otApproveButton" text="Approve Overtime" onAction="#handleApproveOvertime"
+                        styleClass="primary-button"/>
+                <Button fx:id="otRejectButton" text="Reject Overtime" onAction="#handleRejectOvertime"
+                        styleClass="danger-outline-button"/>
+            </HBox>
+
         </VBox>
 
     </StackPane>

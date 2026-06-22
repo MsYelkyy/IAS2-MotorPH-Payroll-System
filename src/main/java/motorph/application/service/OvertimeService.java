@@ -21,6 +21,8 @@ import java.util.List;
  */
 public class OvertimeService {
 
+    private static final int OVERTIME_WINDOW_DAYS = 30;
+
     private final OvertimeRepository overtimeRepository;
     private final AttendanceService attendanceService;
     private final EmployeeService employeeService;
@@ -82,6 +84,18 @@ public class OvertimeService {
         return overtimeRepository.findPending();
     }
 
+    // returns recent completed attendance eligible for a new overtime request
+    public List<Attendance> getEligibleAttendanceForOvertime(int employeeId, LocalDate asOfDate) {
+        validateEmployeeId(employeeId);
+
+        if (asOfDate == null) {
+            throw new ValidationException("As-of date is required.");
+        }
+
+        LocalDate windowStart = asOfDate.minusDays(OVERTIME_WINDOW_DAYS);
+        return overtimeRepository.findEligibleAttendanceForOvertime(employeeId, windowStart, asOfDate);
+    }
+
     // submits a new overtime request
     public void submitOvertimeRequest(int employeeId,
                                       int attendanceId,
@@ -94,6 +108,7 @@ public class OvertimeService {
         validateAttendanceId(attendanceId);
         validateOvertimeTypeId(overtimeTypeId);
         validateOvertimeDate(overtimeDate);
+        validateOvertimeWindow(overtimeDate);
         validateRequestedHours(requestedHours);
         validateReason(reason);
 
@@ -275,6 +290,18 @@ public class OvertimeService {
     private void validateOvertimeDate(LocalDate overtimeDate) {
         if (overtimeDate == null) {
             throw new ValidationException("Overtime date is required.");
+        }
+    }
+
+    // ensures the overtime date falls within the recent allowed window
+    private void validateOvertimeWindow(LocalDate overtimeDate) {
+        LocalDate today = LocalDate.now();
+        LocalDate windowStart = today.minusDays(OVERTIME_WINDOW_DAYS);
+
+        if (overtimeDate.isBefore(windowStart) || overtimeDate.isAfter(today)) {
+            throw new BusinessRuleException(
+                    "Overtime can only be filed for attendance within the last "
+                            + OVERTIME_WINDOW_DAYS + " days.");
         }
     }
 

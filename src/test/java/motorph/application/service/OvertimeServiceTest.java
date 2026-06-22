@@ -1,6 +1,7 @@
 package motorph.application.service;
 
 
+import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.UnauthorizedException;
 import motorph.application.exception.ValidationException;
@@ -358,7 +359,7 @@ class OvertimeServiceTest {
                         10001,
                         1,
                         1,
-                        LocalDate.of(2024, 6, 3),
+                        LocalDate.now().minusDays(1),
                         0,
                         "Overtime work"
                 )
@@ -382,7 +383,7 @@ class OvertimeServiceTest {
                         10001,
                         1,
                         1,
-                        LocalDate.of(2024, 6, 3),
+                        LocalDate.now().minusDays(1),
                         2,
                         ""
                 )
@@ -437,6 +438,88 @@ class OvertimeServiceTest {
         assertThrows(
                 ValidationException.class,
                 () -> overtimeService.cancelOvertimeRequest(0, 1)
+        );
+    }
+
+
+    // UT-OS-022: rejects invalid employee id for eligible attendance
+    @Test
+    @DisplayName("UT-OS-022 - Negative - getEligibleAttendanceForOvertime should reject invalid employee ID")
+    void getEligibleAttendanceForOvertimeShouldRejectInvalidEmployeeId() {
+        OvertimeService overtimeService = createOvertimeService();
+
+
+        logger.info("UT-OS-022 Testing invalid employee ID for eligible attendance.");
+
+
+        assertThrows(
+                ValidationException.class,
+                () -> overtimeService.getEligibleAttendanceForOvertime(0, LocalDate.now())
+        );
+    }
+
+
+    // UT-OS-023: rejects null as-of date for eligible attendance
+    @Test
+    @DisplayName("UT-OS-023 - Negative - getEligibleAttendanceForOvertime should reject null as-of date")
+    void getEligibleAttendanceForOvertimeShouldRejectNullAsOfDate() {
+        OvertimeService overtimeService = createOvertimeService();
+
+
+        logger.info("UT-OS-023 Testing null as-of date for eligible attendance.");
+
+
+        assertThrows(
+                ValidationException.class,
+                () -> overtimeService.getEligibleAttendanceForOvertime(10001, null)
+        );
+    }
+
+
+    // UT-OS-024: rejects overtime date older than the allowed window
+    @Test
+    @DisplayName("UT-OS-024 - Boundary - submitOvertimeRequest should reject attendance older than 30 days")
+    void submitOvertimeRequestShouldRejectOldAttendanceDate() {
+        OvertimeService overtimeService = createOvertimeService();
+
+
+        logger.info("UT-OS-024 Testing 30-day overtime window backstop.");
+
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> overtimeService.submitOvertimeRequest(
+                        10001,
+                        1,
+                        1,
+                        LocalDate.now().minusDays(31),
+                        2,
+                        "Overtime work"
+                )
+        );
+    }
+
+
+    // UT-OS-025: rejects overtime date in the future
+    @Test
+    @DisplayName("UT-OS-025 - Boundary - submitOvertimeRequest should reject future attendance date")
+    void submitOvertimeRequestShouldRejectFutureAttendanceDate() {
+        OvertimeService overtimeService = createOvertimeService();
+
+
+        logger.info("UT-OS-025 Testing future-date overtime window backstop.");
+
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> overtimeService.submitOvertimeRequest(
+                        10001,
+                        1,
+                        1,
+                        LocalDate.now().plusDays(1),
+                        2,
+                        "Overtime work"
+                )
         );
     }
 

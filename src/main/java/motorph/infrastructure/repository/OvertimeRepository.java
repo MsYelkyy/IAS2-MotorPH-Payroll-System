@@ -1,6 +1,8 @@
 package motorph.infrastructure.repository;
 
+import motorph.domain.model.Attendance;
 import motorph.domain.model.OvertimeRequest;
+import motorph.domain.value.AttendanceStatus;
 import motorph.domain.value.RequestStatus;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -9,6 +11,7 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Time;
 import java.sql.Timestamp;
 import java.sql.Types;
 import java.time.LocalDate;
@@ -265,6 +268,68 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
         }
 
         return 0.0;
+    }
+
+    // finds recent completed attendance of an employee that has no active overtime request
+    public List<Attendance> findEligibleAttendanceForOvertime(int employeeId, LocalDate windowStart, LocalDate windowEnd) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+        validateDateRange(windowStart, windowEnd);
+
+        String sql = """
+                SELECT a.attendance_id,
+                       a.employee_id,
+                       a.work_date,
+                       a.time_in,
+                       a.time_out,
+                       a.attendance_status
+                FROM attendance a
+                LEFT JOIN overtime_request o
+                       ON o.attendance_id = a.attendance_id
+                      AND o.overtime_status <> 'CANCELLED'
+                WHERE a.employee_id = ?
+                  AND a.time_in IS NOT NULL
+                  AND a.time_out IS NOT NULL
+                  AND a.time_out > a.time_in
+                  AND a.work_date BETWEEN ? AND ?
+                  AND o.overtime_request_id IS NULL
+                ORDER BY a.work_date DESC
+                """;
+
+        List<Attendance> eligible = new ArrayList<>();
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setDate(2, Date.valueOf(windowStart));
+            stmt.setDate(3, Date.valueOf(windowEnd));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    eligible.add(mapAttendanceRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Failed to find eligible attendance for overtime.", e);
+        }
+
+        return eligible;
+    }
+
+    // maps result set to attendance
+    private Attendance mapAttendanceRow(ResultSet rs) throws SQLException {
+        Time timeInValue = rs.getTime("time_in");
+        Time timeOutValue = rs.getTime("time_out");
+
+        return new Attendance(
+                rs.getInt("attendance_id"),
+                rs.getInt("employee_id"),
+                rs.getDate("work_date").toLocalDate(),
+                timeInValue == null ? null : timeInValue.toLocalTime(),
+                timeOutValue == null ? null : timeOutValue.toLocalTime(),
+                AttendanceStatus.fromValue(rs.getString("attendance_status"))
+        );
     }
 
     // maps result set to overtime request

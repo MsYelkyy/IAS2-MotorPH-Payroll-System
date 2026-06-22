@@ -8,6 +8,7 @@ import motorph.application.service.EmployeeService;
 import motorph.application.service.ITPasswordResetService;
 import motorph.application.service.ITUserAccountService;
 import motorph.application.service.LeaveService;
+import motorph.application.service.OvertimeService;
 import motorph.application.service.PasswordResetService;
 import motorph.application.service.PayrollService;
 import motorph.application.service.PermissionService;
@@ -93,6 +94,10 @@ public final class EmployeeUIServiceFactory {
 
     public PayrollService getPayrollService() {
         return payroll.getPayrollService();
+    }
+
+    public OvertimeService getOvertimeService() {
+        return payroll.getOvertimeService();
     }
 
     public UserAccountService getUserAccountService() {
