@@ -28,10 +28,11 @@ class PayrollServiceGroup {
 
     private final PayrollService payrollService;
     private final SalaryBenefitService salaryBenefitService;
+    private final OvertimeService overtimeService;
 
     // constructors
     PayrollServiceGroup(AttendanceService attendanceService, EmployeeService employeeService) {
-        OvertimeService overtimeService = new OvertimeService(
+        this.overtimeService = new OvertimeService(
                 new OvertimeRepository(),
                 attendanceService,
                 employeeService
@@ -72,5 +73,9 @@ class PayrollServiceGroup {
 
     SalaryBenefitService getSalaryBenefitService() {
         return salaryBenefitService;
+    }
+
+    OvertimeService getOvertimeService() {
+        return overtimeService;
     }
 }

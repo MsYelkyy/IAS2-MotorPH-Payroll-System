@@ -6,6 +6,7 @@ import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.factory.HrUIServiceFactory;
+import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
@@ -35,6 +36,7 @@ public class HrMainController {
     @FXML private Button employeesNavButton;
     @FXML private Button attendanceNavButton;
     @FXML private Button leaveOvertimeNavButton;
+    @FXML private Button reportsNavButton;
     @FXML private Button supportTicketsNavButton;
     @FXML private Button switchRoleButton;
 
@@ -58,6 +60,10 @@ public class HrMainController {
     // Leave & Overtime sub-view
     @FXML private VBox             leaveView;
     @FXML private HrLeaveController leaveViewController;
+
+    // Reports sub-view
+    @FXML private VBox               reportsView;
+    @FXML private ReportsController  reportsViewController;
 
     // Support Tickets sub-view
     @FXML private VBox                    supportTicketsView;
@@ -117,6 +123,15 @@ public class HrMainController {
         if (leaveViewController != null) leaveViewController.refresh();
     }
 
+    // shows the reports view
+    @FXML
+    private void showReports() {
+        setNavSelected(reportsNavButton);
+        setHeader("Reports", "Generate and preview organization reports");
+        showView(ActiveView.REPORTS);
+        if (reportsViewController != null) reportsViewController.refresh();
+    }
+
     // shows the support tickets view
     @FXML
     private void showSupportTickets() {
@@ -140,7 +155,7 @@ public class HrMainController {
     }
 
     // identifies which sub-view is currently shown
-    private enum ActiveView { DASHBOARD, EMPLOYEES, ATTENDANCE, LEAVE, SUPPORT_TICKETS }
+    private enum ActiveView { DASHBOARD, EMPLOYEES, ATTENDANCE, LEAVE, REPORTS, SUPPORT_TICKETS }
 
     // shows the active view and hides the others
     private void showView(ActiveView active) {
@@ -148,6 +163,7 @@ public class HrMainController {
         setPane(employeeView,       active == ActiveView.EMPLOYEES);
         setPane(attendanceView,     active == ActiveView.ATTENDANCE);
         setPane(leaveView,          active == ActiveView.LEAVE);
+        setPane(reportsView,        active == ActiveView.REPORTS);
         setPane(supportTicketsView, active == ActiveView.SUPPORT_TICKETS);
     }
 
@@ -170,7 +186,7 @@ public class HrMainController {
     private void setNavSelected(Button selected) {
         NavigationHelper.setNavSelected(selected,
                 dashboardNavButton, employeesNavButton, attendanceNavButton, leaveOvertimeNavButton,
-                supportTicketsNavButton);
+                reportsNavButton, supportTicketsNavButton);
     }
 
     // updates the topbar title and subtitle
