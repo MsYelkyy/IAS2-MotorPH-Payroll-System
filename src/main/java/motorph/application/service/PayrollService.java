@@ -578,23 +578,26 @@ public class PayrollService {
 
         GovernmentDetails govt = governmentDetailsRepository.findByEmployeeId(employeeId);
 
+        ComponentTypes componentTypes = resolveComponentTypes();
+
         int rid = result.getPayrollResultId();
         List<PayrollEarning>   earnings   = payrollEarningRepository.findByPayrollResultId(rid);
         List<PayrollBenefit>   benefits   = payrollBenefitRepository.findByPayrollResultId(rid);
         List<PayrollDeduction> deductions = payrollDeductionRepository.findByPayrollResultId(rid);
 
-        double basicPay      = extractEarning(earnings, 1);
-        double rice          = extractBenefit(benefits, 1);
-        double phone         = extractBenefit(benefits, 2);
-        double clothing      = extractBenefit(benefits, 3);
-        double totalComp     = basicPay + extractEarning(earnings, 2) + rice + phone + clothing;
+        double basicPay      = extractEarning(earnings, componentTypes.basicPayEarningTypeId);
+        double overtimePay   = extractEarning(earnings, componentTypes.overtimePayEarningTypeId);
+        double rice          = extractBenefit(benefits, componentTypes.riceSubsidyBenefitTypeId);
+        double phone         = extractBenefit(benefits, componentTypes.phoneAllowanceBenefitTypeId);
+        double clothing      = extractBenefit(benefits, componentTypes.clothingAllowanceBenefitTypeId);
+        double totalComp     = basicPay + overtimePay + rice + phone + clothing;
 
-        double sssDeduction  = extractDeduction(deductions, 1);
-        double phDeduction   = extractDeduction(deductions, 2);
-        double pagibigDed    = extractDeduction(deductions, 3);
-        double taxDeduction  = extractDeduction(deductions, 4);
-        double lateDeduction = extractDeduction(deductions, 5);
-        double undertimeDed  = extractDeduction(deductions, 6);
+        double sssDeduction  = extractDeduction(deductions, componentTypes.sssDeductionType.getDeductionTypeId());
+        double phDeduction   = extractDeduction(deductions, componentTypes.philhealthDeductionType.getDeductionTypeId());
+        double pagibigDed    = extractDeduction(deductions, componentTypes.pagibigDeductionType.getDeductionTypeId());
+        double taxDeduction  = extractDeduction(deductions, componentTypes.withholdingTaxDeductionType.getDeductionTypeId());
+        double lateDeduction = extractDeduction(deductions, componentTypes.lateDeductionType.getDeductionTypeId());
+        double undertimeDed  = extractDeduction(deductions, componentTypes.undertimeDeductionType.getDeductionTypeId());
 
         String tin     = govt != null ? govt.getTinNumber()        : "—";
         String sss     = govt != null ? govt.getSssNumber()        : "—";
