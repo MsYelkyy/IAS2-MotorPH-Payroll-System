@@ -34,15 +34,19 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -63,8 +67,6 @@ public class HrEmployeeController {
 
     private static final Logger LOGGER = Logger.getLogger(HrEmployeeController.class.getName());
     private static final DateTimeFormatter BIRTH_DATE_FMT = DateTimeFormatter.ofPattern("MM-dd-yyyy");
-    private static final String FORM_PANEL_CLASS    = "admin-add-form-panel";
-    private static final String FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.46);";
     private static final double MONTHLY_HOURS = 313.0;
 
     /** Tracks which mode the unified form panel is in. */
@@ -108,12 +110,23 @@ public class HrEmployeeController {
     @FXML private TableColumn<EmployeeSummaryDTO, Void>   employeeActionsColumn;
 
     @FXML private Region formBackdrop;
+    @FXML private VBox   listView;
 
     // ── Unified form panel ────────────────────────────────────────────────────
     @FXML private VBox       formPanel;
     @FXML private ScrollPane formScrollPane;
     @FXML private Label      formTitleLabel;
+    @FXML private Label      breadcrumbCurrentLabel;
     @FXML private Label      addFormErrorLabel;
+    @FXML private TabPane    profileTabPane;
+
+    // summary header (photo + name + status badge + employee number)
+    @FXML private StackPane summaryPhotoFrame;
+    @FXML private ImageView summaryPhotoView;
+    @FXML private Label     summaryPhotoInitials;
+    @FXML private Label     summaryNameLabel;
+    @FXML private Label     summaryStatusBadge;
+    @FXML private Label     summaryEmployeeIdLabel;
 
     // action bars inside formPanel
     @FXML private HBox   viewActions;
@@ -172,6 +185,7 @@ public class HrEmployeeController {
     @FXML private Label     addBasicSalaryError;
     @FXML private Label     addBasicSalaryAsterisk;
     @FXML private TextField addHourlyRateField;
+    @FXML private TextField grossSemiMonthlyField;
 
     // government fields
     @FXML private TextField sssField;
@@ -224,12 +238,15 @@ public class HrEmployeeController {
         clearForm();
         reloadAddSupervisorCombo();
         formTitleLabel.setText("Add Employee");
+        setBreadcrumb("Add Employee");
         UiMessageUtil.clearMessage(addFormErrorLabel);
         setVisible(editIdentityRow, false);
+        resetSummaryHeader();
         setFormFieldsEditable(true);
         showAsterisks(true);
         setGovFieldsReadOnly(false);
         switchToAddEditButtons();
+        selectFirstTab();
         openFormPanel();
     }
 
@@ -253,7 +270,10 @@ public class HrEmployeeController {
         }
 
         UiMessageUtil.clearMessage(addFormErrorLabel);
-        if (!validateAddForm()) return;
+        if (!validateAddForm()) {
+            UiMessageUtil.showErrorToast(toastRoot, "Some required fields are missing or invalid. Please check the highlighted fields.");
+            return;
+        }
 
         try {
             Employee built = buildEmployeeFromForm();
@@ -278,7 +298,9 @@ public class HrEmployeeController {
             UiMessageUtil.showToast(toastRoot, "Employee added and temporary account created.");
 
         } catch (Exception e) {
-            UiMessageUtil.setError(addFormErrorLabel, UiMessageUtil.toUserMessage(e));
+            String msg = UiMessageUtil.toUserMessage(e);
+            UiMessageUtil.setError(addFormErrorLabel, msg);
+            UiMessageUtil.showErrorToast(toastRoot, msg);
         }
     }
 
@@ -286,9 +308,13 @@ public class HrEmployeeController {
         UiMessageUtil.clearMessage(addFormErrorLabel);
         if (selectedProfile == null) {
             UiMessageUtil.setError(addFormErrorLabel, "No employee is selected.");
+            UiMessageUtil.showErrorToast(toastRoot, "No employee is selected.");
             return;
         }
-        if (!validateEditForm()) return;
+        if (!validateEditForm()) {
+            UiMessageUtil.showErrorToast(toastRoot, "Some required fields are missing or invalid. Please check the highlighted fields.");
+            return;
+        }
 
         try {
             Employee built = buildEmployeeFromForm();
@@ -296,13 +322,28 @@ public class HrEmployeeController {
             built.setActive(selectedProfile.isActive());
             employeeService.updateEmployee(built);
 
+            int employeeId = selectedProfile.getEmployeeId();
+            employeeService.updateGovernmentDetails(
+                    employeeId,
+                    sssField.getText().trim(),
+                    philhealthField.getText().trim(),
+                    tinField.getText().trim(),
+                    pagibigField.getText().trim());
+            employeeService.updateBenefits(
+                    employeeId,
+                    parseNonNegativeDouble(riceSubsidyField.getText()),
+                    parseNonNegativeDouble(phoneAllowanceField.getText()),
+                    parseNonNegativeDouble(clothingAllowanceField.getText()));
+
             selectedProfile = employeeService.getEmployeeProfileAdmin(selectedProfile.getEmployeeId());
             loadEmployees();
             openViewMode(selectedProfile);
             UiMessageUtil.showToast(toastRoot, "Employee updated successfully.");
 
         } catch (Exception e) {
-            UiMessageUtil.setError(addFormErrorLabel, UiMessageUtil.toUserMessage(e));
+            String msg = UiMessageUtil.toUserMessage(e);
+            UiMessageUtil.setError(addFormErrorLabel, msg);
+            UiMessageUtil.showErrorToast(toastRoot, msg);
         }
     }
 
@@ -323,11 +364,13 @@ public class HrEmployeeController {
         selectedProfile = profile;
 
         populateFormFields(profile);
+        updateSummaryHeader(profile);
         setFormFieldsEditable(false);
         showAsterisks(false);
         setGovFieldsReadOnly(true);
         setVisible(editIdentityRow, true);
-        formTitleLabel.setText("Employee Details");
+        formTitleLabel.setText("Employee Profile");
+        setBreadcrumb("Employee Profile");
         UiMessageUtil.clearMessage(addFormErrorLabel);
         clearAllErrors();
 
@@ -335,6 +378,7 @@ public class HrEmployeeController {
         setVisible(editEmployeeButton, profile.isActive());
         setVisible(deleteEmployeeButton, profile.isActive());
         switchToViewButtons();
+        selectFirstTab();
         openFormPanel();
     }
 
@@ -352,18 +396,22 @@ public class HrEmployeeController {
 
         // populateFormFields calls reloadViewOrEditSupervisorCombo internally
         populateFormFields(selectedProfile);
+        updateSummaryHeader(selectedProfile);
         setFormFieldsEditable(true);
         showAsterisks(true);
         // personal email and supervisor are optional when editing an existing employee
         setVisible(addEmailAsterisk, false);
         setVisible(addSupervisorAsterisk, false);
-        setGovFieldsReadOnly(true);
+        // government IDs and allowances are now editable in edit mode
+        setGovFieldsReadOnly(false);
         setVisible(editIdentityRow, true);
         formTitleLabel.setText("Edit Employee");
+        setBreadcrumb("Edit Employee");
         UiMessageUtil.clearMessage(addFormErrorLabel);
         clearAllErrors();
 
         switchToAddEditButtons();
+        selectFirstTab();
         if (formScrollPane != null) formScrollPane.setVvalue(0);
     }
 
@@ -466,13 +514,16 @@ public class HrEmployeeController {
         addAddressField.setEditable(editable);
         addAddressField.setFocusTraversable(editable);
 
-        addGenderCombo.setDisable(ro);
-        addCivilStatusCombo.setDisable(ro);
-        addEmploymentStatusCombo.setDisable(ro);
-        addSupervisorCombo.setDisable(ro);
-        addDepartmentCombo.setDisable(ro);
-        addPositionCombo.setDisable(ro);
-        addHireDatePicker.setDisable(ro);
+        // Combos/date-pickers: instead of disabling (which JavaFX dims to a
+        // different navy shade), keep them enabled — so they render the same
+        // color as the text fields — but block interaction when read-only.
+        setComboReadOnly(addGenderCombo, ro);
+        setComboReadOnly(addCivilStatusCombo, ro);
+        setComboReadOnly(addEmploymentStatusCombo, ro);
+        setComboReadOnly(addSupervisorCombo, ro);
+        setComboReadOnly(addDepartmentCombo, ro);
+        setComboReadOnly(addPositionCombo, ro);
+        setControlReadOnly(addHireDatePicker, ro);
 
         addBasicSalaryField.setEditable(editable);
         addBasicSalaryField.setFocusTraversable(editable);
@@ -487,12 +538,28 @@ public class HrEmployeeController {
     }
 
     private void applyReadOnlyStyle(TextField field, boolean readOnly) {
-        field.getStyleClass().removeAll("input-field", "readonly-field", "personal-info-control");
-        if (readOnly) {
-            field.getStyleClass().addAll("input-field", "readonly-field");
-        } else {
-            field.getStyleClass().addAll("input-field", "personal-info-control");
+        // emp-grid-control carries the locked size; keep it on at all times so the
+        // control never shifts when toggling between editable and read-only.
+        field.getStyleClass().removeAll("input-field", "readonly-field");
+        if (!field.getStyleClass().contains("emp-grid-control")) {
+            field.getStyleClass().add("emp-grid-control");
         }
+        field.getStyleClass().add("input-field");
+        if (readOnly) field.getStyleClass().add("readonly-field");
+    }
+
+    /**
+     * Make a ComboBox read-only WITHOUT disabling it. Disabling dims the control
+     * to a different (navy) shade; instead we keep it enabled — so it renders the
+     * exact same color as the text fields — and just block opening/interaction.
+     */
+    private void setComboReadOnly(ComboBox<String> combo, boolean readOnly) {
+        setControlReadOnly(combo, readOnly);
+    }
+
+    private void setControlReadOnly(javafx.scene.control.Control control, boolean readOnly) {
+        control.setMouseTransparent(readOnly);
+        control.setFocusTraversable(!readOnly);
     }
 
     /** Show or hide all required-asterisk labels in the form. */
@@ -514,9 +581,7 @@ public class HrEmployeeController {
         }) {
             field.setEditable(!readOnly);
             field.setFocusTraversable(!readOnly);
-            field.getStyleClass().removeAll("input-field", "readonly-field");
-            field.getStyleClass().add("input-field");
-            if (readOnly) field.getStyleClass().add("readonly-field");
+            applyReadOnlyStyle(field, readOnly);
         }
     }
 
@@ -562,6 +627,14 @@ public class HrEmployeeController {
         ok &= requireCombo(addDepartmentCombo, addDepartmentError, "Required");
         ok &= requireCombo(addPositionCombo, addPositionError, "Required");
         ok &= requireDatePicker(addHireDatePicker, addHireDateError, "Required");
+        // government IDs and allowances are editable in edit mode → validate them too
+        ok &= validateGovId(sssField, sssError, "00-0000000-0", 12);
+        ok &= validateGovId(philhealthField, philhealthError, "00-000000000-0", 14);
+        ok &= validateGovId(tinField, tinError, "000-000-000-000", 15);
+        ok &= validateGovId(pagibigField, pagibigError, "0000-0000-0000", 14);
+        ok &= validateNonNegative(riceSubsidyField, riceSubsidyError);
+        ok &= validateNonNegative(phoneAllowanceField, phoneAllowanceError);
+        ok &= validateNonNegative(clothingAllowanceField, clothingAllowanceError);
         return ok;
     }
 
@@ -703,6 +776,7 @@ public class HrEmployeeController {
         addBasicSalaryField.textProperty().addListener((obs, o, n) -> {
             hideError(addBasicSalaryError);
             updateHourlyRateFromBasicSalary(n, addHourlyRateField);
+            updateGrossSemiMonthlyFromBasicSalary(n);
         });
 
         installAmountFormatter(riceSubsidyField, 8, 2);
@@ -726,6 +800,19 @@ public class HrEmployeeController {
         });
         addPositionCombo.valueProperty().addListener((o, ov, nv) -> { if (nv != null) hideError(addPositionError); });
         addHireDatePicker.valueProperty().addListener((o, ov, nv) -> { if (nv != null) hideError(addHireDateError); });
+
+        // Live-update the summary header name while adding/editing.
+        addFirstNameField.textProperty().addListener((o, ov, nv) -> refreshSummaryName());
+        addLastNameField.textProperty().addListener((o, ov, nv) -> refreshSummaryName());
+    }
+
+    private void refreshSummaryName() {
+        if (currentMode == FormMode.VIEW) return;
+        String first = addFirstNameField.getText() == null ? "" : addFirstNameField.getText().trim();
+        String last  = addLastNameField.getText() == null ? "" : addLastNameField.getText().trim();
+        String full  = (first + " " + last).trim();
+        summaryNameLabel.setText(full.isEmpty() ? "New Employee" : full);
+        summaryPhotoInitials.setText(buildInitials(first, last));
     }
 
     // ── Reference data ────────────────────────────────────────────────────────
@@ -944,6 +1031,7 @@ public class HrEmployeeController {
         addSupervisorCombo.setValue(null);
         addBasicSalaryField.clear();
         addHourlyRateField.clear();
+        grossSemiMonthlyField.clear();
         editEmployeeIdField.clear();
         editCompanyEmailField.clear();
         sssField.clear();
@@ -968,11 +1056,13 @@ public class HrEmployeeController {
             if (salary == null) {
                 addBasicSalaryField.clear();
                 addHourlyRateField.clear();
+                grossSemiMonthlyField.clear();
                 return;
             }
 
             addBasicSalaryField.setText(formatAmount(salary.getBasicSalary()));
             addHourlyRateField.setText(formatAmount(salary.getHourlyRate()));
+            grossSemiMonthlyField.setText(formatAmount(salary.getGrossSemiMonthly()));
         } catch (Exception e) {
             LOGGER.log(Level.WARNING, "Failed to load salary details for employee " + employeeId, e);
         }
@@ -1134,46 +1224,17 @@ public class HrEmployeeController {
 
     // ── Panel show/hide ───────────────────────────────────────────────────────
 
+    /** Swap from the list page to the full-page profile (no popup / backdrop). */
     private void openFormPanel() {
-        applyFormVisuals(true);
-        setVisible(formBackdrop, true);
+        setVisible(listView, false);
         setVisible(formPanel, true);
-        lockBackgroundInteraction(true);
         if (formScrollPane != null) formScrollPane.setVvalue(0);
     }
 
+    /** Swap back from the profile page to the employee list. */
     private void hideFormPanel() {
         setVisible(formPanel, false);
-        setVisible(formBackdrop, false);
-        applyFormVisuals(false);
-        lockBackgroundInteraction(false);
-    }
-
-    private void applyFormVisuals(boolean visible) {
-        if (formPanel != null) {
-            formPanel.getStyleClass().remove(FORM_PANEL_CLASS);
-            if (visible) formPanel.getStyleClass().add(FORM_PANEL_CLASS);
-        }
-        if (formBackdrop != null) {
-            formBackdrop.setStyle(visible ? FORM_BACKDROP_STYLE : "");
-        }
-    }
-
-    /**
-     * Block or unblock interaction with background elements while the form is open.
-     * Disables the toolbar, filters, and table so the form acts as a true modal.
-     */
-    private void lockBackgroundInteraction(boolean lock) {
-        searchField.setDisable(lock);
-        statusFilterCombo.setDisable(lock);
-        typeFilterCombo.setDisable(lock);
-        departmentFilterCombo.setDisable(lock);
-        employeeTable.setDisable(lock);
-        // Disable "Add Employee" button to prevent opening a second modal
-        if (formPanel != null && formPanel.getScene() != null) {
-            javafx.scene.Scene scene = formPanel.getScene();
-            scene.lookup("#addEmployeeBtn");  // no-op if absent
-        }
+        setVisible(listView, true);
     }
 
     private void switchToViewButtons() {
@@ -1292,6 +1353,110 @@ public class HrEmployeeController {
             if (v <= 0) { target.clear(); return; }
             target.setText(String.format("%.2f", computeHourlyRate(v)));
         } catch (NumberFormatException ignored) { target.clear(); }
+    }
+
+    /** Gross semi-monthly rate is simply the monthly basic salary split in two. */
+    private void updateGrossSemiMonthlyFromBasicSalary(String raw) {
+        if (raw == null || raw.isBlank()) { grossSemiMonthlyField.clear(); return; }
+        try {
+            double v = Double.parseDouble(raw.trim());
+            if (v <= 0) { grossSemiMonthlyField.clear(); return; }
+            grossSemiMonthlyField.setText(String.format("%.2f", v / 2.0));
+        } catch (NumberFormatException ignored) { grossSemiMonthlyField.clear(); }
+    }
+
+    // ── Summary header ────────────────────────────────────────────────────────
+
+    /** Reset the summary header to its "new employee" placeholder state (Add mode). */
+    private void resetSummaryHeader() {
+        summaryNameLabel.setText("New Employee");
+        summaryPhotoInitials.setText("?");
+        setVisible(summaryStatusBadge, false);
+        summaryEmployeeIdLabel.setText("—");
+        loadSummaryPhoto(null, "?");
+    }
+
+    /** Populate the summary header from a loaded profile (View / Edit mode). */
+    private void updateSummaryHeader(EmployeeProfileDTO profile) {
+        if (profile == null) { resetSummaryHeader(); return; }
+
+        summaryNameLabel.setText(blankToDash(profile.getFullName()));
+        summaryEmployeeIdLabel.setText("EMP-" + profile.getEmployeeId());
+
+        String status = profile.isActive() ? "ACTIVE" : "INACTIVE";
+        summaryStatusBadge.setText(status);
+        summaryStatusBadge.getStyleClass().removeAll("status-badge", "status-badge-inactive");
+        summaryStatusBadge.getStyleClass().add(profile.isActive() ? "status-badge" : "status-badge-inactive");
+        setVisible(summaryStatusBadge, true);
+
+        String initials = buildInitials(profile.getFirstName(), profile.getLastName());
+        loadSummaryPhoto(profile.getPhotoPath(), initials);
+    }
+
+    /** Size of the circular avatar icon in the summary header. */
+    private static final double SUMMARY_AVATAR_SIZE = 64.0;
+
+    /** Load a profile photo into the circular summary avatar, falling back to initials. */
+    private void loadSummaryPhoto(String photoPath, String initials) {
+        summaryPhotoInitials.setText(initials == null || initials.isBlank() ? "?" : initials);
+        applySummaryPhotoClip();
+        boolean showPhoto = false;
+
+        if (photoPath != null && !photoPath.isBlank()) {
+            try {
+                File file = new File(photoPath);
+                if (file.exists()) {
+                    Image image = new Image(file.toURI().toString());
+                    if (!image.isError() && summaryPhotoView != null) {
+                        double imgW = image.getWidth();
+                        double imgH = image.getHeight();
+                        if (imgW > 0 && imgH > 0) {
+                            // cover-scale so the image fills the avatar, then the
+                            // circular clip crops it into a round icon
+                            double scale = Math.max(SUMMARY_AVATAR_SIZE / imgW, SUMMARY_AVATAR_SIZE / imgH);
+                            summaryPhotoView.setImage(image);
+                            summaryPhotoView.setFitWidth(imgW * scale);
+                            summaryPhotoView.setFitHeight(imgH * scale);
+                            showPhoto = true;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // fall through to initials
+            }
+        }
+
+        setVisible(summaryPhotoView, showPhoto);
+        setVisible(summaryPhotoInitials, !showPhoto);
+    }
+
+    /** Clip the avatar frame to a circle so the photo renders as a round icon. */
+    private void applySummaryPhotoClip() {
+        if (summaryPhotoFrame == null) return;
+        javafx.scene.shape.Circle clip = new javafx.scene.shape.Circle(
+                SUMMARY_AVATAR_SIZE / 2, SUMMARY_AVATAR_SIZE / 2, SUMMARY_AVATAR_SIZE / 2);
+        summaryPhotoFrame.setClip(clip);
+    }
+
+    private String buildInitials(String firstName, String lastName) {
+        StringBuilder sb = new StringBuilder();
+        if (firstName != null && !firstName.isBlank()) sb.append(firstName.charAt(0));
+        if (lastName  != null && !lastName.isBlank())  sb.append(lastName.charAt(0));
+        return sb.length() == 0 ? "?" : sb.toString().toUpperCase();
+    }
+
+    private String blankToDash(String value) {
+        return value == null || value.isBlank() ? "—" : value;
+    }
+
+    /** Always show the first tab (Personal Information) when the panel opens. */
+    private void selectFirstTab() {
+        if (profileTabPane != null) profileTabPane.getSelectionModel().selectFirst();
+    }
+
+    /** Set the trailing breadcrumb label (e.g. "Employees › Employee Profile"). */
+    private void setBreadcrumb(String current) {
+        if (breadcrumbCurrentLabel != null) breadcrumbCurrentLabel.setText(current);
     }
 
     private double parsePositiveDouble(String text) {

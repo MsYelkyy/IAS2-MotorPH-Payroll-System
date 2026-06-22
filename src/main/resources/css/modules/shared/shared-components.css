@@ -256,6 +256,38 @@
     -fx-prompt-text-fill: rgba(226,232,240,0.56);
 }
 
+/* The CLOSED combo's display cell and both arrow buttons render their own
+   background by default — pin them transparent / matching so an enabled
+   ComboBox and DatePicker look identical to the text fields (same #1F2937). */
+.admin-add-form-panel .combo-box.input-field > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #F8FAFC;
+}
+
+/* DatePicker's inner editor sits inside the outer frame — drop its own border
+   so it doesn't draw a second line and the fill reads as one solid field. */
+.admin-add-form-panel .date-picker > .text-field,
+.admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-border-color: transparent;
+    -fx-background-radius: 8 0 0 8;
+}
+
+.root-canvas.light-mode .admin-add-form-panel .date-picker > .text-field,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .date-picker-display-node {
+    -fx-border-color: transparent;
+}
+
+.admin-add-form-panel .combo-box.input-field > .arrow-button,
+.admin-add-form-panel .date-picker > .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 8 8 0;
+}
+
+.admin-add-form-panel .combo-box.input-field .arrow,
+.admin-add-form-panel .date-picker .arrow-button .arrow {
+    -fx-background-color: rgba(226,232,240,0.70);
+}
+
 .root-canvas.light-mode .admin-add-form-panel {
     -fx-background-color: #FFFFFF;
     -fx-border-color: rgba(220,38,38,0.30);
@@ -275,6 +307,16 @@
     -fx-border-color: #D8DEE9;
     -fx-text-fill: #111827;
     -fx-prompt-text-fill: #7B8794;
+}
+
+.root-canvas.light-mode .admin-add-form-panel .combo-box.input-field > .arrow-button,
+.root-canvas.light-mode .admin-add-form-panel .date-picker > .arrow-button {
+    -fx-background-color: transparent;
+}
+
+.root-canvas.light-mode .admin-add-form-panel .combo-box.input-field .arrow,
+.root-canvas.light-mode .admin-add-form-panel .date-picker .arrow-button .arrow {
+    -fx-background-color: #5A6A82;
 }
 
 /* ── Form action button row ──────────────────────────────────────── */
