@@ -133,6 +133,7 @@ public class PayrollReportService {
 
     // previews the organization payroll report
     public void previewOrganizationPayrollReport(Integer departmentId,
+                                                 String departmentName,
                                                  Integer employeeId,
                                                  Integer payrunId,
                                                  LocalDate startDate,
@@ -148,7 +149,7 @@ public class PayrollReportService {
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 ORGANIZATION_PAYROLL_REPORT,
-                buildOrganizationPayrollParameters(startDate, endDate),
+                buildOrganizationPayrollParameters(departmentName, startDate, endDate),
                 reportData
         );
 
@@ -197,6 +198,7 @@ public class PayrollReportService {
 
     // exports the organization payroll report to PDF
     public void exportOrganizationPayrollReportToPdf(Integer departmentId,
+                                                     String departmentName,
                                                      Integer employeeId,
                                                      Integer payrunId,
                                                      LocalDate startDate,
@@ -215,7 +217,7 @@ public class PayrollReportService {
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 ORGANIZATION_PAYROLL_REPORT,
-                buildOrganizationPayrollParameters(startDate, endDate),
+                buildOrganizationPayrollParameters(departmentName, startDate, endDate),
                 reportData
         );
 
@@ -223,9 +225,12 @@ public class PayrollReportService {
     }
 
     // builds organization payroll report parameters
-    private Map<String, Object> buildOrganizationPayrollParameters(LocalDate startDate, LocalDate endDate) {
+    private Map<String, Object> buildOrganizationPayrollParameters(String departmentName,
+                                                                   LocalDate startDate,
+                                                                   LocalDate endDate) {
         Map<String, Object> parameters = new HashMap<>();
-        parameters.put("REPORT_TITLE", "Payroll Register");
+        parameters.put("REPORT_TITLE", "Monthly Payroll Summary Report");
+        parameters.put("DEPARTMENT_NAME", departmentName);
         parameters.put("START_DATE", startDate);
         parameters.put("END_DATE", endDate);
         return parameters;

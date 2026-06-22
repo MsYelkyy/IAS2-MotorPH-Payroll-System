@@ -46,8 +46,8 @@ public class ReportsController {
     private enum ReportType {
         ATTENDANCE("Attendance Report"),
         EMPLOYEE_TIMECARD("Employee Timecard Report"),
-        ORG_PAYROLL("Payroll Register"),
-        PAYROLL_SUMMARY("Payroll Summary Report"),
+        ORG_PAYROLL("Payroll Summary Report"),
+        PAYROLL_SUMMARY("Department Payroll Report"),
         PAYSLIP("Payslip"),
         AUDIT_LOG("Audit Trail Report"),
         SUPPORT_TICKET("Support Ticket Report");
@@ -361,7 +361,7 @@ public class ReportsController {
                 setDateRangeOptions(false);
             }
             case ORG_PAYROLL -> {
-                // Payroll Register is a department-scoped report; employee selection does not apply
+                // Monthly Payroll Summary is a department-scoped report; employee selection does not apply
                 usesDepartment = true;
                 usesPayrun = true;
                 setDateRangeOptions(true);
@@ -588,10 +588,11 @@ public class ReportsController {
         LocalDate to   = requireDateRange(from, dates[1]);
 
         Integer deptId   = selectedDeptId();
+        String  deptName = selectedDeptName();
         Integer empId    = selectedEmpId();
         Integer payrunId = selectedPayrunId();
 
-        payrollReportService.previewOrganizationPayrollReport(deptId, empId, payrunId, from, to);
+        payrollReportService.previewOrganizationPayrollReport(deptId, deptName, empId, payrunId, from, to);
     }
 
     private void previewPayrollSummary() {
@@ -715,12 +716,13 @@ public class ReportsController {
         LocalDate to   = requireDateRange(from, dates[1]);
 
         Integer deptId   = selectedDeptId();
+        String  deptName = selectedDeptName();
         Integer empId    = selectedEmpId();
         Integer payrunId = selectedPayrunId();
 
-        String path = chooseExportFile("Organization_Payroll_Report.pdf");
+        String path = chooseExportFile("Monthly_Payroll_Summary_Report.pdf");
         if (path == null) return;
-        payrollReportService.exportOrganizationPayrollReportToPdf(deptId, empId, payrunId, from, to, path);
+        payrollReportService.exportOrganizationPayrollReportToPdf(deptId, deptName, empId, payrunId, from, to, path);
         reportExported(path);
     }
 
@@ -735,7 +737,7 @@ public class ReportsController {
         Integer deptId   = selectedDeptId();
         Integer payrunId = selectedPayrunId();
 
-        String path = chooseExportFile("Payroll_Summary_Report.pdf");
+        String path = chooseExportFile("Department_Payroll_Report.pdf");
         if (path == null) return;
         payrollReportService.exportPayrollSummaryReportToPdf(deptId, payrunId, from, to, path);
         reportExported(path);
@@ -879,6 +881,12 @@ public class ReportsController {
     private Integer selectedDeptId() {
         Department d = departmentCombo.getValue();
         return d == null ? null : d.getDepartmentId();
+    }
+
+    // null when "All Departments" is selected; the report label falls back accordingly
+    private String selectedDeptName() {
+        Department d = departmentCombo.getValue();
+        return d == null ? null : d.getDepartmentName();
     }
 
     private Integer selectedEmpId() {
