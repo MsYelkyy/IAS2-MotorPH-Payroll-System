@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox spacing="20"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.employee.EmployeeSettingsController">
+
+    <VBox spacing="14" styleClass="content-card">
+        <Label text="Account Settings" styleClass="section-title"/>
+        <Label text="Email is view-only and remains the login identity." styleClass="note-text"/>
+        <TextField fx:id="settingsEmailField"         editable="false"               styleClass="input-field"/>
+        <TextField fx:id="settingsRecoveryEmailField" promptText="Recovery email" editable="false" styleClass="input-field"/>
+        <PasswordField fx:id="settingsOldPasswordField"     promptText="Current password"  styleClass="input-field"/>
+        <PasswordField fx:id="settingsNewPasswordField"     promptText="New password"       styleClass="input-field"/>
+        <PasswordField fx:id="settingsConfirmPasswordField" promptText="Confirm new password" styleClass="input-field"/>
+        <Button text="Change Password" onAction="#handleChangePassword" styleClass="success-button"/>
+        <Label fx:id="settingsMessageLabel" wrapText="true" styleClass="message-label"/>
+    </VBox>
+
+</VBox>

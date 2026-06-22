@@ -1,0 +1,15 @@
+/* User Access Logs: compact metric cards need enough height for label, value,
+   and caption when the IT-owned view is hosted from Admin. */
+.user-access-logs-view .metric-card {
+    -fx-padding: 14 16 12 16;
+    -fx-min-height: 112;
+}
+
+.user-access-logs-view .metric-value {
+    -fx-font-size: 24px;
+}
+
+/* Light mode closed ComboBox field only. Popup cells are styled separately. */
+.root-canvas.light-mode .user-access-logs-view .combo-box.input-field > .list-cell {
+    -fx-text-fill: #111827;
+}

@@ -1,7 +1,7 @@
 package motorph.application.dto.login;
 
 /**
- * Carries the company email and password entered by the user during login.
+ * Carries the company email and password entered during login.
  */
 public class LoginRequestDTO {
 
@@ -19,7 +19,6 @@ public class LoginRequestDTO {
         return companyEmail;
     }
 
-    // getters
     public String getPassword() {
         return password;
     }

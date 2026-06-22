@@ -1,0 +1,48 @@
+/* ══════════════════════════════════════════════════
+   CORE — DESIGN TOKENS
+   JavaFX "looked-up colors" defined on .root so they
+   can be referenced by name in any later rule.
+   These are documentation-ready; a future refactor
+   pass should replace hard-coded hex values across
+   dark.css / light.css with these token names.
+   ══════════════════════════════════════════════════ */
+
+.root {
+    /* ── Primary accent (red) ──────────────────── */
+    app-accent:          #E84343;
+    app-accent-hover:    #D43030;
+    app-accent-glow:     rgba(232,67,67,0.30);
+    app-accent-subtle:   rgba(232,67,67,0.10);
+
+    /* ── Surface colors ────────────────────────── */
+    app-bg-root:         #1A1A1E;
+    app-bg-app-main:     #0D0D16;
+    app-bg-sidebar:      #141418;
+    app-bg-topbar:       rgba(8,8,14,0.72);
+    app-bg-card:         rgba(8,16,34,0.90);
+    app-bg-input:        rgba(255,255,255,0.06);
+
+    /* ── Border colors ─────────────────────────── */
+    app-border-subtle:   rgba(255,255,255,0.07);
+    app-border-accent:   rgba(255,60,60,0.28);
+    app-border-input:    rgba(255,255,255,0.12);
+
+    /* ── Text colors ───────────────────────────── */
+    app-text-primary:    #EEF3FF;
+    app-text-secondary:  rgba(110,140,190,0.72);
+    app-text-muted:      rgba(110,140,190,0.65);
+    app-text-nav:        rgba(190,190,200,0.60);
+
+    /* ── Semantic colors ───────────────────────── */
+    app-success:         #22C55E;
+    app-warning:         #FBBF24;
+    app-danger:          #EF4444;
+    app-info:            #60A5FA;
+
+    /* ── Light-mode surface colors ─────────────── */
+    app-light-bg:        #EAEEF4;
+    app-light-card:      #FFFFFF;
+    app-light-sidebar:   #1A1F36;
+    app-light-text:      #1A1F36;
+    app-light-muted:     #A0AABB;
+}

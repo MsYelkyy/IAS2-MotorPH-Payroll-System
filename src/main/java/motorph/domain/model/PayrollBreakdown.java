@@ -1,7 +1,7 @@
 package motorph.domain.model;
 
 /**
- * Represents a computed payroll summary and does not map directly to a database table.
+ * Represents the computed payroll breakdown for one payroll result.
  */
 public class PayrollBreakdown {
 
@@ -9,13 +9,16 @@ public class PayrollBreakdown {
     private final double riceSubsidy;
     private final double phoneAllowance;
     private final double clothingAllowance;
+    private final double overtimePay;
     private final double totalEarnings;
+
     private final double lateDeduction;
     private final double undertimeDeduction;
-    private final double sss;
-    private final double philhealth;
-    private final double pagibig;
-    private final double tax;
+    private final double sssDeduction;
+    private final double philhealthDeduction;
+    private final double pagibigDeduction;
+    private final double withholdingTax;
+
     private final double totalDeductions;
     private final double netPay;
 
@@ -25,31 +28,35 @@ public class PayrollBreakdown {
             double riceSubsidy,
             double phoneAllowance,
             double clothingAllowance,
+            double overtimePay,
             double totalEarnings,
             double lateDeduction,
             double undertimeDeduction,
-            double sss,
-            double philhealth,
-            double pagibig,
-            double tax,
+            double sssDeduction,
+            double philhealthDeduction,
+            double pagibigDeduction,
+            double withholdingTax,
             double totalDeductions,
             double netPay) {
 
-        this.basicPay = requireNonNegative(basicPay, "Basic pay cannot be negative.");
-        this.riceSubsidy = requireNonNegative(riceSubsidy, "Rice subsidy cannot be negative.");
-        this.phoneAllowance = requireNonNegative(phoneAllowance, "Phone allowance cannot be negative.");
-        this.clothingAllowance = requireNonNegative(clothingAllowance, "Clothing allowance cannot be negative.");
-        this.totalEarnings = requireNonNegative(totalEarnings, "Total earnings cannot be negative.");
-        this.lateDeduction = requireNonNegative(lateDeduction, "Late deduction cannot be negative.");
-        this.undertimeDeduction = requireNonNegative(undertimeDeduction, "Undertime deduction cannot be negative.");
-        this.sss = requireNonNegative(sss, "SSS cannot be negative.");
-        this.philhealth = requireNonNegative(philhealth, "PhilHealth cannot be negative.");
-        this.pagibig = requireNonNegative(pagibig, "Pag-IBIG cannot be negative.");
-        this.tax = requireNonNegative(tax, "Tax cannot be negative.");
-        this.totalDeductions = requireNonNegative(totalDeductions, "Total deductions cannot be negative.");
+        this.basicPay = validateNonNegative(basicPay, "Basic pay cannot be negative.");
+        this.riceSubsidy = validateNonNegative(riceSubsidy, "Rice subsidy cannot be negative.");
+        this.phoneAllowance = validateNonNegative(phoneAllowance, "Phone allowance cannot be negative.");
+        this.clothingAllowance = validateNonNegative(clothingAllowance, "Clothing allowance cannot be negative.");
+        this.overtimePay = validateNonNegative(overtimePay, "Overtime pay cannot be negative.");
+        this.totalEarnings = validateNonNegative(totalEarnings, "Total earnings cannot be negative.");
+
+        this.lateDeduction = validateNonNegative(lateDeduction, "Late deduction cannot be negative.");
+        this.undertimeDeduction = validateNonNegative(undertimeDeduction, "Undertime deduction cannot be negative.");
+        this.sssDeduction = validateNonNegative(sssDeduction, "SSS deduction cannot be negative.");
+        this.philhealthDeduction = validateNonNegative(philhealthDeduction, "PhilHealth deduction cannot be negative.");
+        this.pagibigDeduction = validateNonNegative(pagibigDeduction, "Pag-IBIG deduction cannot be negative.");
+        this.withholdingTax = validateNonNegative(withholdingTax, "Withholding tax cannot be negative.");
+
+        this.totalDeductions = validateNonNegative(totalDeductions, "Total deductions cannot be negative.");
         this.netPay = netPay;
 
-        validateTotals();
+        validateNetPay();
     }
 
     // getters
@@ -69,6 +76,10 @@ public class PayrollBreakdown {
         return clothingAllowance;
     }
 
+    public double getOvertimePay() {
+        return overtimePay;
+    }
+
     public double getTotalEarnings() {
         return totalEarnings;
     }
@@ -81,20 +92,20 @@ public class PayrollBreakdown {
         return undertimeDeduction;
     }
 
-    public double getSss() {
-        return sss;
+    public double getSssDeduction() {
+        return sssDeduction;
     }
 
-    public double getPhilhealth() {
-        return philhealth;
+    public double getPhilhealthDeduction() {
+        return philhealthDeduction;
     }
 
-    public double getPagibig() {
-        return pagibig;
+    public double getPagibigDeduction() {
+        return pagibigDeduction;
     }
 
-    public double getTax() {
-        return tax;
+    public double getWithholdingTax() {
+        return withholdingTax;
     }
 
     public double getTotalDeductions() {
@@ -105,60 +116,42 @@ public class PayrollBreakdown {
         return netPay;
     }
 
-    // returns the total allowances
-    public double getTotalAllowances() {
-        return riceSubsidy + phoneAllowance + clothingAllowance;
+    // checks if the payroll has overtime pay
+    public boolean hasOvertimePay() {
+        return overtimePay > 0;
     }
 
-    // returns the total attendance deductions
-    public double getTotalAttendanceDeductions() {
-        return lateDeduction + undertimeDeduction;
+    // checks if the payroll has deductions
+    public boolean hasDeductions() {
+        return totalDeductions > 0;
     }
 
-    // returns the total government deductions
-    public double getTotalGovernmentDeductions() {
-        return sss + philhealth + pagibig + tax;
-    }
-
-    // returns the net pay after an additional deduction
-    public double getNetPay(double additionalDeduction) {
-        double deduction = requireNonNegative(additionalDeduction, "Additional deduction cannot be negative.");
-        return netPay - deduction;
-    }
-
-    // validates the computed totals
-    private void validateTotals() {
-        double expectedTotalEarnings = basicPay + riceSubsidy + phoneAllowance + clothingAllowance;
-        double expectedTotalDeductions = lateDeduction + undertimeDeduction + sss + philhealth + pagibig + tax;
-        double expectedNetPay = totalEarnings - totalDeductions;
-
-        validateAmount(totalEarnings, expectedTotalEarnings, "Total earnings does not match the payroll breakdown.");
-        validateAmount(totalDeductions, expectedTotalDeductions, "Total deductions do not match the payroll breakdown.");
-        validateAmount(netPay, expectedNetPay, "Net pay does not match total earnings minus total deductions.");
-    }
-
-    // validates a non-negative amount
-    private double requireNonNegative(double value, String message) {
+    // validates non-negative numeric values
+    private double validateNonNegative(double value, String message) {
         if (value < 0) {
             throw new IllegalArgumentException(message);
         }
         return value;
     }
 
-    // validates two amounts using a small tolerance
-    private void validateAmount(double actual, double expected, String message) {
+    // validates computed net pay
+    private void validateNetPay() {
+        double expectedNetPay = totalEarnings - totalDeductions;
         double tolerance = 0.01;
 
-        if (Math.abs(actual - expected) > tolerance) {
-            throw new IllegalArgumentException(message);
+        if (Math.abs(netPay - expectedNetPay) > tolerance) {
+            throw new IllegalArgumentException(
+                    "Net pay does not match total earnings minus total deductions."
+            );
         }
     }
 
-    // returns the payroll breakdown summary
+    // returns payroll breakdown summary
     @Override
     public String toString() {
         return "PayrollBreakdown{"
                 + "basicPay=" + basicPay
+                + ", overtimePay=" + overtimePay
                 + ", totalEarnings=" + totalEarnings
                 + ", totalDeductions=" + totalDeductions
                 + ", netPay=" + netPay

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!--
+  Shared Reports module (role-neutral). Consumed by Admin, IT, and future
+  HR/Finance shells.
+
+  Layout strategy: filters live in fixed grid slots. Report changes only alter
+  enabled/disabled state, so controls do not move between report types.
+-->
+<VBox spacing="16"
+      minWidth="0"
+      maxWidth="Infinity"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.reports.ReportsController"
+      VBox.vgrow="ALWAYS">
+
+    <VBox spacing="16" minWidth="0" maxWidth="Infinity" styleClass="content-card">
+        <Label text="Generate Report" styleClass="section-title"/>
+
+        <GridPane hgap="14" vgap="12" maxWidth="Infinity">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="33.333" minWidth="0" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="33.333" minWidth="0" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="33.333" minWidth="0" hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <VBox spacing="6" minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="0" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                <Label text="Report Type" styleClass="field-label"/>
+                <ComboBox fx:id="reportTypeCombo" promptText="Select report type"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="departmentRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                <Label text="Department" styleClass="field-label"/>
+                <ComboBox fx:id="departmentCombo" promptText="All Departments"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="employeeRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="0" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
+                <Label text="Employee" styleClass="field-label"/>
+                <ComboBox fx:id="employeeCombo" promptText="Select Employee"
+                          styleClass="input-field"
+                          minWidth="0" prefWidth="10" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="payrunRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="1" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                <Label text="Payrun" styleClass="field-label"/>
+                <ComboBox fx:id="payrunCombo" promptText="Any Payrun"
+                          styleClass="input-field"
+                          minWidth="0" prefWidth="10" maxWidth="Infinity"/>
+            </VBox>
+
+            <StackPane minWidth="0" maxWidth="Infinity"
+                       GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                <VBox fx:id="statusRow" spacing="6"
+                      minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot">
+                    <Label text="Attendance Status" styleClass="field-label"/>
+                    <ComboBox fx:id="statusCombo" promptText="All Statuses"
+                              styleClass="input-field"
+                              minWidth="0" maxWidth="Infinity"/>
+                </VBox>
+
+                <VBox fx:id="actionRow" spacing="6"
+                      minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot">
+                    <Label text="Action" styleClass="field-label"/>
+                    <ComboBox fx:id="actionCombo" promptText="All Actions"
+                              styleClass="input-field"
+                              minWidth="0" maxWidth="Infinity"/>
+                </VBox>
+            </StackPane>
+
+            <VBox fx:id="dateRangeSection" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="1" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
+                <Label text="Date Range" styleClass="field-label"/>
+                <ComboBox fx:id="dateRangeCombo" promptText="Select date range"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="datePickerRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="2" GridPane.columnIndex="0" GridPane.columnSpan="2"
+                  GridPane.hgrow="ALWAYS">
+                <GridPane hgap="14" maxWidth="Infinity">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="50" minWidth="0" hgrow="ALWAYS"/>
+                        <ColumnConstraints percentWidth="50" minWidth="0" hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <VBox spacing="6" minWidth="0" maxWidth="Infinity"
+                          GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                        <Label text="From" styleClass="field-label"/>
+                        <DatePicker fx:id="dateFromPicker" promptText="Use Custom date range"
+                                    styleClass="input-field"
+                                    minWidth="0" maxWidth="Infinity"/>
+                    </VBox>
+
+                    <VBox spacing="6" minWidth="0" maxWidth="Infinity"
+                          GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                        <Label text="To" styleClass="field-label"/>
+                        <DatePicker fx:id="dateToPicker" promptText="Use Custom date range"
+                                    styleClass="input-field"
+                                    minWidth="0" maxWidth="Infinity"/>
+                    </VBox>
+                </GridPane>
+            </VBox>
+
+            <GridPane hgap="10" maxWidth="Infinity" styleClass="report-action-grid"
+                      GridPane.rowIndex="2" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="50" minWidth="0" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="50" minWidth="0" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <VBox spacing="6" minWidth="0" maxWidth="Infinity"
+                      GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                    <Label text="Preview" styleClass="field-label"/>
+                    <Button fx:id="previewButton" text="Preview Report"
+                            onAction="#handlePreview"
+                            styleClass="primary-button"
+                            minWidth="0" maxWidth="Infinity"/>
+                </VBox>
+
+                <VBox spacing="6" minWidth="0" maxWidth="Infinity"
+                      GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                    <Label text="Export" styleClass="field-label"/>
+                    <Button fx:id="exportButton" text="Export PDF"
+                            onAction="#handleExport"
+                            styleClass="secondary-button"
+                            minWidth="0" maxWidth="Infinity"/>
+                </VBox>
+            </GridPane>
+
+            <VBox fx:id="categoryRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="3" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
+                <Label text="Category" styleClass="field-label"/>
+                <ComboBox fx:id="categoryCombo" promptText="All Categories"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="routingTeamRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="3" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
+                <Label text="Routing Team" styleClass="field-label"/>
+                <ComboBox fx:id="routingTeamCombo" promptText="All Teams"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <VBox fx:id="ticketStatusRow" spacing="6"
+                  minWidth="0" maxWidth="Infinity" styleClass="report-filter-slot"
+                  GridPane.rowIndex="3" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
+                <Label text="Ticket Status" styleClass="field-label"/>
+                <ComboBox fx:id="ticketStatusCombo" promptText="All Statuses"
+                          styleClass="input-field"
+                          minWidth="0" maxWidth="Infinity"/>
+            </VBox>
+
+            <Label fx:id="moduleMessageLabel" wrapText="true" styleClass="note-text"
+                   minWidth="0" maxWidth="Infinity"
+                   GridPane.rowIndex="4" GridPane.columnIndex="0" GridPane.columnSpan="3"
+                   GridPane.hgrow="ALWAYS"/>
+        </GridPane>
+    </VBox>
+
+</VBox>

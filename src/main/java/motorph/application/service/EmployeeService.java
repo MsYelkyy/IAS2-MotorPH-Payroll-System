@@ -4,40 +4,92 @@ import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.employee.EmployeeSummaryDTO;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
-import motorph.application.security.PasswordHasher;
+import motorph.domain.model.Department;
 import motorph.domain.model.Employee;
+import motorph.domain.model.EmployeeBenefit;
+import motorph.domain.model.GovernmentDetails;
+import motorph.domain.model.Position;
+import motorph.domain.model.SalaryHistory;
 import motorph.domain.model.UserAccount;
-import motorph.domain.value.Role;
+import motorph.domain.value.SalaryType;
+import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
-import motorph.infrastructure.repository.UserAccountRepository;
+import motorph.infrastructure.repository.GovernmentDetailsRepository;
+import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.SalaryHistoryRepository;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Handles business logic for employee management and linked account creation.
+ * Handles business logic for employee management.
  */
 public class EmployeeService {
 
+    private static final int BENEFIT_RICE_SUBSIDY    = 1;
+    private static final int BENEFIT_PHONE_ALLOWANCE = 2;
+    private static final int BENEFIT_CLOTHING        = 3;
+
     private final EmployeeRepository employeeRepository;
-    private final UserAccountRepository userAccountRepository;
+    private final UserAccountService userAccountService;
+    private final DepartmentRepository departmentRepository;
+    private final PositionRepository positionRepository;
+    private final SalaryHistoryRepository salaryHistoryRepository;
+    private final EmployeeBenefitRepository employeeBenefitRepository;
+    private final GovernmentDetailsRepository governmentDetailsRepository;
 
     // constructors
     public EmployeeService(EmployeeRepository employeeRepository,
-                           UserAccountRepository userAccountRepository) {
+                           UserAccountService userAccountService,
+                           DepartmentRepository departmentRepository,
+                           PositionRepository positionRepository,
+                           SalaryHistoryRepository salaryHistoryRepository,
+                           EmployeeBenefitRepository employeeBenefitRepository,
+                           GovernmentDetailsRepository governmentDetailsRepository) {
         if (employeeRepository == null) {
             throw new IllegalArgumentException("EmployeeRepository is required.");
         }
 
-        if (userAccountRepository == null) {
-            throw new IllegalArgumentException("UserAccountRepository is required.");
+        if (userAccountService == null) {
+            throw new IllegalArgumentException("UserAccountService is required.");
+        }
+
+        if (departmentRepository == null) {
+            throw new IllegalArgumentException("DepartmentRepository is required.");
+        }
+
+        if (positionRepository == null) {
+            throw new IllegalArgumentException("PositionRepository is required.");
+        }
+
+        if (salaryHistoryRepository == null) {
+            throw new IllegalArgumentException("SalaryHistoryRepository is required.");
+        }
+
+        if (employeeBenefitRepository == null) {
+            throw new IllegalArgumentException("EmployeeBenefitRepository is required.");
+        }
+
+        if (governmentDetailsRepository == null) {
+            throw new IllegalArgumentException("GovernmentDetailsRepository is required.");
         }
 
         this.employeeRepository = employeeRepository;
-        this.userAccountRepository = userAccountRepository;
+        this.userAccountService = userAccountService;
+        this.departmentRepository = departmentRepository;
+        this.positionRepository = positionRepository;
+        this.salaryHistoryRepository = salaryHistoryRepository;
+        this.employeeBenefitRepository = employeeBenefitRepository;
+        this.governmentDetailsRepository = governmentDetailsRepository;
     }
 
-    // Returns an active employee by id.
+    // returns an active employee by id
     public Employee getEmployeeById(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -50,17 +102,45 @@ public class EmployeeService {
         return employee;
     }
 
-    // Returns all active employees.
+    // returns any employee by id including inactive (for IT user account display only)
+    public Employee getEmployeeByIdAny(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        Employee employee = employeeRepository.findAnyById(employeeId);
+
+        if (employee == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        return employee;
+    }
+
+    // returns all active employees
     public List<Employee> getAllActiveEmployees() {
         return employeeRepository.findAllActive();
     }
 
-    // Returns all employees including inactive.
+    // returns all employees including inactive
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAllWithInactive();
     }
 
-    // Returns all employees as summary DTOs.
+    // returns all active departments
+    public List<Department> getAllDepartments() {
+        return departmentRepository.findAllActive();
+    }
+
+    // returns all positions
+    public List<Position> getAllPositions() {
+        return positionRepository.findAll();
+    }
+
+    // returns all positions for a given department
+    public List<Position> getPositionsByDepartment(int departmentId) {
+        return positionRepository.findByDepartmentId(departmentId);
+    }
+
+    // returns all employees as summary DTOs
     public List<EmployeeSummaryDTO> getAllEmployeeSummaries() {
         return employeeRepository.findAllWithInactive()
                 .stream()
@@ -68,15 +148,52 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // Returns employee profile DTO.
+    // returns employee profile DTO for an active employee (used by employee portal)
     public EmployeeProfileDTO getEmployeeProfile(int employeeId) {
-        Employee employee = getEmployeeById(employeeId);
+        validateEmployeeId(employeeId);
 
+        EmployeeRepository.ProfileQueryResult result = employeeRepository.findProfileById(employeeId);
+
+        if (result == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        return toProfileDTO(result);
+    }
+
+    // returns employee profile DTO for any employee including inactive (used by admin)
+    public EmployeeProfileDTO getEmployeeProfileAdmin(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        EmployeeRepository.ProfileQueryResult result = employeeRepository.findProfileByIdAny(employeeId);
+
+        if (result == null) {
+            throw new EntityNotFoundException("Employee not found.");
+        }
+
+        return toProfileDTO(result);
+    }
+
+    // returns government details for an employee, or null when not recorded
+    public GovernmentDetails getGovernmentDetails(int employeeId) {
+        validateEmployeeId(employeeId);
+        return governmentDetailsRepository.findByEmployeeId(employeeId);
+    }
+
+    // returns the personal email address for an active employee
+    public String getPersonalEmail(int employeeId) {
+        validateEmployeeId(employeeId);
+        return employeeRepository.findPersonalEmailByEmployeeId(employeeId);
+    }
+
+    private EmployeeProfileDTO toProfileDTO(EmployeeRepository.ProfileQueryResult result) {
+        Employee employee = result.getEmployee();
         return new EmployeeProfileDTO(
                 employee.getEmployeeId(),
                 employee.getFullName(),
                 employee.getFirstName(),
                 employee.getLastName(),
+                employee.getGender(),
                 employee.getBirthDate(),
                 employee.getAddress(),
                 employee.getCivilStatus(),
@@ -84,57 +201,84 @@ public class EmployeeService {
                 employee.getPersonalEmail(),
                 employee.getEmploymentStatus(),
                 employee.getPositionId(),
+                result.getPositionName(),
                 employee.getDepartmentId(),
+                result.getDepartmentName(),
                 employee.getHireDate(),
                 employee.getSupervisorId(),
+                result.getSupervisorName(),
                 employee.isActive(),
                 employee.getPhotoPath()
         );
     }
 
-    // Creates a new employee only.
+    // creates a new employee only
     public void createEmployee(Employee employee) {
         validateEmployee(employee);
         employeeRepository.save(employee);
     }
 
-    // Creates a new employee and linked user account.
-    public UserAccount createEmployeeWithAccount(Employee employee, Role role, String rawPassword) {
+    // creates a new employee with an automatic user account
+    public UserAccount createEmployeeWithTemporaryAccount(Employee employee) {
         validateEmployee(employee);
-        validateRole(role);
-        validatePassword(rawPassword);
 
         int employeeId = employeeRepository.saveAndReturnId(employee);
-        String companyEmail = generateUniqueCompanyEmail(employee.getFirstName(), employee.getLastName());
-        String username = companyEmail;
-        String salt = PasswordHasher.generateSalt();
-        String hash = PasswordHasher.hash(rawPassword, salt);
 
-        UserAccount userAccount = new UserAccount(
-                null,
+        return userAccountService.createTemporaryEmployeeAccount(
                 employeeId,
-                companyEmail,
-                username,
-                hash,
-                salt,
-                role,
-                false,
-                true,
-                null
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getPersonalEmail()
         );
-
-        userAccountRepository.save(userAccount);
-
-        UserAccount savedAccount = userAccountRepository.findByCompanyEmail(companyEmail);
-
-        if (savedAccount == null) {
-            throw new IllegalStateException("User account was not created successfully.");
-        }
-
-        return savedAccount;
     }
 
-    // Updates an existing employee.
+    // creates a new employee together with initial salary, government IDs, and benefit records
+    public UserAccount createEmployeeWithSalaryAndBenefits(
+            Employee employee,
+            double basicSalary,
+            double hourlyRate,
+            String sssNumber,
+            String philhealthNumber,
+            String tinNumber,
+            String pagibigNumber,
+            double riceSubsidy,
+            double phoneAllowance,
+            double clothingAllowance) {
+
+        validateEmployee(employee);
+
+        int employeeId = employeeRepository.saveAndReturnId(employee);
+
+        LocalDate hireDate = employee.getHireDate();
+
+        salaryHistoryRepository.save(new SalaryHistory(
+                null, employeeId, SalaryType.MONTHLY, basicSalary, hourlyRate, hireDate, null));
+
+        governmentDetailsRepository.save(new GovernmentDetails(
+                null, employeeId, sssNumber, tinNumber, pagibigNumber, philhealthNumber));
+
+        if (riceSubsidy > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_RICE_SUBSIDY, riceSubsidy, hireDate, null));
+        }
+        if (phoneAllowance > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_PHONE_ALLOWANCE, phoneAllowance, hireDate, null));
+        }
+        if (clothingAllowance > 0) {
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, BENEFIT_CLOTHING, clothingAllowance, hireDate, null));
+        }
+
+        return userAccountService.createTemporaryEmployeeAccount(
+                employeeId,
+                employee.getFirstName(),
+                employee.getLastName(),
+                employee.getPersonalEmail()
+        );
+    }
+
+    // updates an existing employee
     public void updateEmployee(Employee employee) {
         if (employee == null || employee.getEmployeeId() == null) {
             throw new ValidationException("Employee ID is required for update.");
@@ -144,15 +288,47 @@ public class EmployeeService {
         employeeRepository.update(employee);
     }
 
-    // Deactivates an employee instead of deleting the record.
+    // deactivates an employee and disables the linked user account
     public void deactivateEmployee(int employeeId) {
         validateEmployeeId(employeeId);
+
         employeeRepository.deactivate(employeeId);
+        userAccountService.deactivateAccountByEmployeeId(employeeId);
     }
 
-    // Updates the employee's own contact information.
+    // copies the selected image file and persists the relative path for the employee's profile photo
+    public void updateOwnProfilePhoto(int employeeId, String sourcePath) {
+        getEmployeeById(employeeId);
+
+        if (sourcePath == null || sourcePath.isBlank()) {
+            throw new ValidationException("Photo path is required.");
+        }
+
+        File sourceFile = new File(sourcePath);
+        if (!sourceFile.exists() || !sourceFile.isFile()) {
+            throw new ValidationException("Selected image file does not exist.");
+        }
+
+        String extension = resolveExtension(sourceFile.getName());
+        String relativePath = "src/main/resources/images/profile-images/employee-" + employeeId + "." + extension;
+
+        File destFile = new File(relativePath);
+        if (destFile.getParentFile() != null) {
+            destFile.getParentFile().mkdirs();
+        }
+
+        try {
+            Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save profile photo: " + e.getMessage(), e);
+        }
+
+        employeeRepository.updatePhotoPath(employeeId, relativePath);
+    }
+
+    // updates the employee's own contact information
     public void updateOwnContactInfo(int employeeId, String phoneNumber, String address) {
-        Employee employee = getEmployeeById(employeeId);
+        getEmployeeById(employeeId);
 
         if (phoneNumber == null || phoneNumber.isBlank()) {
             throw new ValidationException("Phone number is required.");
@@ -162,27 +338,23 @@ public class EmployeeService {
             throw new ValidationException("Address is required.");
         }
 
-        employee.setPhoneNumber(phoneNumber);
-        employee.setAddress(address);
-
-        employeeRepository.update(employee);
+        employeeRepository.updateContactInfo(
+                employeeId,
+                phoneNumber.trim(),
+                address.trim()
+        );
     }
 
-    // Generates a unique company email for a new account.
-    public String generateUniqueCompanyEmail(String firstName, String lastName) {
-        String baseEmail = buildBaseCompanyEmail(firstName, lastName);
-        String candidate = baseEmail;
-        int suffix = 2;
-
-        while (userAccountRepository.existsByCompanyEmail(candidate)) {
-            candidate = appendEmailSuffix(baseEmail, suffix);
-            suffix++;
+    // extracts the lowercased file extension; defaults to png if none found
+    private String resolveExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        if (dot >= 0 && dot < filename.length() - 1) {
+            return filename.substring(dot + 1).toLowerCase();
         }
-
-        return candidate;
+        return "png";
     }
 
-    // Converts employee to summary DTO.
+    // converts employee to summary DTO
     private EmployeeSummaryDTO toSummaryDTO(Employee employee) {
         return new EmployeeSummaryDTO(
                 employee.getEmployeeId(),
@@ -194,7 +366,7 @@ public class EmployeeService {
         );
     }
 
-    // Validates employee fields.
+    // validates employee fields
     private void validateEmployee(Employee employee) {
         if (employee == null) {
             throw new ValidationException("Employee cannot be null.");
@@ -225,61 +397,10 @@ public class EmployeeService {
         }
     }
 
-    // Validates employee id input.
+    // validates employee id input
     private void validateEmployeeId(int employeeId) {
         if (employeeId <= 0) {
             throw new ValidationException("Employee ID is required.");
         }
-    }
-
-    // Validates role input.
-    private void validateRole(Role role) {
-        if (role == null) {
-            throw new ValidationException("Role is required.");
-        }
-    }
-
-    // Validates raw password input.
-    private void validatePassword(String rawPassword) {
-        if (rawPassword == null || rawPassword.isBlank()) {
-            throw new ValidationException("Password is required.");
-        }
-    }
-
-    // Builds the base company email format.
-    private String buildBaseCompanyEmail(String firstName, String lastName) {
-        if (firstName == null || firstName.isBlank()) {
-            throw new ValidationException("First name is required.");
-        }
-
-        if (lastName == null || lastName.isBlank()) {
-            throw new ValidationException("Last name is required.");
-        }
-
-        String cleanFirstName = sanitizeEmailName(firstName);
-        String cleanLastName = sanitizeEmailName(lastName);
-
-        return cleanFirstName + "." + cleanLastName + "@motorph.com";
-    }
-
-    // Appends a numeric suffix to a duplicate company email.
-    private String appendEmailSuffix(String baseEmail, int suffix) {
-        int atIndex = baseEmail.indexOf("@");
-
-        if (atIndex < 0) {
-            throw new IllegalStateException("Base company email is invalid.");
-        }
-
-        String localPart = baseEmail.substring(0, atIndex);
-        String domainPart = baseEmail.substring(atIndex);
-
-        return localPart + suffix + domainPart;
-    }
-
-    // Sanitizes a name for email generation.
-    private String sanitizeEmailName(String value) {
-        return value.trim()
-                .toLowerCase()
-                .replaceAll("[^a-z0-9]", "");
     }
 }

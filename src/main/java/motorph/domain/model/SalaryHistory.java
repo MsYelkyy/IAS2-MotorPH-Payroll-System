@@ -1,17 +1,18 @@
 package motorph.domain.model;
 
 import java.time.LocalDate;
+import motorph.domain.value.SalaryType;
 
 /**
- * Represents an employee salary record and maps to the salary_history table in the database.
+ * Represents an employee salary record and maps to the salary_history table.
  */
 public class SalaryHistory {
 
     private Integer salaryHistoryId;
     private int employeeId;
-    private double basicSalary;
-    private double grossSemiMonthly;
-    private double hourlyRate;
+    private SalaryType salaryType;
+    private Double basicSalary;
+    private Double hourlyRate;
     private LocalDate startDate;
     private LocalDate endDate;
 
@@ -19,19 +20,20 @@ public class SalaryHistory {
     public SalaryHistory(
             Integer salaryHistoryId,
             int employeeId,
-            double basicSalary,
-            double grossSemiMonthly,
-            double hourlyRate,
+            SalaryType salaryType,
+            Double basicSalary,
+            Double hourlyRate,
             LocalDate startDate,
             LocalDate endDate) {
 
         setSalaryHistoryId(salaryHistoryId);
         setEmployeeId(employeeId);
+        setSalaryType(salaryType);
         setBasicSalary(basicSalary);
-        setGrossSemiMonthly(grossSemiMonthly);
         setHourlyRate(hourlyRate);
         setStartDate(startDate);
         setEndDate(endDate);
+        validateSalaryType();
         validateDateRange();
     }
 
@@ -44,16 +46,24 @@ public class SalaryHistory {
         return employeeId;
     }
 
-    public double getBasicSalary() {
+    public SalaryType getSalaryType() {
+        return salaryType;
+    }
+
+    public Double getBasicSalary() {
         return basicSalary;
     }
 
-    public double getGrossSemiMonthly() {
-        return grossSemiMonthly;
+    public Double getHourlyRate() {
+        return hourlyRate;
     }
 
-    public double getHourlyRate() {
-        return hourlyRate;
+    // returns the semi-monthly salary
+    public double getGrossSemiMonthly() {
+        if (salaryType != SalaryType.MONTHLY || basicSalary == null) {
+            return 0.0;
+        }
+        return basicSalary / 2;
     }
 
     public LocalDate getStartDate() {
@@ -97,22 +107,22 @@ public class SalaryHistory {
         this.employeeId = employeeId;
     }
 
-    public void setBasicSalary(double basicSalary) {
-        if (basicSalary < 0) {
+    public void setSalaryType(SalaryType salaryType) {
+        if (salaryType == null) {
+            throw new IllegalArgumentException("Salary type is required.");
+        }
+        this.salaryType = salaryType;
+    }
+
+    public void setBasicSalary(Double basicSalary) {
+        if (basicSalary != null && basicSalary < 0) {
             throw new IllegalArgumentException("Basic salary cannot be negative.");
         }
         this.basicSalary = basicSalary;
     }
 
-    public void setGrossSemiMonthly(double grossSemiMonthly) {
-        if (grossSemiMonthly < 0) {
-            throw new IllegalArgumentException("Gross semi-monthly salary cannot be negative.");
-        }
-        this.grossSemiMonthly = grossSemiMonthly;
-    }
-
-    public void setHourlyRate(double hourlyRate) {
-        if (hourlyRate < 0) {
+    public void setHourlyRate(Double hourlyRate) {
+        if (hourlyRate != null && hourlyRate < 0) {
             throw new IllegalArgumentException("Hourly rate cannot be negative.");
         }
         this.hourlyRate = hourlyRate;
@@ -130,6 +140,17 @@ public class SalaryHistory {
         validateDateRange();
     }
 
+    // validates the salary type values
+    private void validateSalaryType() {
+        if (salaryType == SalaryType.MONTHLY && (basicSalary == null || basicSalary <= 0)) {
+            throw new IllegalArgumentException("Monthly employees must have a basic salary.");
+        }
+
+        if (salaryType == SalaryType.HOURLY && (hourlyRate == null || hourlyRate <= 0)) {
+            throw new IllegalArgumentException("Hourly employees must have an hourly rate.");
+        }
+    }
+
     // validates the salary date range
     private void validateDateRange() {
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
@@ -143,8 +164,8 @@ public class SalaryHistory {
         return "SalaryHistory{"
                 + "salaryHistoryId=" + salaryHistoryId
                 + ", employeeId=" + employeeId
+                + ", salaryType=" + salaryType
                 + ", basicSalary=" + basicSalary
-                + ", grossSemiMonthly=" + grossSemiMonthly
                 + ", hourlyRate=" + hourlyRate
                 + ", startDate=" + startDate
                 + ", endDate=" + endDate

@@ -3,6 +3,7 @@ package motorph.application.dto.employee;
 import java.time.LocalDate;
 
 import motorph.domain.value.EmploymentStatus;
+import motorph.domain.value.Gender;
 
 /**
  * Carries complete employee profile details for display and update use cases.
@@ -13,6 +14,7 @@ public class EmployeeProfileDTO {
     private final String fullName;
     private final String firstName;
     private final String lastName;
+    private final Gender gender;
     private final LocalDate birthDate;
     private final String address;
     private final String civilStatus;
@@ -20,9 +22,12 @@ public class EmployeeProfileDTO {
     private final String personalEmail;
     private final EmploymentStatus employmentStatus;
     private final int positionId;
+    private final String positionName;
     private final int departmentId;
+    private final String departmentName;
     private final LocalDate hireDate;
     private final Integer supervisorId;
+    private final String supervisorName;
     private final boolean active;
     private final String photoPath;
 
@@ -31,6 +36,7 @@ public class EmployeeProfileDTO {
                               String fullName,
                               String firstName,
                               String lastName,
+                              Gender gender,
                               LocalDate birthDate,
                               String address,
                               String civilStatus,
@@ -38,15 +44,19 @@ public class EmployeeProfileDTO {
                               String personalEmail,
                               EmploymentStatus employmentStatus,
                               int positionId,
+                              String positionName,
                               int departmentId,
+                              String departmentName,
                               LocalDate hireDate,
                               Integer supervisorId,
+                              String supervisorName,
                               boolean active,
                               String photoPath) {
         this.employeeId = employeeId;
         this.fullName = fullName;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.gender = gender;
         this.birthDate = birthDate;
         this.address = address;
         this.civilStatus = civilStatus;
@@ -54,9 +64,12 @@ public class EmployeeProfileDTO {
         this.personalEmail = personalEmail;
         this.employmentStatus = employmentStatus;
         this.positionId = positionId;
+        this.positionName = positionName;
         this.departmentId = departmentId;
+        this.departmentName = departmentName;
         this.hireDate = hireDate;
         this.supervisorId = supervisorId;
+        this.supervisorName = supervisorName;
         this.active = active;
         this.photoPath = photoPath;
     }
@@ -66,77 +79,78 @@ public class EmployeeProfileDTO {
         return employeeId;
     }
 
-    // getters
     public String getFullName() {
         return fullName;
     }
 
-    // getters
     public String getFirstName() {
         return firstName;
     }
 
-    // getters
     public String getLastName() {
         return lastName;
     }
 
-    // getters
+    public Gender getGender() {
+        return gender;
+    }
+
     public LocalDate getBirthDate() {
         return birthDate;
     }
 
-    // getters
     public String getAddress() {
         return address;
     }
 
-    // getters
     public String getCivilStatus() {
         return civilStatus;
     }
 
-    // getters
     public String getPhoneNumber() {
         return phoneNumber;
     }
 
-    // getters
     public String getPersonalEmail() {
         return personalEmail;
     }
 
-    // getters
     public EmploymentStatus getEmploymentStatus() {
         return employmentStatus;
     }
 
-    // getters
     public int getPositionId() {
         return positionId;
     }
 
-    // getters
+    public String getPositionName() {
+        return positionName;
+    }
+
     public int getDepartmentId() {
         return departmentId;
     }
 
-    // getters
+    public String getDepartmentName() {
+        return departmentName;
+    }
+
     public LocalDate getHireDate() {
         return hireDate;
     }
 
-    // getters
     public Integer getSupervisorId() {
         return supervisorId;
     }
 
-    // getters
+    public String getSupervisorName() {
+        return supervisorName;
+    }
+
     public boolean isActive() {
         return active;
     }
 
-    // getters
     public String getPhotoPath() {
         return photoPath;
     }

@@ -1,0 +1,44 @@
+/* ══════════════════════════════════════════════════
+   MODULE — IT DASHBOARD
+   Dashboard-exclusive selectors relocated verbatim
+   from it-ui.css. IT-only (loaded after motorph-theme,
+   in it-ui.css's original cascade slot). Values and
+   order unchanged. Light-mode rules travel with their
+   dark counterparts.
+
+   Source: it-ui.css (.stat-success L8, .stat-danger L14,
+   .system-ok-text L21, + light-mode L157/161/165)
+   ══════════════════════════════════════════════════ */
+
+/* ── Login-activity stat numbers ─────────────────────────────────── */
+.stat-success {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+.stat-danger {
+    -fx-font-size: 30px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #EF4444;
+}
+
+/* ── System-status headline ──────────────────────────────────────── */
+.system-ok-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #22C55E;
+}
+
+/* ── Light-mode overrides ────────────────────────────────────────── */
+.root-canvas.light-mode .stat-success {
+    -fx-text-fill: #16A34A;
+}
+
+.root-canvas.light-mode .stat-danger {
+    -fx-text-fill: #DC2626;
+}
+
+.root-canvas.light-mode .system-ok-text {
+    -fx-text-fill: #16A34A;
+}

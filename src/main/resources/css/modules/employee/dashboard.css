@@ -1,0 +1,191 @@
+/* ══════════════════════════════════════════════════
+   MODULE — EMPLOYEE DASHBOARD
+   Dashboard-exclusive selectors extracted from
+   motorph-theme.css (tail layer) with exact values.
+   Loaded AFTER motorph-theme.css so these win their
+   ties; values are identical, so appearance is
+   unchanged. Light-mode is preserved by motorph-theme's
+   higher-specificity .root-canvas.light-mode rules.
+
+   Source lines in motorph-theme.css:
+     .portal-chart                       L3241
+     .leave-tile                         L487
+     .vacation/.sick/.emergency/
+       .special/.maternity               L3266-3270
+     .tile-title/.tile-value             L3419
+     .financial-value                    L3396
+     .attendance-value                   L3403
+     .bottom-card                        L3371
+     .bottom-value                       L3414
+
+   Internal order mirrors motorph-theme.css so the
+   `bottom-value, financial-value` multi-class element
+   keeps .bottom-value winning (financial before bottom).
+   ══════════════════════════════════════════════════ */
+
+
+/* ── Chart container ─────────────────────────────────── */
+.portal-chart { -fx-background-color: transparent; -fx-padding: 0; }
+
+
+/* ── Leave tiles ─────────────────────────────────────── */
+.leave-tile {
+    -fx-padding: 12;
+    -fx-background-radius: 8;
+    -fx-min-width: 100;
+    -fx-min-height: 104;
+}
+
+.vacation  { -fx-background-color: linear-gradient(to bottom right, rgba(255,60,60,0.90), rgba(160,10,10,0.95)); }
+.sick      { -fx-background-color: linear-gradient(to bottom right, rgba(180,140,20,0.88), rgba(130,95,10,0.95)); }
+.emergency { -fx-background-color: linear-gradient(to bottom right, rgba(40,90,200,0.88), rgba(25,60,150,0.95)); }
+.special   { -fx-background-color: linear-gradient(to bottom right, rgba(120,40,200,0.88), rgba(80,20,150,0.95)); }
+.maternity { -fx-background-color: linear-gradient(to bottom right, rgba(220,100,10,0.88), rgba(170,70,5,0.95)); }
+
+.tile-title, .tile-value { -fx-font-size: 12px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
+
+
+/* Leave summary list */
+.leave-summary-list {
+    -fx-padding: 8 2 2 2;
+}
+
+.leave-summary-row {
+    -fx-min-height: 30;
+    -fx-pref-height: 30;
+    -fx-padding: 0 0 1 0;
+}
+
+.leave-summary-name {
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-text-fill: rgba(248,250,252,0.92);
+}
+
+.leave-summary-leader {
+    -fx-border-color: transparent transparent rgba(226,232,240,0.22) transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-min-height: 1;
+}
+
+.leave-summary-value {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FFFFFF;
+    -fx-min-width: 78;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+
+/* ── Data color values ───────────────────────────────── */
+/* Yellow — financial / money data */
+.financial-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #FBBF24;
+}
+
+/* Blue — attendance data */
+.attendance-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #60A5FA;
+}
+
+
+/* ── Bottom row cards ────────────────────────────────── */
+/* Full effective value set (was split across two standalone
+   .bottom-card rules in motorph-theme.css). Radius/border-width/
+   effect/padding came from the theme's first standalone rule;
+   background/border-color/min-height from its translucent pass. */
+.bottom-card {
+    -fx-background-color:
+        linear-gradient(from 0% 0% to 0% 28%, rgba(255,110,110,0.20), transparent),
+        linear-gradient(from 0% 0% to 0% 100%, rgba(168,10,10,0.42), rgba(118,5,5,0.52));
+    -fx-background-radius: 14;
+    -fx-border-color: rgba(255,130,130,0.34);
+    -fx-border-width: 1.5;
+    -fx-border-radius: 14;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.38), 14, 0.20, 0, 5);
+    -fx-padding: 16;
+    -fx-min-height: 128;
+}
+
+.bottom-value { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #FFFFFF; }
+
+.dashboard-bottom-row {
+    -fx-alignment: TOP_LEFT;
+}
+
+.dashboard-bottom-card {
+    -fx-padding: 20 22;
+    -fx-min-height: 158;
+    -fx-pref-height: 164;
+}
+
+.bottom-card-content {
+    -fx-padding: 6 0 0 0;
+}
+
+.dashboard-bottom-card .bottom-value {
+    -fx-font-size: 19px;
+    -fx-wrap-text: true;
+    -fx-text-overrun: ellipsis;
+}
+
+.dashboard-bottom-card .muted-text {
+    -fx-font-size: 13px;
+    -fx-line-spacing: 2;
+}
+
+.dashboard-bottom-card .positive-text {
+    -fx-font-size: 13px;
+    -fx-font-weight: 900;
+}
+
+.dashboard-bottom-card .small-pill-button {
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-max-height: 36;
+    -fx-font-size: 13px;
+    -fx-wrap-text: false;
+}
+
+.upcoming-payday-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.recent-payslip-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.recent-payslip-content {
+    -fx-padding: 6 0 0 0;
+}
+
+.payroll-status-card .bottom-value {
+    -fx-font-size: 18px;
+}
+
+.payroll-status-card .muted-text {
+    -fx-font-size: 13px;
+}
+
+
+/* ══════════════════════════════════════════════════
+   LIGHT MODE — leave-tile text (extracted from the
+   theme's legacy `.light-mode .tile-*` group rule)
+   ══════════════════════════════════════════════════ */
+.light-mode .tile-title,
+.light-mode .tile-value {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-summary-name,
+.root-canvas.light-mode .leave-summary-value {
+    -fx-text-fill: #111827;
+}
+
+.root-canvas.light-mode .leave-summary-leader {
+    -fx-border-color: transparent transparent rgba(15,23,42,0.20) transparent;
+}

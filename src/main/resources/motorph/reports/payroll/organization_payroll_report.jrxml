@@ -1,0 +1,132 @@
+<!-- Created with Jaspersoft Studio version 7.0.6.final using JasperReports Library version 7.0.6-5d2a603fdc6b3db8f842a83383e594f41891534d  -->
+<jasperReport name="organization_payroll_report" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="c3d7d4e1-7e5a-4c4d-8a8a-123456789abc">
+	<parameter name="REPORT_TITLE" class="java.lang.String"/>
+	<parameter name="START_DATE" class="java.time.LocalDate"/>
+	<parameter name="END_DATE" class="java.time.LocalDate"/>
+	<field name="employeeId" class="java.lang.Integer"/>
+	<field name="employeeName" class="java.lang.String"/>
+	<field name="departmentName" class="java.lang.String"/>
+	<field name="payrunId" class="java.lang.Integer"/>
+	<field name="payDate" class="java.time.LocalDate"/>
+	<field name="totalHoursWorked" class="java.lang.Double"/>
+	<field name="grossPay" class="java.lang.Double"/>
+	<field name="totalDeductions" class="java.lang.Double"/>
+	<field name="netPay" class="java.lang.Double"/>
+	<variable name="grossTotal" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{grossPay}]]></expression>
+	</variable>
+	<variable name="deductionTotal" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{totalDeductions}]]></expression>
+	</variable>
+	<variable name="netTotal" calculation="Sum" class="java.lang.Double">
+		<expression><![CDATA[$F{netPay}]]></expression>
+	</variable>
+	<title height="170">
+		<element kind="image" uuid="9f2870af-11e3-4d8d-af6d-770f3d38b437" x="0" y="12" width="115" height="86">
+			<expression><![CDATA[getClass().getResourceAsStream("/motorph/images/motorphlg.png")]]></expression>
+		</element>
+		<element kind="staticText" uuid="cca0ea2c-7121-49f5-b0ee-d54f0e8fec78" x="115" y="12" width="180" height="28" forecolor="#12345A" fontSize="22.0" bold="true" italic="true">
+			<text><![CDATA[MotorPH]]></text>
+		</element>
+		<element kind="staticText" uuid="1a21bb2e-e611-4b17-8b6c-eb162a51b269" x="115" y="50" width="500" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+			<text><![CDATA[7 Jupiter Avenue cor. F. Sandoval Jr., Bagong Nayon, Quezon City]]></text>
+		</element>
+		<element kind="staticText" uuid="60c32756-f8d1-4909-9f22-503fca8c96f9" x="115" y="68" width="500" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+			<text><![CDATA[Phone: (028) 911-5071 / (028) 911-5072 / (028) 911-5073]]></text>
+		</element>
+		<element kind="staticText" uuid="cce61a00-3f0c-4467-a11b-b954ac091ab6" x="115" y="86" width="350" height="13" forecolor="#001F4E" fontSize="8.0" bold="true">
+			<text><![CDATA[Email: corporate@motorph.com]]></text>
+		</element>
+		<element kind="line" uuid="9475fe97-eca9-42f2-aba1-3929da35f545" x="0" y="120" width="782" height="1" forecolor="#12345A"/>
+		<element kind="staticText" uuid="35e42f2a-3b6a-49d3-b995-3038e29cfbd8" x="0" y="130" width="782" height="24" forecolor="#001F4E" fontSize="16.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[ORGANIZATIONAL PAYROLL REPORT]]></text>
+		</element>
+		<element kind="textField" uuid="e3b48d11-d743-46be-938b-d16cb3deb6c6" x="0" y="154" width="782" height="12" forecolor="#000000" fontSize="8.0" bold="true" hTextAlign="Center">
+			<expression><![CDATA[($P{START_DATE} == null || $P{END_DATE} == null)
+                    ? "Period Covered: All Payruns"
+                    : "Period Covered: " + $P{START_DATE} + " to " + $P{END_DATE}]]></expression>
+		</element>
+	</title>
+	<columnHeader height="30">
+		<element kind="rectangle" uuid="521b5965-5616-46da-9ed9-688808b63a83" x="0" y="0" width="782" height="30" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="8dac2065-431f-41be-973c-fe8544282203" x="0" y="0" width="70" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Emp Number]]></text>
+		</element>
+		<element kind="staticText" uuid="5b4f8178-2a03-436c-86a4-e5f7b70b06d6" x="70" y="0" width="140" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Employee Full Name]]></text>
+		</element>
+		<element kind="staticText" uuid="8004348c-22d6-416d-872b-be46a23ab044" x="210" y="0" width="100" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Department]]></text>
+		</element>
+		<element kind="staticText" uuid="a0d98762-5c08-48ed-a93f-b6d765d59174" x="310" y="0" width="55" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Payrun]]></text>
+		</element>
+		<element kind="staticText" uuid="f1e663a9-2940-4235-ae85-85e546667c66" x="365" y="0" width="80" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Pay Date]]></text>
+		</element>
+		<element kind="staticText" uuid="351e03cd-883b-47cb-9b1f-c99faf4b3902" x="445" y="0" width="55" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Hours]]></text>
+		</element>
+		<element kind="staticText" uuid="8bf979ae-7b21-4082-8b45-f61fa1186ea3" x="500" y="0" width="85" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Gross Pay]]></text>
+		</element>
+		<element kind="staticText" uuid="aa04b5aa-6c55-46d6-9b93-42fb736b173f" x="585" y="0" width="85" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Deductions]]></text>
+		</element>
+		<element kind="staticText" uuid="a2561c3e-94de-486b-8673-12d369fbcc43" x="670" y="0" width="112" height="30" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<text><![CDATA[Net Pay]]></text>
+		</element>
+	</columnHeader>
+	<detail>
+		<band height="25">
+			<element kind="line" uuid="edbe4464-d7ee-4281-b675-1c9e79c2eb92" x="0" y="24" width="782" height="1" forecolor="#DDDDDD"/>
+			<element kind="textField" uuid="15fd97e0-9faa-41b0-8e75-b5be513ec556" x="0" y="0" width="70" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{employeeId}]]></expression>
+			</element>
+			<element kind="textField" uuid="fff56dcd-6f18-4bba-bc19-b5853c307223" x="70" y="0" width="140" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{employeeName}]]></expression>
+			</element>
+			<element kind="textField" uuid="bc4f454c-5673-4421-b8c0-fa7eb852cde8" x="210" y="0" width="100" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{departmentName}]]></expression>
+			</element>
+			<element kind="textField" uuid="6ca177ee-8ebf-4e17-ae10-6de38047c292" x="310" y="0" width="55" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{payrunId}]]></expression>
+			</element>
+			<element kind="textField" uuid="1a5bcf7e-d3a0-411b-8e9d-1d404253ab06" x="365" y="0" width="80" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{payDate}]]></expression>
+			</element>
+			<element kind="textField" uuid="00c1c176-7b0e-4fd7-a1c6-d8d86aec44fd" x="445" y="0" width="55" height="24" fontSize="8.0" pattern="#,##0.00" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA[$F{totalHoursWorked}]]></expression>
+			</element>
+			<element kind="textField" uuid="c9fb1e5e-f5e4-45b7-9229-72a84e311ac4" x="500" y="0" width="85" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA["PHP " + String.format("%,.2f", $F{grossPay})]]></expression>
+			</element>
+			<element kind="textField" uuid="ee8041db-dc7c-4c0d-bc12-445d0ced5455" x="585" y="0" width="85" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA["PHP " + String.format("%,.2f", $F{totalDeductions})]]></expression>
+			</element>
+			<element kind="textField" uuid="eaa60274-38fa-4641-bd12-0db78e835f1d" x="670" y="0" width="112" height="24" fontSize="8.0" hTextAlign="Center" vTextAlign="Middle">
+				<expression><![CDATA["PHP " + String.format("%,.2f", $F{netPay})]]></expression>
+			</element>
+		</band>
+	</detail>
+	<summary height="30">
+		<element kind="rectangle" uuid="402b046f-77e1-43ab-9be4-3b0227e4f4b4" x="0" y="0" width="782" height="28" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="2c373388-e3fb-4496-ba98-e14652206c29" x="10" y="0" width="535" height="28" forecolor="#FFFFFF" fontSize="9.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[TOTAL]]></text>
+			<property name="com.jaspersoft.studio.unit.x" value="px"/>
+		</element>
+		<element kind="textField" uuid="906d107c-feed-445e-8ce8-f97b21055859" x="500" y="0" width="85" height="28" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA["PHP " + String.format("%,.2f", $V{grossTotal})]]></expression>
+		</element>
+		<element kind="textField" uuid="99678610-8798-491d-9089-91820c53d9f5" x="585" y="0" width="85" height="28" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA["PHP " + String.format("%,.2f", $V{deductionTotal})]]></expression>
+		</element>
+		<element kind="textField" uuid="1ac92d91-e825-4b61-98ff-95005fbd925a" x="670" y="0" width="112" height="28" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
+			<expression><![CDATA["PHP " + String.format("%,.2f", $V{netTotal})]]></expression>
+		</element>
+	</summary>
+</jasperReport>

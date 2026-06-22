@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.hr.HrAttendanceController"
+      VBox.vgrow="ALWAYS" spacing="6" styleClass="payroll-module, attendance-module">
+
+    <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
+
+        <TabPane tabClosingPolicy="UNAVAILABLE"
+                 styleClass="payroll-tab-pane" VBox.vgrow="ALWAYS">
+            <tabs>
+
+                <!-- ░░░ ATTENDANCE LOGS ░░░ -->
+                <Tab text="Attendance Logs">
+                    <content>
+                        <VBox spacing="14">
+
+                            <!-- Search + department filter row -->
+                            <HBox styleClass="attendance-filter-row" spacing="12" alignment="CENTER_LEFT">
+                                <TextField fx:id="searchField" promptText="Search employee"
+                                           HBox.hgrow="ALWAYS" styleClass="input-field"/>
+                                <ComboBox fx:id="departmentFilterCombo" promptText="All Departments"
+                                          prefWidth="240" styleClass="input-field"/>
+                            </HBox>
+
+                            <!-- Red content container -->
+                            <VBox styleClass="content-card, payroll-tab-card" spacing="16"
+                                  VBox.vgrow="ALWAYS">
+
+                                <VBox spacing="2">
+                                    <Label text="Attendance Logs" styleClass="section-title"/>
+                                    <Label text="Employee attendance records" styleClass="muted-text"/>
+                                </VBox>
+
+                                <HBox spacing="12">
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="PRESENT TODAY" styleClass="metric-label"/>
+                                        <Label fx:id="presentTodayCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="LATE TODAY" styleClass="metric-label"/>
+                                        <Label fx:id="lateTodayCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                    <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
+                                        <Label text="ON LEAVE TODAY" styleClass="metric-label"/>
+                                        <Label fx:id="onLeaveTodayCard" text="0" styleClass="metric-value"/>
+                                    </VBox>
+                                </HBox>
+
+                                <TableView fx:id="logTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
+                                           styleClass="payroll-table">
+                                    <columns>
+                                        <TableColumn fx:id="logWorkDateColumn" text="Work Date" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="logEmployeeColumn" text="Employee" prefWidth="210" minWidth="160"/>
+                                        <TableColumn fx:id="logDepartmentColumn" text="Department" prefWidth="150" minWidth="110"/>
+                                        <TableColumn fx:id="logTimeInColumn" text="Time In" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="logTimeOutColumn" text="Time Out" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="logHoursColumn" text="Hours" prefWidth="100" minWidth="80"/>
+                                        <TableColumn fx:id="logStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                                    </columns>
+                                    <placeholder>
+                                        <Label text="No attendance logs match the current filters." styleClass="muted-text"/>
+                                    </placeholder>
+                                </TableView>
+                            </VBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <!-- ░░░ ALL RECORDS ░░░ -->
+                <Tab text="All Records">
+                    <content>
+                        <VBox spacing="14">
+
+                            <!-- Search + department filter row -->
+                            <HBox styleClass="attendance-filter-row" spacing="12" alignment="CENTER_LEFT">
+                                <TextField fx:id="allRecordsSearchField" promptText="Search employee"
+                                           HBox.hgrow="ALWAYS" styleClass="input-field"/>
+                                <ComboBox fx:id="allRecordsDepartmentCombo" promptText="All Departments"
+                                          prefWidth="240" styleClass="input-field"/>
+                            </HBox>
+
+                            <!-- Red content container -->
+                            <VBox styleClass="content-card, payroll-tab-card" spacing="16"
+                                  VBox.vgrow="ALWAYS">
+
+                                <VBox spacing="2">
+                                    <Label text="All Records" styleClass="section-title"/>
+                                    <Label text="All employee attendance records" styleClass="muted-text"/>
+                                </VBox>
+
+                                <TableView fx:id="allRecordsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="520"
+                                           styleClass="payroll-table">
+                                    <columns>
+                                        <TableColumn fx:id="allWorkDateColumn" text="Work Date" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="allEmployeeColumn" text="Employee" prefWidth="210" minWidth="160"/>
+                                        <TableColumn fx:id="allDepartmentColumn" text="Department" prefWidth="150" minWidth="110"/>
+                                        <TableColumn fx:id="allTimeInColumn" text="Time In" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="allTimeOutColumn" text="Time Out" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="allHoursColumn" text="Hours" prefWidth="100" minWidth="80"/>
+                                        <TableColumn fx:id="allStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                                    </columns>
+                                    <placeholder>
+                                        <Label text="No attendance records match the current filters." styleClass="muted-text"/>
+                                    </placeholder>
+                                </TableView>
+                            </VBox>
+                        </VBox>
+                    </content>
+                </Tab>
+
+            </tabs>
+        </TabPane>
+
+    </StackPane>
+
+</VBox>
