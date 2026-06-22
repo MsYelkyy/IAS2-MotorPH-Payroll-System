@@ -39,6 +39,7 @@ public class PayrollReportRepository {
                SELECT pr.payroll_result_id,
                       e.employee_id,
                       CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
+                      pos.position_name,
                       d.department_name,
                       p.pay_run_id,
                       p.start_date,
@@ -46,6 +47,14 @@ public class PayrollReportRepository {
                       p.pay_date,
                       pr.total_hours_worked,
                       pr.gross_pay,
+                      gd.sss_number,
+                      gd.philhealth_number,
+                      gd.pagibig_number,
+                      gd.tin_number,
+                      COALESCE(pd.sss_deduction, 0) AS sss_deduction,
+                      COALESCE(pd.philhealth_deduction, 0) AS philhealth_deduction,
+                      COALESCE(pd.pagibig_deduction, 0) AS pagibig_deduction,
+                      COALESCE(pd.withholding_tax, 0) AS withholding_tax,
                       pr.total_deductions,
                       pr.net_pay
                FROM payroll_result pr
@@ -53,8 +62,24 @@ public class PayrollReportRepository {
                  ON pr.employee_id = e.employee_id
                JOIN department d
                  ON e.department_id = d.department_id
+               JOIN position pos
+                 ON e.position_id = pos.position_id
                JOIN payrun p
                  ON pr.pay_run_id = p.pay_run_id
+               LEFT JOIN government_details gd
+                 ON e.employee_id = gd.employee_id
+               LEFT JOIN (
+                   SELECT pd.payroll_result_id,
+                          SUM(CASE WHEN dt.deduction_name = 'SSS Contribution' THEN pd.amount ELSE 0 END) AS sss_deduction,
+                          SUM(CASE WHEN dt.deduction_name = 'PhilHealth Contribution' THEN pd.amount ELSE 0 END) AS philhealth_deduction,
+                          SUM(CASE WHEN dt.deduction_name = 'Pag-IBIG Contribution' THEN pd.amount ELSE 0 END) AS pagibig_deduction,
+                          SUM(CASE WHEN dt.deduction_name = 'Withholding Tax' THEN pd.amount ELSE 0 END) AS withholding_tax
+                   FROM payroll_deduction pd
+                   JOIN deduction_type dt
+                     ON pd.deduction_type_id = dt.deduction_type_id
+                   GROUP BY pd.payroll_result_id
+               ) pd
+                 ON pr.payroll_result_id = pd.payroll_result_id
                WHERE EXISTS (
                    SELECT 1
                    FROM attendance a
@@ -359,6 +384,7 @@ public class PayrollReportRepository {
                rs.getInt("payroll_result_id"),
                rs.getInt("employee_id"),
                rs.getString("employee_name"),
+               rs.getString("position_name"),
                rs.getString("department_name"),
                rs.getInt("pay_run_id"),
                rs.getDate("start_date").toLocalDate(),
@@ -366,6 +392,14 @@ public class PayrollReportRepository {
                rs.getDate("pay_date").toLocalDate(),
                rs.getDouble("total_hours_worked"),
                rs.getDouble("gross_pay"),
+               rs.getString("sss_number"),
+               rs.getString("philhealth_number"),
+               rs.getString("pagibig_number"),
+               rs.getString("tin_number"),
+               rs.getDouble("sss_deduction"),
+               rs.getDouble("philhealth_deduction"),
+               rs.getDouble("pagibig_deduction"),
+               rs.getDouble("withholding_tax"),
                rs.getDouble("total_deductions"),
                rs.getDouble("net_pay")
        );
