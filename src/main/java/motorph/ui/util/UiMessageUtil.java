@@ -59,6 +59,14 @@ public final class UiMessageUtil {
         showToast(root, message, Pos.TOP_RIGHT, "toast-label-error");
     }
 
+    /**
+     * Shows a transient red error toast pinned to the bottom-right of {@code root}.
+     * Used for validation failures (e.g. missing required fields).
+     */
+    public static void showErrorToast(StackPane root, String message) {
+        showToast(root, message, Pos.BOTTOM_RIGHT, "toast-label-danger");
+    }
+
     // injects a transient toast that fades in, holds, then removes itself
     private static void showToast(StackPane root, String message, Pos alignment, String styleClass) {
         if (root == null) return;

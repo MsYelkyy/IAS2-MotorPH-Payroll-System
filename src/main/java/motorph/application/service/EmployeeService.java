@@ -288,6 +288,60 @@ public class EmployeeService {
         employeeRepository.update(employee);
     }
 
+    // updates (or creates) the government IDs for an existing employee
+    public void updateGovernmentDetails(int employeeId, String sssNumber, String philhealthNumber,
+                                        String tinNumber, String pagibigNumber) {
+        validateEmployeeId(employeeId);
+
+        GovernmentDetails existing = governmentDetailsRepository.findByEmployeeId(employeeId);
+        if (existing == null) {
+            governmentDetailsRepository.save(new GovernmentDetails(
+                    null, employeeId, sssNumber, tinNumber, pagibigNumber, philhealthNumber));
+        } else {
+            governmentDetailsRepository.update(new GovernmentDetails(
+                    existing.getGovernmentDetailsId(), employeeId,
+                    sssNumber, tinNumber, pagibigNumber, philhealthNumber));
+        }
+    }
+
+    // updates the three allowance benefits for an existing employee, keyed by benefit type
+    public void updateBenefits(int employeeId, double riceSubsidy, double phoneAllowance,
+                               double clothingAllowance) {
+        validateEmployeeId(employeeId);
+        upsertBenefit(employeeId, BENEFIT_RICE_SUBSIDY, riceSubsidy);
+        upsertBenefit(employeeId, BENEFIT_PHONE_ALLOWANCE, phoneAllowance);
+        upsertBenefit(employeeId, BENEFIT_CLOTHING, clothingAllowance);
+    }
+
+    // sets a benefit amount: updates the current record, ends it when cleared, or adds a new one
+    private void upsertBenefit(int employeeId, int benefitTypeId, double amount) {
+        EmployeeBenefit current = null;
+        for (EmployeeBenefit benefit : employeeBenefitRepository.findByEmployeeId(employeeId)) {
+            if (benefit.getBenefitTypeId() == benefitTypeId && benefit.isCurrent()) {
+                current = benefit;
+                break;
+            }
+        }
+
+        if (current != null) {
+            if (amount <= 0) {
+                // cleared → close the active benefit as of today
+                employeeBenefitRepository.update(new EmployeeBenefit(
+                        current.getEmployeeBenefitId(), employeeId, benefitTypeId,
+                        current.getAmount(), current.getEffectiveStartDate(), LocalDate.now()));
+            } else {
+                // changed amount → update the active record in place
+                employeeBenefitRepository.update(new EmployeeBenefit(
+                        current.getEmployeeBenefitId(), employeeId, benefitTypeId,
+                        amount, current.getEffectiveStartDate(), current.getEffectiveEndDate()));
+            }
+        } else if (amount > 0) {
+            // none active → create one effective today
+            employeeBenefitRepository.save(new EmployeeBenefit(
+                    null, employeeId, benefitTypeId, amount, LocalDate.now(), null));
+        }
+    }
+
     // deactivates an employee and disables the linked user account
     public void deactivateEmployee(int employeeId) {
         validateEmployeeId(employeeId);

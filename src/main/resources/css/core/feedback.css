@@ -90,3 +90,23 @@
     -fx-text-fill: #B91C1C;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
 }
+
+/* Solid red error toast (validation failures) — MotorPH dark-red theme */
+.toast-label-danger {
+    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #DC2626 0%, #B91C1C 100%);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(248,113,113,0.55);
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-padding: 10 18 10 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+}
+
+.root-canvas.light-mode .toast-label-danger {
+    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #DC2626 0%, #B91C1C 100%);
+    -fx-text-fill: #FFFFFF;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 12, 0, 0, 4);
+}
