@@ -13,6 +13,7 @@ import motorph.domain.model.Payrun;
 import motorph.domain.value.PayrollType;
 import motorph.domain.value.ReadinessStatus;
 import motorph.ui.factory.FinanceUIServiceFactory;
+import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
 
@@ -196,6 +197,10 @@ public class PayrollManagementController {
         setupResultTable();
         setupFilters();
         showLanding();
+
+        DatePickerInputHelper.enableMaskedInput(payrunStartDatePicker);
+        DatePickerInputHelper.enableMaskedInput(payrunEndDatePicker);
+        DatePickerInputHelper.enableMaskedInput(payrunPayDatePicker);
     }
 
     /** Refreshes the payroll landing when the nav button is clicked. */

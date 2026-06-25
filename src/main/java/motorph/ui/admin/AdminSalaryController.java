@@ -9,6 +9,7 @@ import motorph.domain.model.EmployeeBenefit;
 import motorph.domain.model.SalaryHistory;
 import motorph.domain.value.SalaryType;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiFormatter;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -132,6 +133,9 @@ public class AdminSalaryController {
         setupEmployeeTable();
         setupSalaryTable();
         setupBenefitTable();
+
+        DatePickerInputHelper.enableMaskedInput(salaryStartDatePicker);
+        DatePickerInputHelper.enableMaskedInput(salaryEndDatePicker);
     }
 
     public void refresh() {

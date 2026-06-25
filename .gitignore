@@ -1,5 +1,6 @@
 target/
 *.iml
+.idea/
 out/
 .tools/
 .DS_Store

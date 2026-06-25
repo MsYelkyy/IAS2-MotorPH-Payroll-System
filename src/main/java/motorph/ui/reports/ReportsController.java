@@ -11,6 +11,7 @@ import motorph.domain.model.Department;
 import motorph.domain.model.Employee;
 import motorph.domain.model.Payrun;
 import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
@@ -142,6 +143,9 @@ public class ReportsController {
         setupPayrunCombo();
         setupStaticCombos();
         setupDateRangeCombo();
+
+        DatePickerInputHelper.enableMaskedInput(dateFromPicker);
+        DatePickerInputHelper.enableMaskedInput(dateToPicker);
 
         reportTypeCombo.setValue(ReportType.ATTENDANCE);
         configureFilters();
