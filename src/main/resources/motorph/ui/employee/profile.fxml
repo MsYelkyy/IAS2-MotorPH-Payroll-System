@@ -10,10 +10,14 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="16"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.EmployeeProfileController">
+<StackPane fx:id="toastRoot"
+           maxWidth="Infinity"
+           maxHeight="Infinity"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="motorph.ui.employee.EmployeeProfileController">
+
+<VBox spacing="16">
 
     <!-- ── Profile header: photo left | name/ID right ─────────────── -->
     <HBox spacing="28" alignment="CENTER_LEFT" styleClass="profile-header-section">
@@ -40,7 +44,7 @@
                 visible toggles between edit/view mode so layout never shifts.
             -->
             <Button fx:id="uploadImageButton"
-                    text="⬆  Upload Image"
+                    text="Upload Image"
                     onAction="#handleUploadImage"
                     styleClass="upload-image-button"
                     visible="false"
@@ -61,7 +65,6 @@
     <VBox spacing="0" styleClass="profile-section-card">
 
         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
-            <Label text="👤" styleClass="profile-section-icon"/>
             <Label text="Personal Information" styleClass="profile-section-title"/>
         </HBox>
 
@@ -94,7 +97,6 @@
     <VBox spacing="0" styleClass="profile-section-card">
 
         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
-            <Label text="💼" styleClass="profile-section-icon"/>
             <Label text="Employment Details" styleClass="profile-section-title"/>
         </HBox>
 
@@ -127,7 +129,6 @@
     <VBox spacing="0" styleClass="profile-section-card">
 
         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="profile-section-header">
-            <Label text="✉" styleClass="profile-section-icon"/>
             <Label text="Contact Information" styleClass="profile-section-title"/>
         </HBox>
 
@@ -170,7 +171,6 @@
 
         <!-- Note row -->
         <HBox spacing="6" alignment="CENTER_LEFT" styleClass="profile-note-row">
-            <Label text="ⓘ" styleClass="profile-note-icon"/>
             <Label text="Only phone number and address can be updated."
                    styleClass="note-text" wrapText="true" HBox.hgrow="ALWAYS"/>
         </HBox>
@@ -199,3 +199,5 @@
     <Label fx:id="profileMessageLabel" wrapText="true" styleClass="message-label"/>
 
 </VBox>
+
+</StackPane>
