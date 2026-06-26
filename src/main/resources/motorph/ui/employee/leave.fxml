@@ -12,15 +12,20 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="toastRoot"
+           maxWidth="Infinity"
+           maxHeight="Infinity"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="motorph.ui.employee.EmployeeLeaveController">
 
 <VBox spacing="18"
       styleClass="leave-root"
       maxWidth="Infinity"
-      maxHeight="Infinity"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.EmployeeLeaveController">
+      maxHeight="Infinity">
 
     <VBox spacing="0" maxWidth="Infinity" styleClass="content-card, leave-card, leave-credits-card">
         <Label text="Available Credits" styleClass="leave-card-title"/>
@@ -153,3 +158,5 @@
     </VBox>
 
 </VBox>
+
+</StackPane>
