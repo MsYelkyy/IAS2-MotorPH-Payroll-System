@@ -150,6 +150,7 @@ public class EmployeeLeaveController {
 
         UiMessageUtil.clearMessage(leaveMessageLabel);
         if (!validateForm()) {
+            UiMessageUtil.showErrorToast(toastRoot, "Some required fields are missing or invalid. Please check the highlighted fields.");
             return;
         }
 

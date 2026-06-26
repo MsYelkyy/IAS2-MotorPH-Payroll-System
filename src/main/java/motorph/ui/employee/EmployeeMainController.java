@@ -86,7 +86,7 @@ public class EmployeeMainController {
     private VBox attendanceView;
 
     @FXML
-    private VBox leaveView;
+    private StackPane leaveView;
 
     @FXML
     private StackPane overtimeView;
