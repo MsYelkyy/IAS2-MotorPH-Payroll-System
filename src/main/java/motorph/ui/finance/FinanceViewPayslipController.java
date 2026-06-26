@@ -225,7 +225,6 @@ public class FinanceViewPayslipController {
                 + "Payroll Period: " + DATE_FMT.format(payslip.getStartDate())
                         + " - " + DATE_FMT.format(payslip.getEndDate()) + "\n"
                 + "Pay Date: " + DATE_FMT.format(payslip.getPayDate()) + "\n\n"
-                + "Total Hours Worked: " + String.format("%.2f", payslip.getTotalHoursWorked()) + "\n"
                 + "Gross Pay: " + UiFormatter.formatPeso(payslip.getGrossPay()) + "\n"
                 + "Total Deductions: " + UiFormatter.formatPeso(payslip.getTotalDeductions()) + "\n"
                 + "Net Pay: " + UiFormatter.formatPeso(payslip.getNetPay()) + "\n"
