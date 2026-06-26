@@ -80,7 +80,7 @@ public class EmployeeMainController {
     private VBox dashboardView;
 
     @FXML
-    private VBox profileView;
+    private StackPane profileView;
 
     @FXML
     private VBox attendanceView;
