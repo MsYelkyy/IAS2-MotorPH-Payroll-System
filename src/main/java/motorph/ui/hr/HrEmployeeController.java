@@ -850,7 +850,10 @@ public class HrEmployeeController {
             for (Position p : allPositions) {
                 positionsByDept.computeIfAbsent(p.getDepartmentId(), k -> new ArrayList<>()).add(p);
             }
-        } catch (Exception ignored) { }
+        } catch (Exception e) {
+            // leaves the dropdown caches empty on load failure
+            LOGGER.log(Level.WARNING, "Failed to load departments and positions", e);
+        }
     }
 
     private void loadEmployees() {
@@ -1438,8 +1441,9 @@ public class HrEmployeeController {
                         }
                     }
                 }
-            } catch (Exception ignored) {
-                // fall through to initials
+            } catch (Exception e) {
+                // falls through to initials
+                LOGGER.log(Level.FINE, "Could not load employee summary photo", e);
             }
         }
 
@@ -1504,7 +1508,9 @@ public class HrEmployeeController {
     private String companyEmailFor(int employeeId) {
         try {
             return safe(userAccountService.getCompanyEmailByEmployeeId(employeeId));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // returns blank when the account email cannot be resolved
+            LOGGER.log(Level.FINE, "Could not resolve company email for employee " + employeeId, e);
             return "";
         }
     }

@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Payrun;
 import motorph.domain.value.PayrollType;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -42,7 +44,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payrun by id.", e);
+            throw new DataAccessException("Failed to find payrun by id.", e);
         }
 
         return null;
@@ -71,7 +73,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payruns.", e);
+            throw new DataAccessException("Failed to find payruns.", e);
         }
 
         return payruns;
@@ -102,7 +104,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payruns with payroll results.", e);
+            throw new DataAccessException("Failed to find payruns with payroll results.", e);
         }
 
         return payruns;
@@ -135,7 +137,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payruns by pay date.", e);
+            throw new DataAccessException("Failed to find payruns by pay date.", e);
         }
 
         return payruns;
@@ -162,7 +164,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payrun existence.", e);
+            throw new DataAccessException("Failed to check payrun existence.", e);
         }
 
         return false;
@@ -189,7 +191,7 @@ public class PayrunRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check overlapping payruns.", e);
+            throw new DataAccessException("Failed to check overlapping payruns.", e);
         }
 
         return false;
@@ -223,10 +225,10 @@ public class PayrunRepository {
                 }
             }
 
-            throw new RuntimeException("No ID generated for payrun.");
+            throw new DataAccessException("No ID generated for payrun.");
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payrun.", e);
+            throw new DataAccessException("Failed to save payrun.", e);
         }
     }
 
@@ -253,7 +255,7 @@ public class PayrunRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payrun.", e);
+            throw new DataAccessException("Failed to save payrun.", e);
         }
     }
 

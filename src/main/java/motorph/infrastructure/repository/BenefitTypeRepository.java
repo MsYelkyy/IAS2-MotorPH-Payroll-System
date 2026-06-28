@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.infrastructure.config.DatabaseConnection;
 
 import java.sql.Connection;
@@ -30,7 +32,7 @@ public class BenefitTypeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find benefit type by code.", e);
+            throw new DataAccessException("Failed to find benefit type by code.", e);
         }
     }
 

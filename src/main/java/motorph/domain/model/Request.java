@@ -87,7 +87,13 @@ public abstract class Request implements Approvable {
 
     // cancels the request
     public void cancel() {
+        cancel(null);
+    }
+
+    // overload: cancels the request and records a reason
+    public void cancel(String reason) {
         this.status = RequestStatus.CANCELLED;
+        this.remarks = clean(reason);
         this.dateReviewed = LocalDateTime.now();
     }
 

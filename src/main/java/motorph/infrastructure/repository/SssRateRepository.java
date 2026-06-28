@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.systemconfig.SssRateDTO;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -27,7 +29,7 @@ public class SssRateRepository {
              ResultSet rs = s.executeQuery()) {
             while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load SSS rates.", e);
+            throw new DataAccessException("Failed to load SSS rates.", e);
         }
         return list;
     }
@@ -48,7 +50,7 @@ public class SssRateRepository {
                 return rs.next() ? mapRow(rs) : null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load effective SSS rate.", e);
+            throw new DataAccessException("Failed to load effective SSS rate.", e);
         }
     }
 
@@ -72,7 +74,7 @@ public class SssRateRepository {
             setNullableDate(s, 7, dto.getEffectiveEndDate());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save SSS rate.", e);
+            throw new DataAccessException("Failed to save SSS rate.", e);
         }
     }
 
@@ -96,7 +98,7 @@ public class SssRateRepository {
             s.setInt(7, dto.getSssRateId());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update SSS rate.", e);
+            throw new DataAccessException("Failed to update SSS rate.", e);
         }
     }
 
@@ -108,7 +110,7 @@ public class SssRateRepository {
             s.setDate(1, Date.valueOf(endDate));
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to close open-ended SSS rates.", e);
+            throw new DataAccessException("Failed to close open-ended SSS rates.", e);
         }
     }
 

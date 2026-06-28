@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -144,6 +145,7 @@ public class EmployeeService {
     public List<EmployeeSummaryDTO> getAllEmployeeSummaries() {
         return employeeRepository.findAllWithInactive()
                 .stream()
+                .sorted(Comparator.comparing(e -> e.getFullName(true), String.CASE_INSENSITIVE_ORDER))
                 .map(this::toSummaryDTO)
                 .collect(Collectors.toList());
     }

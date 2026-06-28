@@ -33,9 +33,13 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Displays the employee dashboard: metrics, charts, and quick-action cards, all backed by real data for the logged-in employee. */
 public class EmployeeDashboardController {
+
+    private static final Logger logger = Logger.getLogger(EmployeeDashboardController.class.getName());
 
     private static final DateTimeFormatter PERIOD_FMT = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH);
     private static final DateTimeFormatter PERIOD_FMT_YEAR = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ENGLISH);
@@ -90,15 +94,25 @@ public class EmployeeDashboardController {
             return;
         }
 
-        try { refreshNetPay(); } catch (Throwable ignored) {}
-        try { refreshPendingRequests(); } catch (Throwable ignored) {}
-        try { refreshLeaveCredits(); } catch (Throwable ignored) {}
-        try { refreshAttendanceMetrics(employeeId); } catch (Throwable ignored) {}
-        try { refreshPayrollTrendChart(employeeId); } catch (Throwable ignored) {}
-        try { refreshEarningsBreakdownChart(employeeId); } catch (Throwable ignored) {}
-        try { refreshAttendanceSummaryChart(employeeId); } catch (Throwable ignored) {}
-        try { refreshLeaveSummary(employeeId); } catch (Throwable ignored) {}
-        try { refreshBottomCards(employeeId); } catch (Throwable ignored) {}
+        // refreshes each widget independently so one failure does not break the dashboard
+        refreshWidget("net pay", this::refreshNetPay);
+        refreshWidget("pending requests", this::refreshPendingRequests);
+        refreshWidget("leave credits", this::refreshLeaveCredits);
+        refreshWidget("attendance metrics", () -> refreshAttendanceMetrics(employeeId));
+        refreshWidget("payroll trend chart", () -> refreshPayrollTrendChart(employeeId));
+        refreshWidget("earnings breakdown chart", () -> refreshEarningsBreakdownChart(employeeId));
+        refreshWidget("attendance summary chart", () -> refreshAttendanceSummaryChart(employeeId));
+        refreshWidget("leave summary", () -> refreshLeaveSummary(employeeId));
+        refreshWidget("bottom cards", () -> refreshBottomCards(employeeId));
+    }
+
+    // runs a single widget refresh, logging any failure instead of swallowing it
+    private void refreshWidget(String widgetName, Runnable refreshAction) {
+        try {
+            refreshAction.run();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to refresh dashboard widget: " + widgetName, e);
+        }
     }
 
     // ----- Metric cards -----
@@ -268,8 +282,9 @@ public class EmployeeDashboardController {
                 leaveSummaryList.getChildren().add(
                         buildLeaveSummaryRow(row.getLeaveTypeName(), row.getRemainingCredits()));
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // leave summary stays empty on service error
+            logger.log(Level.WARNING, "Failed to load leave summary", e);
         }
     }
 
@@ -337,7 +352,9 @@ public class EmployeeDashboardController {
         Optional<PayrollResult> latest = Optional.empty();
         try {
             latest = latestResult(employeeId);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // leaves latest empty so the labels fall back to placeholders
+            logger.log(Level.FINE, "Could not load latest payroll result", e);
         }
 
         // Recent payslip period label
@@ -412,7 +429,9 @@ public class EmployeeDashboardController {
             if (payrun != null && payrun.getEndDate() != null) {
                 return PERIOD_FMT.format(payrun.getEndDate());
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // falls back to the generation date below
+            logger.log(Level.FINE, "Could not resolve payrun period for chart label", e);
         }
         return result.getGeneratedAt().toLocalDate().format(PERIOD_FMT);
     }

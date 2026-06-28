@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.GovernmentDetails;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -38,7 +40,7 @@ public class GovernmentDetailsRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find government details by id.", e);
+            throw new DataAccessException("Failed to find government details by id.", e);
         }
 
         return null;
@@ -69,7 +71,7 @@ public class GovernmentDetailsRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find government details by employee id.", e);
+            throw new DataAccessException("Failed to find government details by employee id.", e);
         }
 
         return null;
@@ -100,7 +102,7 @@ public class GovernmentDetailsRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save government details.", e);
+            throw new DataAccessException("Failed to save government details.", e);
         }
     }
 
@@ -129,7 +131,7 @@ public class GovernmentDetailsRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update government details.", e);
+            throw new DataAccessException("Failed to update government details.", e);
         }
     }
 

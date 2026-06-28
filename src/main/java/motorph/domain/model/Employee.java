@@ -135,6 +135,11 @@ public class Employee {
         return firstName + " " + lastName;
     }
 
+    // overload: returns the full name as "Last, First" when lastNameFirst is true
+    public String getFullName(boolean lastNameFirst) {
+        return lastNameFirst ? lastName + ", " + firstName : getFullName();
+    }
+
     // checks if the employee is regular
     public boolean isRegular() {
         return employmentStatus == EmploymentStatus.REGULAR;

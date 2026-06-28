@@ -8,8 +8,7 @@
 	<field name="employeeName" class="java.lang.String"/>
 	<field name="positionName" class="java.lang.String"/>
 	<field name="departmentName" class="java.lang.String"/>
-	<field name="payrunId" class="java.lang.Integer"/>
-	<field name="payDate" class="java.time.LocalDate"/>
+	<field name="payrollMonth" class="java.lang.String"/>
 	<field name="grossPay" class="java.lang.Double"/>
 	<field name="sssNumber" class="java.lang.String"/>
 	<field name="sssContribution" class="java.lang.Double"/>

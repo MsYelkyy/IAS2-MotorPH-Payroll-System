@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Shared logic for every role's Support Tickets screen.
@@ -46,6 +48,8 @@ import java.util.stream.Collectors;
  * which category filter options to show.
  */
 public abstract class BaseSupportTicketController {
+
+    private static final Logger logger = Logger.getLogger(BaseSupportTicketController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
@@ -537,8 +541,9 @@ public abstract class BaseSupportTicketController {
         try {
             Employee employee = employeeService.getEmployeeById(ticket.getEmployeeId());
             employeeName = employee.getFullName();
-        } catch (Exception ignored) {
-            // fall back to ID label if employee lookup fails
+        } catch (Exception e) {
+            // falls back to the ID label if employee lookup fails
+            logger.log(Level.FINE, "Could not resolve employee name for ticket row", e);
         }
         return new SupportTicketRowDTO(
                 ticket.getTicketId(),

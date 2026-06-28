@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.DeductionType;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -37,7 +39,7 @@ public class DeductionTypeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find deduction type by code.", e);
+            throw new DataAccessException("Failed to find deduction type by code.", e);
         }
 
         return null;

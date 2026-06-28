@@ -1,5 +1,6 @@
 package motorph.infrastructure.repository.report;
 
+import motorph.application.exception.DataAccessException;
 
 import motorph.application.dto.report.payroll.OrganizationPayrollReportDTO;
 import motorph.application.dto.report.payroll.PayrollSummaryReportDTO;
@@ -26,6 +27,7 @@ public class PayrollReportRepository {
    // finds organization payroll report data using optional filters
    public List<OrganizationPayrollReportDTO> findOrganizationPayrollReport(
            Integer departmentId,
+           String departmentName,
            Integer employeeId,
            Integer payrunId,
            LocalDate startDate,
@@ -35,65 +37,56 @@ public class PayrollReportRepository {
        List<OrganizationPayrollReportDTO> reportRows = new ArrayList<>();
 
 
+       // Reads the MONTHLY payroll summary view: one row per (employee, calendar
+       // month) with both semi-monthly cutoffs already merged. All grouping and
+       // the official monthly totals live in vw_payroll_summary_monthly; this
+       // query only selects and filters. The payrunId argument is intentionally
+       // ignored here -- a payrun is a single cutoff, which has no meaning for a
+       // monthly report; the date range selects which month(s) appear.
        StringBuilder sql = new StringBuilder("""
-               SELECT pr.payroll_result_id,
-                      e.employee_id,
-                      CONCAT(e.first_name, ' ', e.last_name) AS employee_name,
-                      pos.position_name,
-                      d.department_name,
-                      p.pay_run_id,
-                      p.start_date,
-                      p.end_date,
-                      p.pay_date,
-                      pr.total_hours_worked,
-                      pr.gross_pay,
-                      gd.sss_number,
-                      gd.philhealth_number,
-                      gd.pagibig_number,
-                      gd.tin_number,
-                      COALESCE(pd.sss_deduction, 0) AS sss_deduction,
-                      COALESCE(pd.philhealth_deduction, 0) AS philhealth_deduction,
-                      COALESCE(pd.pagibig_deduction, 0) AS pagibig_deduction,
-                      COALESCE(pd.withholding_tax, 0) AS withholding_tax,
-                      pr.total_deductions,
-                      pr.net_pay
-               FROM payroll_result pr
-               JOIN employee e
-                 ON pr.employee_id = e.employee_id
-               JOIN department d
-                 ON e.department_id = d.department_id
-               JOIN position pos
-                 ON e.position_id = pos.position_id
-               JOIN payrun p
-                 ON pr.pay_run_id = p.pay_run_id
-               LEFT JOIN government_details gd
-                 ON e.employee_id = gd.employee_id
-               LEFT JOIN (
-                   SELECT pd.payroll_result_id,
-                          SUM(CASE WHEN dt.deduction_name = 'SSS Contribution' THEN pd.amount ELSE 0 END) AS sss_deduction,
-                          SUM(CASE WHEN dt.deduction_name = 'PhilHealth Contribution' THEN pd.amount ELSE 0 END) AS philhealth_deduction,
-                          SUM(CASE WHEN dt.deduction_name = 'Pag-IBIG Contribution' THEN pd.amount ELSE 0 END) AS pagibig_deduction,
-                          SUM(CASE WHEN dt.deduction_name = 'Withholding Tax' THEN pd.amount ELSE 0 END) AS withholding_tax
-                   FROM payroll_deduction pd
-                   JOIN deduction_type dt
-                     ON pd.deduction_type_id = dt.deduction_type_id
-                   GROUP BY pd.payroll_result_id
-               ) pd
-                 ON pr.payroll_result_id = pd.payroll_result_id
-               WHERE EXISTS (
-                   SELECT 1
-                   FROM attendance a
-                   WHERE a.employee_id = pr.employee_id
-                     AND a.work_date BETWEEN p.start_date AND p.end_date
-               )
+               SELECT employee_id,
+                      employee_name,
+                      position_name,
+                      department_name,
+                      payroll_month,
+                      month_start,
+                      month_end,
+                      monthly_gross_pay,
+                      sss_number,
+                      philhealth_number,
+                      pagibig_number,
+                      tin_number,
+                      sss_deduction,
+                      philhealth_deduction,
+                      pagibig_deduction,
+                      withholding_tax,
+                      monthly_total_deductions,
+                      monthly_net_pay
+               FROM vw_payroll_summary_monthly
+               WHERE 1 = 1
                """);
 
 
        List<Object> parameters = new ArrayList<>();
 
 
-       appendPayrollFilters(sql, parameters, departmentId, employeeId, payrunId, startDate, endDate);
-       sql.append(" ORDER BY d.department_name, e.last_name, e.first_name, p.start_date");
+       if (departmentId != null && departmentName != null && !departmentName.isBlank()) {
+           sql.append(" AND department_name = ?");
+           parameters.add(departmentName);
+       }
+
+       if (employeeId != null) {
+           sql.append(" AND employee_id = ?");
+           parameters.add(employeeId);
+       }
+
+       if (startDate != null && endDate != null) {
+           sql.append(" AND month_end >= ? AND month_start <= ?");
+           parameters.add(Date.valueOf(startDate));
+           parameters.add(Date.valueOf(endDate));
+       }
+
+       sql.append(" ORDER BY department_name, employee_name, payroll_month");
 
 
        try (Connection conn = DatabaseConnection.getConnection();
@@ -111,7 +104,7 @@ public class PayrollReportRepository {
 
 
        } catch (SQLException e) {
-           throw new RuntimeException("Failed to find organization payroll report data.", e);
+           throw new DataAccessException("Failed to find organization payroll report data.", e);
        }
 
 
@@ -191,7 +184,7 @@ public class PayrollReportRepository {
 
 
        } catch (SQLException e) {
-           throw new RuntimeException("Failed to find payroll summary report data.", e);
+           throw new DataAccessException("Failed to find payroll summary report data.", e);
        }
 
 
@@ -254,7 +247,7 @@ public class PayrollReportRepository {
 
 
        } catch (SQLException e) {
-           throw new RuntimeException("Failed to find payslip report data.", e);
+           throw new DataAccessException("Failed to find payslip report data.", e);
        }
 
 
@@ -298,20 +291,17 @@ public class PayrollReportRepository {
    }
 
 
-   // maps result set to organization payroll report dto
+   // maps result set to organization payroll report dto (columns mirror vw_payroll_summary_monthly)
    private OrganizationPayrollReportDTO mapOrganizationPayrollRow(ResultSet rs) throws SQLException {
        return new OrganizationPayrollReportDTO(
-               rs.getInt("payroll_result_id"),
                rs.getInt("employee_id"),
                rs.getString("employee_name"),
                rs.getString("position_name"),
                rs.getString("department_name"),
-               rs.getInt("pay_run_id"),
-               rs.getDate("start_date").toLocalDate(),
-               rs.getDate("end_date").toLocalDate(),
-               rs.getDate("pay_date").toLocalDate(),
-               rs.getDouble("total_hours_worked"),
-               rs.getDouble("gross_pay"),
+               rs.getString("payroll_month"),
+               rs.getDate("month_start").toLocalDate(),
+               rs.getDate("month_end").toLocalDate(),
+               rs.getDouble("monthly_gross_pay"),
                rs.getString("sss_number"),
                rs.getString("philhealth_number"),
                rs.getString("pagibig_number"),
@@ -320,8 +310,8 @@ public class PayrollReportRepository {
                rs.getDouble("philhealth_deduction"),
                rs.getDouble("pagibig_deduction"),
                rs.getDouble("withholding_tax"),
-               rs.getDouble("total_deductions"),
-               rs.getDouble("net_pay")
+               rs.getDouble("monthly_total_deductions"),
+               rs.getDouble("monthly_net_pay")
        );
    }
 

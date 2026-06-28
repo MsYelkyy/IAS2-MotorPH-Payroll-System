@@ -6,23 +6,24 @@ import java.time.LocalDate;
  * Holds organization payroll report data for JasperReports.
  *
  * <p>Backs the employee-level Monthly Payroll Summary Report: one row per
- * employee per payrun, carrying government identifiers and the persisted
- * per-component contributions (SSS, PhilHealth, Pag-IBIG, withholding tax).
- * All values originate from the persisted payroll result; nothing is
- * recalculated here.</p>
+ * employee per CALENDAR MONTH (both semi-monthly cutoffs merged), carrying
+ * government identifiers and the monthly statutory contributions (SSS,
+ * PhilHealth, Pag-IBIG, withholding tax). All values originate from the
+ * {@code vw_payroll_summary_monthly} view, which sums the persisted payroll
+ * results; nothing is recalculated here.</p>
  */
 public class OrganizationPayrollReportDTO {
 
-    private final int payrollResultId;
     private final int employeeId;
     private final String employeeName;
     private final String positionName;
     private final String departmentName;
-    private final int payrunId;
-    private final LocalDate periodStartDate;
-    private final LocalDate periodEndDate;
-    private final LocalDate payDate;
-    private final double totalHoursWorked;
+
+    // calendar month this row summarizes (e.g. "2024-06") and its bounds
+    private final String payrollMonth;
+    private final LocalDate monthStart;
+    private final LocalDate monthEnd;
+
     private final double grossPay;
 
     // government identifiers
@@ -31,7 +32,7 @@ public class OrganizationPayrollReportDTO {
     private final String pagibigNumber;
     private final String tinNumber;
 
-    // persisted contribution components
+    // monthly contribution components
     private final double sssContribution;
     private final double philhealthContribution;
     private final double pagibigContribution;
@@ -41,16 +42,13 @@ public class OrganizationPayrollReportDTO {
     private final double netPay;
 
     // constructors
-    public OrganizationPayrollReportDTO(int payrollResultId,
-                                        int employeeId,
+    public OrganizationPayrollReportDTO(int employeeId,
                                         String employeeName,
                                         String positionName,
                                         String departmentName,
-                                        int payrunId,
-                                        LocalDate periodStartDate,
-                                        LocalDate periodEndDate,
-                                        LocalDate payDate,
-                                        double totalHoursWorked,
+                                        String payrollMonth,
+                                        LocalDate monthStart,
+                                        LocalDate monthEnd,
                                         double grossPay,
                                         String sssNumber,
                                         String philhealthNumber,
@@ -63,16 +61,13 @@ public class OrganizationPayrollReportDTO {
                                         double totalDeductions,
                                         double netPay) {
 
-        this.payrollResultId = payrollResultId;
         this.employeeId = employeeId;
         this.employeeName = employeeName;
         this.positionName = positionName;
         this.departmentName = departmentName;
-        this.payrunId = payrunId;
-        this.periodStartDate = periodStartDate;
-        this.periodEndDate = periodEndDate;
-        this.payDate = payDate;
-        this.totalHoursWorked = totalHoursWorked;
+        this.payrollMonth = payrollMonth;
+        this.monthStart = monthStart;
+        this.monthEnd = monthEnd;
         this.grossPay = grossPay;
         this.sssNumber = clean(sssNumber);
         this.philhealthNumber = clean(philhealthNumber);
@@ -87,10 +82,6 @@ public class OrganizationPayrollReportDTO {
     }
 
     // getters
-    public int getPayrollResultId() {
-        return payrollResultId;
-    }
-
     public int getEmployeeId() {
         return employeeId;
     }
@@ -107,24 +98,16 @@ public class OrganizationPayrollReportDTO {
         return departmentName;
     }
 
-    public int getPayrunId() {
-        return payrunId;
+    public String getPayrollMonth() {
+        return payrollMonth;
     }
 
-    public LocalDate getPeriodStartDate() {
-        return periodStartDate;
+    public LocalDate getMonthStart() {
+        return monthStart;
     }
 
-    public LocalDate getPeriodEndDate() {
-        return periodEndDate;
-    }
-
-    public LocalDate getPayDate() {
-        return payDate;
-    }
-
-    public double getTotalHoursWorked() {
-        return totalHoursWorked;
+    public LocalDate getMonthEnd() {
+        return monthEnd;
     }
 
     public double getGrossPay() {

@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Attendance;
 import motorph.domain.value.AttendanceStatus;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -44,7 +46,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find attendance by employee id.", e);
+            throw new DataAccessException("Failed to find attendance by employee id.", e);
         }
 
         return attendances;
@@ -69,7 +71,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all attendance records.", e);
+            throw new DataAccessException("Failed to find all attendance records.", e);
         }
 
         return attendances;
@@ -99,7 +101,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find attendance by date range.", e);
+            throw new DataAccessException("Failed to find attendance by date range.", e);
         }
 
         return attendances;
@@ -130,7 +132,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find attendance by employee and date range.", e);
+            throw new DataAccessException("Failed to find attendance by employee and date range.", e);
         }
 
         return attendances;
@@ -157,7 +159,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find today's attendance.", e);
+            throw new DataAccessException("Failed to find today's attendance.", e);
         }
 
         return null;
@@ -180,7 +182,7 @@ public class AttendanceRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check attendance existence.", e);
+            throw new DataAccessException("Failed to check attendance existence.", e);
         }
 
         return false;
@@ -211,7 +213,7 @@ public class AttendanceRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to insert time in.", e);
+            throw new DataAccessException("Failed to insert time in.", e);
         }
     }
 
@@ -233,7 +235,7 @@ public class AttendanceRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update time out.", e);
+            throw new DataAccessException("Failed to update time out.", e);
         }
     }
 
@@ -254,7 +256,7 @@ public class AttendanceRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update attendance status.", e);
+            throw new DataAccessException("Failed to update attendance status.", e);
         }
     }
 
@@ -269,7 +271,7 @@ public class AttendanceRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to delete attendance record.", e);
+            throw new DataAccessException("Failed to delete attendance record.", e);
         }
     }
 

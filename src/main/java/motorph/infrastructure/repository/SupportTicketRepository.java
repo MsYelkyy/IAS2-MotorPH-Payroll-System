@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.SupportTicket;
 import motorph.domain.value.RoutingTeam;
 import motorph.domain.value.SupportTicketCategory;
@@ -43,7 +45,7 @@ public class SupportTicketRepository implements Repository<SupportTicket, Intege
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save support ticket.", e);
+            throw new DataAccessException("Failed to save support ticket.", e);
         }
     }
 
@@ -68,7 +70,7 @@ public class SupportTicketRepository implements Repository<SupportTicket, Intege
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find support ticket by id.", e);
+            throw new DataAccessException("Failed to find support ticket by id.", e);
         }
 
         return null;
@@ -219,7 +221,7 @@ public class SupportTicketRepository implements Repository<SupportTicket, Intege
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query support tickets.", e);
+            throw new DataAccessException("Failed to query support tickets.", e);
         }
 
         return tickets;
@@ -239,7 +241,7 @@ public class SupportTicketRepository implements Repository<SupportTicket, Intege
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update support ticket.", e);
+            throw new DataAccessException("Failed to update support ticket.", e);
         }
     }
 

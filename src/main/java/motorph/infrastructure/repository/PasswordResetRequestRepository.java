@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.value.PasswordResetStatus;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -54,7 +56,7 @@ public class PasswordResetRequestRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save password reset request.", e);
+            throw new DataAccessException("Failed to save password reset request.", e);
         }
 
         throw new IllegalStateException("Failed to retrieve generated reset request ID.");
@@ -80,7 +82,7 @@ public class PasswordResetRequestRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find password reset request by id.", e);
+            throw new DataAccessException("Failed to find password reset request by id.", e);
         }
 
         return null;
@@ -109,7 +111,7 @@ public class PasswordResetRequestRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find latest pending password reset request.", e);
+            throw new DataAccessException("Failed to find latest pending password reset request.", e);
         }
 
         return null;
@@ -133,7 +135,7 @@ public class PasswordResetRequestRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find pending password reset requests.", e);
+            throw new DataAccessException("Failed to find pending password reset requests.", e);
         }
 
         return results;
@@ -156,7 +158,7 @@ public List<PasswordResetRequest> findAll() {
         }
 
     } catch (SQLException e) {
-        throw new RuntimeException("Failed to find password reset requests.", e);
+        throw new DataAccessException("Failed to find password reset requests.", e);
     }
 
     return results;
@@ -187,7 +189,7 @@ public List<PasswordResetRequest> findByStatus(PasswordResetStatus status) {
         }
 
     } catch (SQLException e) {
-        throw new RuntimeException("Failed to find password reset requests by status.", e);
+        throw new DataAccessException("Failed to find password reset requests by status.", e);
     }
 
     return results;
@@ -235,7 +237,7 @@ public List<PasswordResetRequest> findByStatus(PasswordResetStatus status) {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to mark password reset request as manually resolved.", e);
+            throw new DataAccessException("Failed to mark password reset request as manually resolved.", e);
         }
     }
 
@@ -280,7 +282,7 @@ public List<PasswordResetRequest> findByStatus(PasswordResetStatus status) {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to cancel password reset request.", e);
+            throw new DataAccessException("Failed to cancel password reset request.", e);
         }
     }
 
@@ -325,7 +327,7 @@ public List<PasswordResetRequest> findByStatus(PasswordResetStatus status) {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(errorMessage, e);
+            throw new DataAccessException(errorMessage, e);
         }
     }
 

@@ -9,8 +9,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /** Provides helpers for showing success and error messages on Labels. */
 public final class UiMessageUtil {
+
+    private static final Logger logger = Logger.getLogger(UiMessageUtil.class.getName());
 
     // utility class — no instances
     private UiMessageUtil() {
@@ -65,6 +70,12 @@ public final class UiMessageUtil {
      */
     public static void showErrorToast(StackPane root, String message) {
         showToast(root, message, Pos.BOTTOM_RIGHT, "toast-label-danger");
+    }
+
+    // logs the failure and shows a user-friendly error toast
+    public static void handle(StackPane root, String context, Exception e) {
+        logger.log(Level.WARNING, context, e);
+        showErrorToast(root, toUserMessage(e));
     }
 
     // injects a transient toast that fades in, holds, then removes itself

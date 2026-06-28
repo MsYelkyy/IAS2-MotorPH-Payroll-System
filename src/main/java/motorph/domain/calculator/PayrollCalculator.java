@@ -97,7 +97,7 @@ public class PayrollCalculator {
                     monthlyBasic + overtimePay - mandatory - lateDeduction - undertimeDeduction
             );
 
-            tax = computeMonthlyTax(taxable, 0.0, rates.getTaxBrackets());
+            tax = computeMonthlyTax(taxable, rates.getTaxBrackets());
         }
 
         double totalDeductions = lateDeduction + undertimeDeduction + sss + philhealth + pagibig + tax;
@@ -121,29 +121,55 @@ public class PayrollCalculator {
         );
     }
 
-    /**
-     * Holds the computed attendance deductions.
-     */
-    private static class AttendanceDeduction {
+    // calculates paid regular hours with unpaid lunch deducted
+    public static double calculatePaidRegularHours(Attendance attendance) {
+        if (attendance == null) {
+            return 0.0;
+        }
+        return calculatePaidRegularHours(attendance.getTimeIn(), attendance.getTimeOut());
+    }
 
-        private final double lateDeduction;
-        private final double undertimeDeduction;
-
-        // constructors
-        AttendanceDeduction(double lateDeduction, double undertimeDeduction) {
-            this.lateDeduction = lateDeduction;
-            this.undertimeDeduction = undertimeDeduction;
+    // overload: same calculation but takes the time-in and time-out directly
+    public static double calculatePaidRegularHours(LocalTime timeIn, LocalTime timeOut) {
+        if (timeIn == null || timeOut == null) {
+            return 0.0;
         }
 
-        // getters
-        double getLateDeduction() {
-            return lateDeduction;
+        double actualHours = Duration.between(timeIn, timeOut).toMinutes() / 60.0;
+        double paidHours = actualHours - UNPAID_LUNCH_HOURS;
+
+        return Math.max(0.0, Math.min(paidHours, MAX_REGULAR_HOURS_PER_DAY));
+    }
+
+    // overload: computes tax when the taxable amount is already known
+    public static double computeMonthlyTax(
+            double taxableIncome,
+            List<WithholdingTaxBracketDTO> brackets) {
+        return computeMonthlyTax(taxableIncome, 0.0, brackets);
+    }
+
+    // computes withholding tax from monthly taxable income using the effective tax brackets
+    public static double computeMonthlyTax(
+            double monthlyGross,
+            double monthlyDeductions,
+            List<WithholdingTaxBracketDTO> brackets) {
+
+        double taxable = Math.max(0.0, monthlyGross - monthlyDeductions);
+
+        if (brackets == null || brackets.isEmpty()) {
+            return 0.0;
         }
 
-        // getters
-        double getUndertimeDeduction() {
-            return undertimeDeduction;
+        for (WithholdingTaxBracketDTO bracket : brackets) {
+            boolean withinMin = taxable >= bracket.getMinSalary();
+            boolean withinMax = bracket.getMaxSalary() <= 0 || taxable <= bracket.getMaxSalary();
+
+            if (withinMin && withinMax) {
+                return bracket.getBaseTax() + (taxable - bracket.getExcessOver()) * bracket.getTaxRate();
+            }
         }
+
+        return 0.0;
     }
 
     // filters attendance logs within the current cutoff range
@@ -195,22 +221,6 @@ public class PayrollCalculator {
         }
 
         return new AttendanceDeduction(lateTotal, undertimeTotal);
-    }
-
-    // calculates paid regular hours with unpaid lunch deducted
-    public static double calculatePaidRegularHours(Attendance attendance) {
-        if (attendance == null || attendance.getTimeIn() == null || attendance.getTimeOut() == null) {
-            return 0.0;
-        }
-
-        double actualHours = Duration.between(
-                attendance.getTimeIn(),
-                attendance.getTimeOut()
-        ).toMinutes() / 60.0;
-
-        double paidHours = actualHours - UNPAID_LUNCH_HOURS;
-
-        return Math.max(0.0, Math.min(paidHours, MAX_REGULAR_HOURS_PER_DAY));
     }
 
     // calculates the employee SSS share; uses fixed cap contribution when salary exceeds max_salary, otherwise prorates
@@ -271,27 +281,26 @@ public class PayrollCalculator {
         return value;
     }
 
-    // computes withholding tax from monthly taxable income using the effective tax brackets
-    public static double computeMonthlyTax(
-            double monthlyGross,
-            double monthlyDeductions,
-            List<WithholdingTaxBracketDTO> brackets) {
+    // Holds the computed attendance deductions.
+    private static class AttendanceDeduction {
 
-        double taxable = Math.max(0.0, monthlyGross - monthlyDeductions);
+        private final double lateDeduction;
+        private final double undertimeDeduction;
 
-        if (brackets == null || brackets.isEmpty()) {
-            return 0.0;
+        // constructors
+        AttendanceDeduction(double lateDeduction, double undertimeDeduction) {
+            this.lateDeduction = lateDeduction;
+            this.undertimeDeduction = undertimeDeduction;
         }
 
-        for (WithholdingTaxBracketDTO bracket : brackets) {
-            boolean withinMin = taxable >= bracket.getMinSalary();
-            boolean withinMax = bracket.getMaxSalary() <= 0 || taxable <= bracket.getMaxSalary();
-
-            if (withinMin && withinMax) {
-                return bracket.getBaseTax() + (taxable - bracket.getExcessOver()) * bracket.getTaxRate();
-            }
+        // getters
+        double getLateDeduction() {
+            return lateDeduction;
         }
 
-        return 0.0;
+        // getters
+        double getUndertimeDeduction() {
+            return undertimeDeduction;
+        }
     }
 }

@@ -4,9 +4,14 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 
 /** Provides helpers for navigating between top-level FXML scenes. */
 public final class NavigationUtil {
+
+    private static final Logger logger = Logger.getLogger(NavigationUtil.class.getName());
 
     // utility class — no instances
     private NavigationUtil() {
@@ -56,7 +61,7 @@ public final class NavigationUtil {
             ThemeManager.getInstance().applyCurrentTo(root);
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Navigation failed: " + fxmlPath, e);
             throw new RuntimeException("Navigation failed: " + fxmlPath, e);
         }
     }

@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.TwoFactorCode;
 import motorph.domain.value.OtpPurpose;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -52,7 +54,7 @@ public class TwoFactorCodeRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save two-factor code.", e);
+            throw new DataAccessException("Failed to save two-factor code.", e);
         }
     }
 
@@ -94,7 +96,7 @@ public class TwoFactorCodeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find latest valid two-factor code.", e);
+            throw new DataAccessException("Failed to find latest valid two-factor code.", e);
         }
 
         return null;
@@ -136,7 +138,7 @@ public class TwoFactorCodeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find latest valid password reset OTP.", e);
+            throw new DataAccessException("Failed to find latest valid password reset OTP.", e);
         }
 
         return null;
@@ -191,7 +193,7 @@ public class TwoFactorCodeRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to expire old OTP codes.", e);
+            throw new DataAccessException("Failed to expire old OTP codes.", e);
         }
     }
 
@@ -209,7 +211,7 @@ public class TwoFactorCodeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(errorMessage, e);
+            throw new DataAccessException(errorMessage, e);
         }
     }
 

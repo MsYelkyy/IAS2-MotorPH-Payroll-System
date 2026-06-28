@@ -360,7 +360,8 @@ public class EmployeeOvertimeController {
         }
 
         try {
-            overtimeService.cancelOvertimeRequest(employeeId, row.request().getRequestId());
+            overtimeService.cancelOvertimeRequest(
+                    employeeId, row.request().getRequestId(), "Cancelled by employee.");
             refresh();
             UiMessageUtil.showToast(toastRoot, "Pending overtime request cancelled.");
         } catch (Exception e) {

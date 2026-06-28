@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Position;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -54,7 +56,7 @@ public class PositionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query positions.", e);
+            throw new DataAccessException("Failed to query positions.", e);
         }
 
         return list;

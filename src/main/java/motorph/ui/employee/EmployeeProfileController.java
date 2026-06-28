@@ -22,9 +22,13 @@ import javafx.stage.FileChooser;
 
 import java.io.File;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Displays the logged-in employee's profile and handles view/edit mode toggling. */
 public class EmployeeProfileController {
+
+    private static final Logger logger = Logger.getLogger(EmployeeProfileController.class.getName());
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMMM d, yyyy");
     private static final double PHOTO_W = 174;
@@ -345,8 +349,9 @@ public class EmployeeProfileController {
                         }
                     }
                 }
-            } catch (Exception ignored) {
-                // fall through to initials
+            } catch (Exception e) {
+                // falls through to initials
+                logger.log(Level.FINE, "Could not load profile photo", e);
             }
         }
 

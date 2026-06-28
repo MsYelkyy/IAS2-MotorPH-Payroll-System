@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.UserAccessLog;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -48,7 +50,7 @@ public class UserAccessLogRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save user access log.", e);
+            throw new DataAccessException("Failed to save user access log.", e);
         }
     }
 
@@ -179,7 +181,7 @@ public class UserAccessLogRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query user access logs.", e);
+            throw new DataAccessException("Failed to query user access logs.", e);
         }
 
         return logs;

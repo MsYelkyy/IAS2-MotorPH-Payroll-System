@@ -202,6 +202,49 @@ class PayrollCalculatorTest {
     }
 
 
+    // overloaded computeMonthlyTax matches the full version with zero deductions
+    @Test
+    @DisplayName("computeMonthlyTax overload should match the full method with zero deductions")
+    void computeMonthlyTaxOverloadShouldMatchFullMethodWithZeroDeductions() {
+        List<WithholdingTaxBracketDTO> brackets = createRates().getTaxBrackets();
+
+        double overloaded = PayrollCalculator.computeMonthlyTax(30000, brackets);
+        double full = PayrollCalculator.computeMonthlyTax(30000, 0.0, brackets);
+
+        assertEquals(full, overloaded, 0.01);
+    }
+
+
+    // overloaded calculatePaidRegularHours matches the attendance version
+    @Test
+    @DisplayName("calculatePaidRegularHours overload should match the attendance version")
+    void calculatePaidRegularHoursOverloadShouldMatchAttendanceVersion() {
+        Attendance attendance = new Attendance(
+                1,
+                10001,
+                LocalDate.of(2025, 6, 10),
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                AttendanceStatus.PRESENT
+        );
+
+        double fromTimes = PayrollCalculator.calculatePaidRegularHours(LocalTime.of(8, 0), LocalTime.of(18, 0));
+        double fromAttendance = PayrollCalculator.calculatePaidRegularHours(attendance);
+
+        assertEquals(8.00, fromTimes, 0.01);
+        assertEquals(fromAttendance, fromTimes, 0.01);
+    }
+
+
+    // overloaded calculatePaidRegularHours returns zero for null times
+    @Test
+    @DisplayName("calculatePaidRegularHours overload should return zero for null times")
+    void calculatePaidRegularHoursOverloadShouldReturnZeroForNullTimes() {
+        assertEquals(0.00, PayrollCalculator.calculatePaidRegularHours(null, LocalTime.of(17, 0)), 0.01);
+        assertEquals(0.00, PayrollCalculator.calculatePaidRegularHours(LocalTime.of(8, 0), null), 0.01);
+    }
+
+
     // rejects null payroll input
     @Test
     @DisplayName("computeDeductions should reject null payroll input")

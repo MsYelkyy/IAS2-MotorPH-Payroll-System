@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.systemconfig.PhilHealthRateDTO;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -28,7 +30,7 @@ public class PhilHealthRateRepository {
              ResultSet rs = s.executeQuery()) {
             while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load PhilHealth rates.", e);
+            throw new DataAccessException("Failed to load PhilHealth rates.", e);
         }
         return list;
     }
@@ -49,7 +51,7 @@ public class PhilHealthRateRepository {
                 return rs.next() ? mapRow(rs) : null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load effective PhilHealth rate.", e);
+            throw new DataAccessException("Failed to load effective PhilHealth rate.", e);
         }
     }
 
@@ -74,7 +76,7 @@ public class PhilHealthRateRepository {
             setNullableDate(s, 8, dto.getEffectiveEndDate());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save PhilHealth rate.", e);
+            throw new DataAccessException("Failed to save PhilHealth rate.", e);
         }
     }
 
@@ -99,7 +101,7 @@ public class PhilHealthRateRepository {
             s.setInt(8, dto.getPhilhealthRateId());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update PhilHealth rate.", e);
+            throw new DataAccessException("Failed to update PhilHealth rate.", e);
         }
     }
 
@@ -115,7 +117,7 @@ public class PhilHealthRateRepository {
             s.setDate(1, Date.valueOf(endDate));
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to close open-ended PhilHealth rates.", e);
+            throw new DataAccessException("Failed to close open-ended PhilHealth rates.", e);
         }
     }
 

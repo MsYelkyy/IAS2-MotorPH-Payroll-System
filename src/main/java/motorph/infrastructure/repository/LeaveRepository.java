@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.LeaveRequest;
 import motorph.domain.value.RequestStatus;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -65,7 +67,7 @@ public class LeaveRepository implements Repository<LeaveRequest, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find leave request by id.", e);
+            throw new DataAccessException("Failed to find leave request by id.", e);
         }
 
         return null;
@@ -144,7 +146,7 @@ public class LeaveRepository implements Repository<LeaveRequest, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check leave conflict.", e);
+            throw new DataAccessException("Failed to check leave conflict.", e);
         }
     }
 
@@ -189,7 +191,7 @@ public class LeaveRepository implements Repository<LeaveRequest, Integer> {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save leave request.", e);
+            throw new DataAccessException("Failed to save leave request.", e);
         }
     }
 
@@ -225,7 +227,7 @@ public class LeaveRepository implements Repository<LeaveRequest, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update leave request status.", e);
+            throw new DataAccessException("Failed to update leave request status.", e);
         }
     }
 
@@ -252,7 +254,7 @@ public class LeaveRepository implements Repository<LeaveRequest, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query leave requests.", e);
+            throw new DataAccessException("Failed to query leave requests.", e);
         }
 
         return requests;
