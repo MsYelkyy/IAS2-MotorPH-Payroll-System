@@ -515,8 +515,7 @@
     -fx-max-height: 42;
 }
 
-/* ComboBox internals: pin the display cell and the arrow button so the
-   editor area keeps a constant width regardless of the selected value. */
+/* Pin the CLOSED combo's display cell only — not the dropdown rows. */
 .admin-add-form-panel .combo-box.emp-grid-control > .list-cell {
     -fx-min-height: 40;
     -fx-pref-height: 40;
@@ -526,6 +525,14 @@
     -fx-ellipsis-string: "...";
     -fx-wrap-text: false;
     -fx-alignment: CENTER_LEFT;
+}
+
+/* Keep dropdown rows at natural height so all positions show at once. */
+.admin-add-form-panel .combo-box.emp-grid-control .combo-box-popup .list-cell,
+.combo-box-popup .list-cell {
+    -fx-min-height: -1;
+    -fx-pref-height: -1;
+    -fx-max-height: -1;
 }
 
 .admin-add-form-panel .combo-box.emp-grid-control > .arrow-button {

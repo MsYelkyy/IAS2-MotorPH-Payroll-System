@@ -4,145 +4,134 @@ import java.time.LocalDate;
 
 /**
  * Stores employee payslip report data.
+ *
+ * <p>Mirrors the {@code vw_employee_payslip_report} database view one-to-one:
+ * every field is a pass-through column from that view, and the view exposes
+ * exactly the columns the payslip report prints. No payroll figure is computed
+ * here; the view (and the application that persisted the payroll result) remains
+ * the single source of truth.</p>
  */
 public class PayslipReportDTO {
 
+    // identity / routing keys
+    private final int payrollResultId;
     private final int employeeId;
-    private final String employeeName;
-    private final String departmentName;
-    private final String positionName;
-
-    private final String tinNumber;
-    private final String sssNumber;
-    private final String philhealthNumber;
-    private final String pagibigNumber;
-
     private final int payrunId;
+
+    // employee / pay-period header
+    private final String employeeName;
+    private final String positionName;
+    private final String departmentName;
     private final LocalDate startDate;
     private final LocalDate endDate;
     private final LocalDate payDate;
-    private final double totalHoursWorked;
 
+    // salary reference
+    private final double monthlySalary;
+    private final double dailyRate;
+    private final double daysWorked;
+
+    // earnings
     private final double basicPay;
-    private final double totalBenefits;
-    private final double totalOvertime;
-    private final double grossPay;
+    private final double overtimePay;
 
+    // benefits / allowances
+    private final double riceSubsidy;
+    private final double phoneAllowance;
+    private final double clothingAllowance;
+    private final double totalBenefits;
+
+    // deductions
     private final double sssDeduction;
     private final double philhealthDeduction;
     private final double pagibigDeduction;
     private final double withholdingTax;
     private final double otherDeductions;
-    private final double totalDeductions;
 
+    // official stored totals (single source of truth)
+    private final double grossPay;
+    private final double totalDeductions;
     private final double netPay;
 
-    private final double ytdGrossPay;
-    private final double ytdWithholdingTax;
-    private final double ytdSss;
-    private final double ytdPhilhealth;
-    private final double ytdPagibig;
-    private final double ytdNetPay;
-
     // constructors
-    public PayslipReportDTO(int employeeId,
-                            String employeeName,
-                            String departmentName,
-                            String positionName,
-                            String tinNumber,
-                            String sssNumber,
-                            String philhealthNumber,
-                            String pagibigNumber,
+    public PayslipReportDTO(int payrollResultId,
+                            int employeeId,
                             int payrunId,
+                            String employeeName,
+                            String positionName,
+                            String departmentName,
                             LocalDate startDate,
                             LocalDate endDate,
                             LocalDate payDate,
-                            double totalHoursWorked,
+                            double monthlySalary,
+                            double dailyRate,
+                            double daysWorked,
                             double basicPay,
+                            double overtimePay,
+                            double riceSubsidy,
+                            double phoneAllowance,
+                            double clothingAllowance,
                             double totalBenefits,
-                            double totalOvertime,
-                            double grossPay,
                             double sssDeduction,
                             double philhealthDeduction,
                             double pagibigDeduction,
                             double withholdingTax,
                             double otherDeductions,
+                            double grossPay,
                             double totalDeductions,
-                            double netPay,
-                            double ytdGrossPay,
-                            double ytdWithholdingTax,
-                            double ytdSss,
-                            double ytdPhilhealth,
-                            double ytdPagibig,
-                            double ytdNetPay) {
+                            double netPay) {
 
+        this.payrollResultId = payrollResultId;
         this.employeeId = employeeId;
-        this.employeeName = employeeName;
-        this.departmentName = departmentName;
-        this.positionName = positionName;
-        this.tinNumber = clean(tinNumber);
-        this.sssNumber = clean(sssNumber);
-        this.philhealthNumber = clean(philhealthNumber);
-        this.pagibigNumber = clean(pagibigNumber);
         this.payrunId = payrunId;
+        this.employeeName = employeeName;
+        this.positionName = positionName;
+        this.departmentName = departmentName;
         this.startDate = startDate;
         this.endDate = endDate;
         this.payDate = payDate;
-        this.totalHoursWorked = totalHoursWorked;
+        this.monthlySalary = monthlySalary;
+        this.dailyRate = dailyRate;
+        this.daysWorked = daysWorked;
         this.basicPay = basicPay;
+        this.overtimePay = overtimePay;
+        this.riceSubsidy = riceSubsidy;
+        this.phoneAllowance = phoneAllowance;
+        this.clothingAllowance = clothingAllowance;
         this.totalBenefits = totalBenefits;
-        this.totalOvertime = totalOvertime;
-        this.grossPay = grossPay;
         this.sssDeduction = sssDeduction;
         this.philhealthDeduction = philhealthDeduction;
         this.pagibigDeduction = pagibigDeduction;
         this.withholdingTax = withholdingTax;
         this.otherDeductions = otherDeductions;
+        this.grossPay = grossPay;
         this.totalDeductions = totalDeductions;
         this.netPay = netPay;
-        this.ytdGrossPay = ytdGrossPay;
-        this.ytdWithholdingTax = ytdWithholdingTax;
-        this.ytdSss = ytdSss;
-        this.ytdPhilhealth = ytdPhilhealth;
-        this.ytdPagibig = ytdPagibig;
-        this.ytdNetPay = ytdNetPay;
     }
 
     // getters
+    public int getPayrollResultId() {
+        return payrollResultId;
+    }
+
     public int getEmployeeId() {
         return employeeId;
+    }
+
+    public int getPayrunId() {
+        return payrunId;
     }
 
     public String getEmployeeName() {
         return employeeName;
     }
 
-    public String getDepartmentName() {
-        return departmentName;
-    }
-
     public String getPositionName() {
         return positionName;
     }
 
-    public String getTinNumber() {
-        return tinNumber;
-    }
-
-    public String getSssNumber() {
-        return sssNumber;
-    }
-
-    public String getPhilhealthNumber() {
-        return philhealthNumber;
-    }
-
-    public String getPagibigNumber() {
-        return pagibigNumber;
-    }
-
-    public int getPayrunId() {
-        return payrunId;
+    public String getDepartmentName() {
+        return departmentName;
     }
 
     public LocalDate getStartDate() {
@@ -157,24 +146,40 @@ public class PayslipReportDTO {
         return payDate;
     }
 
-    public double getTotalHoursWorked() {
-        return totalHoursWorked;
+    public double getMonthlySalary() {
+        return monthlySalary;
+    }
+
+    public double getDailyRate() {
+        return dailyRate;
+    }
+
+    public double getDaysWorked() {
+        return daysWorked;
     }
 
     public double getBasicPay() {
         return basicPay;
     }
 
+    public double getOvertimePay() {
+        return overtimePay;
+    }
+
+    public double getRiceSubsidy() {
+        return riceSubsidy;
+    }
+
+    public double getPhoneAllowance() {
+        return phoneAllowance;
+    }
+
+    public double getClothingAllowance() {
+        return clothingAllowance;
+    }
+
     public double getTotalBenefits() {
         return totalBenefits;
-    }
-
-    public double getTotalOvertime() {
-        return totalOvertime;
-    }
-
-    public double getGrossPay() {
-        return grossPay;
     }
 
     public double getSssDeduction() {
@@ -197,40 +202,15 @@ public class PayslipReportDTO {
         return otherDeductions;
     }
 
+    public double getGrossPay() {
+        return grossPay;
+    }
+
     public double getTotalDeductions() {
         return totalDeductions;
     }
 
     public double getNetPay() {
         return netPay;
-    }
-
-    public double getYtdGrossPay() {
-        return ytdGrossPay;
-    }
-
-    public double getYtdWithholdingTax() {
-        return ytdWithholdingTax;
-    }
-
-    public double getYtdSss() {
-        return ytdSss;
-    }
-
-    public double getYtdPhilhealth() {
-        return ytdPhilhealth;
-    }
-
-    public double getYtdPagibig() {
-        return ytdPagibig;
-    }
-
-    public double getYtdNetPay() {
-        return ytdNetPay;
-    }
-
-    // cleans optional text values
-    private String clean(String value) {
-        return value == null || value.isBlank() ? "N/A" : value.trim();
     }
 }

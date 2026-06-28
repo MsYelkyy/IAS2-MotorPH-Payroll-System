@@ -35,6 +35,8 @@ public class EmployeeProfileController {
     private String pendingPhotoPath;
     private boolean isFormattingPhone = false;
 
+    @FXML private StackPane toastRoot;
+
     // Photo
     @FXML private ImageView profilePhotoView;
     @FXML private Label     profilePhotoInitials;
@@ -165,7 +167,8 @@ public class EmployeeProfileController {
             populateFields(currentProfile);
             pendingPhotoPath = null;
             enterViewMode();
-            UiMessageUtil.setSuccess(profileMessageLabel, "Profile updated successfully.");
+            UiMessageUtil.clearMessage(profileMessageLabel);
+            UiMessageUtil.showToast(toastRoot, "Profile updated successfully.");
         } catch (Exception e) {
             UiMessageUtil.setError(profileMessageLabel, UiMessageUtil.toUserMessage(e));
         }

@@ -69,6 +69,9 @@ public class HrEmployeeController {
     private static final DateTimeFormatter BIRTH_DATE_FMT = DateTimeFormatter.ofPattern("MM-dd-yyyy");
     private static final double MONTHLY_HOURS = 313.0;
 
+    // requires name@domain.tld — an @, a domain, and a dot-extension (e.g. .com, .ph)
+    private static final String EMAIL_REGEX = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+
     /** Tracks which mode the unified form panel is in. */
     private enum FormMode { ADD, VIEW, EDIT }
 
@@ -595,7 +598,7 @@ public class HrEmployeeController {
         ok &= requireCombo(addCivilStatusCombo, addCivilStatusError, "Required");
         ok &= validateBirthDate();
         ok &= requireText(addPhoneField, addPhoneError, "Required");
-        ok &= requireText(addEmailField, addEmailError, "Required");
+        ok &= validateEmail(addEmailField, addEmailError, true);
         ok &= requireText(addAddressField, addAddressError, "Required");
         ok &= requireCombo(addEmploymentStatusCombo, addEmploymentStatusError, "Required");
         ok &= requireCombo(addSupervisorCombo, addSupervisorError, "Required");
@@ -621,7 +624,8 @@ public class HrEmployeeController {
         ok &= requireCombo(addCivilStatusCombo, addCivilStatusError, "Required");
         ok &= validateBirthDate();
         ok &= requireText(addPhoneField, addPhoneError, "Required");
-        // personal email is optional for existing employees
+        // personal email is optional for existing employees, but must be valid if provided
+        ok &= validateEmail(addEmailField, addEmailError, false);
         ok &= requireText(addAddressField, addAddressError, "Required");
         ok &= requireCombo(addEmploymentStatusCombo, addEmploymentStatusError, "Required");
         ok &= requireCombo(addDepartmentCombo, addDepartmentError, "Required");
@@ -692,6 +696,19 @@ public class HrEmployeeController {
 
     private boolean requireDatePicker(DatePicker dp, Label errorLabel, String msg) {
         if (dp.getValue() == null) { showError(errorLabel, msg); return false; }
+        hideError(errorLabel);
+        return true;
+    }
+
+    // validates email format; when required is false, a blank value passes (edit mode)
+    private boolean validateEmail(TextField field, Label errorLabel, boolean required) {
+        String val = field.getText() == null ? "" : field.getText().trim();
+        if (val.isEmpty()) {
+            if (required) { showError(errorLabel, "Required"); return false; }
+            hideError(errorLabel);
+            return true;
+        }
+        if (!val.matches(EMAIL_REGEX)) { showError(errorLabel, "Invalid email"); return false; }
         hideError(errorLabel);
         return true;
     }

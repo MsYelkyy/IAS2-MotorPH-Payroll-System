@@ -72,6 +72,11 @@ public class LoginController {
         passwordTextField.textProperty().addListener((obs, oldValue, newValue) ->
                 UiMessageUtil.clearMessage(loginMessageLabel));
 
+        // pressing Enter in any login field submits the form
+        companyEmailField.setOnAction(event -> handleLogin());
+        passwordField.setOnAction(event -> handleLogin());
+        passwordTextField.setOnAction(event -> handleLogin());
+
         initSidePanel();
 
         ThemeManager.getInstance().applyCurrentTo(rootPane);

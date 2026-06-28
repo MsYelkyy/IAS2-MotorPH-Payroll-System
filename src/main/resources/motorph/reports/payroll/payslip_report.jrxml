@@ -1,22 +1,23 @@
 <!-- Created with Jaspersoft Studio version 7.0.6.final using JasperReports Library version 7.0.6-5d2a603fdc6b3db8f842a83383e594f41891534d  -->
-<jasperReport name="payslip_report" language="java" pageWidth="842" pageHeight="595" orientation="Landscape" columnWidth="782" leftMargin="30" rightMargin="30" topMargin="20" bottomMargin="20" uuid="c4d5e6f7-3333-4444-9555-cdef12345678">
+<jasperReport name="payslip_report" language="java" pageWidth="612" pageHeight="792" columnWidth="540" leftMargin="36" rightMargin="36" topMargin="36" bottomMargin="36" uuid="c4d5e6f7-3333-4444-9555-cdef12345678">
+	<field name="payrunId" class="java.lang.Integer"/>
 	<field name="employeeId" class="java.lang.Integer"/>
 	<field name="employeeName" class="java.lang.String"/>
-	<field name="departmentName" class="java.lang.String"/>
 	<field name="positionName" class="java.lang.String"/>
-	<field name="tinNumber" class="java.lang.String"/>
-	<field name="sssNumber" class="java.lang.String"/>
-	<field name="philhealthNumber" class="java.lang.String"/>
-	<field name="pagibigNumber" class="java.lang.String"/>
-	<field name="payrunId" class="java.lang.Integer"/>
+	<field name="departmentName" class="java.lang.String"/>
 	<field name="startDate" class="java.time.LocalDate"/>
 	<field name="endDate" class="java.time.LocalDate"/>
 	<field name="payDate" class="java.time.LocalDate"/>
-	<field name="totalHoursWorked" class="java.lang.Double"/>
+	<field name="monthlySalary" class="java.lang.Double"/>
+	<field name="dailyRate" class="java.lang.Double"/>
+	<field name="daysWorked" class="java.lang.Double"/>
 	<field name="basicPay" class="java.lang.Double"/>
-	<field name="totalBenefits" class="java.lang.Double"/>
-	<field name="totalOvertime" class="java.lang.Double"/>
+	<field name="overtimePay" class="java.lang.Double"/>
 	<field name="grossPay" class="java.lang.Double"/>
+	<field name="riceSubsidy" class="java.lang.Double"/>
+	<field name="phoneAllowance" class="java.lang.Double"/>
+	<field name="clothingAllowance" class="java.lang.Double"/>
+	<field name="totalBenefits" class="java.lang.Double"/>
 	<field name="sssDeduction" class="java.lang.Double"/>
 	<field name="philhealthDeduction" class="java.lang.Double"/>
 	<field name="pagibigDeduction" class="java.lang.Double"/>
@@ -24,222 +25,234 @@
 	<field name="otherDeductions" class="java.lang.Double"/>
 	<field name="totalDeductions" class="java.lang.Double"/>
 	<field name="netPay" class="java.lang.Double"/>
-	<field name="ytdGrossPay" class="java.lang.Double"/>
-	<field name="ytdWithholdingTax" class="java.lang.Double"/>
-	<field name="ytdSss" class="java.lang.Double"/>
-	<field name="ytdPhilhealth" class="java.lang.Double"/>
-	<field name="ytdPagibig" class="java.lang.Double"/>
-	<field name="ytdNetPay" class="java.lang.Double"/>
-	<title height="520">
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000002" x="60" y="20" width="662" height="95" backcolor="#FFFFFF">
-			<pen lineWidth="0.7" lineColor="#0B2D52"/>
+	<title height="700">
+		<element kind="staticText" uuid="a0000000-0000-4000-8000-000000000001" x="90" y="0" width="450" height="26" forecolor="#12345A" fontSize="20.0" bold="true">
+			<text><![CDATA[MotorPH]]></text>
 		</element>
-		<element kind="image" uuid="10000000-0000-4000-8000-000000000003" x="270" y="-20" width="310" height="184">
-			<expression><![CDATA[getClass().getResourceAsStream("/motorph/images/motorph.png")]]></expression>
+		<element kind="staticText" uuid="a0000000-0000-4000-8000-000000000002" x="90" y="27" width="450" height="12" forecolor="#444444" fontSize="8.0">
+			<text><![CDATA[7 Jupiter Avenue cor. F. Sandoval Jr., Bagong Nayon, Quezon City]]></text>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000006" x="60" y="135" width="662" height="115" backcolor="#FFFFFF">
-			<pen lineWidth="0.7" lineColor="#0B2D52"/>
+		<element kind="staticText" uuid="a0000000-0000-4000-8000-000000000003" x="90" y="39" width="450" height="12" forecolor="#444444" fontSize="8.0">
+			<text><![CDATA[Phone: (028) 911-5071 / (028) 911-5072 / (028) 911-5073]]></text>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000007" x="75" y="150" width="95" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[EMPLOYEE NO.]]></text>
+		<element kind="staticText" uuid="a0000000-0000-4000-8000-000000000004" x="90" y="51" width="450" height="12" forecolor="#444444" fontSize="8.0">
+			<text><![CDATA[Email: corporate@motorph.com]]></text>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000008" x="175" y="150" width="145" height="14" fontSize="8.0">
+		<element kind="line" uuid="a0000000-0000-4000-8000-000000000005" x="0" y="68" width="540" height="1" forecolor="#12345A">
+			<pen lineWidth="0.7"/>
+		</element>
+		<element kind="staticText" uuid="a0000000-0000-4000-8000-000000000006" x="0" y="80" width="540" height="20" forecolor="#001F4E" fontSize="14.0" bold="true" hTextAlign="Center">
+			<text><![CDATA[EMPLOYEE PAYSLIP]]></text>
+		</element>
+		<element kind="rectangle" uuid="b0000000-0000-4000-8000-000000000001" x="0" y="110" width="540" height="78" backcolor="#FFFFFF">
+			<pen lineWidth="0.7" lineColor="#BBBBBB"/>
+		</element>
+		<element kind="rectangle" uuid="b0000000-0000-4000-8000-000000000002" x="0" y="110" width="120" height="78" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-000000000003" x="8" y="114" width="104" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[PAYSLIP NO]]></text>
+		</element>
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-000000000004" x="8" y="140" width="104" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[EMPLOYEE ID]]></text>
+		</element>
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-000000000005" x="8" y="166" width="104" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[EMPLOYEE NAME]]></text>
+		</element>
+		<element kind="textField" uuid="b0000000-0000-4000-8000-000000000006" x="128" y="114" width="148" height="22" fontSize="8.0" vTextAlign="Middle">
+			<expression><![CDATA[$F{payrunId} + "-" + $F{payDate}]]></expression>
+		</element>
+		<element kind="textField" uuid="b0000000-0000-4000-8000-000000000007" x="128" y="140" width="148" height="22" fontSize="8.0" vTextAlign="Middle">
 			<expression><![CDATA[String.valueOf($F{employeeId})]]></expression>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000009" x="75" y="170" width="95" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[NAME]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000010" x="175" y="170" width="210" height="14" fontSize="8.0">
+		<element kind="textField" uuid="b0000000-0000-4000-8000-000000000008" x="128" y="166" width="148" height="22" fontSize="8.0" vTextAlign="Middle">
 			<expression><![CDATA[$F{employeeName}]]></expression>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000011" x="75" y="190" width="95" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[DEPARTMENT]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000012" x="175" y="190" width="145" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{departmentName}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000013" x="75" y="210" width="95" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[POSITION]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000014" x="175" y="210" width="210" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{positionName}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000015" x="420" y="150" width="80" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[TIN]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000016" x="510" y="150" width="185" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{tinNumber}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000017" x="420" y="170" width="80" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[SSS No.]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000018" x="510" y="170" width="185" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{sssNumber}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000019" x="420" y="190" width="80" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[PHILHEALTH NO.]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000020" x="510" y="190" width="185" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{philhealthNumber}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000021" x="420" y="210" width="80" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[HDMF]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000022" x="510" y="210" width="185" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{pagibigNumber}]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000023" x="75" y="230" width="95" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[PAYROLL DATE]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000024" x="175" y="230" width="145" height="14" fontSize="8.0">
-			<expression><![CDATA[String.valueOf($F{payDate})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000025" x="420" y="230" width="80" height="14" fontSize="8.0" bold="true">
-			<text><![CDATA[DATE COVERED]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000026" x="510" y="230" width="185" height="14" fontSize="8.0">
-			<expression><![CDATA[$F{startDate} + " to " + $F{endDate}]]></expression>
-		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000027" x="60" y="250" width="220" height="190" backcolor="#FFFFFF">
-			<pen lineWidth="0.7" lineColor="#0B2D52"/>
-		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000028" x="60" y="250" width="220" height="25" backcolor="#0B2D52">
+		<element kind="rectangle" uuid="b0000000-0000-4000-8000-000000000009" x="280" y="110" width="130" height="78" backcolor="#0B2D52">
 			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000029" x="70" y="256" width="200" height="13" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center">
-			<text><![CDATA[COMPENSATION]]></text>
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-00000000000a" x="288" y="114" width="114" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[PERIOD START DATE]]></text>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000030" x="280" y="250" width="220" height="190" backcolor="#FFFFFF">
-			<pen lineWidth="0.7" lineColor="#0B2D52"/>
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-00000000000b" x="288" y="140" width="114" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[PERIOD END DATE]]></text>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000031" x="280" y="250" width="220" height="25" backcolor="#0B2D52">
+		<element kind="staticText" uuid="b0000000-0000-4000-8000-00000000000c" x="288" y="166" width="114" height="22" forecolor="#FFFFFF" fontSize="7.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[POSITION/DEPARTMENT]]></text>
+		</element>
+		<element kind="textField" uuid="b0000000-0000-4000-8000-00000000000d" x="418" y="114" width="114" height="22" fontSize="8.0" vTextAlign="Middle">
+			<expression><![CDATA[String.valueOf($F{startDate})]]></expression>
+		</element>
+		<element kind="textField" uuid="b0000000-0000-4000-8000-00000000000e" x="418" y="140" width="114" height="22" fontSize="8.0" vTextAlign="Middle">
+			<expression><![CDATA[String.valueOf($F{endDate})]]></expression>
+		</element>
+		<element kind="textField" uuid="b0000000-0000-4000-8000-00000000000f" x="418" y="166" width="114" height="22" fontSize="8.0" textAdjust="StretchHeight" vTextAlign="Middle">
+			<expression><![CDATA[$F{positionName} + " / " + $F{departmentName}]]></expression>
+		</element>
+		<element kind="rectangle" uuid="c0000000-0000-4000-8000-000000000001" x="0" y="206" width="540" height="16" backcolor="#0B2D52">
 			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000032" x="290" y="256" width="200" height="13" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center">
-			<text><![CDATA[DEDUCTIONS]]></text>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-000000000002" x="8" y="206" width="300" height="16" forecolor="#FFFFFF" fontSize="8.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[EARNINGS]]></text>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000033" x="500" y="250" width="222" height="190" backcolor="#FFFFFF">
-			<pen lineWidth="0.7" lineColor="#0B2D52"/>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-000000000003" x="8" y="226" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Monthly Salary]]></text>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000034" x="500" y="250" width="222" height="25" backcolor="#0B2D52">
+		<element kind="textField" uuid="c0000000-0000-4000-8000-000000000004" x="340" y="226" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{monthlySalary})]]></expression>
+		</element>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-000000000005" x="8" y="241" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Daily Rate]]></text>
+		</element>
+		<element kind="textField" uuid="c0000000-0000-4000-8000-000000000006" x="340" y="241" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{dailyRate})]]></expression>
+		</element>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-000000000007" x="8" y="256" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Days Worked]]></text>
+		</element>
+		<element kind="textField" uuid="c0000000-0000-4000-8000-000000000008" x="340" y="256" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA[String.format("%,.2f", $F{daysWorked})]]></expression>
+		</element>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-000000000009" x="8" y="271" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Overtime]]></text>
+		</element>
+		<element kind="textField" uuid="c0000000-0000-4000-8000-00000000000a" x="340" y="271" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{overtimePay})]]></expression>
+		</element>
+		<element kind="line" uuid="c0000000-0000-4000-8000-00000000000b" x="0" y="287" width="540" height="1" forecolor="#DDDDDD"/>
+		<element kind="rectangle" uuid="c0000000-0000-4000-8000-00000000000c" x="0" y="288" width="540" height="15" backcolor="#F0F0F0">
 			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000035" x="510" y="256" width="202" height="13" forecolor="#FFFFFF" fontSize="8.0" bold="true" hTextAlign="Center">
-			<text><![CDATA[YEAR-TO-DATE]]></text>
+		<element kind="staticText" uuid="c0000000-0000-4000-8000-00000000000d" x="8" y="288" width="300" height="15" fontSize="8.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[GROSS INCOME]]></text>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000036" x="75" y="288" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[BASIC]]></text>
+		<element kind="textField" uuid="c0000000-0000-4000-8000-00000000000e" x="340" y="288" width="200" height="15" fontSize="8.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{grossPay})]]></expression>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000037" x="175" y="288" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{basicPay})]]></expression>
+		<element kind="rectangle" uuid="d0000000-0000-4000-8000-000000000001" x="0" y="321" width="540" height="16" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000038" x="75" y="310" width="95" height="13" fontSize="8.0" bold="true">
+		<element kind="staticText" uuid="d0000000-0000-4000-8000-000000000002" x="8" y="321" width="300" height="16" forecolor="#FFFFFF" fontSize="8.5" bold="true" vTextAlign="Middle">
 			<text><![CDATA[BENEFITS]]></text>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000039" x="175" y="310" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{totalBenefits})]]></expression>
+		<element kind="staticText" uuid="d0000000-0000-4000-8000-000000000003" x="8" y="341" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Rice Subsidy]]></text>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000040" x="75" y="332" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[OVERTIME]]></text>
+		<element kind="textField" uuid="d0000000-0000-4000-8000-000000000004" x="340" y="341" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{riceSubsidy})]]></expression>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000041" x="175" y="332" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{totalOvertime})]]></expression>
+		<element kind="staticText" uuid="d0000000-0000-4000-8000-000000000005" x="8" y="356" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Phone Allowance]]></text>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000042" x="75" y="354" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[HOURS WORKED]]></text>
+		<element kind="textField" uuid="d0000000-0000-4000-8000-000000000006" x="340" y="356" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{phoneAllowance})]]></expression>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000043" x="175" y="354" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{totalHoursWorked})]]></expression>
+		<element kind="staticText" uuid="d0000000-0000-4000-8000-000000000007" x="8" y="371" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Clothing Allowance]]></text>
 		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000044" x="295" y="288" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[SSS]]></text>
+		<element kind="textField" uuid="d0000000-0000-4000-8000-000000000008" x="340" y="371" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{clothingAllowance})]]></expression>
 		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000045" x="395" y="288" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{sssDeduction})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000046" x="295" y="310" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[PHILHEALTH]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000047" x="395" y="310" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{philhealthDeduction})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000048" x="295" y="332" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[HDMF]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000049" x="395" y="332" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{pagibigDeduction})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000050" x="295" y="354" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[WITHHOLDING TAX]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000051" x="395" y="354" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{withholdingTax})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000052" x="295" y="376" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[OTHER]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000053" x="395" y="376" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{otherDeductions})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000054" x="515" y="288" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[TAXABLE GROSS]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000055" x="615" y="288" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{ytdGrossPay})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000056" x="515" y="310" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[TAX]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000057" x="615" y="310" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{ytdWithholdingTax})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000058" x="515" y="332" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[SSS]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000059" x="615" y="332" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{ytdSss})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000060" x="515" y="354" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[PHIC]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000061" x="615" y="354" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{ytdPhilhealth})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000062" x="515" y="376" width="95" height="13" fontSize="8.0" bold="true">
-			<text><![CDATA[HDMF]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000063" x="615" y="376" width="85" height="13" fontSize="8.0" hTextAlign="Right">
-			<expression><![CDATA[String.format("%,.2f", $F{ytdPagibig})]]></expression>
-		</element>
-		<element kind="line" uuid="10000000-0000-4000-8000-000000000064" x="60" y="405" width="220" height="1" forecolor="#0B2D52"/>
-		<element kind="line" uuid="10000000-0000-4000-8000-000000000065" x="280" y="405" width="220" height="1" forecolor="#0B2D52"/>
-		<element kind="line" uuid="10000000-0000-4000-8000-000000000066" x="500" y="405" width="222" height="1" forecolor="#0B2D52"/>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000067" x="60" y="415" width="114" height="13" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[TOTAL COMPENSATION]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000068" x="176" y="415" width="104" height="13" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<expression><![CDATA[String.format("%,.2f", $F{grossPay})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000069" x="280" y="415" width="114" height="13" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<text><![CDATA[TOTAL DEDUCTIONS]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000070" x="396" y="415" width="104" height="13" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<expression><![CDATA[String.format("%,.2f", $F{totalDeductions})]]></expression>
-		</element>
-		<element kind="staticText" uuid="10000000-0000-4000-8000-000000000071" x="500" y="415" width="114" height="13" fontSize="8.0" bold="true" hTextAlign="Center">
-			<text><![CDATA[NET PAY]]></text>
-		</element>
-		<element kind="textField" uuid="10000000-0000-4000-8000-000000000072" x="616" y="415" width="106" height="13" fontSize="8.0" bold="true" hTextAlign="Center" vTextAlign="Middle">
-			<expression><![CDATA[String.format("%,.2f", $F{netPay})]]></expression>
-		</element>
-		<element kind="line" uuid="685f85b8-4dcf-4d3e-a7ac-cb65f578c078" x="395" y="405" width="1" height="35" forecolor="#12345A"/>
-		<element kind="line" uuid="cc5c16d4-5bf5-47e9-9092-b5a2b27d0297" x="175" y="405" width="1" height="35" forecolor="#12345A"/>
-		<element kind="line" uuid="8d97427a-a48f-41cf-8672-54be95e80dba" x="615" y="405" width="1" height="35" forecolor="#12345A"/>
-		<element kind="rectangle" uuid="f697171f-0a47-4f53-8628-f52af48df981" x="60" y="110" width="662" height="25" backcolor="#0B2D52">
+		<element kind="line" uuid="d0000000-0000-4000-8000-000000000009" x="0" y="387" width="540" height="1" forecolor="#DDDDDD"/>
+		<element kind="rectangle" uuid="d0000000-0000-4000-8000-00000000000a" x="0" y="388" width="540" height="15" backcolor="#F0F0F0">
 			<pen lineWidth="0.0"/>
 		</element>
-		<element kind="rectangle" uuid="10000000-0000-4000-8000-000000000001" x="60" y="20" width="662" height="420" backcolor="rgba(255, 255, 255, 0.0)">
-			<pen lineWidth="1.0" lineColor="#0B2D52"/>
+		<element kind="staticText" uuid="d0000000-0000-4000-8000-00000000000b" x="8" y="388" width="300" height="15" fontSize="8.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[TOTAL]]></text>
+		</element>
+		<element kind="textField" uuid="d0000000-0000-4000-8000-00000000000c" x="340" y="388" width="200" height="15" fontSize="8.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{totalBenefits})]]></expression>
+		</element>
+		<element kind="rectangle" uuid="e0000000-0000-4000-8000-000000000001" x="0" y="421" width="540" height="16" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-000000000002" x="8" y="421" width="300" height="16" forecolor="#FFFFFF" fontSize="8.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[DEDUCTIONS]]></text>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-000000000003" x="8" y="441" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Social Security System]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-000000000004" x="340" y="441" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{sssDeduction})]]></expression>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-000000000005" x="8" y="456" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Philhealth]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-000000000006" x="340" y="456" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{philhealthDeduction})]]></expression>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-000000000007" x="8" y="471" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Pag-Ibig]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-000000000008" x="340" y="471" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{pagibigDeduction})]]></expression>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-000000000009" x="8" y="486" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Withholding Tax]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-00000000000a" x="340" y="486" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{withholdingTax})]]></expression>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-00000000000f" x="8" y="501" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Other Deductions]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-000000000010" x="340" y="501" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{otherDeductions})]]></expression>
+		</element>
+		<element kind="line" uuid="e0000000-0000-4000-8000-00000000000b" x="0" y="517" width="540" height="1" forecolor="#DDDDDD"/>
+		<element kind="rectangle" uuid="e0000000-0000-4000-8000-00000000000c" x="0" y="518" width="540" height="15" backcolor="#F0F0F0">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="e0000000-0000-4000-8000-00000000000d" x="8" y="518" width="300" height="15" fontSize="8.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[TOTAL DEDUCTIONS]]></text>
+		</element>
+		<element kind="textField" uuid="e0000000-0000-4000-8000-00000000000e" x="340" y="518" width="200" height="15" fontSize="8.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{totalDeductions})]]></expression>
+		</element>
+		<element kind="rectangle" uuid="f0000000-0000-4000-8000-000000000001" x="0" y="551" width="540" height="16" backcolor="#0B2D52">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-000000000002" x="8" y="551" width="300" height="16" forecolor="#FFFFFF" fontSize="8.5" bold="true" vTextAlign="Middle">
+			<text><![CDATA[SUMMARY]]></text>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-000000000003" x="8" y="571" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Basic Pay]]></text>
+		</element>
+		<element kind="textField" uuid="f0000000-0000-4000-8000-000000000004" x="340" y="571" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{basicPay})]]></expression>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-000000000005" x="8" y="584" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Overtime]]></text>
+		</element>
+		<element kind="textField" uuid="f0000000-0000-4000-8000-000000000006" x="340" y="584" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{overtimePay})]]></expression>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-000000000007" x="8" y="597" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Benefits]]></text>
+		</element>
+		<element kind="textField" uuid="f0000000-0000-4000-8000-000000000008" x="340" y="597" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{totalBenefits})]]></expression>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-000000000009" x="8" y="610" width="300" height="13" fontSize="8.0">
+			<text><![CDATA[Total Deductions]]></text>
+		</element>
+		<element kind="textField" uuid="f0000000-0000-4000-8000-00000000000d" x="340" y="610" width="200" height="13" fontSize="8.0" hTextAlign="Right">
+			<expression><![CDATA["(₱" + String.format("%,.2f", $F{totalDeductions}) + ")"]]></expression>
+		</element>
+		<element kind="line" uuid="f0000000-0000-4000-8000-00000000000a" x="0" y="626" width="540" height="1" forecolor="#12345A">
+			<pen lineWidth="0.7"/>
+		</element>
+		<element kind="rectangle" uuid="f0000000-0000-4000-8000-00000000000b" x="0" y="627" width="540" height="17" backcolor="#E4E8EC">
+			<pen lineWidth="0.0"/>
+		</element>
+		<element kind="staticText" uuid="f0000000-0000-4000-8000-00000000000c" x="8" y="627" width="300" height="17" forecolor="#001F4E" fontSize="9.0" bold="true" vTextAlign="Middle">
+			<text><![CDATA[TAKE HOME PAY]]></text>
+		</element>
+		<element kind="textField" uuid="f0000000-0000-4000-8000-00000000000e" x="340" y="627" width="200" height="17" forecolor="#001F4E" fontSize="9.0" bold="true" hTextAlign="Right" vTextAlign="Middle">
+			<expression><![CDATA["₱" + String.format("%,.2f", $F{netPay})]]></expression>
+		</element>
+		<element kind="image" uuid="637eee70-aec9-4b8a-80f1-4aaadb3ff2bc" x="0" y="-10" width="89" height="78">
+			<expression><![CDATA[getClass().getResourceAsStream("/motorph/images/motorphlg.png")]]></expression>
 		</element>
 	</title>
 </jasperReport>

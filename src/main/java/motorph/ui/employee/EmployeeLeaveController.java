@@ -27,6 +27,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.time.LocalDate;
@@ -54,6 +55,7 @@ public class EmployeeLeaveController {
     private final List<LeaveHistoryRow> filteredHistoryRows = new ArrayList<>();
     private int currentLeavePage = 1;
 
+    @FXML private StackPane toastRoot;
     @FXML private HBox leaveCreditsBox;
     @FXML private ComboBox<String> leaveTypeComboBox;
     @FXML private DatePicker leaveStartDatePicker;
@@ -148,6 +150,7 @@ public class EmployeeLeaveController {
 
         UiMessageUtil.clearMessage(leaveMessageLabel);
         if (!validateForm()) {
+            UiMessageUtil.showErrorToast(toastRoot, "Some required fields are missing or invalid. Please check the highlighted fields.");
             return;
         }
 
@@ -168,7 +171,8 @@ public class EmployeeLeaveController {
 
             clearFormFields();
             clearAllFieldErrors();
-            UiMessageUtil.setSuccess(leaveMessageLabel, "Leave request submitted.");
+            UiMessageUtil.clearMessage(leaveMessageLabel);
+            UiMessageUtil.showToast(toastRoot, "Leave request submitted.");
             refresh();
         } catch (Exception e) {
             showServiceError(e);
@@ -514,16 +518,16 @@ public class EmployeeLeaveController {
 
         int employeeId = CurrentUserSession.getEmployeeId();
         if (employeeId <= 0) {
-            UiMessageUtil.setError(leaveMessageLabel, "Please log in before using this action.");
+            UiMessageUtil.showErrorToastTop(toastRoot, "Please log in before using this action.");
             return;
         }
 
         try {
             leaveService.cancelLeaveRequest(employeeId, row.request().getRequestId());
-            UiMessageUtil.setSuccess(leaveMessageLabel, "Pending leave request cancelled.");
             refresh();
+            UiMessageUtil.showToast(toastRoot, "Pending leave request cancelled.");
         } catch (Exception e) {
-            UiMessageUtil.setError(leaveMessageLabel, userMessage(e));
+            UiMessageUtil.showErrorToastTop(toastRoot, userMessage(e));
         }
     }
 
