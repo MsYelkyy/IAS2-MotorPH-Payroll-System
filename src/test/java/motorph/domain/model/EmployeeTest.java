@@ -53,6 +53,50 @@ class EmployeeTest {
     }
 
 
+    // rejects a null first name
+    @Test
+    @DisplayName("Negative - constructor should reject null first name")
+    void constructorShouldRejectNullFirstName() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Employee(
+                        1, null, "Dela Cruz", LocalDate.of(1990, 1, 1), Gender.MALE,
+                        null, null, null, null, EmploymentStatus.REGULAR, 1, 1,
+                        LocalDate.of(2020, 1, 1), null, true, null)
+        );
+    }
+
+
+    // rejects a hire date in the future
+    @Test
+    @DisplayName("Negative - constructor should reject a future hire date")
+    void constructorShouldRejectFutureHireDate() {
+        LocalDate future = LocalDate.now().plusDays(1);
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Employee(
+                        1, "Juan", "Dela Cruz", LocalDate.of(1990, 1, 1), Gender.MALE,
+                        null, null, "0917-123-4567", null, EmploymentStatus.REGULAR, 1, 1,
+                        future, null, true, null)
+        );
+    }
+
+
+    // rejects an invalid phone number format
+    @Test
+    @DisplayName("Negative - constructor should reject an invalid phone number format")
+    void constructorShouldRejectInvalidPhoneFormat() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> new Employee(
+                        1, "Juan", "Dela Cruz", LocalDate.of(1990, 1, 1), Gender.MALE,
+                        null, null, "not-a-phone", null, EmploymentStatus.REGULAR, 1, 1,
+                        LocalDate.of(2020, 1, 1), null, true, null)
+        );
+    }
+
+
     // creates an employee with the given names
     private Employee createEmployee(String firstName, String lastName) {
         return new Employee(

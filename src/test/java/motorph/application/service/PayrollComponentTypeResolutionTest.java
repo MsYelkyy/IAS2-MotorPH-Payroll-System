@@ -211,7 +211,7 @@ class PayrollComponentTypeResolutionTest {
 
     // creates government data for the test payroll input
     private GovernmentDetails governmentDetails() {
-        return new GovernmentDetails(1, 1, "SSS-1", "TIN-1", "PAGIBIG-1", "PHILHEALTH-1");
+        return new GovernmentDetails(1, 1, "44-4506057-3", "442-605-657-000", "691295330870", "820126853951");
     }
 
     // creates a positive payroll breakdown for component persistence
