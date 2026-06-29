@@ -208,7 +208,7 @@ public class EmployeeDashboardController {
             for (PayrollResult r : results) {
                 addPoint(series, periodLabelForResult(r), r.getNetPay());
             }
-            payrollTrendChart.getData().setAll(series);
+            payrollTrendChart.getData().setAll(List.of(series));
         } catch (Exception e) {
             payrollTrendChart.getData().clear();
         }
@@ -227,7 +227,7 @@ public class EmployeeDashboardController {
                 addPoint(series, "Deductions", r.getTotalDeductions());
                 addPoint(series, "Net Pay",    r.getNetPay());
             }
-            earningsBreakdownChart.getData().setAll(series);
+            earningsBreakdownChart.getData().setAll(List.of(series));
         } catch (Exception e) {
             earningsBreakdownChart.getData().clear();
         }
@@ -264,7 +264,7 @@ public class EmployeeDashboardController {
                 addPoint(absent,  label, counts[2]);
             });
 
-            attendanceSummaryChart.getData().setAll(present, late, absent);
+            attendanceSummaryChart.getData().setAll(List.of(present, late, absent));
         } catch (Exception e) {
             attendanceSummaryChart.getData().clear();
         }

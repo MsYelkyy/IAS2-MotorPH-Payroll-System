@@ -222,7 +222,7 @@ public class EmployeeOvertimeController {
     }
 
     private void configureHistoryTable() {
-        overtimeHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        overtimeHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         colRequestId.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().requestId()));

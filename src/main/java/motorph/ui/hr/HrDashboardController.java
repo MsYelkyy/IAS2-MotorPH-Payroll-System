@@ -153,7 +153,7 @@ public class HrDashboardController {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Present");
             byMonth.forEach((month, count) -> addPoint(series, monthLabel(month), count));
-            attendanceTrendChart.getData().setAll(series);
+            attendanceTrendChart.getData().setAll(List.of(series));
 
         } catch (Exception e) {
             attendanceTrendChart.getData().clear();
@@ -179,7 +179,7 @@ public class HrDashboardController {
                 long count = countByDept.getOrDefault(dept.getDepartmentId(), 0L);
                 addPoint(series, dept.getDepartmentName(), count);
             }
-            departmentDistributionChart.getData().setAll(series);
+            departmentDistributionChart.getData().setAll(List.of(series));
 
         } catch (Exception e) {
             departmentDistributionChart.getData().clear();
@@ -216,7 +216,7 @@ public class HrDashboardController {
                 addPoint(absent,  label, counts[2]);
             });
 
-            attendanceSummaryChart.getData().setAll(present, late, absent);
+            attendanceSummaryChart.getData().setAll(List.of(present, late, absent));
 
         } catch (Exception e) {
             attendanceSummaryChart.getData().clear();

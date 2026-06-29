@@ -196,7 +196,7 @@ public class EmployeeSupportTicketController {
     }
 
     private void setupTable() {
-        ticketTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        ticketTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         colTicketId.setCellValueFactory(data -> {
             Integer id = data.getValue().getTicketId();

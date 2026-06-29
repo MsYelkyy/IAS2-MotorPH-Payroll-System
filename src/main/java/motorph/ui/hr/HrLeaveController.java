@@ -520,7 +520,7 @@ public class HrLeaveController {
     }
 
     private void setupOvertimeTable() {
-        overtimeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        overtimeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         otIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().requestId()));
         otEmployeeColumn.setCellValueFactory(data ->
@@ -636,7 +636,7 @@ public class HrLeaveController {
     }
 
     private void setupLeaveTable() {
-        leaveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        leaveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         leaveIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().getLeaveRequestId()));
         leaveEmployeeColumn.setCellValueFactory(data ->
@@ -701,7 +701,7 @@ public class HrLeaveController {
     }
 
     private void setupCreditTable() {
-        creditTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        creditTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         creditTypeColumn.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getLeaveTypeName()));
         creditTotalColumn.setCellValueFactory(data ->

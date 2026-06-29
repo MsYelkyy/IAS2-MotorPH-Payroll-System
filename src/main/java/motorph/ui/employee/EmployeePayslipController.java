@@ -54,7 +54,7 @@ public class EmployeePayslipController {
         payrollService       = factory.getPayrollService();
         payrollReportService = factory.getPayrollReportService();
 
-        payrollTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        payrollTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         setupColumns();
     }

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -151,6 +152,45 @@ class AuthenticationServiceMockTest {
     }
 
 
+    // a temporary-password account returns a password-change result before OTP
+    @Test
+    @DisplayName("Positive - authenticate should return temporary-password result when change is required")
+    void authenticateShouldReturnTemporaryPasswordResult() {
+        UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(temporaryPasswordAccount(LocalDateTime.now().plusDays(1)));
+
+        AuthenticationService service = new AuthenticationService(
+                userAccountRepository, mock(EmployeeService.class),
+                mock(TwoFactorService.class), mock(EmailService.class), null);
+
+        LoginResultDTO result = service.authenticate(new LoginRequestDTO(EMAIL, PASSWORD));
+
+        // temporary password is verified but login is not yet complete and no OTP is sent
+        assertFalse(result.isAuthenticated());
+        assertFalse(result.isOtpRequired());
+    }
+
+
+    // an expired temporary password is rejected
+    @Test
+    @DisplayName("Negative - authenticate should reject an expired temporary password")
+    void authenticateShouldRejectExpiredTemporaryPassword() {
+        UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(temporaryPasswordAccount(LocalDateTime.now().minusDays(1)));
+
+        AuthenticationService service = new AuthenticationService(
+                userAccountRepository, mock(EmployeeService.class),
+                mock(TwoFactorService.class), mock(EmailService.class), null);
+
+        assertThrows(
+                AuthenticationException.class,
+                () -> service.authenticate(new LoginRequestDTO(EMAIL, PASSWORD))
+        );
+    }
+
+
     // builds an active employee account with a real password hash
     private UserAccount activeAccount() {
         return account(false, true);
@@ -176,6 +216,19 @@ class AuthenticationServiceMockTest {
                 hash, salt,
                 List.of(Role.EMPLOYEE),
                 locked, active, null, false, null
+        );
+    }
+
+    // builds an active account that must change a temporary password by the given expiry
+    private UserAccount temporaryPasswordAccount(LocalDateTime expiresAt) {
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(PASSWORD, salt);
+
+        return new UserAccount(
+                1, 10001, EMAIL, EMAIL,
+                hash, salt,
+                List.of(Role.EMPLOYEE),
+                false, true, null, true, expiresAt
         );
     }
 }

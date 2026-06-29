@@ -186,7 +186,7 @@ public class HrAttendanceController {
             TableColumn<AttendanceLogRowDTO, Number> hoursColumn,
             TableColumn<AttendanceLogRowDTO, String> statusColumn) {
 
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         workDateColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getWorkDate()));
         workDateColumn.setCellFactory(c -> dateCell());

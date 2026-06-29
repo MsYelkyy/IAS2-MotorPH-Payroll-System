@@ -359,7 +359,7 @@ public class AdminSalaryController {
     }
 
     private void setupEmployeeTable() {
-        employeeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        employeeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         employeeIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().getEmployeeId()));
         employeeNameColumn.setCellValueFactory(data ->
@@ -402,7 +402,7 @@ public class AdminSalaryController {
     }
 
     private void setupSalaryTable() {
-        salaryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        salaryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         salaryIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().getSalaryHistoryId()));
         salaryTypeColumn.setCellValueFactory(data ->
@@ -446,7 +446,7 @@ public class AdminSalaryController {
     }
 
     private void setupBenefitTable() {
-        benefitTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        benefitTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         benefitIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().getEmployeeBenefitId()));
         benefitTypeColumn.setCellValueFactory(data ->
