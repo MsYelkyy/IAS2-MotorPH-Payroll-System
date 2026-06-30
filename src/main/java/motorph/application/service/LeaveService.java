@@ -219,10 +219,12 @@ public class LeaveService {
             throw new BusinessRuleException("Employee does not have enough leave credits.");
         }
 
+        request.approve(actorAccount.getUserAccountId(), null);
+
         leaveRepository.updateStatus(
                 leaveRequestId,
-                RequestStatus.APPROVED,
-                actorAccount.getUserAccountId()
+                request.getStatus(),
+                request.getApproverAccountId()
         );
 
         leaveCreditRepository.deductCredits(
@@ -247,10 +249,12 @@ public class LeaveService {
             throw new BusinessRuleException("Only pending leave requests can be rejected.");
         }
 
+        request.reject(actorAccount.getUserAccountId(), null);
+
         leaveRepository.updateStatus(
                 leaveRequestId,
-                RequestStatus.REJECTED,
-                actorAccount.getUserAccountId()
+                request.getStatus(),
+                request.getApproverAccountId()
         );
     }
 
@@ -269,7 +273,9 @@ public class LeaveService {
             throw new BusinessRuleException("Only pending leave requests can be cancelled.");
         }
 
-        leaveRepository.updateStatus(leaveRequestId, RequestStatus.CANCELLED, null);
+        request.cancel();
+
+        leaveRepository.updateStatus(leaveRequestId, request.getStatus(), null);
     }
 
     // reverses an approved leave request and restores credits

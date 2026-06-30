@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PayrollResult;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -46,7 +48,7 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll result by id.", e);
+            throw new DataAccessException("Failed to find payroll result by id.", e);
         }
 
         return null;
@@ -82,7 +84,7 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll results by employee id.", e);
+            throw new DataAccessException("Failed to find payroll results by employee id.", e);
         }
 
         return results;
@@ -118,7 +120,7 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll results by payrun id.", e);
+            throw new DataAccessException("Failed to find payroll results by payrun id.", e);
         }
 
         return results;
@@ -152,7 +154,7 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll result by employee and payrun.", e);
+            throw new DataAccessException("Failed to find payroll result by employee and payrun.", e);
         }
 
         return null;
@@ -199,7 +201,7 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payroll result existence.", e);
+            throw new DataAccessException("Failed to check payroll result existence.", e);
         }
 
         return false;
@@ -241,10 +243,10 @@ public class PayrollResultRepository {
                 }
             }
 
-            throw new RuntimeException("Failed to retrieve generated payroll result ID.");
+            throw new DataAccessException("Failed to retrieve generated payroll result ID.");
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payroll result.", e);
+            throw new DataAccessException("Failed to save payroll result.", e);
         }
     }
 

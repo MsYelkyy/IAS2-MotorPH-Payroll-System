@@ -365,9 +365,10 @@ public class ReportsController {
                 setDateRangeOptions(false);
             }
             case ORG_PAYROLL -> {
-                // Monthly Payroll Summary is a department-scoped report; employee selection does not apply
+                // Monthly Payroll Summary merges both semi-monthly cutoffs per month,
+                // so it is driven by the date range, not a single payrun. The payrun
+                // filter is intentionally hidden here to avoid implying it has an effect.
                 usesDepartment = true;
-                usesPayrun = true;
                 setDateRangeOptions(true);
             }
             case PAYROLL_SUMMARY -> {

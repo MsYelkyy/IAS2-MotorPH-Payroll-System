@@ -18,9 +18,13 @@ import javafx.scene.layout.VBox;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Displays IT dashboard metrics, login-activity stats, and summary tables. */
 public class ITDashboardController {
+
+    private static final Logger logger = Logger.getLogger(ITDashboardController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
@@ -124,8 +128,9 @@ public class ITDashboardController {
                   .limit(5)
                   .map(this::buildResetRow)
                   .forEach(pendingResetRows.getChildren()::add);
-        } catch (Exception ignored) {
-            // leave table empty on service error
+        } catch (Exception e) {
+            // leaves the table empty on service error
+            logger.log(Level.WARNING, "Failed to load pending password resets", e);
         }
     }
 
@@ -139,8 +144,9 @@ public class ITDashboardController {
                    .limit(5)
                    .map(this::buildTicketRow)
                    .forEach(recentTicketsRows.getChildren()::add);
-        } catch (Exception ignored) {
-            // leave table empty on service error
+        } catch (Exception e) {
+            // leaves the table empty on service error
+            logger.log(Level.WARNING, "Failed to load recent IT tickets", e);
         }
     }
 

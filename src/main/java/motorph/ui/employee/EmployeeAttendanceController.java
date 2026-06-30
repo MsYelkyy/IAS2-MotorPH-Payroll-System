@@ -56,7 +56,7 @@ public class EmployeeAttendanceController {
     @FXML
     private void initialize() {
         attendanceService = EmployeeUIServiceFactory.getInstance().getAttendanceService();
-        attendanceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        attendanceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         setupAttendanceColumns();
         updateTodayDate();
     }

@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.LeaveCredit;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -50,7 +52,7 @@ public class LeaveCreditRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check leave credits.", e);
+            throw new DataAccessException("Failed to check leave credits.", e);
         }
 
         return false;
@@ -88,7 +90,7 @@ public class LeaveCreditRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to get remaining leave credits.", e);
+            throw new DataAccessException("Failed to get remaining leave credits.", e);
         }
 
         return 0.0;
@@ -128,7 +130,7 @@ public class LeaveCreditRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to deduct leave credits.", e);
+            throw new DataAccessException("Failed to deduct leave credits.", e);
         }
     }
 
@@ -166,7 +168,7 @@ public class LeaveCreditRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to restore leave credits.", e);
+            throw new DataAccessException("Failed to restore leave credits.", e);
         }
     }
 
@@ -206,7 +208,7 @@ public class LeaveCreditRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load leave credits for employee.", e);
+            throw new DataAccessException("Failed to load leave credits for employee.", e);
         }
 
         return results;

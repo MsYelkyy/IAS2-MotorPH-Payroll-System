@@ -222,6 +222,59 @@ class PermissionServiceTest {
     }
 
 
+    // role-based access: an employee cannot edit other employees
+    @Test
+    @DisplayName("RBAC - Employee cannot manage (edit) other employees")
+    void employeeCannotEditOthers() {
+        PermissionService permissionService = createPermissionService();
+        loginAs(Role.EMPLOYEE);
+
+        logger.info("Testing employee cannot edit other employees.");
+
+        assertFalse(permissionService.hasPermission(PermissionKey.MANAGE_EMPLOYEE));
+    }
+
+
+    // role-based access: finance can generate reports
+    @Test
+    @DisplayName("RBAC - Finance can generate reports")
+    void financeCanGenerateReports() {
+        PermissionService permissionService = createPermissionService();
+        loginAs(Role.FINANCE);
+
+        logger.info("Testing finance can generate reports.");
+
+        assertTrue(permissionService.hasPermission(PermissionKey.GENERATE_REPORTS));
+    }
+
+
+    // role-based access: an employee can view own payslip but not other employee records
+    @Test
+    @DisplayName("RBAC - Employee can view own record only")
+    void employeeCanOnlyViewOwnRecord() {
+        PermissionService permissionService = createPermissionService();
+        loginAs(Role.EMPLOYEE);
+
+        logger.info("Testing employee can only view own record.");
+
+        assertTrue(permissionService.hasPermission(PermissionKey.VIEW_PAYSLIP));
+        assertFalse(permissionService.hasPermission(PermissionKey.VIEW_EMPLOYEE));
+    }
+
+
+    // role-based access: an unauthorized action is denied
+    @Test
+    @DisplayName("RBAC - Access denied for unauthorized action")
+    void accessDeniedForUnauthorizedAction() {
+        PermissionService permissionService = createPermissionService();
+        loginAs(Role.EMPLOYEE);
+
+        logger.info("Testing access denied for unauthorized action.");
+
+        assertFalse(permissionService.hasPermission(PermissionKey.PROCESS_PAYROLL));
+    }
+
+
     // creates permission service with real dependency
     private PermissionService createPermissionService() {
         return new PermissionService(new PermissionRepository());

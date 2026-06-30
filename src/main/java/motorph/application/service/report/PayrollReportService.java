@@ -49,6 +49,7 @@ public class PayrollReportService {
     // returns organization payroll report data
     public List<OrganizationPayrollReportDTO> getOrganizationPayrollReport(
             Integer departmentId,
+            String departmentName,
             Integer employeeId,
             Integer payrunId,
             LocalDate startDate,
@@ -58,6 +59,7 @@ public class PayrollReportService {
 
         return payrollReportRepository.findOrganizationPayrollReport(
                 departmentId,
+                departmentName,
                 employeeId,
                 payrunId,
                 startDate,
@@ -141,6 +143,7 @@ public class PayrollReportService {
 
         List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
                 departmentId,
+                departmentName,
                 employeeId,
                 payrunId,
                 startDate,
@@ -209,6 +212,7 @@ public class PayrollReportService {
 
         List<OrganizationPayrollReportDTO> reportData = getOrganizationPayrollReport(
                 departmentId,
+                departmentName,
                 employeeId,
                 payrunId,
                 startDate,

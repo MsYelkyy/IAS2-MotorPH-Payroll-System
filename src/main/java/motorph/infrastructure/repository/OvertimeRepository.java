@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Attendance;
 import motorph.domain.model.OvertimeRequest;
 import motorph.domain.value.AttendanceStatus;
@@ -66,7 +68,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find overtime request by id.", e);
+            throw new DataAccessException("Failed to find overtime request by id.", e);
         }
 
         return null;
@@ -155,7 +157,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check overtime request existence.", e);
+            throw new DataAccessException("Failed to check overtime request existence.", e);
         }
     }
 
@@ -197,7 +199,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save overtime request.", e);
+            throw new DataAccessException("Failed to save overtime request.", e);
         }
     }
 
@@ -233,7 +235,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update overtime request status.", e);
+            throw new DataAccessException("Failed to update overtime request status.", e);
         }
     }
 
@@ -264,7 +266,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to get approved overtime hours.", e);
+            throw new DataAccessException("Failed to get approved overtime hours.", e);
         }
 
         return 0.0;
@@ -311,7 +313,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find eligible attendance for overtime.", e);
+            throw new DataAccessException("Failed to find eligible attendance for overtime.", e);
         }
 
         return eligible;
@@ -373,7 +375,7 @@ public class OvertimeRepository implements Repository<OvertimeRequest, Integer> 
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query overtime requests.", e);
+            throw new DataAccessException("Failed to query overtime requests.", e);
         }
 
         return requests;

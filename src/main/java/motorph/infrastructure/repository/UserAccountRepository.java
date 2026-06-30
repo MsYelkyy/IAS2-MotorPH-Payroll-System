@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.Role;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -54,7 +56,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find active user account by company email.", e);
+            throw new DataAccessException("Failed to find active user account by company email.", e);
         }
 
         return null;
@@ -78,7 +80,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find user account by company email.", e);
+            throw new DataAccessException("Failed to find user account by company email.", e);
         }
 
         return null;
@@ -105,7 +107,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find user account by id.", e);
+            throw new DataAccessException("Failed to find user account by id.", e);
         }
 
         return null;
@@ -131,7 +133,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find user account by employee id.", e);
+            throw new DataAccessException("Failed to find user account by employee id.", e);
         }
 
         return null;
@@ -223,7 +225,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             conn.commit();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save user account.", e);
+            throw new DataAccessException("Failed to save user account.", e);
         }
     }
 
@@ -241,7 +243,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             conn.commit();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update account roles.", e);
+            throw new DataAccessException("Failed to update account roles.", e);
         }
     }
 
@@ -262,7 +264,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             assignRole(conn, userAccountId, role);
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to add account role.", e);
+            throw new DataAccessException("Failed to add account role.", e);
         }
     }
 
@@ -383,7 +385,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check company email.", e);
+            throw new DataAccessException("Failed to check company email.", e);
         }
 
         return false;
@@ -461,7 +463,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query user accounts.", e);
+            throw new DataAccessException("Failed to query user accounts.", e);
         }
 
         return accounts;
@@ -546,7 +548,7 @@ public class UserAccountRepository implements Repository<UserAccount, Integer> {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update user account.", e);
+            throw new DataAccessException("Failed to update user account.", e);
         }
     }
 

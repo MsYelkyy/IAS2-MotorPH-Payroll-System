@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Permission;
 import motorph.domain.value.Role;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -45,7 +47,7 @@ public class PermissionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find permission keys by role.", e);
+            throw new DataAccessException("Failed to find permission keys by role.", e);
         }
 
         return permissionKeys;
@@ -85,7 +87,7 @@ public class PermissionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find permissions by role.", e);
+            throw new DataAccessException("Failed to find permissions by role.", e);
         }
 
         return permissions;
@@ -117,7 +119,7 @@ public class PermissionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find all permissions.", e);
+            throw new DataAccessException("Failed to find all permissions.", e);
         }
 
         return permissions;
@@ -149,7 +151,7 @@ public class PermissionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check role permission.", e);
+            throw new DataAccessException("Failed to check role permission.", e);
         }
     }
 
@@ -201,7 +203,7 @@ public class PermissionRepository {
             conn.commit();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update role permissions.", e);
+            throw new DataAccessException("Failed to update role permissions.", e);
         }
     }
 

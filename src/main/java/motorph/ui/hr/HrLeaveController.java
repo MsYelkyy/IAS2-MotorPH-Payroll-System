@@ -40,9 +40,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Manages the HR Leave & Overtime module: request list, detail view, and employee credits panel. */
 public class HrLeaveController {
+
+    private static final Logger logger = Logger.getLogger(HrLeaveController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
@@ -447,8 +451,9 @@ public class HrLeaveController {
                         employeeName = profile.getFullName();
                         department = profile.getDepartmentName() != null ? profile.getDepartmentName() : "-";
                     }
-                } catch (Exception ignored) {
-                    // fall back to placeholders when the profile cannot be resolved
+                } catch (Exception e) {
+                    // falls back to placeholders when the profile cannot be resolved
+                    logger.log(Level.FINE, "Could not resolve employee profile for overtime row", e);
                 }
                 rows.add(new OvertimeRow(request, employeeName, department,
                         resolveOvertimeTypeName(request.getOvertimeTypeId())));
@@ -515,7 +520,7 @@ public class HrLeaveController {
     }
 
     private void setupOvertimeTable() {
-        overtimeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        overtimeTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         otIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().requestId()));
         otEmployeeColumn.setCellValueFactory(data ->
@@ -631,7 +636,7 @@ public class HrLeaveController {
     }
 
     private void setupLeaveTable() {
-        leaveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        leaveTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         leaveIdColumn.setCellValueFactory(data ->
                 new SimpleObjectProperty<>(data.getValue().getLeaveRequestId()));
         leaveEmployeeColumn.setCellValueFactory(data ->
@@ -696,7 +701,7 @@ public class HrLeaveController {
     }
 
     private void setupCreditTable() {
-        creditTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        creditTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         creditTypeColumn.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getLeaveTypeName()));
         creditTotalColumn.setCellValueFactory(data ->

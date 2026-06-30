@@ -20,9 +20,13 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Populates the Admin dashboard with system-wide metrics and quick-access tiles. */
 public class AdminDashboardController {
+
+    private static final Logger logger = Logger.getLogger(AdminDashboardController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy");
@@ -188,8 +192,9 @@ public class AdminDashboardController {
                 .limit(10)
                 .map(this::buildActivityRow)
                 .forEach(activityRows.getChildren()::add);
-        } catch (Exception ignored) {
-            // leave table empty on service error
+        } catch (Exception e) {
+            // leaves the table empty on service error
+            logger.log(Level.WARNING, "Failed to load recent activity", e);
         }
     }
 

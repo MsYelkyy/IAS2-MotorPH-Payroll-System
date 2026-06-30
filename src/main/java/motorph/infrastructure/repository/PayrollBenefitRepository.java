@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PayrollBenefit;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -40,7 +42,7 @@ public class PayrollBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll benefit by id.", e);
+            throw new DataAccessException("Failed to find payroll benefit by id.", e);
         }
 
         return null;
@@ -74,7 +76,7 @@ public class PayrollBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll benefits by payroll result id.", e);
+            throw new DataAccessException("Failed to find payroll benefits by payroll result id.", e);
         }
 
         return benefits;
@@ -108,7 +110,7 @@ public class PayrollBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll benefits by benefit type id.", e);
+            throw new DataAccessException("Failed to find payroll benefits by benefit type id.", e);
         }
 
         return benefits;
@@ -141,7 +143,7 @@ public class PayrollBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll benefit by payroll result and benefit type.", e);
+            throw new DataAccessException("Failed to find payroll benefit by payroll result and benefit type.", e);
         }
 
         return null;
@@ -169,7 +171,7 @@ public class PayrollBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payroll benefit existence.", e);
+            throw new DataAccessException("Failed to check payroll benefit existence.", e);
         }
     }
 
@@ -196,7 +198,7 @@ public class PayrollBenefitRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payroll benefit.", e);
+            throw new DataAccessException("Failed to save payroll benefit.", e);
         }
     }
 

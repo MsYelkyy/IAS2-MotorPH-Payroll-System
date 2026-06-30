@@ -1,189 +1,128 @@
 package motorph.application.service;
 
-import motorph.application.dto.login.LoginRequestDTO;
-import motorph.application.exception.AuthenticationException;
+
+import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.ValidationException;
-import motorph.infrastructure.config.EmailConfig;
-import motorph.infrastructure.repository.DepartmentRepository;
+import motorph.domain.calculator.PayrollCalculator;
+import motorph.domain.model.Payrun;
+import motorph.domain.value.PayrollType;
+import motorph.infrastructure.repository.BenefitTypeRepository;
+import motorph.infrastructure.repository.DeductionTypeRepository;
+import motorph.infrastructure.repository.EarningTypeRepository;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
-import motorph.infrastructure.repository.EmployeeRepository;
 import motorph.infrastructure.repository.GovernmentDetailsRepository;
-import motorph.infrastructure.repository.PositionRepository;
+import motorph.infrastructure.repository.PagIbigRateRepository;
+import motorph.infrastructure.repository.PayrollBenefitRepository;
+import motorph.infrastructure.repository.PayrollDeductionRepository;
+import motorph.infrastructure.repository.PayrollEarningRepository;
+import motorph.infrastructure.repository.PayrollResultRepository;
+import motorph.infrastructure.repository.PayrunRepository;
+import motorph.infrastructure.repository.PhilHealthRateRepository;
 import motorph.infrastructure.repository.SalaryHistoryRepository;
-import motorph.infrastructure.repository.TwoFactorCodeRepository;
-import motorph.infrastructure.repository.UserAccountRepository;
+import motorph.infrastructure.repository.SssRateRepository;
+import motorph.infrastructure.repository.WithholdingTaxBracketRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.logging.Logger;
+
+import java.time.LocalDate;
+
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 
 /**
- * Tests authentication service validation rules (payroll test placeholder).
+ * Tests payroll service rules using mocked dependencies.
  */
-@DisplayName("PayrollService - Authentication Dependency Tests")
+@DisplayName("PayrollService Tests")
 class PayrollServiceTest {
 
-    private static final Logger logger = Logger.getLogger(PayrollServiceTest.class.getName());
 
-    // negative: rejects null login request
+    // constructor rejects a missing payrun repository
     @Test
-    @DisplayName("Negative - authenticate should reject null login request")
-    void authenticateShouldRejectNullLoginRequest() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing null login request validation.");
-        assertThrows(AuthenticationException.class, () -> authenticationService.authenticate(null));
+    @DisplayName("Negative - constructor should reject null payrun repository")
+    void constructorShouldRejectNullPayrunRepository() {
+        Deps deps = new Deps();
+        deps.payrunRepository = null;
+
+        assertThrows(IllegalArgumentException.class, deps::build);
     }
 
-    // negative: rejects blank company email
+
+    // runPayrollForEmployee rejects an invalid employee id
     @Test
-    @DisplayName("Negative - authenticate should reject blank company email")
-    void authenticateShouldRejectBlankCompanyEmail() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing blank company email validation.");
-        LoginRequestDTO request = new LoginRequestDTO("", "password123");
-        assertThrows(AuthenticationException.class, () -> authenticationService.authenticate(request));
+    @DisplayName("Negative - runPayrollForEmployee should reject invalid employee id")
+    void runPayrollForEmployeeShouldRejectInvalidEmployeeId() {
+        PayrollService service = new Deps().build();
+
+        assertThrows(ValidationException.class, () -> service.runPayrollForEmployee(0, 1));
     }
 
-    // negative: rejects blank password
+
+    // runPayrollForEmployee rejects an invalid payrun id
     @Test
-    @DisplayName("Negative - authenticate should reject blank password")
-    void authenticateShouldRejectBlankPassword() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing blank password validation.");
-        LoginRequestDTO request = new LoginRequestDTO("notfound@motorph.com", "");
-        assertThrows(AuthenticationException.class, () -> authenticationService.authenticate(request));
+    @DisplayName("Negative - runPayrollForEmployee should reject invalid payrun id")
+    void runPayrollForEmployeeShouldRejectInvalidPayrunId() {
+        PayrollService service = new Deps().build();
+
+        assertThrows(ValidationException.class, () -> service.runPayrollForEmployee(10001, 0));
     }
 
-    // edge case: rejects unknown company email
+
+    // runPayrollForEmployee blocks a duplicate payroll run
     @Test
-    @DisplayName("Edge Case - authenticate should reject unknown company email")
-    void authenticateShouldRejectUnknownCompanyEmail() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing unknown company email lookup.");
-        LoginRequestDTO request = new LoginRequestDTO("unknown_user_99999@motorph.com", "password123");
-        assertThrows(AuthenticationException.class, () -> authenticationService.authenticate(request));
+    @DisplayName("Negative - runPayrollForEmployee should block a duplicate run")
+    void runPayrollForEmployeeShouldBlockDuplicateRun() {
+        Deps deps = new Deps();
+        when(deps.payrunRepository.findById(1)).thenReturn(
+                new Payrun(1, LocalDate.of(2025, 6, 1), LocalDate.of(2025, 6, 15),
+                        LocalDate.of(2025, 6, 20), PayrollType.SEMI_MONTHLY));
+        when(deps.payrollResultRepository.existsByEmployeeAndPayrunId(10001, 1)).thenReturn(true);
+
+        PayrollService service = deps.build();
+
+        assertThrows(BusinessRuleException.class, () -> service.runPayrollForEmployee(10001, 1));
     }
 
-    // boundary: rejects zero user account id
+
+    // getPayrun rejects an invalid payrun id
     @Test
-    @DisplayName("Boundary - verifyLoginOtp should reject zero user account ID")
-    void verifyLoginOtpShouldRejectZeroUserAccountId() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing zero user account ID boundary.");
-        assertThrows(ValidationException.class, () -> authenticationService.verifyLoginOtp(0, "123456"));
+    @DisplayName("Negative - getPayrun should reject an invalid payrun id")
+    void getPayrunShouldRejectInvalidId() {
+        PayrollService service = new Deps().build();
+
+        assertThrows(ValidationException.class, () -> service.getPayrun(0));
     }
 
-    // boundary: rejects negative user account id
-    @Test
-    @DisplayName("Boundary - verifyLoginOtp should reject negative user account ID")
-    void verifyLoginOtpShouldRejectNegativeUserAccountId() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing negative user account ID boundary.");
-        assertThrows(ValidationException.class, () -> authenticationService.verifyLoginOtp(-1, "123456"));
-    }
 
-    // edge case: rejects missing user account during otp verification
-    @Test
-    @DisplayName("Edge Case - verifyLoginOtp should reject missing user account")
-    void verifyLoginOtpShouldRejectMissingUserAccount() {
-        AuthenticationService authenticationService = createAuthenticationService();
-        logger.info("Testing missing user account during OTP verification.");
-        assertThrows(AuthenticationException.class, () -> authenticationService.verifyLoginOtp(99999, "123456"));
-    }
+    // holds mocked dependencies and builds a PayrollService from them
+    private static final class Deps {
+        PayrunRepository payrunRepository = mock(PayrunRepository.class);
+        PayrollResultRepository payrollResultRepository = mock(PayrollResultRepository.class);
 
-    // constructor requires user account repository
-    @Test
-    @DisplayName("Negative - constructor should require UserAccountRepository")
-    void constructorShouldRequireUserAccountRepository() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new AuthenticationService(
-                        null,
-                        createEmployeeService(),
-                        new TwoFactorService(new TwoFactorCodeRepository()),
-                        createEmailService(),
-                        null
-                )
-        );
-    }
-
-    // constructor requires employee service
-    @Test
-    @DisplayName("Negative - constructor should require EmployeeService")
-    void constructorShouldRequireEmployeeService() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new AuthenticationService(
-                        new UserAccountRepository(),
-                        null,
-                        new TwoFactorService(new TwoFactorCodeRepository()),
-                        createEmailService(),
-                        null
-                )
-        );
-    }
-
-    // constructor requires two factor service
-    @Test
-    @DisplayName("Negative - constructor should require TwoFactorService")
-    void constructorShouldRequireTwoFactorService() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new AuthenticationService(
-                        new UserAccountRepository(),
-                        createEmployeeService(),
-                        null,
-                        createEmailService(),
-                        null
-                )
-        );
-    }
-
-    // constructor requires email service
-    @Test
-    @DisplayName("Negative - constructor should require EmailService")
-    void constructorShouldRequireEmailService() {
-        assertThrows(
-                IllegalArgumentException.class,
-                () -> new AuthenticationService(
-                        new UserAccountRepository(),
-                        createEmployeeService(),
-                        new TwoFactorService(new TwoFactorCodeRepository()),
-                        null,
-                        null
-                )
-        );
-    }
-
-    // creates authentication service with real dependencies
-    private AuthenticationService createAuthenticationService() {
-        return new AuthenticationService(
-                new UserAccountRepository(),
-                createEmployeeService(),
-                new TwoFactorService(new TwoFactorCodeRepository()),
-                createEmailService(),
-                null
-        );
-    }
-
-    // creates employee service with real dependencies
-    private EmployeeService createEmployeeService() {
-        return new EmployeeService(
-                new EmployeeRepository(),
-                new UserAccountService(new UserAccountRepository(), createEmailService()),
-                new DepartmentRepository(),
-                new PositionRepository(),
-                new SalaryHistoryRepository(),
-                new EmployeeBenefitRepository(),
-                new GovernmentDetailsRepository()
-        );
-    }
-
-    // creates email service dependency
-    @SuppressWarnings("deprecation")
-    private EmailService createEmailService() {
-        return new EmailService(EmailConfig.mailtrapSandbox());
+        PayrollService build() {
+            return new PayrollService(
+                    payrunRepository,
+                    payrollResultRepository,
+                    mock(PayrollEarningRepository.class),
+                    mock(PayrollBenefitRepository.class),
+                    mock(PayrollDeductionRepository.class),
+                    mock(EarningTypeRepository.class),
+                    mock(BenefitTypeRepository.class),
+                    mock(DeductionTypeRepository.class),
+                    mock(SalaryHistoryRepository.class),
+                    mock(EmployeeBenefitRepository.class),
+                    mock(GovernmentDetailsRepository.class),
+                    mock(SssRateRepository.class),
+                    mock(PhilHealthRateRepository.class),
+                    mock(PagIbigRateRepository.class),
+                    mock(WithholdingTaxBracketRepository.class),
+                    mock(AttendanceService.class),
+                    mock(OvertimeService.class),
+                    mock(EmployeeService.class),
+                    new PayrollCalculator()
+            );
+        }
     }
 }

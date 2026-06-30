@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository.report;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.report.attendance.AttendanceReportDTO;
 import motorph.application.dto.report.attendance.EmployeeTimecardEntryDTO;
 import motorph.application.dto.report.attendance.EmployeeTimecardReportDTO;
@@ -102,7 +104,7 @@ public class AttendanceReportRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find attendance report data.", e);
+            throw new DataAccessException("Failed to find attendance report data.", e);
         }
 
         return results;
@@ -142,10 +144,10 @@ public class AttendanceReportRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee timecard header data.", e);
+            throw new DataAccessException("Failed to find employee timecard header data.", e);
         }
 
-        throw new RuntimeException("Employee not found for timecard report.");
+        throw new DataAccessException("Employee not found for timecard report.");
     }
 
     // finds employee timecard detail rows
@@ -179,7 +181,7 @@ public class AttendanceReportRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee timecard entries.", e);
+            throw new DataAccessException("Failed to find employee timecard entries.", e);
         }
 
         return entries;

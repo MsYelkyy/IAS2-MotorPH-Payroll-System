@@ -235,7 +235,7 @@ public class EmployeeLeaveController {
     }
 
     private void configureHistoryTable() {
-        leaveHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        leaveHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         colRequestId.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().requestId()));

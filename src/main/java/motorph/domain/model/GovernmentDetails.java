@@ -70,27 +70,31 @@ public class GovernmentDetails {
     }
 
     public void setSssNumber(String sssNumber) {
-        this.sssNumber = requireNonBlank(sssNumber, "SSS number is required.");
+        this.sssNumber = requireValidNumber(sssNumber, "SSS number");
     }
 
     public void setTinNumber(String tinNumber) {
-        this.tinNumber = requireNonBlank(tinNumber, "TIN number is required.");
+        this.tinNumber = requireValidNumber(tinNumber, "TIN number");
     }
 
     public void setPagibigNumber(String pagibigNumber) {
-        this.pagibigNumber = requireNonBlank(pagibigNumber, "Pag-IBIG number is required.");
+        this.pagibigNumber = requireValidNumber(pagibigNumber, "Pag-IBIG number");
     }
 
     public void setPhilhealthNumber(String philhealthNumber) {
-        this.philhealthNumber = requireNonBlank(philhealthNumber, "PhilHealth number is required.");
+        this.philhealthNumber = requireValidNumber(philhealthNumber, "PhilHealth number");
     }
 
-    // validates required text
-    private String requireNonBlank(String value, String message) {
+    // validates a required government number: present and made of digits and dashes only
+    private String requireValidNumber(String value, String label) {
         if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException(message);
+            throw new IllegalArgumentException(label + " is required.");
         }
-        return value.trim();
+        String trimmed = value.trim();
+        if (!trimmed.matches("[0-9-]{6,}")) {
+            throw new IllegalArgumentException(label + " format is invalid.");
+        }
+        return trimmed;
     }
 
     // returns the government details summary

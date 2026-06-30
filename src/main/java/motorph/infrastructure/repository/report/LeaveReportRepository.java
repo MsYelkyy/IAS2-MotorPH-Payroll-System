@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository.report;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.report.leave.LeaveReportDTO;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -81,7 +83,7 @@ public class LeaveReportRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find leave report data.", e);
+            throw new DataAccessException("Failed to find leave report data.", e);
         }
 
         return results;

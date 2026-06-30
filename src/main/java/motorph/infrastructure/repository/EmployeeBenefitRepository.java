@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.EmployeeBenefit;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -42,7 +44,7 @@ public class EmployeeBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee benefit by id.", e);
+            throw new DataAccessException("Failed to find employee benefit by id.", e);
         }
 
         return null;
@@ -76,7 +78,7 @@ public class EmployeeBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee benefits by employee id.", e);
+            throw new DataAccessException("Failed to find employee benefits by employee id.", e);
         }
 
         return benefits;
@@ -114,7 +116,7 @@ public class EmployeeBenefitRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find active employee benefits.", e);
+            throw new DataAccessException("Failed to find active employee benefits.", e);
         }
 
         return benefits;
@@ -150,7 +152,7 @@ public class EmployeeBenefitRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save employee benefit.", e);
+            throw new DataAccessException("Failed to save employee benefit.", e);
         }
     }
 
@@ -185,7 +187,7 @@ public class EmployeeBenefitRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update employee benefit.", e);
+            throw new DataAccessException("Failed to update employee benefit.", e);
         }
     }
 

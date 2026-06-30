@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.systemconfig.WithholdingTaxBracketDTO;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -27,7 +29,7 @@ public class WithholdingTaxBracketRepository {
              ResultSet rs = s.executeQuery()) {
             while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load tax brackets.", e);
+            throw new DataAccessException("Failed to load tax brackets.", e);
         }
         return list;
     }
@@ -48,7 +50,7 @@ public class WithholdingTaxBracketRepository {
                 while (rs.next()) list.add(mapRow(rs));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load effective tax brackets.", e);
+            throw new DataAccessException("Failed to load effective tax brackets.", e);
         }
         return list;
     }
@@ -74,7 +76,7 @@ public class WithholdingTaxBracketRepository {
             setNullableDate(s, 8, dto.getEffectiveEndDate());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save tax bracket.", e);
+            throw new DataAccessException("Failed to save tax bracket.", e);
         }
     }
 
@@ -99,7 +101,7 @@ public class WithholdingTaxBracketRepository {
             s.setInt(8, dto.getTaxBracketId());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update tax bracket.", e);
+            throw new DataAccessException("Failed to update tax bracket.", e);
         }
     }
 
@@ -111,7 +113,7 @@ public class WithholdingTaxBracketRepository {
             s.setDate(1, Date.valueOf(endDate));
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to close open-ended tax brackets.", e);
+            throw new DataAccessException("Failed to close open-ended tax brackets.", e);
         }
     }
 

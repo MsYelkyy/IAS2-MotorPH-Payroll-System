@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PayrollDeduction;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -41,7 +43,7 @@ public class PayrollDeductionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll deduction by id.", e);
+            throw new DataAccessException("Failed to find payroll deduction by id.", e);
         }
 
         return null;
@@ -76,7 +78,7 @@ public class PayrollDeductionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll deductions by payroll result id.", e);
+            throw new DataAccessException("Failed to find payroll deductions by payroll result id.", e);
         }
 
         return deductions;
@@ -111,7 +113,7 @@ public class PayrollDeductionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll deductions by deduction type id.", e);
+            throw new DataAccessException("Failed to find payroll deductions by deduction type id.", e);
         }
 
         return deductions;
@@ -145,7 +147,7 @@ public class PayrollDeductionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll deduction by payroll result and deduction type.", e);
+            throw new DataAccessException("Failed to find payroll deduction by payroll result and deduction type.", e);
         }
 
         return null;
@@ -173,7 +175,7 @@ public class PayrollDeductionRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payroll deduction existence.", e);
+            throw new DataAccessException("Failed to check payroll deduction existence.", e);
         }
     }
 
@@ -202,7 +204,7 @@ public class PayrollDeductionRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payroll deduction.", e);
+            throw new DataAccessException("Failed to save payroll deduction.", e);
         }
     }
 

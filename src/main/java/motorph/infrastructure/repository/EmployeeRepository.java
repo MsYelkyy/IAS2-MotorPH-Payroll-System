@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Employee;
 import motorph.domain.value.EmploymentStatus;
 import motorph.domain.value.Gender;
@@ -95,7 +97,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee by id.", e);
+            throw new DataAccessException("Failed to find employee by id.", e);
         }
 
         return null;
@@ -122,7 +124,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find active employee by id.", e);
+            throw new DataAccessException("Failed to find active employee by id.", e);
         }
 
         return null;
@@ -167,7 +169,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find personal email by employee id.", e);
+            throw new DataAccessException("Failed to find personal email by employee id.", e);
         }
 
         return null;
@@ -205,7 +207,7 @@ public class EmployeeRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save employee.", e);
+            throw new DataAccessException("Failed to save employee.", e);
         }
     }
 
@@ -247,7 +249,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save employee and return generated ID.", e);
+            throw new DataAccessException("Failed to save employee and return generated ID.", e);
         }
 
         throw new IllegalStateException("Failed to retrieve generated employee ID.");
@@ -294,7 +296,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update employee.", e);
+            throw new DataAccessException("Failed to update employee.", e);
         }
     }
 
@@ -326,7 +328,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update employee contact information.", e);
+            throw new DataAccessException("Failed to update employee contact information.", e);
         }
     }
 
@@ -355,7 +357,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update employee personal email.", e);
+            throw new DataAccessException("Failed to update employee personal email.", e);
         }
     }
 
@@ -377,7 +379,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to deactivate employee.", e);
+            throw new DataAccessException("Failed to deactivate employee.", e);
         }
     }
 
@@ -438,7 +440,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find employee profile.", e);
+            throw new DataAccessException("Failed to find employee profile.", e);
         }
 
         return null;
@@ -468,7 +470,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update employee photo path.", e);
+            throw new DataAccessException("Failed to update employee photo path.", e);
         }
     }
 
@@ -490,7 +492,7 @@ public class EmployeeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query employees.", e);
+            throw new DataAccessException("Failed to query employees.", e);
         }
 
         return employees;

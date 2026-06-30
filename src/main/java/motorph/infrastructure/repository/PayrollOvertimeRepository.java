@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PayrollOvertime;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -44,7 +46,7 @@ public class PayrollOvertimeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll overtime by id.", e);
+            throw new DataAccessException("Failed to find payroll overtime by id.", e);
         }
 
         return null;
@@ -82,7 +84,7 @@ public class PayrollOvertimeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll overtime records by payroll result id.", e);
+            throw new DataAccessException("Failed to find payroll overtime records by payroll result id.", e);
         }
 
         return overtimeRecords;
@@ -117,7 +119,7 @@ public class PayrollOvertimeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll overtime by overtime request id.", e);
+            throw new DataAccessException("Failed to find payroll overtime by overtime request id.", e);
         }
 
         return null;
@@ -143,7 +145,7 @@ public class PayrollOvertimeRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payroll overtime existence.", e);
+            throw new DataAccessException("Failed to check payroll overtime existence.", e);
         }
     }
 
@@ -175,7 +177,7 @@ public class PayrollOvertimeRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payroll overtime.", e);
+            throw new DataAccessException("Failed to save payroll overtime.", e);
         }
     }
 

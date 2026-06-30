@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.Department;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -40,7 +42,7 @@ public class DepartmentRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to query departments.", e);
+            throw new DataAccessException("Failed to query departments.", e);
         }
 
         return list;

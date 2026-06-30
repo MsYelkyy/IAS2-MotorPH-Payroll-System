@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -199,6 +200,157 @@ class PayrollCalculatorTest {
 
 
         assertEquals(0.00, tax, 0.01);
+    }
+
+
+    // computes gross semi-monthly earnings from basic pay and allowances
+    @Test
+    @DisplayName("computeDeductions should compute gross earnings from basic and allowances")
+    void computeDeductionsShouldComputeGrossEarnings() {
+        PayrollInputDTO input = createInput(30000, 1500, 1000, 1000, 100);
+
+        PayrollBreakdown result = payrollCalculator.computeDeductions(
+                input, List.of(), 0, LocalDate.of(2025, 6, 15), createRates());
+
+        // 15000 basic + 750 rice + 500 phone + 500 clothing
+        assertEquals(16750.00, result.getTotalEarnings(), 0.01);
+    }
+
+
+    // computes net pay after government deductions on the second cutoff
+    @Test
+    @DisplayName("computeDeductions should compute net pay with tax deductions")
+    void computeDeductionsShouldComputeNetPayWithTax() {
+        PayrollInputDTO input = createInput(30000, 0, 0, 0, 100);
+
+        PayrollBreakdown result = payrollCalculator.computeDeductions(
+                input, List.of(), 0, LocalDate.of(2025, 6, 30), createRates());
+
+        assertEquals(result.getTotalEarnings() - result.getTotalDeductions(), result.getNetPay(), 0.01);
+        assertTrue(result.getWithholdingTax() > 0);
+    }
+
+
+    // computes overtime pay from approved hours and hourly rate
+    @Test
+    @DisplayName("computeDeductions should compute overtime pay from approved hours")
+    void computeDeductionsShouldComputeOvertimePay() {
+        PayrollInputDTO input = createInput(30000, 0, 0, 0, 150);
+
+        PayrollBreakdown result = payrollCalculator.computeDeductions(
+                input, List.of(), 4, LocalDate.of(2025, 6, 15), createRates());
+
+        // 4 hours * 150 hourly rate
+        assertEquals(600.00, result.getOvertimePay(), 0.01);
+    }
+
+
+    // computes payroll correctly when no allowances are provided
+    @Test
+    @DisplayName("computeDeductions should compute correctly with no allowances")
+    void computeDeductionsShouldComputeWithNoAllowances() {
+        PayrollInputDTO input = createInput(30000, 0, 0, 0, 100);
+
+        PayrollBreakdown result = payrollCalculator.computeDeductions(
+                input, List.of(), 0, LocalDate.of(2025, 6, 15), createRates());
+
+        assertEquals(0.00, result.getRiceSubsidy(), 0.01);
+        assertEquals(0.00, result.getPhoneAllowance(), 0.01);
+        assertEquals(0.00, result.getClothingAllowance(), 0.01);
+        assertEquals(15000.00, result.getTotalEarnings(), 0.01);
+    }
+
+
+    // keeps monetary values free of rounding drift over repeated computation
+    @Test
+    @DisplayName("computeDeductions should not accumulate rounding errors")
+    void computeDeductionsShouldNotAccumulateRoundingErrors() {
+        PayrollInputDTO input = createInput(33333, 1500, 1000, 1000, 100);
+
+        PayrollBreakdown first = payrollCalculator.computeDeductions(
+                input, List.of(), 0, LocalDate.of(2025, 6, 15), createRates());
+        PayrollBreakdown second = payrollCalculator.computeDeductions(
+                input, List.of(), 0, LocalDate.of(2025, 6, 15), createRates());
+
+        // identical inputs must yield identical results (no drift)
+        assertEquals(first.getNetPay(), second.getNetPay(), 0.001);
+    }
+
+
+    // stress: stays stable and correct across a high volume of computations
+    @Test
+    @DisplayName("Stress - computeDeductions should stay stable for high volume")
+    void computeDeductionsShouldStayStableForHighVolume() {
+        PayrollInputDTO input = createInput(30000, 1500, 1000, 1000, 100);
+        GovernmentRatesDTO rates = createRates();
+
+        for (int i = 0; i < 10_000; i++) {
+            PayrollBreakdown result = payrollCalculator.computeDeductions(
+                    input, List.of(), 0, LocalDate.of(2025, 6, 15), rates);
+            assertEquals(16750.00, result.getNetPay(), 0.01);
+        }
+    }
+
+
+    // stress: handles a large attendance list without failure
+    @Test
+    @DisplayName("Stress - computeDeductions should handle a large attendance list")
+    void computeDeductionsShouldHandleLargeAttendanceList() {
+        List<Attendance> bigList = new ArrayList<>();
+        for (int i = 1; i <= 5000; i++) {
+            bigList.add(new Attendance(
+                    i, 10001, LocalDate.of(2025, 6, 10),
+                    LocalTime.of(8, 0), LocalTime.of(17, 0), AttendanceStatus.PRESENT));
+        }
+
+        PayrollBreakdown result = payrollCalculator.computeDeductions(
+                createInput(30000, 0, 0, 0, 100), bigList, 0,
+                LocalDate.of(2025, 6, 15), createRates());
+
+        assertNotNull(result);
+    }
+
+
+    // overloaded computeMonthlyTax matches the full version with zero deductions
+    @Test
+    @DisplayName("computeMonthlyTax overload should match the full method with zero deductions")
+    void computeMonthlyTaxOverloadShouldMatchFullMethodWithZeroDeductions() {
+        List<WithholdingTaxBracketDTO> brackets = createRates().getTaxBrackets();
+
+        double overloaded = PayrollCalculator.computeMonthlyTax(30000, brackets);
+        double full = PayrollCalculator.computeMonthlyTax(30000, 0.0, brackets);
+
+        assertEquals(full, overloaded, 0.01);
+    }
+
+
+    // overloaded calculatePaidRegularHours matches the attendance version
+    @Test
+    @DisplayName("calculatePaidRegularHours overload should match the attendance version")
+    void calculatePaidRegularHoursOverloadShouldMatchAttendanceVersion() {
+        Attendance attendance = new Attendance(
+                1,
+                10001,
+                LocalDate.of(2025, 6, 10),
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                AttendanceStatus.PRESENT
+        );
+
+        double fromTimes = PayrollCalculator.calculatePaidRegularHours(LocalTime.of(8, 0), LocalTime.of(18, 0));
+        double fromAttendance = PayrollCalculator.calculatePaidRegularHours(attendance);
+
+        assertEquals(8.00, fromTimes, 0.01);
+        assertEquals(fromAttendance, fromTimes, 0.01);
+    }
+
+
+    // overloaded calculatePaidRegularHours returns zero for null times
+    @Test
+    @DisplayName("calculatePaidRegularHours overload should return zero for null times")
+    void calculatePaidRegularHoursOverloadShouldReturnZeroForNullTimes() {
+        assertEquals(0.00, PayrollCalculator.calculatePaidRegularHours(null, LocalTime.of(17, 0)), 0.01);
+        assertEquals(0.00, PayrollCalculator.calculatePaidRegularHours(LocalTime.of(8, 0), null), 0.01);
     }
 
 

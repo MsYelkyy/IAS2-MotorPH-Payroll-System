@@ -135,6 +135,11 @@ public class Employee {
         return firstName + " " + lastName;
     }
 
+    // overload: returns the full name as "Last, First" when lastNameFirst is true
+    public String getFullName(boolean lastNameFirst) {
+        return lastNameFirst ? lastName + ", " + firstName : getFullName();
+    }
+
     // checks if the employee is regular
     public boolean isRegular() {
         return employmentStatus == EmploymentStatus.REGULAR;
@@ -183,7 +188,11 @@ public class Employee {
     }
 
     public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = clean(phoneNumber);
+        String cleaned = clean(phoneNumber);
+        if (cleaned != null && !cleaned.isEmpty() && !cleaned.matches("[0-9+()\\-\\s]{7,}")) {
+            throw new IllegalArgumentException("Phone number format is invalid.");
+        }
+        this.phoneNumber = cleaned;
     }
 
     public void setPersonalEmail(String personalEmail) {
@@ -209,7 +218,11 @@ public class Employee {
     }
 
     public void setHireDate(LocalDate hireDate) {
-        this.hireDate = Objects.requireNonNull(hireDate, "Hire date is required.");
+        Objects.requireNonNull(hireDate, "Hire date is required.");
+        if (hireDate.isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Hire date cannot be in the future.");
+        }
+        this.hireDate = hireDate;
     }
 
     public void setSupervisorId(Integer supervisorId) {

@@ -563,7 +563,7 @@ public class PayrollManagementController {
     // ── Table setup ───────────────────────────────────────────────────
 
     private void setupPendingTable() {
-        pendingTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        pendingTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         pendingTable.setItems(pendingItems);
 
         pendingPayDateColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getPayDate()));
@@ -608,7 +608,7 @@ public class PayrollManagementController {
     }
 
     private void setupCompletedTable() {
-        completedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        completedTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         completedTable.setItems(completedItems);
 
         completedPayDateColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getPayDate()));
@@ -646,7 +646,7 @@ public class PayrollManagementController {
     }
 
     private void setupReadinessTable() {
-        readinessTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        readinessTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         readinessTable.setItems(readinessItems);
 
         readyEmpIdColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getEmployeeId()));
@@ -682,7 +682,7 @@ public class PayrollManagementController {
     }
 
     private void setupResultTable() {
-        resultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        resultTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         resultEmployeeIdColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getEmployeeId()));
         resultEmployeeColumn.setCellValueFactory(d -> new SimpleStringProperty(d.getValue().getFullName()));

@@ -1,5 +1,6 @@
 package motorph.infrastructure.repository.report;
 
+import motorph.application.exception.DataAccessException;
 
 import motorph.application.dto.report.ticket.TicketReportDTO;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -106,7 +107,7 @@ public class TicketReportRepository {
 
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve ticket report data.", e);
+            throw new DataAccessException("Failed to retrieve ticket report data.", e);
         }
 
 

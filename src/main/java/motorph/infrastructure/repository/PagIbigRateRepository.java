@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.application.dto.systemconfig.PagIbigRateDTO;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -29,7 +31,7 @@ public class PagIbigRateRepository {
              ResultSet rs = s.executeQuery()) {
             while (rs.next()) list.add(mapRow(rs));
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load Pag-IBIG rates.", e);
+            throw new DataAccessException("Failed to load Pag-IBIG rates.", e);
         }
         return list;
     }
@@ -50,7 +52,7 @@ public class PagIbigRateRepository {
                 while (rs.next()) list.add(mapRow(rs));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to load effective Pag-IBIG rates.", e);
+            throw new DataAccessException("Failed to load effective Pag-IBIG rates.", e);
         }
         return list;
     }
@@ -78,7 +80,7 @@ public class PagIbigRateRepository {
             setNullableDate(s, 9, dto.getEffectiveEndDate());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save Pag-IBIG rate.", e);
+            throw new DataAccessException("Failed to save Pag-IBIG rate.", e);
         }
     }
 
@@ -105,7 +107,7 @@ public class PagIbigRateRepository {
             s.setInt(9, dto.getPagibigRateId());
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update Pag-IBIG rate.", e);
+            throw new DataAccessException("Failed to update Pag-IBIG rate.", e);
         }
     }
 
@@ -117,7 +119,7 @@ public class PagIbigRateRepository {
             s.setDate(1, Date.valueOf(endDate));
             s.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to close open-ended Pag-IBIG rates.", e);
+            throw new DataAccessException("Failed to close open-ended Pag-IBIG rates.", e);
         }
     }
 

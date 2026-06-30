@@ -28,9 +28,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Handles support ticket submission and ticket history display for the employee. */
 public class EmployeeSupportTicketController {
+
+    private static final Logger logger = Logger.getLogger(EmployeeSupportTicketController.class.getName());
 
     private static final int MESSAGE_LIMIT = 1000;
     private static final int TITLE_LIMIT = 150;
@@ -192,7 +196,7 @@ public class EmployeeSupportTicketController {
     }
 
     private void setupTable() {
-        ticketTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        ticketTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         colTicketId.setCellValueFactory(data -> {
             Integer id = data.getValue().getTicketId();
@@ -239,8 +243,9 @@ public class EmployeeSupportTicketController {
                 List<SupportTicket> tickets = supportTicketService.getTicketsByEmployee(employeeId);
                 tickets.sort(Comparator.comparing(SupportTicket::getCreatedAt).reversed());
                 allTickets.addAll(tickets);
-            } catch (Exception ignored) {
-                // leave table empty on error; avoid crashing the view
+            } catch (Exception e) {
+                // leaves the table empty on error to avoid crashing the view
+                logger.log(Level.WARNING, "Failed to load employee tickets", e);
             }
         }
 

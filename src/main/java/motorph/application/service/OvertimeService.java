@@ -144,11 +144,13 @@ public class OvertimeService {
     public void approveOvertimeRequest(UserAccount actorAccount, int overtimeRequestId, String remarks) {
         OvertimeRequest request = validateApprovalAction(actorAccount, overtimeRequestId);
 
+        request.approve(actorAccount.getUserAccountId(), remarks);
+
         overtimeRepository.updateStatus(
                 request.getRequestId(),
-                RequestStatus.APPROVED,
-                actorAccount.getUserAccountId(),
-                remarks
+                request.getStatus(),
+                request.getApproverAccountId(),
+                request.getRemarks()
         );
     }
 
@@ -156,16 +158,18 @@ public class OvertimeService {
     public void rejectOvertimeRequest(UserAccount actorAccount, int overtimeRequestId, String remarks) {
         OvertimeRequest request = validateApprovalAction(actorAccount, overtimeRequestId);
 
+        request.reject(actorAccount.getUserAccountId(), remarks);
+
         overtimeRepository.updateStatus(
                 request.getRequestId(),
-                RequestStatus.REJECTED,
-                actorAccount.getUserAccountId(),
-                remarks
+                request.getStatus(),
+                request.getApproverAccountId(),
+                request.getRemarks()
         );
     }
 
     // cancels a pending overtime request by the employee owner
-    public void cancelOvertimeRequest(int actorEmployeeId, int overtimeRequestId) {
+    public void cancelOvertimeRequest(int actorEmployeeId, int overtimeRequestId, String reason) {
         validateEmployeeId(actorEmployeeId);
         validateOvertimeRequestId(overtimeRequestId);
 
@@ -179,11 +183,13 @@ public class OvertimeService {
             throw new BusinessRuleException("Only pending overtime requests can be cancelled.");
         }
 
+        request.cancel(reason);
+
         overtimeRepository.updateStatus(
                 overtimeRequestId,
-                RequestStatus.CANCELLED,
-                null,
-                null
+                request.getStatus(),
+                request.getApproverAccountId(),
+                request.getRemarks()
         );
     }
 

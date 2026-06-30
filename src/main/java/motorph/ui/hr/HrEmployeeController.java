@@ -15,6 +15,7 @@ import motorph.domain.value.EmploymentStatus;
 import motorph.domain.value.Gender;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
+import motorph.ui.util.TextFieldFormatters;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.scene.layout.StackPane;
@@ -39,7 +40,6 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextFormatter;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -57,7 +57,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.UnaryOperator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -850,7 +849,10 @@ public class HrEmployeeController {
             for (Position p : allPositions) {
                 positionsByDept.computeIfAbsent(p.getDepartmentId(), k -> new ArrayList<>()).add(p);
             }
-        } catch (Exception ignored) { }
+        } catch (Exception e) {
+            // leaves the dropdown caches empty on load failure
+            LOGGER.log(Level.WARNING, "Failed to load departments and positions", e);
+        }
     }
 
     private void loadEmployees() {
@@ -1267,81 +1269,27 @@ public class HrEmployeeController {
     // ── Input formatters / masks ──────────────────────────────────────────────
 
     private void installMaxLengthFormatter(TextField field, int maxLength) {
-        field.setTextFormatter(new TextFormatter<>(change ->
-                change.getControlNewText().length() <= maxLength ? change : null));
+        TextFieldFormatters.installMaxLength(field, maxLength);
     }
 
     private void installAmountFormatter(TextField field, int maxInt, int maxDec) {
-        field.setTextFormatter(new TextFormatter<>(amountFilter(maxInt, maxDec)));
+        TextFieldFormatters.installAmount(field, maxInt, maxDec);
     }
 
     private void installDigitMaskFormatter(TextField field, int maxDigits) {
-        field.setTextFormatter(new TextFormatter<>(change -> {
-            String text = change.getControlNewText();
-            if (!text.matches("[\\d-]*")) return null;
-            int digits = 0;
-            for (char c : text.toCharArray()) if (Character.isDigit(c)) digits++;
-            return digits <= maxDigits ? change : null;
-        }));
+        TextFieldFormatters.installDigitMask(field, maxDigits);
     }
 
     private void installPhoneFormatter(TextField field) {
-        field.textProperty().addListener((obs, o, n) -> {
-            if (n == null) return;
-            String digits = n.replaceAll("[^\\d]", "");
-            if (digits.length() > 10) digits = digits.substring(0, 10);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < digits.length(); i++) {
-                if (i == 3 || i == 6) sb.append('-');
-                sb.append(digits.charAt(i));
-            }
-            String result = sb.toString();
-            if (!result.equals(n)) { field.setText(result); field.positionCaret(result.length()); }
-        });
-    }
-
-    private UnaryOperator<TextFormatter.Change> amountFilter(int maxInt, int maxDec) {
-        return change -> {
-            String text = change.getControlNewText();
-            if (text.isEmpty()) return change;
-            if (!text.matches("\\d*(\\.\\d*)?")) return null;
-            int dot = text.indexOf('.');
-            String intPart = dot >= 0 ? text.substring(0, dot) : text;
-            String decPart = dot >= 0 ? text.substring(dot + 1) : "";
-            if (intPart.length() > maxInt || decPart.length() > maxDec) return null;
-            return change;
-        };
+        TextFieldFormatters.installPhone(field);
     }
 
     private String applyDateMask(TextField field, String newVal) {
-        if (newVal == null) return "";
-        String digits = newVal.replaceAll("[^\\d]", "");
-        if (digits.length() > 8) digits = digits.substring(0, 8);
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < digits.length(); i++) {
-            if (i == 2 || i == 4) sb.append('-');
-            sb.append(digits.charAt(i));
-        }
-        String result = sb.toString();
-        if (!result.equals(newVal)) { field.setText(result); field.positionCaret(result.length()); }
-        return result;
+        return TextFieldFormatters.applyDateMask(field, newVal);
     }
 
     private void autoFormatGovId(TextField field, String newVal, int[] dashPositions, int maxLen) {
-        if (newVal == null) return;
-        String digits = newVal.replaceAll("[^\\d]", "");
-        int maxDigits = maxLen - dashPositions.length;
-        if (digits.length() > maxDigits) digits = digits.substring(0, maxDigits);
-        StringBuilder sb = new StringBuilder();
-        int d = 0;
-        for (int pos = 0; pos < maxLen && d < digits.length(); pos++) {
-            boolean isDash = false;
-            for (int dp : dashPositions) if (pos == dp) { isDash = true; break; }
-            if (isDash) sb.append('-');
-            else sb.append(digits.charAt(d++));
-        }
-        String result = sb.toString();
-        if (!result.equals(newVal)) { field.setText(result); field.positionCaret(result.length()); }
+        TextFieldFormatters.autoFormatGovId(field, newVal, dashPositions, maxLen);
     }
 
     private javafx.util.StringConverter<LocalDate> datePickerConverter() {
@@ -1438,8 +1386,9 @@ public class HrEmployeeController {
                         }
                     }
                 }
-            } catch (Exception ignored) {
-                // fall through to initials
+            } catch (Exception e) {
+                // falls through to initials
+                LOGGER.log(Level.FINE, "Could not load employee summary photo", e);
             }
         }
 
@@ -1504,7 +1453,9 @@ public class HrEmployeeController {
     private String companyEmailFor(int employeeId) {
         try {
             return safe(userAccountService.getCompanyEmailByEmployeeId(employeeId));
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            // returns blank when the account email cannot be resolved
+            LOGGER.log(Level.FINE, "Could not resolve company email for employee " + employeeId, e);
             return "";
         }
     }

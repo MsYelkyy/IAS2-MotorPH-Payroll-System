@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Populates the HR dashboard with workforce metrics, attendance/department charts,
@@ -35,6 +37,8 @@ import java.util.TreeMap;
  * controller from existing service results (no SQL here), mirroring AdminDashboardController.
  */
 public class HrDashboardController {
+
+    private static final Logger logger = Logger.getLogger(HrDashboardController.class.getName());
 
     // Leave types shown in the Leave Summary, in display order.
     private static final int[] LEAVE_SUMMARY_TYPE_IDS = {1, 2, 3, 4, 5, 6};
@@ -149,7 +153,7 @@ public class HrDashboardController {
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Present");
             byMonth.forEach((month, count) -> addPoint(series, monthLabel(month), count));
-            attendanceTrendChart.getData().setAll(series);
+            attendanceTrendChart.getData().setAll(List.of(series));
 
         } catch (Exception e) {
             attendanceTrendChart.getData().clear();
@@ -175,7 +179,7 @@ public class HrDashboardController {
                 long count = countByDept.getOrDefault(dept.getDepartmentId(), 0L);
                 addPoint(series, dept.getDepartmentName(), count);
             }
-            departmentDistributionChart.getData().setAll(series);
+            departmentDistributionChart.getData().setAll(List.of(series));
 
         } catch (Exception e) {
             departmentDistributionChart.getData().clear();
@@ -212,7 +216,7 @@ public class HrDashboardController {
                 addPoint(absent,  label, counts[2]);
             });
 
-            attendanceSummaryChart.getData().setAll(present, late, absent);
+            attendanceSummaryChart.getData().setAll(List.of(present, late, absent));
 
         } catch (Exception e) {
             attendanceSummaryChart.getData().clear();
@@ -242,8 +246,9 @@ public class HrDashboardController {
                     leaveSummaryList.getChildren().add(
                             buildLeaveSummaryRow(LeaveService.resolveLeaveTypeName(typeId), days)));
 
-        } catch (Exception ignored) {
+        } catch (Exception e) {
             // leave summary stays empty on service error
+            logger.log(Level.WARNING, "Failed to load leave summary", e);
         }
     }
 

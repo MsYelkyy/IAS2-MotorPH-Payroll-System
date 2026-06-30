@@ -222,7 +222,7 @@ public class EmployeeOvertimeController {
     }
 
     private void configureHistoryTable() {
-        overtimeHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        overtimeHistoryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
         colRequestId.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().requestId()));
@@ -360,7 +360,8 @@ public class EmployeeOvertimeController {
         }
 
         try {
-            overtimeService.cancelOvertimeRequest(employeeId, row.request().getRequestId());
+            overtimeService.cancelOvertimeRequest(
+                    employeeId, row.request().getRequestId(), "Cancelled by employee.");
             refresh();
             UiMessageUtil.showToast(toastRoot, "Pending overtime request cancelled.");
         } catch (Exception e) {

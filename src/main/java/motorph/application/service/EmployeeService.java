@@ -2,6 +2,7 @@ package motorph.application.service;
 
 import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.employee.EmployeeSummaryDTO;
+import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Department;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -144,6 +146,7 @@ public class EmployeeService {
     public List<EmployeeSummaryDTO> getAllEmployeeSummaries() {
         return employeeRepository.findAllWithInactive()
                 .stream()
+                .sorted(Comparator.comparing(e -> e.getFullName(true), String.CASE_INSENSITIVE_ORDER))
                 .map(this::toSummaryDTO)
                 .collect(Collectors.toList());
     }
@@ -374,7 +377,7 @@ public class EmployeeService {
         try {
             Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save profile photo: " + e.getMessage(), e);
+            throw new BusinessRuleException("Failed to save profile photo: " + e.getMessage(), e);
         }
 
         employeeRepository.updatePhotoPath(employeeId, relativePath);

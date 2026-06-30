@@ -437,7 +437,7 @@ class OvertimeServiceTest {
 
         assertThrows(
                 ValidationException.class,
-                () -> overtimeService.cancelOvertimeRequest(0, 1)
+                () -> overtimeService.cancelOvertimeRequest(0, 1, "Cancelled by employee.")
         );
     }
 

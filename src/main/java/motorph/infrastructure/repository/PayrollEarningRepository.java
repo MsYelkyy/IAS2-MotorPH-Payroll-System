@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.PayrollEarning;
 import motorph.infrastructure.config.DatabaseConnection;
 
@@ -40,7 +42,7 @@ public class PayrollEarningRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll earning by id.", e);
+            throw new DataAccessException("Failed to find payroll earning by id.", e);
         }
 
         return null;
@@ -74,7 +76,7 @@ public class PayrollEarningRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll earnings by payroll result id.", e);
+            throw new DataAccessException("Failed to find payroll earnings by payroll result id.", e);
         }
 
         return earnings;
@@ -108,7 +110,7 @@ public class PayrollEarningRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll earnings by earning type id.", e);
+            throw new DataAccessException("Failed to find payroll earnings by earning type id.", e);
         }
 
         return earnings;
@@ -141,7 +143,7 @@ public class PayrollEarningRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find payroll earning by payroll result and earning type.", e);
+            throw new DataAccessException("Failed to find payroll earning by payroll result and earning type.", e);
         }
 
         return null;
@@ -169,7 +171,7 @@ public class PayrollEarningRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to check payroll earning existence.", e);
+            throw new DataAccessException("Failed to check payroll earning existence.", e);
         }
     }
 
@@ -196,7 +198,7 @@ public class PayrollEarningRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save payroll earning.", e);
+            throw new DataAccessException("Failed to save payroll earning.", e);
         }
     }
 

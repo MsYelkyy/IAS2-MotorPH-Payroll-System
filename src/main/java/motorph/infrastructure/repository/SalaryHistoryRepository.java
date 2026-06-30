@@ -1,5 +1,7 @@
 package motorph.infrastructure.repository;
 
+import motorph.application.exception.DataAccessException;
+
 import motorph.domain.model.SalaryHistory;
 import motorph.domain.value.SalaryType;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -45,7 +47,7 @@ public class SalaryHistoryRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find salary history by id.", e);
+            throw new DataAccessException("Failed to find salary history by id.", e);
         }
 
         return null;
@@ -80,7 +82,7 @@ public class SalaryHistoryRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find salary history by employee id.", e);
+            throw new DataAccessException("Failed to find salary history by employee id.", e);
         }
 
         return histories;
@@ -118,7 +120,7 @@ public class SalaryHistoryRepository {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to find current salary history.", e);
+            throw new DataAccessException("Failed to find current salary history.", e);
         }
 
         return null;
@@ -151,7 +153,7 @@ public class SalaryHistoryRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to save salary history.", e);
+            throw new DataAccessException("Failed to save salary history.", e);
         }
     }
 
@@ -182,7 +184,7 @@ public class SalaryHistoryRepository {
             stmt.executeUpdate();
 
         } catch (SQLException e) {
-            throw new RuntimeException("Failed to update salary history.", e);
+            throw new DataAccessException("Failed to update salary history.", e);
         }
     }
 

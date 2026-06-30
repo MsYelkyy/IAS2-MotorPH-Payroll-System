@@ -1,5 +1,6 @@
 package motorph.infrastructure.repository.report;
 
+import motorph.application.exception.DataAccessException;
 
 import motorph.application.dto.report.audit.AuditReportDTO;
 import motorph.infrastructure.config.DatabaseConnection;
@@ -82,7 +83,7 @@ public class AuditReportRepository {
 
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to retrieve audit report data.", e);
+            throw new DataAccessException("Failed to retrieve audit report data.", e);
         }
 
 
