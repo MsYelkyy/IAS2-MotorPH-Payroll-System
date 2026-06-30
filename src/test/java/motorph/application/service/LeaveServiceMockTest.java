@@ -3,8 +3,11 @@ package motorph.application.service;
 
 import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.UnauthorizedException;
+import motorph.domain.model.Employee;
 import motorph.domain.model.LeaveRequest;
 import motorph.domain.model.UserAccount;
+import motorph.domain.value.EmploymentStatus;
+import motorph.domain.value.Gender;
 import motorph.domain.value.RequestStatus;
 import motorph.domain.value.Role;
 import motorph.infrastructure.repository.LeaveCreditRepository;
@@ -146,10 +149,84 @@ class LeaveServiceMockTest {
     }
 
 
+    // reverse restores credits and updates the status of an approved leave
+    @Test
+    @DisplayName("Positive - reverseApprovedLeave should restore credits and update status")
+    void reverseApprovedLeaveShouldRestoreCredits() {
+        LeaveRepository leaveRepository = mock(LeaveRepository.class);
+        LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
+
+        when(leaveRepository.findById(1)).thenReturn(approvedLeave(10002));
+
+        LeaveService service = serviceWith(leaveRepository, leaveCreditRepository);
+
+        service.reverseApprovedLeave(hrActor(), 1, RequestStatus.CANCELLED);
+
+        verify(leaveCreditRepository).restoreCredits(anyInt(), anyInt(), anyInt(), anyDouble());
+        verify(leaveRepository).updateStatus(eq(1), eq(RequestStatus.CANCELLED), anyInt());
+    }
+
+
+    // reverse only accepts rejected or cancelled as the new status
+    @Test
+    @DisplayName("Negative - reverseApprovedLeave should reject an invalid new status")
+    void reverseApprovedLeaveShouldRejectInvalidStatus() {
+        LeaveService service = serviceWith(mock(LeaveRepository.class), mock(LeaveCreditRepository.class));
+
+        assertThrows(
+                motorph.application.exception.ValidationException.class,
+                () -> service.reverseApprovedLeave(hrActor(), 1, RequestStatus.APPROVED));
+    }
+
+
+    // a valid submission saves the leave request
+    @Test
+    @DisplayName("Positive - submitLeaveRequest should save a valid request")
+    void submitLeaveRequestShouldSaveValidRequest() {
+        LeaveRepository leaveRepository = mock(LeaveRepository.class);
+        LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
+        EmployeeService employeeService = mock(EmployeeService.class);
+
+        when(employeeService.getEmployeeById(10001)).thenReturn(regularEmployee());
+        when(leaveRepository.hasConflict(anyInt(), any(), any())).thenReturn(false);
+        when(leaveCreditRepository.hasEnoughCredits(anyInt(), anyInt(), anyInt(), anyDouble()))
+                .thenReturn(true);
+
+        LeaveService service = new LeaveService(leaveRepository, leaveCreditRepository, employeeService);
+
+        LocalDate start = LocalDate.now().plusDays(7);
+        service.submitLeaveRequest(10001, 1, start, start.plusDays(1), 8.0, "Family event");
+
+        verify(leaveRepository).save(any(LeaveRequest.class));
+    }
+
+
+    // computes leave hours as eight hours per day for a future range
+    @Test
+    @DisplayName("Positive - computeLeaveHours should return eight hours per day")
+    void computeLeaveHoursShouldReturnEightHoursPerDay() {
+        LeaveService service = serviceWith(mock(LeaveRepository.class), mock(LeaveCreditRepository.class));
+
+        LocalDate start = LocalDate.now().plusDays(10);
+        double hours = service.computeLeaveHours(start, start.plusDays(2));
+
+        // 3 days * 8 hours
+        assertEquals(24.0, hours, 0.01);
+    }
+
+
     // builds a leave service with mocked repositories and employee service
     private LeaveService serviceWith(LeaveRepository leaveRepository,
                                      LeaveCreditRepository leaveCreditRepository) {
         return new LeaveService(leaveRepository, leaveCreditRepository, mock(EmployeeService.class));
+    }
+
+    // builds a regular (eligible) employee
+    private Employee regularEmployee() {
+        return new Employee(
+                10001, "Juan", "Dela Cruz", LocalDate.of(1990, 1, 1), Gender.MALE,
+                null, null, null, null, EmploymentStatus.REGULAR, 1, 1,
+                LocalDate.of(2020, 1, 1), null, true, null);
     }
 
     // builds a pending leave request owned by the given employee

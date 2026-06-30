@@ -2,6 +2,7 @@ package motorph.application.service;
 
 import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.dto.employee.EmployeeSummaryDTO;
+import motorph.application.exception.BusinessRuleException;
 import motorph.application.exception.EntityNotFoundException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.Department;
@@ -376,7 +377,7 @@ public class EmployeeService {
         try {
             Files.copy(sourceFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to save profile photo: " + e.getMessage(), e);
+            throw new BusinessRuleException("Failed to save profile photo: " + e.getMessage(), e);
         }
 
         employeeRepository.updatePhotoPath(employeeId, relativePath);

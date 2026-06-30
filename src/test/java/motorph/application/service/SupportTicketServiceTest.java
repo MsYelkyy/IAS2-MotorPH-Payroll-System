@@ -1,13 +1,20 @@
 package motorph.application.service;
 
 
+import motorph.application.exception.BusinessRuleException;
+import motorph.application.exception.UnauthorizedException;
 import motorph.application.exception.ValidationException;
 import motorph.domain.model.SupportTicket;
+import motorph.domain.value.Role;
 import motorph.domain.value.RoutingTeam;
 import motorph.domain.value.SupportTicketCategory;
+import motorph.domain.value.SupportTicketStatus;
 import motorph.infrastructure.repository.SupportTicketRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+
+import java.time.LocalDateTime;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -88,6 +95,90 @@ class SupportTicketServiceTest {
 
 
         verify(repository, never()).save(any(SupportTicket.class));
+    }
+
+
+    // a privileged role resolves an open ticket
+    @Test
+    @DisplayName("Positive - resolveTicket should mark an open ticket resolved")
+    void resolveTicketShouldMarkResolved() {
+        SupportTicketRepository repository = mock(SupportTicketRepository.class);
+        when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
+
+        SupportTicketService service = new SupportTicketService(repository);
+
+        service.resolveTicket(1, 5, Role.IT);
+
+        verify(repository).markResolved(1, 5);
+    }
+
+
+    // a non-privileged role cannot resolve a ticket
+    @Test
+    @DisplayName("Negative - resolveTicket should deny an employee role")
+    void resolveTicketShouldDenyEmployeeRole() {
+        SupportTicketRepository repository = mock(SupportTicketRepository.class);
+
+        SupportTicketService service = new SupportTicketService(repository);
+
+        assertThrows(
+                UnauthorizedException.class,
+                () -> service.resolveTicket(1, 5, Role.EMPLOYEE));
+        verify(repository, never()).markResolved(anyInt(), anyInt());
+    }
+
+
+    // an already-resolved ticket cannot be resolved again
+    @Test
+    @DisplayName("Negative - resolveTicket should reject a non-open ticket")
+    void resolveTicketShouldRejectNonOpen() {
+        SupportTicketRepository repository = mock(SupportTicketRepository.class);
+        when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.RESOLVED, 10001));
+
+        SupportTicketService service = new SupportTicketService(repository);
+
+        assertThrows(
+                BusinessRuleException.class,
+                () -> service.resolveTicket(1, 5, Role.IT));
+    }
+
+
+    // the owner cancels their own open ticket
+    @Test
+    @DisplayName("Positive - cancelTicket should let the owner cancel their open ticket")
+    void cancelTicketShouldLetOwnerCancel() {
+        SupportTicketRepository repository = mock(SupportTicketRepository.class);
+        when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
+
+        SupportTicketService service = new SupportTicketService(repository);
+
+        service.cancelTicket(1, 10001, Role.EMPLOYEE);
+
+        verify(repository).markCancelled(1);
+    }
+
+
+    // a non-owner employee cannot cancel someone else's ticket
+    @Test
+    @DisplayName("Negative - cancelTicket should block a non-owner employee")
+    void cancelTicketShouldBlockNonOwner() {
+        SupportTicketRepository repository = mock(SupportTicketRepository.class);
+        when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
+
+        SupportTicketService service = new SupportTicketService(repository);
+
+        assertThrows(
+                UnauthorizedException.class,
+                () -> service.cancelTicket(1, 10002, Role.EMPLOYEE));
+    }
+
+
+    // builds a support ticket with the given status and owner
+    private SupportTicket ticket(SupportTicketStatus status, int ownerEmployeeId) {
+        return new SupportTicket(
+                1, ownerEmployeeId, SupportTicketCategory.PAYROLL, RoutingTeam.PAYROLL,
+                "Subject", "Description", status, null, null,
+                LocalDateTime.now(), LocalDateTime.now());
     }
 }
 
