@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,10 +30,15 @@ import static org.mockito.Mockito.*;
 class EmployeeServiceMockTest {
 
 
+    private static final Logger logger = Logger.getLogger(EmployeeServiceMockTest.class.getName());
+
+
     // create saves a valid employee to the repository
     @Test
     @DisplayName("Positive - createEmployee should save valid employee data")
     void createEmployeeShouldSaveValidData() {
+        logger.info("Testing valid employee creation saves the record.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         EmployeeService service = serviceWith(employeeRepository);
 
@@ -46,6 +52,8 @@ class EmployeeServiceMockTest {
     @Test
     @DisplayName("Negative - createEmployee should reject null employee")
     void createEmployeeShouldRejectNullEmployee() {
+        logger.info("Testing null employee creation is rejected.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         EmployeeService service = serviceWith(employeeRepository);
 
@@ -58,6 +66,8 @@ class EmployeeServiceMockTest {
     @Test
     @DisplayName("Positive - updateEmployee should update existing employee")
     void updateEmployeeShouldUpdateExisting() {
+        logger.info("Testing existing employee update.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         EmployeeService service = serviceWith(employeeRepository);
 
@@ -71,6 +81,8 @@ class EmployeeServiceMockTest {
     @Test
     @DisplayName("Negative - updateEmployee should reject employee without id")
     void updateEmployeeShouldRejectMissingId() {
+        logger.info("Testing employee update without an id is rejected.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         EmployeeService service = serviceWith(employeeRepository);
 
@@ -83,6 +95,8 @@ class EmployeeServiceMockTest {
     @Test
     @DisplayName("Positive - deactivateEmployee should deactivate an existing employee")
     void deactivateEmployeeShouldDeactivateExisting() {
+        logger.info("Testing existing employee deactivation.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         UserAccountService userAccountService = mock(UserAccountService.class);
         EmployeeService service = serviceWith(employeeRepository, userAccountService);
@@ -98,6 +112,8 @@ class EmployeeServiceMockTest {
     @Test
     @DisplayName("Negative - deactivateEmployee should reject invalid employee id")
     void deactivateEmployeeShouldRejectInvalidId() {
+        logger.info("Testing invalid employee id deactivation is rejected.");
+
         EmployeeRepository employeeRepository = mock(EmployeeRepository.class);
         EmployeeService service = serviceWith(employeeRepository);
 

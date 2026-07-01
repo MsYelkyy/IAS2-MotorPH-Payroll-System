@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,6 +29,8 @@ import static org.mockito.Mockito.*;
 class AuthenticationServiceMockTest {
 
 
+    private static final Logger logger = Logger.getLogger(AuthenticationServiceMockTest.class.getName());
+
     private static final String EMAIL = "juan.delacruz@motorph.com";
     private static final String PASSWORD = "Secret123!";
 
@@ -36,6 +39,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Positive - authenticate should require OTP for valid credentials")
     void authenticateShouldRequireOtpForValidCredentials() {
+        logger.info("Testing valid credentials require OTP.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         EmployeeService employeeService = mock(EmployeeService.class);
         TwoFactorService twoFactorService = mock(TwoFactorService.class);
@@ -60,6 +65,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Negative - authenticate should reject incorrect password")
     void authenticateShouldRejectIncorrectPassword() {
+        logger.info("Testing incorrect password rejection.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(activeAccount());
 
@@ -78,6 +85,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Negative - authenticate should reject a locked account")
     void authenticateShouldRejectLockedAccount() {
+        logger.info("Testing locked account rejection.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(lockedAccount());
 
@@ -96,6 +105,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Negative - authenticate should reject an inactive account")
     void authenticateShouldRejectInactiveAccount() {
+        logger.info("Testing inactive account rejection.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(inactiveAccount());
 
@@ -114,6 +125,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Positive - authenticate should carry the assigned role into the result")
     void authenticateShouldCarryAssignedRole() {
+        logger.info("Testing assigned role is carried into the login result.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         EmployeeService employeeService = mock(EmployeeService.class);
         TwoFactorService twoFactorService = mock(TwoFactorService.class);
@@ -135,6 +148,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Positive - verifyLoginOtp should complete login and update last login")
     void verifyLoginOtpShouldCompleteLogin() {
+        logger.info("Testing login OTP verification completes login.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         TwoFactorService twoFactorService = mock(TwoFactorService.class);
 
@@ -156,6 +171,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Positive - authenticate should return temporary-password result when change is required")
     void authenticateShouldReturnTemporaryPasswordResult() {
+        logger.info("Testing temporary-password login result.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         when(userAccountRepository.findByCompanyEmail(EMAIL))
                 .thenReturn(temporaryPasswordAccount(LocalDateTime.now().plusDays(1)));
@@ -176,6 +193,8 @@ class AuthenticationServiceMockTest {
     @Test
     @DisplayName("Negative - authenticate should reject an expired temporary password")
     void authenticateShouldRejectExpiredTemporaryPassword() {
+        logger.info("Testing expired temporary password rejection.");
+
         UserAccountRepository userAccountRepository = mock(UserAccountRepository.class);
         when(userAccountRepository.findByCompanyEmail(EMAIL))
                 .thenReturn(temporaryPasswordAccount(LocalDateTime.now().minusDays(1)));

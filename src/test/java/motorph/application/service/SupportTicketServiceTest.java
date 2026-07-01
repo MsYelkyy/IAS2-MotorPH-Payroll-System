@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,10 +29,15 @@ import static org.mockito.Mockito.*;
 class SupportTicketServiceTest {
 
 
+    private static final Logger logger = Logger.getLogger(SupportTicketServiceTest.class.getName());
+
+
     // positive: submits payroll ticket routed to payroll team
     @Test
     @DisplayName("Positive - submitTicket should route payroll ticket to payroll team")
     void submitTicketShouldRoutePayrollTicketToPayrollTeam() {
+        logger.info("Testing payroll ticket routes to the payroll team.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         SupportTicketService service = new SupportTicketService(repository);
 
@@ -57,6 +63,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Positive - submitTicket should route attendance ticket to HR team")
     void submitTicketShouldRouteAttendanceTicketToHrTeam() {
+        logger.info("Testing attendance ticket routes to the HR team.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         SupportTicketService service = new SupportTicketService(repository);
 
@@ -79,6 +87,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Negative - submitTicket should reject missing subject")
     void submitTicketShouldRejectMissingSubject() {
+        logger.info("Testing ticket submission rejects a missing subject.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         SupportTicketService service = new SupportTicketService(repository);
 
@@ -102,6 +112,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Positive - resolveTicket should mark an open ticket resolved")
     void resolveTicketShouldMarkResolved() {
+        logger.info("Testing a privileged role resolves an open ticket.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
 
@@ -117,6 +129,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Negative - resolveTicket should deny an employee role")
     void resolveTicketShouldDenyEmployeeRole() {
+        logger.info("Testing an employee role cannot resolve a ticket.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
 
         SupportTicketService service = new SupportTicketService(repository);
@@ -132,6 +146,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Negative - resolveTicket should reject a non-open ticket")
     void resolveTicketShouldRejectNonOpen() {
+        logger.info("Testing an already-resolved ticket cannot be resolved again.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.RESOLVED, 10001));
 
@@ -147,6 +163,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Positive - cancelTicket should let the owner cancel their open ticket")
     void cancelTicketShouldLetOwnerCancel() {
+        logger.info("Testing the owner can cancel their open ticket.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
 
@@ -162,6 +180,8 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("Negative - cancelTicket should block a non-owner employee")
     void cancelTicketShouldBlockNonOwner() {
+        logger.info("Testing a non-owner employee cannot cancel a ticket.");
+
         SupportTicketRepository repository = mock(SupportTicketRepository.class);
         when(repository.findById(1)).thenReturn(ticket(SupportTicketStatus.OPEN, 10001));
 

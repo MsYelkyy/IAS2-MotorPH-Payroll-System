@@ -184,8 +184,8 @@ The following employee numbers are assigned to specific system roles:
 Create the database and import the provided dump:
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE motorph_db;"
-mysql -u root -p motorph_db < database/motorph_db_updated_dump.sql
+mysql -u root -p -e "CREATE DATABASE payrollsystem_db;"
+mysql -u root -p payrollsystem_db < database/payrollsystem_db_updated_dump.sql
 ```
 
 ### 2. Configure the Connection
@@ -195,7 +195,7 @@ Database connection settings are defined in
 Update the URL, username, and password to match your local MySQL setup:
 
 ```java
-private static final String URL = "jdbc:mysql://localhost:3306/motorph_db";
+private static final String URL = "jdbc:mysql://localhost:3306/payrollsystem_db";
 private static final String USER = "root";
 private static final String PASSWORD = "root123";
 ```

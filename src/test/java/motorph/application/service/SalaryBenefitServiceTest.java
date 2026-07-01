@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,10 +28,15 @@ import static org.mockito.Mockito.*;
 class SalaryBenefitServiceTest {
 
 
+    private static final Logger logger = Logger.getLogger(SalaryBenefitServiceTest.class.getName());
+
+
     // constructor rejects a missing salary repository
     @Test
     @DisplayName("Negative - constructor should reject null salary repository")
     void constructorShouldRejectNullSalaryRepository() {
+        logger.info("Testing null salary repository validation.");
+
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new SalaryBenefitService(null, mock(EmployeeBenefitRepository.class)));
@@ -41,6 +47,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Positive - addSalaryRecord should save a valid record")
     void addSalaryRecordShouldSaveValidRecord() {
+        logger.info("Testing valid salary record is saved.");
+
         SalaryHistoryRepository salaryRepo = mock(SalaryHistoryRepository.class);
         when(salaryRepo.findCurrentByEmployeeId(anyInt(), any())).thenReturn(null);
 
@@ -58,6 +66,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Positive - addSalaryRecord should close the open salary record")
     void addSalaryRecordShouldCloseOpenRecord() {
+        logger.info("Testing adding a salary record closes the open one.");
+
         SalaryHistoryRepository salaryRepo = mock(SalaryHistoryRepository.class);
         SalaryHistory openRecord = new SalaryHistory(
                 7, 10001, SalaryType.MONTHLY, 25000.0, 156.25, LocalDate.of(2024, 1, 1), null);
@@ -78,6 +88,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Negative - addSalaryRecord should reject a missing start date")
     void addSalaryRecordShouldRejectMissingStartDate() {
+        logger.info("Testing salary record rejects a missing start date.");
+
         SalaryBenefitService service = new SalaryBenefitService(
                 mock(SalaryHistoryRepository.class), mock(EmployeeBenefitRepository.class));
 
@@ -92,6 +104,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Positive - addBenefit should save a valid benefit")
     void addBenefitShouldSaveValidBenefit() {
+        logger.info("Testing valid benefit is saved.");
+
         EmployeeBenefitRepository benefitRepo = mock(EmployeeBenefitRepository.class);
 
         SalaryBenefitService service = new SalaryBenefitService(
@@ -108,6 +122,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Negative - addBenefit should reject a non-positive amount")
     void addBenefitShouldRejectNonPositiveAmount() {
+        logger.info("Testing benefit rejects a non-positive amount.");
+
         EmployeeBenefitRepository benefitRepo = mock(EmployeeBenefitRepository.class);
 
         SalaryBenefitService service = new SalaryBenefitService(
@@ -125,6 +141,8 @@ class SalaryBenefitServiceTest {
     @Test
     @DisplayName("Negative - endBenefit should reject a missing benefit record")
     void endBenefitShouldRejectMissingRecord() {
+        logger.info("Testing ending a missing benefit is rejected.");
+
         EmployeeBenefitRepository benefitRepo = mock(EmployeeBenefitRepository.class);
         when(benefitRepo.findById(99)).thenReturn(null);
 

@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,10 +40,15 @@ import static org.mockito.Mockito.*;
 class PayrollServiceTest {
 
 
+    private static final Logger logger = Logger.getLogger(PayrollServiceTest.class.getName());
+
+
     // constructor rejects a missing payrun repository
     @Test
     @DisplayName("Negative - constructor should reject null payrun repository")
     void constructorShouldRejectNullPayrunRepository() {
+        logger.info("Testing null payrun repository validation.");
+
         Deps deps = new Deps();
         deps.payrunRepository = null;
 
@@ -54,6 +60,8 @@ class PayrollServiceTest {
     @Test
     @DisplayName("Negative - runPayrollForEmployee should reject invalid employee id")
     void runPayrollForEmployeeShouldRejectInvalidEmployeeId() {
+        logger.info("Testing payroll run rejects an invalid employee id.");
+
         PayrollService service = new Deps().build();
 
         assertThrows(ValidationException.class, () -> service.runPayrollForEmployee(0, 1));
@@ -64,6 +72,8 @@ class PayrollServiceTest {
     @Test
     @DisplayName("Negative - runPayrollForEmployee should reject invalid payrun id")
     void runPayrollForEmployeeShouldRejectInvalidPayrunId() {
+        logger.info("Testing payroll run rejects an invalid payrun id.");
+
         PayrollService service = new Deps().build();
 
         assertThrows(ValidationException.class, () -> service.runPayrollForEmployee(10001, 0));
@@ -74,6 +84,8 @@ class PayrollServiceTest {
     @Test
     @DisplayName("Negative - runPayrollForEmployee should block a duplicate run")
     void runPayrollForEmployeeShouldBlockDuplicateRun() {
+        logger.info("Testing payroll run blocks a duplicate run.");
+
         Deps deps = new Deps();
         when(deps.payrunRepository.findById(1)).thenReturn(
                 new Payrun(1, LocalDate.of(2025, 6, 1), LocalDate.of(2025, 6, 15),
@@ -90,6 +102,8 @@ class PayrollServiceTest {
     @Test
     @DisplayName("Negative - getPayrun should reject an invalid payrun id")
     void getPayrunShouldRejectInvalidId() {
+        logger.info("Testing getPayrun rejects an invalid id.");
+
         PayrollService service = new Deps().build();
 
         assertThrows(ValidationException.class, () -> service.getPayrun(0));

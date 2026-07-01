@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 
 import java.time.LocalDate;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,10 +21,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class EmployeeTest {
 
 
+    private static final Logger logger = Logger.getLogger(EmployeeTest.class.getName());
+
+
     // returns the default "First Last" full name
     @Test
     @DisplayName("getFullName should return First Last format")
     void getFullNameShouldReturnFirstLastFormat() {
+        logger.info("Testing default full name format.");
+
         Employee employee = createEmployee("Juan", "Dela Cruz");
 
 
@@ -35,6 +41,8 @@ class EmployeeTest {
     @Test
     @DisplayName("getFullName overload should return First Last when lastNameFirst is false")
     void getFullNameOverloadShouldReturnFirstLastWhenFalse() {
+        logger.info("Testing full name overload with lastNameFirst false.");
+
         Employee employee = createEmployee("Juan", "Dela Cruz");
 
 
@@ -46,6 +54,8 @@ class EmployeeTest {
     @Test
     @DisplayName("getFullName overload should return Last, First when lastNameFirst is true")
     void getFullNameOverloadShouldReturnLastFirstWhenTrue() {
+        logger.info("Testing full name overload with lastNameFirst true.");
+
         Employee employee = createEmployee("Juan", "Dela Cruz");
 
 
@@ -57,6 +67,8 @@ class EmployeeTest {
     @Test
     @DisplayName("Negative - constructor should reject null first name")
     void constructorShouldRejectNullFirstName() {
+        logger.info("Testing null first name validation.");
+
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new Employee(
@@ -71,6 +83,8 @@ class EmployeeTest {
     @Test
     @DisplayName("Negative - constructor should reject a future hire date")
     void constructorShouldRejectFutureHireDate() {
+        logger.info("Testing future hire date validation.");
+
         LocalDate future = LocalDate.now().plusDays(1);
 
         assertThrows(
@@ -87,6 +101,8 @@ class EmployeeTest {
     @Test
     @DisplayName("Negative - constructor should reject an invalid phone number format")
     void constructorShouldRejectInvalidPhoneFormat() {
+        logger.info("Testing invalid phone number format validation.");
+
         assertThrows(
                 IllegalArgumentException.class,
                 () -> new Employee(

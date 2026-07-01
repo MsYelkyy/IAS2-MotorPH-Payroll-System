@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,10 +21,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class RequestTest {
 
 
+    private static final Logger logger = Logger.getLogger(RequestTest.class.getName());
+
+
     // approves the request and records the approver
     @Test
     @DisplayName("approve should set status to approved and record the approver")
     void approveShouldSetStatusAndApprover() {
+        logger.info("Testing approve sets status and approver.");
+
         Request request = createPendingRequest();
 
 
@@ -40,6 +46,8 @@ class RequestTest {
     @Test
     @DisplayName("reject should set status to rejected and record the approver")
     void rejectShouldSetStatusAndApprover() {
+        logger.info("Testing reject sets status and approver.");
+
         Request request = createPendingRequest();
 
 
@@ -56,6 +64,8 @@ class RequestTest {
     @Test
     @DisplayName("cancel should set status to cancelled with no remarks")
     void cancelShouldSetStatusWithoutRemarks() {
+        logger.info("Testing cancel sets status without remarks.");
+
         Request request = createPendingRequest();
 
 
@@ -71,6 +81,8 @@ class RequestTest {
     @Test
     @DisplayName("cancel overload should set status to cancelled and record the reason")
     void cancelOverloadShouldRecordReason() {
+        logger.info("Testing cancel overload records the reason.");
+
         Request request = createPendingRequest();
 
 

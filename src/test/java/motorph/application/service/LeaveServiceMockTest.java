@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,10 +33,15 @@ import static org.mockito.Mockito.*;
 class LeaveServiceMockTest {
 
 
+    private static final Logger logger = Logger.getLogger(LeaveServiceMockTest.class.getName());
+
+
     // approve with enough credits sets status approved and deducts credits
     @Test
     @DisplayName("Positive - approveLeaveRequest should approve and deduct credits")
     void approveLeaveRequestShouldApproveAndDeductCredits() {
+        logger.info("Testing leave approval deducts credits.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -56,6 +62,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - approveLeaveRequest should block when credits are insufficient")
     void approveLeaveRequestShouldBlockWhenInsufficientCredits() {
+        logger.info("Testing leave approval blocked on insufficient credits.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -74,6 +82,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - approveLeaveRequest should block self-approval")
     void approveLeaveRequestShouldBlockSelfApproval() {
+        logger.info("Testing leave self-approval is blocked.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -90,6 +100,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - approveLeaveRequest should deny non-HR/Admin role")
     void approveLeaveRequestShouldDenyNonHrAdmin() {
+        logger.info("Testing leave approval denied for non-HR/Admin role.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -105,6 +117,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - approveLeaveRequest should reject a non-pending request")
     void approveLeaveRequestShouldRejectNonPending() {
+        logger.info("Testing approval rejected for a non-pending request.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -120,6 +134,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - cancelLeaveRequest should block cancelling another employee's request")
     void cancelLeaveRequestShouldBlockNonOwner() {
+        logger.info("Testing cancelling another employee's leave is blocked.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -136,6 +152,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Positive - cancelLeaveRequest should cancel the owner's pending request")
     void cancelLeaveRequestShouldCancelOwnRequest() {
+        logger.info("Testing the owner can cancel their own pending leave.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -153,6 +171,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Positive - reverseApprovedLeave should restore credits and update status")
     void reverseApprovedLeaveShouldRestoreCredits() {
+        logger.info("Testing reversing approved leave restores credits.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
 
@@ -171,6 +191,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Negative - reverseApprovedLeave should reject an invalid new status")
     void reverseApprovedLeaveShouldRejectInvalidStatus() {
+        logger.info("Testing reverse rejects an invalid new status.");
+
         LeaveService service = serviceWith(mock(LeaveRepository.class), mock(LeaveCreditRepository.class));
 
         assertThrows(
@@ -183,6 +205,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Positive - submitLeaveRequest should save a valid request")
     void submitLeaveRequestShouldSaveValidRequest() {
+        logger.info("Testing a valid leave submission is saved.");
+
         LeaveRepository leaveRepository = mock(LeaveRepository.class);
         LeaveCreditRepository leaveCreditRepository = mock(LeaveCreditRepository.class);
         EmployeeService employeeService = mock(EmployeeService.class);
@@ -205,6 +229,8 @@ class LeaveServiceMockTest {
     @Test
     @DisplayName("Positive - computeLeaveHours should return eight hours per day")
     void computeLeaveHoursShouldReturnEightHoursPerDay() {
+        logger.info("Testing leave hours computation at eight hours per day.");
+
         LeaveService service = serviceWith(mock(LeaveRepository.class), mock(LeaveCreditRepository.class));
 
         LocalDate start = LocalDate.now().plusDays(10);

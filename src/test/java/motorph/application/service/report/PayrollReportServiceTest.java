@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.logging.Logger;
 
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,10 +26,15 @@ import static org.mockito.Mockito.*;
 class PayrollReportServiceTest {
 
 
+    private static final Logger logger = Logger.getLogger(PayrollReportServiceTest.class.getName());
+
+
     // generates an organization payroll report for a valid date range
     @Test
     @DisplayName("Positive - getOrganizationPayrollReport should return report rows")
     void getOrganizationPayrollReportShouldReturnRows() {
+        logger.info("Testing organization payroll report returns rows.");
+
         PayrollReportRepository repository = mock(PayrollReportRepository.class);
         when(repository.findOrganizationPayrollReport(any(), any(), any(), any(), any(), any()))
                 .thenReturn(List.of(mock(OrganizationPayrollReportDTO.class)));
@@ -48,6 +54,8 @@ class PayrollReportServiceTest {
     @Test
     @DisplayName("Positive - getPayrollSummaryReport should return a summary for all employees")
     void getPayrollSummaryReportShouldReturnSummary() {
+        logger.info("Testing payroll summary report returns a summary.");
+
         PayrollReportRepository repository = mock(PayrollReportRepository.class);
         when(repository.findPayrollSummaryReport(any(), any(), any(), any()))
                 .thenReturn(List.of(
@@ -69,6 +77,8 @@ class PayrollReportServiceTest {
     @Test
     @DisplayName("Edge Case - report should return empty data without error")
     void getPayrollSummaryReportShouldReturnEmptyWithoutError() {
+        logger.info("Testing payroll summary report handles empty data.");
+
         PayrollReportRepository repository = mock(PayrollReportRepository.class);
         when(repository.findPayrollSummaryReport(any(), any(), any(), any()))
                 .thenReturn(List.of());
@@ -88,6 +98,8 @@ class PayrollReportServiceTest {
     @Test
     @DisplayName("Negative - getPayslipReport should reject missing payslip data")
     void getPayslipReportShouldRejectMissingData() {
+        logger.info("Testing payslip report rejects missing data.");
+
         PayrollReportRepository repository = mock(PayrollReportRepository.class);
         when(repository.findPayslipReport(10001, 1)).thenReturn(null);
 
@@ -105,6 +117,8 @@ class PayrollReportServiceTest {
     @Test
     @DisplayName("Negative - report should reject an invalid date range")
     void reportShouldRejectInvalidDateRange() {
+        logger.info("Testing report rejects an invalid date range.");
+
         PayrollReportService service = new PayrollReportService(
                 mock(PayrollReportRepository.class), mock(JasperReportGenerator.class));
 
