@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: motorph-backend
+  datasource:
+    url: jdbc:mysql://${MOTORPH_DB_HOST:localhost}:${MOTORPH_DB_PORT:3306}/payrollsystem_db?useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MOTORPH_DB_USER}
+    password: ${MOTORPH_DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+  profiles:
+    active: ${MOTORPH_PROFILE:default}
+
+motorph:
+  jwt:
+    secret: ${MOTORPH_JWT_SECRET}
+    access-expiry-minutes: ${MOTORPH_JWT_ACCESS_EXPIRY_MINUTES:15}
+    refresh-expiry-minutes: ${MOTORPH_JWT_REFRESH_EXPIRY_MINUTES:1440}
+  auth:
+    otp-challenge-expiry-minutes: 10
+    login-rate-limit:
+      max-attempts: 10
+      window-minutes: 1
