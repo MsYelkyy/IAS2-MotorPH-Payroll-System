@@ -1,0 +1,15 @@
+package motorph.backend.exception;
+
+/**
+ * Represents an error when a required entity cannot be found.
+ */
+public class EntityNotFoundException extends RuntimeException {
+
+    public EntityNotFoundException(String message) {
+        super(message);
+    }
+
+    public EntityNotFoundException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
