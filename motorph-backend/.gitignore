@@ -1,0 +1,7 @@
+target/
+.env
+application-local.yml
+.local-db-password.txt
+.local-env.sh
+*.iml
+.idea/
