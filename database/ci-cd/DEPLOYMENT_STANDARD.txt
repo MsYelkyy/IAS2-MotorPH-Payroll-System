@@ -1,0 +1,101 @@
+=============================================================================
+MotorPH Payroll System
+DATABASE REPORT CI/CD -- GUIDE
+File: database/ci-cd/DEPLOYMENT_STANDARD.txt
+=============================================================================
+
+PURPOSE
+-------
+This is a short guide to the Database Report CI/CD Pipeline. The pipeline
+rebuilds and validates the database reporting layer in a clean MySQL 8
+environment. It does two things:
+
+  * Builds the reporting layer (loads the database, seeds the data the reports
+    need, and creates the two report views).
+  * Runs the report tests to confirm the reports are correct.
+
+This does NOT deploy to a live production database. It only builds and checks
+the reporting layer on a fresh test database.
+
+
+FOLDER LOCATION
+---------------
+  database/payrollsystem_db.sql   -- the database dump (sits in database/, not
+                                     inside sql_scripts/)
+  database/sql_scripts/           -- the report and test SQL scripts
+  database/ci-cd/                 -- the pipeline files:
+        deploy_reports.sql            builds the reporting layer
+        run_all_tests.sql             runs all the report tests
+        DEPLOYMENT_STANDARD.txt       this guide
+
+The workflow file is at:
+  .github/workflows/database-report-ci.yml
+
+
+HOW TO RUN MANUALLY
+-------------------
+You need MySQL 8 and an account that can create a database and views.
+
+The scripts use paths like ../payrollsystem_db.sql, so they must be run from the
+database/ci-cd/ folder. From a terminal (Git Bash):
+
+  cd "C:/Projects/DPA-MotorPH/database/ci-cd"
+  mysql -u root -p --default-character-set=utf8mb4 < deploy_reports.sql
+  mysql -u root -p --default-character-set=utf8mb4 --table < run_all_tests.sql
+
+Or in MySQL Workbench, open a SQL tab in the database/ci-cd/ folder and run:
+
+  SOURCE deploy_reports.sql;
+  SOURCE run_all_tests.sql;
+
+Run deploy_reports.sql first, then run_all_tests.sql.
+
+
+HOW THE GITHUB ACTIONS PIPELINE WORKS
+-------------------------------------
+The workflow runs on push, pull request, and manual trigger. Each run:
+
+  1. Starts a fresh, throwaway MySQL 8 database.
+  2. Runs deploy_reports.sql to build the reporting layer from scratch.
+  3. Runs run_all_tests.sql and saves the full output to test_output.log.
+  4. Checks the log and fails the build if any test really failed.
+  5. Uploads test_output.log as an artifact named "database-report-test-output"
+     so the results can be downloaded, even when the build fails.
+
+The pipeline does not build or test the Java application. It never runs Maven and
+never touches src/main/java, src/main/resources, pom.xml, or target/.
+
+
+WHAT COUNTS AS SUCCESS
+----------------------
+  * deploy_reports.sql ends with a "DEPLOY COMPLETE" line, and the payslip and
+    summary row counts are both greater than zero.
+  * Every test row ends in PASS, and each suite prints "ALL TESTS PASSED".
+  * In GitHub Actions, the workflow shows a green check.
+
+A build fails when the output contains a FAIL result cell or a "TEST(S) FAILED"
+verdict. The lowercase "failed" column header is not a failure.
+
+
+NOTES
+-----
+  * Safe to re-run: the dump recreates the schema cleanly, the views are dropped
+    and recreated, and the seed is safe to apply again. Re-running resets the
+    reporting layer to a known good state.
+  * The tests are read-only. They only read payroll data and use a temporary
+    results table, so they never change business data.
+  * Nothing to roll back: test runs make no changes, and the CI database is
+    thrown away after every run. To reset locally, drop the database
+    (DROP DATABASE payrollsystem_db;) and run deploy_reports.sql again.
+
+
+EVIDENCE TO SAVE
+----------------
+  * A screenshot of a green GitHub Actions run.
+  * The test_output.log artifact (database-report-test-output) showing the PASS
+    results and each suite's verdict.
+  * Optional: MySQL Workbench screenshots of the same PASS results.
+
+=============================================================================
+Prepared by Group 5 / ByteBabes -- MotorPH Payroll System, Database Reporting.
+=============================================================================
