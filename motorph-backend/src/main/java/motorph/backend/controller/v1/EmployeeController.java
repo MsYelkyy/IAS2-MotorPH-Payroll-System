@@ -1,0 +1,116 @@
+package motorph.backend.controller.v1;
+
+import motorph.backend.domain.Department;
+import motorph.backend.domain.GovernmentDetails;
+import motorph.backend.domain.Position;
+import motorph.backend.domain.value.PermissionKey;
+import motorph.backend.dto.employee.EmployeeCreateRequest;
+import motorph.backend.dto.employee.EmployeeCreateResponse;
+import motorph.backend.dto.employee.EmployeeProfileDTO;
+import motorph.backend.dto.employee.EmployeeSummaryDTO;
+import motorph.backend.dto.employee.EmployeeUpdateRequest;
+import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.security.AuthenticatedPrincipal;
+import motorph.backend.security.CurrentUserProvider;
+import motorph.backend.service.EmployeeService;
+import motorph.backend.service.PermissionService;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+/**
+ * Phase 2 read-only employee endpoints. Every method re-checks permissions
+ * server-side (see PermissionService) - the desktop client's own menu/role
+ * checks are display hints only, never trusted here.
+ */
+@RestController
+@RequestMapping("/api/v1")
+public class EmployeeController {
+
+    private final EmployeeService employeeService;
+    private final PermissionService permissionService;
+    private final CurrentUserProvider currentUserProvider;
+
+    public EmployeeController(EmployeeService employeeService,
+                              PermissionService permissionService,
+                              CurrentUserProvider currentUserProvider) {
+        this.employeeService = employeeService;
+        this.permissionService = permissionService;
+        this.currentUserProvider = currentUserProvider;
+    }
+
+    // full employee list (sorted, includes inactive) - clients filter by isActive() as needed
+    @GetMapping("/employees")
+    public List<EmployeeSummaryDTO> listEmployees() {
+        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        return employeeService.getAllEmployeeSummaries();
+    }
+
+    // an employee may always view their own profile; viewing anyone else's
+    // requires VIEW_EMPLOYEE/MANAGE_EMPLOYEE, in which case inactive employees are visible too
+    @GetMapping("/employees/{employeeId}")
+    public EmployeeProfileDTO getEmployee(@PathVariable int employeeId) {
+        if (permissionService.hasAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE)) {
+            return employeeService.getEmployeeProfileAdmin(employeeId);
+        }
+
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+
+        if (principal.employeeId() == employeeId) {
+            return employeeService.getEmployeeProfile(employeeId);
+        }
+
+        throw new UnauthorizedException("You do not have permission to view this employee.");
+    }
+
+    @GetMapping("/employees/{employeeId}/government-details")
+    public GovernmentDetails getGovernmentDetails(@PathVariable int employeeId) {
+        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        return employeeService.getGovernmentDetails(employeeId);
+    }
+
+    @GetMapping("/departments")
+    public List<Department> listDepartments() {
+        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        return employeeService.getAllDepartments();
+    }
+
+    @GetMapping("/positions")
+    public List<Position> listPositions(@RequestParam(required = false) Integer departmentId) {
+        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+
+        return departmentId != null
+                ? employeeService.getPositionsByDepartment(departmentId)
+                : employeeService.getAllPositions();
+    }
+
+    // creates a new employee with an initial salary, government IDs, benefits, and a temporary login account
+    @PostMapping("/employees")
+    public EmployeeCreateResponse createEmployee(@RequestBody EmployeeCreateRequest request) {
+        permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
+        return employeeService.createEmployeeWithSalaryAndBenefits(request);
+    }
+
+    @PutMapping("/employees/{employeeId}")
+    public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody EmployeeUpdateRequest request) {
+        permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
+        return employeeService.updateEmployee(employeeId, request);
+    }
+
+    // deactivates an employee; the caller may never deactivate their own account, server-enforced
+    @DeleteMapping("/employees/{employeeId}")
+    public void deactivateEmployee(@PathVariable int employeeId) {
+        permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+        employeeService.deactivateEmployee(employeeId, principal.employeeId());
+    }
+}
