@@ -1,14 +1,13 @@
 package motorph.ui.reports;
 
 import motorph.application.exception.ValidationException;
-import motorph.application.service.EmployeeService;
 import motorph.application.service.PayrollService;
-import motorph.application.service.report.AttendanceReportService;
-import motorph.application.service.report.AuditReportService;
-import motorph.application.service.report.PayrollReportService;
-import motorph.application.service.report.TicketReportService;
-import motorph.domain.model.Department;
-import motorph.domain.model.Employee;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.PayslipApiClient;
+import motorph.api.ReportApiClient;
+import motorph.api.dto.employee.DepartmentDTO;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
 import motorph.domain.model.Payrun;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.util.DatePickerInputHelper;
@@ -27,14 +26,20 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Shared Reports module: role-neutral, consumed by Admin, IT, and future HR/Finance shells. */
 public class ReportsController {
 
+    private static final Logger LOG = Logger.getLogger(ReportsController.class.getName());
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
 
     private static final String DR_LATEST    = "Latest Available";
@@ -69,11 +74,11 @@ public class ReportsController {
 
     // Department filter
     @FXML private VBox departmentRow;
-    @FXML private ComboBox<Department> departmentCombo;
+    @FXML private ComboBox<DepartmentDTO> departmentCombo;
 
     // Employee filter
     @FXML private VBox employeeRow;
-    @FXML private ComboBox<Employee> employeeCombo;
+    @FXML private ComboBox<EmployeeSummaryDTO> employeeCombo;
 
     // Payrun filter
     @FXML private VBox payrunRow;
@@ -109,14 +114,14 @@ public class ReportsController {
     @FXML private Button previewButton;
     @FXML private Button exportButton;
 
-    // --- Services ---------------------------------------------------------
+    // --- Services / API clients --------------------------------------------
 
-    private EmployeeService          employeeService;
-    private PayrollService           payrollService;
-    private AttendanceReportService  attendanceReportService;
-    private AuditReportService       auditReportService;
-    private PayrollReportService     payrollReportService;
-    private TicketReportService      ticketReportService;
+    // payrun listing stays on the legacy path - PayrollService (beyond payslip
+    // viewing) has not migrated to the backend yet
+    private PayrollService payrollService;
+    private EmployeeApiClient employeeApiClient;
+    private ReportApiClient reportApiClient;
+    private PayslipApiClient payslipApiClient;
 
     // Latest payrun with results; resolved once on init, used for "Latest Available".
     private Payrun latestPayrun;
@@ -127,14 +132,12 @@ public class ReportsController {
 
     @FXML
     private void initialize() {
-        EmployeeUIServiceFactory factory = EmployeeUIServiceFactory.getInstance();
-        employeeService = factory.getEmployeeService();
-        payrollService  = factory.getPayrollService();
+        payrollService = EmployeeUIServiceFactory.getInstance().getPayrollService();
 
-        attendanceReportService = factory.getAttendanceReportService();
-        auditReportService      = factory.getAuditReportService();
-        payrollReportService    = factory.getPayrollReportService();
-        ticketReportService     = factory.getTicketReportService();
+        ApiClientFactory apiClientFactory = ApiClientFactory.getInstance();
+        employeeApiClient = apiClientFactory.getEmployeeApiClient();
+        reportApiClient   = apiClientFactory.getReportApiClient();
+        payslipApiClient  = apiClientFactory.getPayslipApiClient();
 
         loadPayrunCache();
         setupReportTypeCombo();
@@ -180,14 +183,14 @@ public class ReportsController {
 
     private void setupDepartmentCombo() {
         departmentCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(Department d) {
+            @Override public String toString(DepartmentDTO d) {
                 return d == null ? "All Departments" : d.getDepartmentName();
             }
-            @Override public Department fromString(String s) { return null; }
+            @Override public DepartmentDTO fromString(String s) { return null; }
         });
 
         try {
-            List<Department> departments = employeeService.getAllDepartments();
+            List<DepartmentDTO> departments = employeeApiClient.getAllDepartments();
             departmentCombo.getItems().add(null);
             departmentCombo.getItems().addAll(departments);
         } catch (Exception ex) {
@@ -198,14 +201,16 @@ public class ReportsController {
 
     private void setupEmployeeCombo() {
         employeeCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(Employee e) {
+            @Override public String toString(EmployeeSummaryDTO e) {
                 return e == null ? "Select Employee" : e.getFullName() + " (#" + e.getEmployeeId() + ")";
             }
-            @Override public Employee fromString(String s) { return null; }
+            @Override public EmployeeSummaryDTO fromString(String s) { return null; }
         });
 
         try {
-            List<Employee> employees = employeeService.getAllActiveEmployees();
+            List<EmployeeSummaryDTO> employees = employeeApiClient.getAllEmployeeSummaries().stream()
+                    .filter(EmployeeSummaryDTO::isActive)
+                    .toList();
             employeeCombo.getItems().add(null);
             employeeCombo.getItems().addAll(employees);
         } catch (Exception ex) {
@@ -544,15 +549,16 @@ public class ReportsController {
         }
 
         try {
-            switch (type) {
-                case ATTENDANCE        -> previewAttendance();
-                case EMPLOYEE_TIMECARD -> previewEmployeeTimecard();
-                case ORG_PAYROLL       -> previewOrgPayroll();
-                case PAYROLL_SUMMARY   -> previewPayrollSummary();
-                case PAYSLIP           -> previewPayslip();
-                case AUDIT_LOG         -> previewAuditLog();
-                case SUPPORT_TICKET    -> previewSupportTicket();
-            }
+            byte[] pdf = switch (type) {
+                case ATTENDANCE        -> fetchAttendancePdf();
+                case EMPLOYEE_TIMECARD -> fetchEmployeeTimecardPdf();
+                case ORG_PAYROLL       -> fetchOrgPayrollPdf();
+                case PAYROLL_SUMMARY   -> fetchPayrollSummaryPdf();
+                case PAYSLIP           -> fetchPayslipPdf();
+                case AUDIT_LOG         -> fetchAuditLogPdf();
+                case SUPPORT_TICKET    -> fetchSupportTicketPdf();
+            };
+            openPdf(pdf, type.name().toLowerCase());
         } catch (ValidationException ex) {
             showError("Validation Error", ex.getMessage());
         } catch (Exception ex) {
@@ -560,9 +566,9 @@ public class ReportsController {
         }
     }
 
-    // --- Per-report preview methods ---------------------------------------
+    // --- Per-report PDF fetch methods (shared by preview and export) ------
 
-    private void previewAttendance() {
+    private byte[] fetchAttendancePdf() {
         LocalDate[] dates = resolveDates();
         LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
         LocalDate to   = requireDateRange(from, dates[1]);
@@ -571,20 +577,20 @@ public class ReportsController {
         Integer empId  = selectedEmpId();
         String  status = toAttendanceStatusRaw(statusCombo.getValue());
 
-        attendanceReportService.previewAttendanceReport(deptId, empId, status, from, to);
+        return reportApiClient.getAttendanceReportPdf(deptId, empId, status, from, to);
     }
 
-    private void previewEmployeeTimecard() {
+    private byte[] fetchEmployeeTimecardPdf() {
         int empId = requireEmployee();
 
         LocalDate[] dates = resolveDates();
         LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
         LocalDate to   = requireDateRange(from, dates[1]);
 
-        attendanceReportService.previewEmployeeTimecardReport(empId, from, to);
+        return reportApiClient.getEmployeeTimecardReportPdf(empId, from, to);
     }
 
-    private void previewOrgPayroll() {
+    private byte[] fetchOrgPayrollPdf() {
         LocalDate[] dates = resolveDates();
         if (dates[0] == null) {
             throw new ValidationException("No payrun data found. Cannot resolve date range.");
@@ -597,10 +603,10 @@ public class ReportsController {
         Integer empId    = selectedEmpId();
         Integer payrunId = selectedPayrunId();
 
-        payrollReportService.previewOrganizationPayrollReport(deptId, deptName, empId, payrunId, from, to);
+        return reportApiClient.getOrganizationPayrollReportPdf(deptId, deptName, empId, payrunId, from, to);
     }
 
-    private void previewPayrollSummary() {
+    private byte[] fetchPayrollSummaryPdf() {
         LocalDate[] dates = resolveDates();
         if (dates[0] == null) {
             throw new ValidationException("No payrun data found. Cannot resolve date range.");
@@ -611,16 +617,16 @@ public class ReportsController {
         Integer deptId   = selectedDeptId();
         Integer payrunId = selectedPayrunId();
 
-        payrollReportService.previewPayrollSummaryReport(deptId, payrunId, from, to);
+        return reportApiClient.getPayrollSummaryReportPdf(deptId, payrunId, from, to);
     }
 
-    private void previewPayslip() {
+    private byte[] fetchPayslipPdf() {
         int empId    = requireEmployee();
         int payrunId = requirePayrun();
-        payrollReportService.previewPayslipReport(empId, payrunId);
+        return payslipApiClient.getPayslipPdf(empId, payrunId);
     }
 
-    private void previewAuditLog() {
+    private byte[] fetchAuditLogPdf() {
         // Dates are optional for audit log — null is valid
         LocalDate[] dates = resolveDates();
         LocalDate from = dates[0];
@@ -632,10 +638,10 @@ public class ReportsController {
         }
 
         String action = toAuditActionRaw(actionCombo.getValue());
-        auditReportService.previewAuditReport(null, action, from, to);
+        return reportApiClient.getAuditReportPdf(null, action, from, to);
     }
 
-    private void previewSupportTicket() {
+    private byte[] fetchSupportTicketPdf() {
         // Dates are optional for ticket report
         LocalDate[] dates = resolveDates();
         LocalDate from = dates[0];
@@ -651,7 +657,7 @@ public class ReportsController {
         String  routingTeam = toRawEnumValue(routingTeamCombo.getValue(), "All Teams");
         String  status      = toRawEnumValue(ticketStatusCombo.getValue(), "All Statuses");
 
-        ticketReportService.previewTicketReport(deptId, empId, category, routingTeam, status, from, to);
+        return reportApiClient.getTicketReportPdf(deptId, empId, category, routingTeam, status, from, to);
     }
 
     // --- Export action ----------------------------------------------------
@@ -666,134 +672,36 @@ public class ReportsController {
         }
 
         try {
-            switch (type) {
-                case ATTENDANCE        -> exportAttendance();
-                case EMPLOYEE_TIMECARD -> exportEmployeeTimecard();
-                case ORG_PAYROLL       -> exportOrgPayroll();
-                case PAYROLL_SUMMARY   -> exportPayrollSummary();
-                case PAYSLIP           -> exportPayslip();
-                case AUDIT_LOG         -> exportAuditLog();
-                case SUPPORT_TICKET    -> exportSupportTicket();
-            }
+            String defaultName = switch (type) {
+                case ATTENDANCE        -> "Attendance_Report.pdf";
+                case EMPLOYEE_TIMECARD -> "Employee_Timecard_Report.pdf";
+                case ORG_PAYROLL       -> "Monthly_Payroll_Summary_Report.pdf";
+                case PAYROLL_SUMMARY   -> "Department_Payroll_Report.pdf";
+                case PAYSLIP           -> "Payslip_" + requireEmployee() + "_Payrun" + requirePayrun() + ".pdf";
+                case AUDIT_LOG         -> "Audit_Log_Report.pdf";
+                case SUPPORT_TICKET    -> "Support_Ticket_Report.pdf";
+            };
+
+            String path = chooseExportFile(defaultName);
+            if (path == null) return;
+
+            byte[] pdf = switch (type) {
+                case ATTENDANCE        -> fetchAttendancePdf();
+                case EMPLOYEE_TIMECARD -> fetchEmployeeTimecardPdf();
+                case ORG_PAYROLL       -> fetchOrgPayrollPdf();
+                case PAYROLL_SUMMARY   -> fetchPayrollSummaryPdf();
+                case PAYSLIP           -> fetchPayslipPdf();
+                case AUDIT_LOG         -> fetchAuditLogPdf();
+                case SUPPORT_TICKET    -> fetchSupportTicketPdf();
+            };
+
+            Files.write(Path.of(path), pdf);
+            reportExported(path);
         } catch (ValidationException ex) {
             showError("Validation Error", ex.getMessage());
         } catch (Exception ex) {
             showError("Report Error", "Could not export report:\n" + ex.getMessage());
         }
-    }
-
-    // --- Per-report export methods ----------------------------------------
-
-    private void exportAttendance() {
-        LocalDate[] dates = resolveDates();
-        LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
-        LocalDate to   = requireDateRange(from, dates[1]);
-
-        Integer deptId = selectedDeptId();
-        Integer empId  = selectedEmpId();
-        String  status = toAttendanceStatusRaw(statusCombo.getValue());
-
-        String path = chooseExportFile("Attendance_Report.pdf");
-        if (path == null) return;
-        attendanceReportService.exportAttendanceReportToPdf(deptId, empId, status, from, to, path);
-        reportExported(path);
-    }
-
-    private void exportEmployeeTimecard() {
-        int empId = requireEmployee();
-
-        LocalDate[] dates = resolveDates();
-        LocalDate from = requireDate(dates[0], "Date From is required (select Custom to enter a specific date).");
-        LocalDate to   = requireDateRange(from, dates[1]);
-
-        String path = chooseExportFile("Employee_Timecard_Report.pdf");
-        if (path == null) return;
-        attendanceReportService.exportEmployeeTimecardReportToPdf(empId, from, to, path);
-        reportExported(path);
-    }
-
-    private void exportOrgPayroll() {
-        LocalDate[] dates = resolveDates();
-        if (dates[0] == null) {
-            throw new ValidationException("No payrun data found. Cannot resolve date range.");
-        }
-        LocalDate from = dates[0];
-        LocalDate to   = requireDateRange(from, dates[1]);
-
-        Integer deptId   = selectedDeptId();
-        String  deptName = selectedDeptName();
-        Integer empId    = selectedEmpId();
-        Integer payrunId = selectedPayrunId();
-
-        String path = chooseExportFile("Monthly_Payroll_Summary_Report.pdf");
-        if (path == null) return;
-        payrollReportService.exportOrganizationPayrollReportToPdf(deptId, deptName, empId, payrunId, from, to, path);
-        reportExported(path);
-    }
-
-    private void exportPayrollSummary() {
-        LocalDate[] dates = resolveDates();
-        if (dates[0] == null) {
-            throw new ValidationException("No payrun data found. Cannot resolve date range.");
-        }
-        LocalDate from = dates[0];
-        LocalDate to   = requireDateRange(from, dates[1]);
-
-        Integer deptId   = selectedDeptId();
-        Integer payrunId = selectedPayrunId();
-
-        String path = chooseExportFile("Department_Payroll_Report.pdf");
-        if (path == null) return;
-        payrollReportService.exportPayrollSummaryReportToPdf(deptId, payrunId, from, to, path);
-        reportExported(path);
-    }
-
-    private void exportPayslip() {
-        int empId    = requireEmployee();
-        int payrunId = requirePayrun();
-
-        String path = chooseExportFile("Payslip_" + empId + "_Payrun" + payrunId + ".pdf");
-        if (path == null) return;
-        payrollReportService.exportPayslipReportToPdf(empId, payrunId, path);
-        reportExported(path);
-    }
-
-    private void exportAuditLog() {
-        LocalDate[] dates = resolveDates();
-        LocalDate from = dates[0];
-        LocalDate to   = dates[1];
-
-        if (DR_CUSTOM.equals(dateRangeCombo.getValue()) && (from == null) != (to == null)) {
-            throw new ValidationException("Provide both Date From and Date To, or leave both empty.");
-        }
-
-        String action = toAuditActionRaw(actionCombo.getValue());
-
-        String path = chooseExportFile("Audit_Log_Report.pdf");
-        if (path == null) return;
-        auditReportService.exportAuditReportToPdf(null, action, from, to, path);
-        reportExported(path);
-    }
-
-    private void exportSupportTicket() {
-        LocalDate[] dates = resolveDates();
-        LocalDate from = dates[0];
-        LocalDate to   = dates[1];
-
-        if (DR_CUSTOM.equals(dateRangeCombo.getValue()) && (from != null) != (to != null)) {
-            throw new ValidationException("Provide both Date From and Date To, or leave both empty.");
-        }
-
-        Integer deptId      = selectedDeptId();
-        Integer empId       = selectedEmpId();
-        String  category    = toRawEnumValue(categoryCombo.getValue(), "All Categories");
-        String  routingTeam = toRawEnumValue(routingTeamCombo.getValue(), "All Teams");
-        String  status      = toRawEnumValue(ticketStatusCombo.getValue(), "All Statuses");
-
-        String path = chooseExportFile("Support_Ticket_Report.pdf");
-        if (path == null) return;
-        ticketReportService.exportTicketReportToPdf(deptId, empId, category, routingTeam, status, from, to, path);
-        reportExported(path);
     }
 
     // opens a save dialog and returns the chosen path, or null when cancelled
@@ -817,6 +725,23 @@ public class ReportsController {
             UiMessageUtil.showToast(root, message);
         } else {
             UiMessageUtil.setSuccess(moduleMessageLabel, message);
+        }
+    }
+
+    // opens the PDF bytes in the OS's default viewer via a temp file - there is no
+    // in-app preview window anymore now that generation happens server-side
+    private void openPdf(byte[] pdf, String namePrefix) {
+        try {
+            File tempFile = File.createTempFile(namePrefix + "-", ".pdf");
+            tempFile.deleteOnExit();
+            Files.write(tempFile.toPath(), pdf);
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            }
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to save or open report PDF", e);
+            showError("Report Error", "Could not open the generated report.");
         }
     }
 
@@ -872,7 +797,7 @@ public class ReportsController {
     }
 
     private int requireEmployee() {
-        Employee e = employeeCombo.getValue();
+        EmployeeSummaryDTO e = employeeCombo.getValue();
         if (e == null) throw new ValidationException("Please select an employee.");
         return e.getEmployeeId();
     }
@@ -884,18 +809,18 @@ public class ReportsController {
     }
 
     private Integer selectedDeptId() {
-        Department d = departmentCombo.getValue();
+        DepartmentDTO d = departmentCombo.getValue();
         return d == null ? null : d.getDepartmentId();
     }
 
     // null when "All Departments" is selected; the report label falls back accordingly
     private String selectedDeptName() {
-        Department d = departmentCombo.getValue();
+        DepartmentDTO d = departmentCombo.getValue();
         return d == null ? null : d.getDepartmentName();
     }
 
     private Integer selectedEmpId() {
-        Employee e = employeeCombo.getValue();
+        EmployeeSummaryDTO e = employeeCombo.getValue();
         return e == null ? null : e.getEmployeeId();
     }
 

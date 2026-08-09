@@ -2,8 +2,11 @@ package motorph.ui.session;
 
 import motorph.domain.value.Role;
 import motorph.application.session.UserSession;
+import motorph.api.ApiClientFactory;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Provides UI-layer access to the current logged-in user's session state. */
 public final class CurrentUserSession {
@@ -59,8 +62,17 @@ public final class CurrentUserSession {
         UserSession.getInstance().switchRole(role);
     }
 
-    // clears all current session data
+    private static final Logger logger = Logger.getLogger(CurrentUserSession.class.getName());
+
+    // clears all current session data, revoking the backend token first so a
+    // copied token cannot be reused after the user has logged out here
     public static void clear() {
+        try {
+            ApiClientFactory.getInstance().getAuthApiClient().logout();
+        } catch (Exception e) {
+            logger.log(Level.WARNING, "Failed to revoke session token on logout.", e);
+        }
+
         UserSession.getInstance().clear();
     }
 }

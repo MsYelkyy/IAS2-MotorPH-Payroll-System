@@ -1,13 +1,12 @@
 package motorph.ui.admin;
 
-import motorph.application.dto.systemconfig.PhilHealthRateDTO;
-import motorph.application.dto.systemconfig.SssRateDTO;
-import motorph.application.dto.systemconfig.PagIbigRateDTO;
-import motorph.application.dto.systemconfig.WithholdingTaxBracketDTO;
-import motorph.application.service.SystemConfigService;
 import motorph.application.service.TwoFactorService;
-import motorph.ui.factory.EmployeeUIServiceFactory;
-import motorph.ui.session.CurrentUserSession;
+import motorph.api.ApiClientFactory;
+import motorph.api.SystemConfigApiClient;
+import motorph.api.dto.systemconfig.PhilHealthRateDTO;
+import motorph.api.dto.systemconfig.SssRateDTO;
+import motorph.api.dto.systemconfig.PagIbigRateDTO;
+import motorph.api.dto.systemconfig.WithholdingTaxBracketDTO;
 
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -47,7 +46,7 @@ public class AdminSystemConfigController {
     private static final int DEDUCTION_TYPE_TAX        = 4;
 
     // Services
-    private SystemConfigService configService;
+    private SystemConfigApiClient configApiClient;
 
     // State
     private ConfigCategory selectedCategory;
@@ -94,7 +93,7 @@ public class AdminSystemConfigController {
     // Lifecycle
     @FXML
     private void initialize() {
-        configService = EmployeeUIServiceFactory.getInstance().getSystemConfigService();
+        configApiClient = ApiClientFactory.getInstance().getSystemConfigApiClient();
     }
 
     // Refreshes the screen after tab selection
@@ -239,7 +238,7 @@ public class AdminSystemConfigController {
         try {
             switch (cat) {
                 case PHILHEALTH -> {
-                    List<PhilHealthRateDTO> list = configService.getAllPhilHealthRates();
+                    List<PhilHealthRateDTO> list = configApiClient.getAllPhilHealthRates();
                     if (list.isEmpty()) {
                         rateRows.getChildren().add(emptyLabel("No PhilHealth rates configured."));
                     } else {
@@ -247,7 +246,7 @@ public class AdminSystemConfigController {
                     }
                 }
                 case SSS -> {
-                    List<SssRateDTO> list = configService.getAllSssRates();
+                    List<SssRateDTO> list = configApiClient.getAllSssRates();
                     if (list.isEmpty()) {
                         rateRows.getChildren().add(emptyLabel("No SSS rates configured."));
                     } else {
@@ -255,7 +254,7 @@ public class AdminSystemConfigController {
                     }
                 }
                 case PAGIBIG -> {
-                    List<PagIbigRateDTO> list = configService.getAllPagIbigRates();
+                    List<PagIbigRateDTO> list = configApiClient.getAllPagIbigRates();
                     if (list.isEmpty()) {
                         rateRows.getChildren().add(emptyLabel("No Pag-IBIG rates configured."));
                     } else {
@@ -263,7 +262,7 @@ public class AdminSystemConfigController {
                     }
                 }
                 case TAX -> {
-                    List<WithholdingTaxBracketDTO> list = configService.getAllTaxBrackets();
+                    List<WithholdingTaxBracketDTO> list = configApiClient.getAllTaxBrackets();
                     if (list.isEmpty()) {
                         rateRows.getChildren().add(emptyLabel("No tax brackets configured."));
                     } else {
@@ -561,14 +560,12 @@ public class AdminSystemConfigController {
             if (result.isEmpty() || result.get() != ButtonType.YES) return;
         }
 
-        int actorId = CurrentUserSession.getUserAccountId();
-
         try {
             switch (selectedCategory) {
-                case PHILHEALTH -> savePhilHealth(actorId);
-                case SSS        -> saveSss(actorId);
-                case PAGIBIG    -> savePagIbig(actorId);
-                case TAX        -> saveTax(actorId);
+                case PHILHEALTH -> savePhilHealth();
+                case SSS        -> saveSss();
+                case PAGIBIG    -> savePagIbig();
+                case TAX        -> saveTax();
                 default         -> { /* no-op */ }
             }
             setMessage((editMode ? "Updated" : "Added") + " " + selectedCategory.displayName() + " successfully.");
@@ -580,7 +577,7 @@ public class AdminSystemConfigController {
         }
     }
 
-    private void savePhilHealth(int actorId) {
+    private void savePhilHealth() {
         // formControls order: premiumRate[0], salaryFloor[1], salaryCeiling[2],
         //                      employeeShareRatio[3], employerShareRatio[4],
         //                      startDate[5], endDate[6]
@@ -600,13 +597,13 @@ public class AdminSystemConfigController {
                 startDate, endDate);
 
         if (editMode) {
-            configService.updatePhilHealthRate(dto, actorId);
+            configApiClient.updatePhilHealthRate(dto);
         } else {
-            configService.addPhilHealthRate(dto, actorId);
+            configApiClient.addPhilHealthRate(dto);
         }
     }
 
-    private void saveSss(int actorId) {
+    private void saveSss() {
         // formControls order: minSalary[0], maxSalary[1], employeeShare[2], employerShare[3],
         //                      startDate[4], endDate[5]
         double minSalary      = requireDouble(0, "Min Salary");
@@ -624,13 +621,13 @@ public class AdminSystemConfigController {
                 startDate, endDate);
 
         if (editMode) {
-            configService.updateSssRate(dto, actorId);
+            configApiClient.updateSssRate(dto);
         } else {
-            configService.addSssRate(dto, actorId);
+            configApiClient.addSssRate(dto);
         }
     }
 
-    private void savePagIbig(int actorId) {
+    private void savePagIbig() {
         // formControls order: minSalary[0], maxSalary[1], employeeShareRate[2], employerShareRate[3],
         //                      maxEmployeeShare[4], maxEmployerShare[5], startDate[6], endDate[7]
         double minSalary          = requireDouble(0, "Min Salary");
@@ -651,13 +648,13 @@ public class AdminSystemConfigController {
                 startDate, endDate);
 
         if (editMode) {
-            configService.updatePagIbigRate(dto, actorId);
+            configApiClient.updatePagIbigRate(dto);
         } else {
-            configService.addPagIbigRate(dto, actorId);
+            configApiClient.addPagIbigRate(dto);
         }
     }
 
-    private void saveTax(int actorId) {
+    private void saveTax() {
         // formControls order: minSalary[0], maxSalary[1], baseTax[2], taxRate[3], excessOver[4],
         //                      startDate[5], endDate[6]
         double minSalary   = requireDouble(0, "Min Salary");
@@ -676,9 +673,9 @@ public class AdminSystemConfigController {
                 startDate, endDate);
 
         if (editMode) {
-            configService.updateTaxBracket(dto, actorId);
+            configApiClient.updateTaxBracket(dto);
         } else {
-            configService.addTaxBracket(dto, actorId);
+            configApiClient.addTaxBracket(dto);
         }
     }
 

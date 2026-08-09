@@ -19,6 +19,7 @@
 
         <mysql.connector.version>8.3.0</mysql.connector.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
+        <jackson.version>2.22.1</jackson.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <mockito.version>5.12.0</mockito.version>
         <maven.surefire.version>3.2.5</maven.surefire.version>
@@ -26,11 +27,23 @@
 
     <dependencies>
 
-        <!-- MySQL -->
+        <!-- MySQL: retained until every repository is migrated to motorph-backend (see Phase 2-4) -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>${mysql.connector.version}</version>
+        </dependency>
+
+        <!-- JSON (de)serialization for the motorph.api REST client -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Email -->

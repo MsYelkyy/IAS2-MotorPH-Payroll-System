@@ -1,9 +1,11 @@
 package motorph.ui.auth;
 
 import motorph.application.dto.login.LoginResultDTO;
-import motorph.application.service.AuthenticationService;
 import motorph.application.session.UserSession;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.domain.value.Role;
+import motorph.api.ApiClientFactory;
+import motorph.api.AuthApiClient;
+import motorph.api.dto.auth.MeResponse;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
@@ -11,12 +13,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
+import java.util.List;
+
 /** Handles OTP verification after successful credential validation. */
 public class OtpController {
 
-    private AuthenticationService authenticationService;
+    private AuthApiClient authApiClient;
     private LoginController loginController;
-    private LoginResultDTO pendingLoginResult;
+    private String pendingChallengeId;
 
     @FXML
     private TextField otpField;
@@ -27,7 +31,7 @@ public class OtpController {
     // initializes OTP dependencies
     @FXML
     private void initialize() {
-        authenticationService = EmployeeUIServiceFactory.getInstance().getAuthenticationService();
+        authApiClient = ApiClientFactory.getInstance().getAuthApiClient();
     }
 
     // setters
@@ -35,9 +39,9 @@ public class OtpController {
         this.loginController = loginController;
     }
 
-    // stores pending login result for OTP verification
-    public void setPendingLoginResult(LoginResultDTO result) {
-        this.pendingLoginResult = result;
+    // stores the opaque login challenge issued by the backend for the OTP step
+    public void setPendingChallenge(String challengeId) {
+        this.pendingChallengeId = challengeId;
     }
 
     // shows OTP message and clears old input
@@ -47,26 +51,26 @@ public class OtpController {
         UiMessageUtil.setSuccess(otpMessageLabel, message);
     }
 
-    // verifies OTP and completes login
+    // verifies OTP, completes login, and loads the account's current
+    // role/employee info from the backend (never trusted from the client)
     @FXML
     private void handleOtpVerification() {
         UiValidationUtil.clearInvalid(otpField);
 
-        if (!hasPendingLogin()) {
+        if (!hasPendingChallenge()) {
             return;
         }
 
         String otp = UiValidationUtil.getText(otpField);
 
         try {
-            LoginResultDTO result = authenticationService.verifyLoginOtp(
-                    pendingLoginResult.getUserAccountId(),
-                    otp
-            );
+            authApiClient.verifyOtp(pendingChallengeId, otp);
+            pendingChallengeId = null;
+
+            MeResponse me = authApiClient.me();
+            LoginResultDTO result = toLoginResultDTO(me);
 
             UserSession.getInstance().login(result);
-
-            pendingLoginResult = null;
 
             if (loginController != null) {
                 loginController.onLoginSuccess(result);
@@ -80,16 +84,16 @@ public class OtpController {
     // returns to the login card
     @FXML
     private void backToLogin() {
-        pendingLoginResult = null;
+        pendingChallengeId = null;
 
         if (loginController != null) {
             loginController.showLoginCard();
         }
     }
 
-    // checks if OTP verification has a pending login
-    private boolean hasPendingLogin() {
-        if (pendingLoginResult != null && pendingLoginResult.isOtpRequired()) {
+    // checks if OTP verification has a pending challenge
+    private boolean hasPendingChallenge() {
+        if (pendingChallengeId != null) {
             return true;
         }
 
@@ -100,5 +104,24 @@ public class OtpController {
         }
 
         return false;
+    }
+
+    // adapts the backend's /me response into the desktop's existing
+    // LoginResultDTO shape so LoginController.onLoginSuccess needs no changes
+    private LoginResultDTO toLoginResultDTO(MeResponse me) {
+        List<Role> roles = me.roles().stream().map(Role::fromValue).toList();
+        Role activeRole = Role.fromValue(me.activeRole());
+
+        return new LoginResultDTO(
+                me.userAccountId(),
+                me.employeeId(),
+                me.companyEmail(),
+                roles,
+                activeRole,
+                true,
+                false,
+                roles.size() > 1,
+                "Login successful."
+        );
     }
 }

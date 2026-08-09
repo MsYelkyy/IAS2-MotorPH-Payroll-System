@@ -1,15 +1,16 @@
 package motorph.ui.hr;
 
-import motorph.application.dto.employee.EmployeeProfileDTO;
-import motorph.application.dto.leave.LeaveCreditRowDTO;
-import motorph.application.dto.leave.LeaveRequestRowDTO;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.LeaveService;
-import motorph.application.service.OvertimeService;
 import motorph.application.service.UserAccountService;
-import motorph.domain.model.OvertimeRequest;
 import motorph.domain.model.UserAccount;
 import motorph.domain.value.RequestStatus;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.LeaveApiClient;
+import motorph.api.OvertimeApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.api.dto.leave.LeaveCreditRowDTO;
+import motorph.api.dto.leave.LeaveRequestRowDTO;
+import motorph.api.dto.overtime.OvertimeRequestDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
@@ -51,10 +52,10 @@ public class HrLeaveController {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATETIME_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
-    private LeaveService leaveService;
-    private OvertimeService overtimeService;
+    private LeaveApiClient leaveApiClient;
+    private OvertimeApiClient overtimeApiClient;
     private UserAccountService userAccountService;
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     private List<LeaveRequestRowDTO> allRows = new ArrayList<>();
     private final ObservableList<LeaveRequestRowDTO> leaveItems = FXCollections.observableArrayList();
@@ -141,10 +142,10 @@ public class HrLeaveController {
 
     @FXML
     private void initialize() {
-        leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
-        overtimeService = EmployeeUIServiceFactory.getInstance().getOvertimeService();
+        leaveApiClient = ApiClientFactory.getInstance().getLeaveApiClient();
+        overtimeApiClient = ApiClientFactory.getInstance().getOvertimeApiClient();
         userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
         setupFilters();
         setupLeaveTable();
         setupCreditTable();
@@ -248,8 +249,7 @@ public class HrLeaveController {
     private void handleApprove() {
         if (selectedRow == null) return;
         try {
-            UserAccount actor = resolveActorAccount();
-            leaveService.approveLeaveRequest(actor, selectedRow.getLeaveRequestId());
+            leaveApiClient.approveLeaveRequest(selectedRow.getLeaveRequestId());
             loadRows();
             showList();
             UiMessageUtil.showSuccessToastTop(toastRoot, "Leave request approved.");
@@ -262,8 +262,7 @@ public class HrLeaveController {
     private void handleReject() {
         if (selectedRow == null) return;
         try {
-            UserAccount actor = resolveActorAccount();
-            leaveService.rejectLeaveRequest(actor, selectedRow.getLeaveRequestId());
+            leaveApiClient.rejectLeaveRequest(selectedRow.getLeaveRequestId());
             loadRows();
             showList();
             UiMessageUtil.showSuccessToastTop(toastRoot, "Leave request rejected.");
@@ -279,7 +278,7 @@ public class HrLeaveController {
 
     private void loadRows() {
         try {
-            allRows = leaveService.getLeaveRequestRows();
+            allRows = leaveApiClient.getAllLeaveRequests();
         } catch (Exception e) {
             allRows = new ArrayList<>();
             UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
@@ -385,7 +384,7 @@ public class HrLeaveController {
         if (approverAccountId == null) return "-";
         try {
             UserAccount reviewer = userAccountService.getById(approverAccountId);
-            return employeeService.getEmployeeByIdAny(reviewer.getEmployeeId()).getFullName();
+            return employeeApiClient.getEmployee(reviewer.getEmployeeId()).getFullName();
         } catch (Exception e) {
             return "Account #" + approverAccountId;
         }
@@ -398,7 +397,7 @@ public class HrLeaveController {
         }
 
         try {
-            creditItems.setAll(leaveService.getLeaveCreditsForEmployee(row.getEmployeeId()));
+            creditItems.setAll(leaveApiClient.getLeaveCredits(row.getEmployeeId()));
         } catch (Exception e) {
             creditItems.clear();
             UiMessageUtil.setError(moduleMessageLabel, userMessage(e));
@@ -442,11 +441,11 @@ public class HrLeaveController {
     private void loadOvertimeRows() {
         List<OvertimeRow> rows = new ArrayList<>();
         try {
-            for (OvertimeRequest request : overtimeService.getAllOvertimeRequests()) {
+            for (OvertimeRequestDTO request : overtimeApiClient.getAllOvertimeRequests()) {
                 String employeeName = "Employee #" + request.getEmployeeId();
                 String department = "-";
                 try {
-                    EmployeeProfileDTO profile = employeeService.getEmployeeProfileAdmin(request.getEmployeeId());
+                    EmployeeProfileDTO profile = employeeApiClient.getEmployee(request.getEmployeeId());
                     if (profile != null) {
                         employeeName = profile.getFullName();
                         department = profile.getDepartmentName() != null ? profile.getDepartmentName() : "-";
@@ -468,8 +467,7 @@ public class HrLeaveController {
     private void handleApproveOvertime() {
         if (selectedOvertimeRow == null) return;
         try {
-            UserAccount actor = resolveActorAccount();
-            overtimeService.approveOvertimeRequest(actor, selectedOvertimeRow.requestId(), null);
+            overtimeApiClient.approveOvertimeRequest(selectedOvertimeRow.requestId());
             loadOvertimeRows();
             showOvertimeList();
             UiMessageUtil.showSuccessToastTop(toastRoot, "Overtime request approved.");
@@ -482,8 +480,7 @@ public class HrLeaveController {
     private void handleRejectOvertime() {
         if (selectedOvertimeRow == null) return;
         try {
-            UserAccount actor = resolveActorAccount();
-            overtimeService.rejectOvertimeRequest(actor, selectedOvertimeRow.requestId(), null);
+            overtimeApiClient.rejectOvertimeRequest(selectedOvertimeRow.requestId());
             loadOvertimeRows();
             showOvertimeList();
             UiMessageUtil.showSuccessToastTop(toastRoot, "Overtime request rejected.");
@@ -771,16 +768,6 @@ public class HrLeaveController {
         };
     }
 
-    private UserAccount resolveActorAccount() {
-        int accountId = CurrentUserSession.getUserAccountId();
-        if (accountId <= 0) {
-            throw new IllegalStateException("No active session found. Please log in again.");
-        }
-        UserAccount actor = userAccountService.getById(accountId);
-        actor.setActiveRole(CurrentUserSession.getActiveRole());
-        return actor;
-    }
-
     private void setText(Label label, String text) {
         if (label != null) label.setText(text != null ? text : "-");
     }
@@ -846,7 +833,7 @@ public class HrLeaveController {
     }
 
     // holds an overtime request enriched with employee name, department, and type name for display
-    private record OvertimeRow(OvertimeRequest request, String employeeName, String department, String overtimeTypeName) {
+    private record OvertimeRow(OvertimeRequestDTO request, String employeeName, String department, String overtimeTypeName) {
 
         // getters/setters
         int requestId() {

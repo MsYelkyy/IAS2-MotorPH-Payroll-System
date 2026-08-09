@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 import motorph.domain.contract.Approvable;
 import motorph.domain.value.RequestStatus;
+import motorph.domain.value.RequestType;
 
 /**
  * Represents a base employee request with approval details.
@@ -37,6 +38,9 @@ public abstract class Request implements Approvable {
         this.remarks = clean(remarks);
         this.dateReviewed = dateReviewed;
     }
+
+    // returns the specific type of this request
+    public abstract RequestType getRequestType();
 
     // getters
     public Integer getRequestId() {

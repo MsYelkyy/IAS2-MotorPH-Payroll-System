@@ -1,9 +1,7 @@
 package motorph.ui.admin;
 
-import motorph.application.service.EmployeeService;
-import motorph.application.service.SupportTicketService;
-import motorph.domain.model.SupportTicket;
-import motorph.ui.factory.ITUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.dto.support.SupportTicketDTO;
 import motorph.ui.support.BaseSupportTicketController;
 
 import java.util.List;
@@ -15,18 +13,8 @@ import java.util.List;
 public class AdminSupportTicketController extends BaseSupportTicketController {
 
     @Override
-    protected SupportTicketService supportTicketService() {
-        return ITUIServiceFactory.getInstance().getSupportTicketService();
-    }
-
-    @Override
-    protected EmployeeService employeeService() {
-        return ITUIServiceFactory.getInstance().getEmployeeService();
-    }
-
-    @Override
-    protected List<SupportTicket> loadTickets() {
-        return supportTicketService().getAllTickets();
+    protected List<SupportTicketDTO> loadTickets() {
+        return ApiClientFactory.getInstance().getSupportTicketApiClient().getAllTickets();
     }
 
     @Override

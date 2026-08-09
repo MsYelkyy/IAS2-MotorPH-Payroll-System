@@ -1,12 +1,12 @@
 package motorph.ui.support;
 
 import motorph.application.dto.it.SupportTicketRowDTO;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.SupportTicketService;
-import motorph.domain.model.Employee;
-import motorph.domain.model.SupportTicket;
 import motorph.domain.value.SupportTicketStatus;
-import motorph.ui.session.CurrentUserSession;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.SupportTicketApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.api.dto.support.SupportTicketDTO;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -63,8 +63,8 @@ public abstract class BaseSupportTicketController {
 
     protected static final String CAT_ALL = "All Categories";
 
-    private SupportTicketService supportTicketService;
-    private EmployeeService      employeeService;
+    private SupportTicketApiClient supportTicketApiClient;
+    private final EmployeeApiClient employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
     private final ObservableList<SupportTicketRowDTO> allRows      = FXCollections.observableArrayList();
     private final ObservableList<SupportTicketRowDTO> filteredRows = FXCollections.observableArrayList();
@@ -108,14 +108,8 @@ public abstract class BaseSupportTicketController {
     private Button cancelledTab;
 
     // Subclass hooks
-    /** Supplies the support ticket service (typically from the role's UI service factory). */
-    protected abstract SupportTicketService supportTicketService();
-
-    /** Supplies the employee service used to resolve employee names. */
-    protected abstract EmployeeService employeeService();
-
     /** Loads the tickets this screen should display (routing team, all, or employee-scoped). */
-    protected abstract List<SupportTicket> loadTickets();
+    protected abstract List<SupportTicketDTO> loadTickets();
 
     /** Category filter options for this screen; defaults to all categories only. Override to scope. */
     protected List<String> categoryFilterOptions() {
@@ -124,8 +118,7 @@ public abstract class BaseSupportTicketController {
 
     @FXML
     private void initialize() {
-        supportTicketService = supportTicketService();
-        employeeService      = employeeService();
+        supportTicketApiClient = ApiClientFactory.getInstance().getSupportTicketApiClient();
         buildTabButtons();
         configureFilters();
         configureTable();
@@ -467,10 +460,7 @@ public abstract class BaseSupportTicketController {
             resolveBtn.setOnAction(e -> performAction(
                     "Resolve Ticket",
                     "Resolve ticket #" + row.getTicketId() + " for " + row.getEmployeeName() + "?",
-                    () -> supportTicketService.resolveTicket(
-                            row.getTicketId(),
-                            CurrentUserSession.getUserAccountId(),
-                            CurrentUserSession.getActiveRole()),
+                    () -> supportTicketApiClient.resolveTicket(row.getTicketId()),
                     "Ticket #" + row.getTicketId() + " resolved.",
                     overlay));
 
@@ -479,10 +469,7 @@ public abstract class BaseSupportTicketController {
             cancelBtn.setOnAction(e -> performAction(
                     "Cancel Ticket",
                     "Cancel ticket #" + row.getTicketId() + " for " + row.getEmployeeName() + "?",
-                    () -> supportTicketService.cancelTicket(
-                            row.getTicketId(),
-                            CurrentUserSession.getEmployeeId(),
-                            CurrentUserSession.getActiveRole()),
+                    () -> supportTicketApiClient.cancelTicket(row.getTicketId()),
                     "Ticket #" + row.getTicketId() + " cancelled.",
                     overlay));
 
@@ -536,10 +523,10 @@ public abstract class BaseSupportTicketController {
 
     // Helpers
     // converts a domain ticket to a display row DTO, resolving employee name
-    private SupportTicketRowDTO toRowDTO(SupportTicket ticket) {
+    private SupportTicketRowDTO toRowDTO(SupportTicketDTO ticket) {
         String employeeName = "Employee #" + ticket.getEmployeeId();
         try {
-            Employee employee = employeeService.getEmployeeById(ticket.getEmployeeId());
+            EmployeeProfileDTO employee = employeeApiClient.getEmployee(ticket.getEmployeeId());
             employeeName = employee.getFullName();
         } catch (Exception e) {
             // falls back to the ID label if employee lookup fails

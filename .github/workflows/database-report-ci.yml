@@ -1,10 +1,9 @@
 name: Database Report CI/CD Pipeline
 
-# Rebuilds and validates the MotorPH database REPORTING LAYER in a clean MySQL 8
-# environment. This is NOT a production deployment pipeline: it stands up the
-# reporting layer on a throwaway MySQL service container and runs the report
-# validation tests. It never builds/tests the Java app and never touches
-# src/main/java, src/main/resources, pom.xml, or target/.
+# Rebuilds and validates the MotorPH database reporting layer in a clean MySQL 8
+# database, then runs the report tests. This does not deploy to production and
+# does not build or test the Java app (no Maven; src, pom.xml, and target are
+# left untouched).
 
 on:
   push:
@@ -56,43 +55,33 @@ jobs:
       - name: Run all report validation tests
         working-directory: database/ci-cd
         run: |
-          # Capture the full test output (table grids + verdicts) to a log.
-          # 'tee' keeps it visible in the Actions console too.
+          # Save the full test output to a log, and show it in the console too.
           mysql -h 127.0.0.1 -P 3306 -uroot -proot \
             --default-character-set=utf8mb4 --table \
             < run_all_tests.sql | tee test_output.log
 
-      - name: Evaluate pass/fail gate
+      - name: Check test results
         working-directory: database/ci-cd
         run: |
           set -euo pipefail
 
-          echo "Scanning test_output.log for real failures..."
-
-          # A REAL failure is either:
-          #   1) a FAIL result cell in a --table grid, rendered as "| FAIL |"
-          #      (optional surrounding whitespace inside the pipes), OR
-          #   2) a "TEST(S) FAILED" verdict line.
-          #
-          # We intentionally do NOT match the bare word FAIL, because a PASSING
-          # run still prints:
-          #   * the lowercase "failed" column header, and
-          #   * one scenario label containing "...if FAIL".
-          # Those are not failures and must not trip the gate.
+          # Fail only on a real failure: a FAIL result cell (shown as "| FAIL |")
+          # or a "TEST(S) FAILED" verdict. We do not match the plain word "FAIL",
+          # because a passing run still prints the "failed" column header and one
+          # label that reads "...if FAIL".
           if grep -Eq '\|[[:space:]]*FAIL[[:space:]]*\||TEST\(S\) FAILED' test_output.log; then
-            echo "::error::Report validation FAILED. Failing rows / verdicts:"
+            echo "::error::Report tests failed. Failing rows / verdicts:"
             grep -En '\|[[:space:]]*FAIL[[:space:]]*\||TEST\(S\) FAILED' test_output.log || true
             exit 1
           fi
 
-          # Sanity check: make sure the suite actually ran and produced PASS
-          # results (guards against a silent no-op that would otherwise "pass").
+          # Make sure the tests actually ran (a run with no PASS cells is wrong).
           if ! grep -Eq '\|[[:space:]]*PASS[[:space:]]*\|' test_output.log; then
-            echo "::error::No PASS result cells found -- the test suite did not run as expected."
+            echo "::error::No PASS results found -- the tests did not run as expected."
             exit 1
           fi
 
-          echo "All report validation tests passed."
+          echo "All report tests passed."
 
       - name: Upload test output log
         if: always()

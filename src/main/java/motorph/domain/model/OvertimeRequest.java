@@ -3,6 +3,7 @@ package motorph.domain.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import motorph.domain.value.RequestStatus;
+import motorph.domain.value.RequestType;
 
 /**
  * Represents an overtime request and maps to the overtime_request table.
@@ -72,6 +73,12 @@ public class OvertimeRequest extends Request {
         this.overtimeDate = requireNonNull(overtimeDate, "Overtime date is required.");
         this.requestedHours = validateRequestedHours(requestedHours);
         this.reason = requireNonBlank(reason, "Reason is required.");
+    }
+
+    // returns the specific type of this request
+    @Override
+    public RequestType getRequestType() {
+        return RequestType.OVERTIME;
     }
 
     // getters

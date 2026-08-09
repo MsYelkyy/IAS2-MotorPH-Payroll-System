@@ -1,10 +1,9 @@
 package motorph.ui.employee;
 
-import motorph.application.service.PayrollService;
-import motorph.application.service.report.PayrollReportService;
-import motorph.domain.model.PayrollResult;
-import motorph.domain.model.Payrun;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.ApiException;
+import motorph.api.PayslipApiClient;
+import motorph.api.dto.payroll.PayslipSummaryDTO;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
 
@@ -17,10 +16,15 @@ import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 
+import java.awt.Desktop;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /** Displays the employee's payroll history as a paginated summary table. */
@@ -31,18 +35,17 @@ public class EmployeePayslipController {
     private static final DateTimeFormatter MONTH_DAY = DateTimeFormatter.ofPattern("MMMM d");
     private static final DateTimeFormatter MONTH_DAY_YEAR = DateTimeFormatter.ofPattern("MMMM d, yyyy");
 
-    private PayrollService payrollService;
-    private PayrollReportService payrollReportService;
-    private final List<PayrollRowItem> allRows = new ArrayList<>();
+    private PayslipApiClient payslipApiClient;
+    private final List<PayslipSummaryDTO> allRows = new ArrayList<>();
     private int currentPage = 1;
 
-    @FXML private TableView<PayrollRowItem> payrollTable;
-    @FXML private TableColumn<PayrollRowItem, String> colPayPeriod;
-    @FXML private TableColumn<PayrollRowItem, String> colBasicPay;
-    @FXML private TableColumn<PayrollRowItem, String> colGrossPay;
-    @FXML private TableColumn<PayrollRowItem, String> colDeductions;
-    @FXML private TableColumn<PayrollRowItem, String> colNetPay;
-    @FXML private TableColumn<PayrollRowItem, Void>   colAction;
+    @FXML private TableView<PayslipSummaryDTO> payrollTable;
+    @FXML private TableColumn<PayslipSummaryDTO, String> colPayPeriod;
+    @FXML private TableColumn<PayslipSummaryDTO, String> colBasicPay;
+    @FXML private TableColumn<PayslipSummaryDTO, String> colGrossPay;
+    @FXML private TableColumn<PayslipSummaryDTO, String> colDeductions;
+    @FXML private TableColumn<PayslipSummaryDTO, String> colNetPay;
+    @FXML private TableColumn<PayslipSummaryDTO, Void>   colAction;
     @FXML private Label  recordInfoLabel;
     @FXML private Label  pageLabel;
     @FXML private Button btnPrev;
@@ -50,9 +53,7 @@ public class EmployeePayslipController {
 
     @FXML
     private void initialize() {
-        EmployeeUIServiceFactory factory = EmployeeUIServiceFactory.getInstance();
-        payrollService       = factory.getPayrollService();
-        payrollReportService = factory.getPayrollReportService();
+        payslipApiClient = ApiClientFactory.getInstance().getPayslipApiClient();
 
         payrollTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
@@ -64,26 +65,13 @@ public class EmployeePayslipController {
         loadPayrollData();
     }
 
-    // fetches all payroll results and builds row items enriched with payrun period dates
+    // fetches the caller's own payroll history from the backend
     private void loadPayrollData() {
-        int employeeId = CurrentUserSession.getEmployeeId();
-        if (employeeId <= 0) return;
-
         allRows.clear();
         try {
-            List<PayrollResult> results = payrollService.getPayrollResultsByEmployee(employeeId);
-            results.sort(Comparator.comparing(PayrollResult::getGeneratedAt).reversed());
-
-            for (PayrollResult result : results) {
-                try {
-                    Payrun payrun = payrollService.getPayrun(result.getPayrunId());
-                    if (payrun != null) {
-                        allRows.add(new PayrollRowItem(result, payrun));
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Skipped payrun " + result.getPayrunId() + ": " + e.getMessage());
-                }
-            }
+            List<PayslipSummaryDTO> results = payslipApiClient.getOwnPayslips();
+            results.sort(Comparator.comparing(PayslipSummaryDTO::getPeriodStart).reversed());
+            allRows.addAll(results);
         } catch (Exception e) {
             LOG.warning("Failed to load payroll data: " + e.getMessage());
         }
@@ -132,7 +120,7 @@ public class EmployeePayslipController {
     // wires cell value factories and cell factories for all table columns
     private void setupColumns() {
         colPayPeriod.setCellValueFactory(data -> {
-            PayrollRowItem row = data.getValue();
+            PayslipSummaryDTO row = data.getValue();
             String period = row.getPeriodStart().format(MONTH_DAY)
                     + " - " + row.getPeriodEnd().format(MONTH_DAY_YEAR);
             return new SimpleStringProperty(period);
@@ -173,7 +161,7 @@ public class EmployeePayslipController {
             {
                 btnView.getStyleClass().add("view-payslip-button");
                 btnView.setOnAction(evt -> {
-                    PayrollRowItem row = getTableView().getItems().get(getIndex());
+                    PayslipSummaryDTO row = getTableView().getItems().get(getIndex());
                     handleViewPayslip(row);
                 });
             }
@@ -187,9 +175,27 @@ public class EmployeePayslipController {
         });
     }
 
-    private void handleViewPayslip(PayrollRowItem row) {
+    // downloads the payslip PDF and opens it in the OS's default PDF viewer -
+    // there is no in-app preview window anymore now that generation happens
+    // server-side (the backend has no GUI to pop a Swing viewer from)
+    private void handleViewPayslip(PayslipSummaryDTO row) {
         int employeeId = CurrentUserSession.getEmployeeId();
         if (employeeId <= 0) return;
-        payrollReportService.previewPayslipReport(employeeId, row.getPayrunId());
+
+        try {
+            byte[] pdf = payslipApiClient.getPayslipPdf(employeeId, row.getPayrunId());
+
+            File tempFile = File.createTempFile("payslip-" + employeeId + "-" + row.getPayrunId() + "-", ".pdf");
+            tempFile.deleteOnExit();
+            Files.write(tempFile.toPath(), pdf);
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            }
+        } catch (ApiException e) {
+            LOG.warning("Failed to fetch payslip PDF: " + e.getMessage());
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to save or open payslip PDF", e);
+        }
     }
 }

@@ -1,10 +1,11 @@
 package motorph.ui.employee;
 
-import motorph.application.service.SupportTicketService;
-import motorph.domain.model.SupportTicket;
 import motorph.domain.value.SupportTicketCategory;
 import motorph.domain.value.SupportTicketStatus;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.SupportTicketApiClient;
+import motorph.api.dto.support.SupportTicketDTO;
+import motorph.api.dto.support.TicketSubmitRequest;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -43,10 +44,10 @@ public class EmployeeSupportTicketController {
     private static final String MESSAGE_HINT = "Describe your concern in detail...";
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy hh:mm a");
 
-    private SupportTicketService supportTicketService;
+    private SupportTicketApiClient supportTicketApiClient;
 
     private final Map<String, SupportTicketCategory> categoryMap = new LinkedHashMap<>();
-    private final List<SupportTicket> allTickets = new ArrayList<>();
+    private final List<SupportTicketDTO> allTickets = new ArrayList<>();
     private int currentPage = 1;
     private boolean titleDirty = false;
     private boolean messageDirty = false;
@@ -65,12 +66,12 @@ public class EmployeeSupportTicketController {
     @FXML private Label formMessageLabel;
 
     // Table
-    @FXML private TableView<SupportTicket> ticketTable;
-    @FXML private TableColumn<SupportTicket, String> colTicketId;
-    @FXML private TableColumn<SupportTicket, String> colCategory;
-    @FXML private TableColumn<SupportTicket, String> colTitle;
-    @FXML private TableColumn<SupportTicket, String> colStatus;
-    @FXML private TableColumn<SupportTicket, String> colDateCreated;
+    @FXML private TableView<SupportTicketDTO> ticketTable;
+    @FXML private TableColumn<SupportTicketDTO, String> colTicketId;
+    @FXML private TableColumn<SupportTicketDTO, String> colCategory;
+    @FXML private TableColumn<SupportTicketDTO, String> colTitle;
+    @FXML private TableColumn<SupportTicketDTO, String> colStatus;
+    @FXML private TableColumn<SupportTicketDTO, String> colDateCreated;
 
     // Pagination
     @FXML private Button prevButton;
@@ -80,7 +81,7 @@ public class EmployeeSupportTicketController {
 
     @FXML
     private void initialize() {
-        supportTicketService = EmployeeUIServiceFactory.getInstance().getSupportTicketService();
+        supportTicketApiClient = ApiClientFactory.getInstance().getSupportTicketApiClient();
 
         buildCategoryMap();
         setupForm();
@@ -122,7 +123,7 @@ public class EmployeeSupportTicketController {
             String subject = titleField.getText().trim();
             String description = messageArea.getText().trim();
 
-            supportTicketService.submitTicket(employeeId, category, subject, description);
+            supportTicketApiClient.submitTicket(new TicketSubmitRequest(category.name(), subject, description));
 
             resetForm();
             loadTickets();
@@ -240,8 +241,8 @@ public class EmployeeSupportTicketController {
 
         if (employeeId > 0) {
             try {
-                List<SupportTicket> tickets = supportTicketService.getTicketsByEmployee(employeeId);
-                tickets.sort(Comparator.comparing(SupportTicket::getCreatedAt).reversed());
+                List<SupportTicketDTO> tickets = supportTicketApiClient.getOwnTickets();
+                tickets.sort(Comparator.comparing(SupportTicketDTO::getCreatedAt).reversed());
                 allTickets.addAll(tickets);
             } catch (Exception e) {
                 // leaves the table empty on error to avoid crashing the view

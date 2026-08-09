@@ -1,11 +1,15 @@
 package motorph.ui.employee;
 
-import motorph.application.service.LeaveService;
-import motorph.domain.model.Employee;
-import motorph.domain.model.LeaveRequest;
+import motorph.domain.value.EmploymentStatus;
 import motorph.domain.value.Gender;
 import motorph.domain.value.RequestStatus;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.LeaveApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.api.dto.leave.LeaveCreditRowDTO;
+import motorph.api.dto.leave.LeaveRequestDTO;
+import motorph.api.dto.leave.LeaveSubmitRequest;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -47,7 +51,8 @@ public class EmployeeLeaveController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy hh:mm a");
 
-    private LeaveService leaveService;
+    private LeaveApiClient leaveApiClient;
+    private EmployeeApiClient employeeApiClient;
     private Consumer<String> onLeaveCreditsUpdated;
 
     private final Map<String, Integer> leaveTypeIds = new LinkedHashMap<>();
@@ -87,7 +92,8 @@ public class EmployeeLeaveController {
 
     @FXML
     private void initialize() {
-        leaveService = EmployeeUIServiceFactory.getInstance().getLeaveService();
+        leaveApiClient = ApiClientFactory.getInstance().getLeaveApiClient();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         loadLeaveTypesForCurrentEmployee();
         leaveTypeComboBox.getItems().setAll(leaveTypeIds.keySet());
@@ -160,14 +166,13 @@ public class EmployeeLeaveController {
             LocalDate endDate = leaveEndDatePicker.getValue();
             double hours = Double.parseDouble(leaveHoursField.getText().trim());
 
-            leaveService.submitLeaveRequest(
-                    employeeId,
+            leaveApiClient.submitLeaveRequest(new LeaveSubmitRequest(
                     leaveTypeId,
                     startDate,
                     endDate,
                     hours,
                     getReasonText()
-            );
+            ));
 
             clearFormFields();
             clearAllFieldErrors();
@@ -300,8 +305,8 @@ public class EmployeeLeaveController {
             return;
         }
 
-        Employee employee = leaveService.getEmployeeById(employeeId);
-        if (employee.isProbationary()) {
+        EmployeeProfileDTO employee = employeeApiClient.getEmployee(employeeId);
+        if (employee.getEmploymentStatus() == EmploymentStatus.PROBATIONARY) {
             leaveTypeIds.put("Unpaid Leave", 7);
             return;
         }
@@ -332,7 +337,7 @@ public class EmployeeLeaveController {
         }
 
         try {
-            double hours = leaveService.computeLeaveHours(startDate, endDate);
+            double hours = leaveApiClient.computeLeaveHours(startDate, endDate);
             leaveHoursField.setText(String.format("%.1f", hours));
             clearFieldError(leaveHoursErrorLabel, leaveHoursField);
         } catch (Exception e) {
@@ -396,8 +401,18 @@ public class EmployeeLeaveController {
         leaveCreditsBox.getChildren().clear();
 
         int employeeId = CurrentUserSession.getEmployeeId();
-        int year = LocalDate.now().getYear();
         int index = 0;
+
+        Map<Integer, Double> remainingByType = new LinkedHashMap<>();
+        if (employeeId > 0) {
+            try {
+                for (LeaveCreditRowDTO row : leaveApiClient.getOwnLeaveCredits()) {
+                    remainingByType.put(row.getLeaveTypeId(), row.getRemainingCredits());
+                }
+            } catch (Exception e) {
+                // leaves remainingByType empty; each tile falls back to "Unavailable" below
+            }
+        }
 
         for (Map.Entry<String, Integer> entry : leaveTypeIds.entrySet()) {
             String name = entry.getKey();
@@ -405,13 +420,13 @@ public class EmployeeLeaveController {
             String value = "N/A";
 
             if (employeeId > 0 && typeId != 7) {
-                try {
-                    double credits = leaveService.getRemainingLeaveCredits(employeeId, typeId, year);
+                Double credits = remainingByType.get(typeId);
+                if (credits != null) {
                     value = String.format("%.2f", credits);
                     if (typeId == 1 && onLeaveCreditsUpdated != null) {
                         onLeaveCreditsUpdated.accept(String.format("%.0f", credits));
                     }
-                } catch (Exception e) {
+                } else {
                     value = "Unavailable";
                 }
             }
@@ -449,9 +464,9 @@ public class EmployeeLeaveController {
         }
 
         try {
-            List<LeaveRequest> requests = leaveService.getLeaveRequestsByEmployeeId(employeeId);
-            requests.sort(Comparator.comparing(LeaveRequest::getRequestDate).reversed());
-            for (LeaveRequest request : requests) {
+            List<LeaveRequestDTO> requests = leaveApiClient.getOwnLeaveRequests();
+            requests.sort(Comparator.comparing(LeaveRequestDTO::getRequestDate).reversed());
+            for (LeaveRequestDTO request : requests) {
                 allHistoryRows.add(new LeaveHistoryRow(request, resolveLeaveTypeName(request.getLeaveTypeId())));
             }
 
@@ -523,7 +538,7 @@ public class EmployeeLeaveController {
         }
 
         try {
-            leaveService.cancelLeaveRequest(employeeId, row.request().getRequestId());
+            leaveApiClient.cancelLeaveRequest(row.request().getRequestId());
             refresh();
             UiMessageUtil.showToast(toastRoot, "Pending leave request cancelled.");
         } catch (Exception e) {
@@ -617,7 +632,7 @@ public class EmployeeLeaveController {
         return false;
     }
 
-    private record LeaveHistoryRow(LeaveRequest request, String leaveType) {
+    private record LeaveHistoryRow(LeaveRequestDTO request, String leaveType) {
         String requestId() {
             return request.getRequestId() == null ? "-" : String.format("LR-%04d", request.getRequestId());
         }

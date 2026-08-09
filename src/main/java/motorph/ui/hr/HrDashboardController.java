@@ -1,14 +1,15 @@
 package motorph.ui.hr;
 
-import motorph.application.service.AttendanceService;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.LeaveService;
-import motorph.domain.model.Attendance;
-import motorph.domain.model.Department;
-import motorph.domain.model.Employee;
-import motorph.domain.model.LeaveRequest;
 import motorph.domain.value.RequestStatus;
-import motorph.ui.factory.HrUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.AttendanceApiClient;
+import motorph.api.EmployeeApiClient;
+import motorph.api.LeaveApiClient;
+import motorph.api.dto.attendance.AttendanceDTO;
+import motorph.api.dto.employee.DepartmentDTO;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
+import motorph.api.dto.leave.LeaveRequestRowDTO;
+import motorph.api.dto.leave.LeaveSummaryDTO;
 
 import javafx.fxml.FXML;
 import javafx.scene.chart.BarChart;
@@ -43,10 +44,10 @@ public class HrDashboardController {
     // Leave types shown in the Leave Summary, in display order.
     private static final int[] LEAVE_SUMMARY_TYPE_IDS = {1, 2, 3, 4, 5, 6};
 
-    private EmployeeService   employeeService;
-    private LeaveService      leaveService;
-    private AttendanceService attendanceService;
-    private HrMainController  mainController;
+    private EmployeeApiClient   employeeApiClient;
+    private LeaveApiClient      leaveApiClient;
+    private AttendanceApiClient attendanceApiClient;
+    private HrMainController    mainController;
 
     // Workforce metric labels
     @FXML private Label totalEmployeesLabel;
@@ -66,9 +67,9 @@ public class HrDashboardController {
     // resolves HR services from the factory
     @FXML
     private void initialize() {
-        employeeService   = HrUIServiceFactory.getInstance().getEmployeeService();
-        leaveService      = HrUIServiceFactory.getInstance().getLeaveService();
-        attendanceService = HrUIServiceFactory.getInstance().getAttendanceService();
+        employeeApiClient   = ApiClientFactory.getInstance().getEmployeeApiClient();
+        leaveApiClient      = ApiClientFactory.getInstance().getLeaveApiClient();
+        attendanceApiClient = ApiClientFactory.getInstance().getAttendanceApiClient();
     }
 
     // links this view to its parent shell
@@ -92,8 +93,10 @@ public class HrDashboardController {
     // loads total and active employee counts
     private void refreshWorkforceMetrics() {
         try {
-            setText(totalEmployeesLabel,  String.valueOf(employeeService.getAllEmployees().size()));
-            setText(activeEmployeesLabel, String.valueOf(employeeService.getAllActiveEmployees().size()));
+            List<EmployeeSummaryDTO> summaries = employeeApiClient.getAllEmployeeSummaries();
+            long activeCount = summaries.stream().filter(EmployeeSummaryDTO::isActive).count();
+            setText(totalEmployeesLabel,  String.valueOf(summaries.size()));
+            setText(activeEmployeesLabel, String.valueOf(activeCount));
         } catch (Exception e) {
             setText(totalEmployeesLabel,  "—");
             setText(activeEmployeesLabel, "—");
@@ -104,7 +107,7 @@ public class HrDashboardController {
     private void refreshAttendanceMetrics() {
         try {
             LocalDate today = LocalDate.now();
-            long present = attendanceService.getAttendanceByDateRange(today, today).stream()
+            long present = attendanceApiClient.getAttendanceByDateRange(today, today).stream()
                     .filter(a -> a.isPresent() || a.isLate())
                     .count();
             setText(presentTodayLabel, String.valueOf(present));
@@ -116,14 +119,11 @@ public class HrDashboardController {
     // loads on-leave-today and pending leave counts
     private void refreshLeaveMetrics() {
         try {
-            setText(onLeaveTodayLabel, String.valueOf(leaveService.countApprovedLeavesToday()));
+            LeaveSummaryDTO summary = leaveApiClient.getSummary();
+            setText(onLeaveTodayLabel, String.valueOf(summary.approvedTodayCount()));
+            setText(pendingLeaveLabel, String.valueOf(summary.pendingCount()));
         } catch (Exception e) {
             setText(onLeaveTodayLabel, "—");
-        }
-
-        try {
-            setText(pendingLeaveLabel, String.valueOf(leaveService.countPendingRequests()));
-        } catch (Exception e) {
             setText(pendingLeaveLabel, "—");
         }
     }
@@ -144,7 +144,7 @@ public class HrDashboardController {
                 byMonth.put(start.plusMonths(i), 0);
             }
 
-            for (Attendance a : attendanceService.getAttendanceByDateRange(start, today)) {
+            for (AttendanceDTO a : attendanceApiClient.getAttendanceByDateRange(start, today)) {
                 if (!(a.isPresent() || a.isLate())) continue;
                 LocalDate monthKey = a.getWorkDate().withDayOfMonth(1);
                 byMonth.computeIfPresent(monthKey, (k, v) -> v + 1);
@@ -165,17 +165,19 @@ public class HrDashboardController {
         if (departmentDistributionChart == null) return;
 
         try {
-            List<Department> departments = employeeService.getAllDepartments();
-            List<Employee> employees = employeeService.getAllActiveEmployees();
+            List<DepartmentDTO> departments = employeeApiClient.getAllDepartments();
+            List<EmployeeSummaryDTO> employees = employeeApiClient.getAllEmployeeSummaries().stream()
+                    .filter(EmployeeSummaryDTO::isActive)
+                    .toList();
 
             Map<Integer, Long> countByDept = new LinkedHashMap<>();
-            for (Employee e : employees) {
+            for (EmployeeSummaryDTO e : employees) {
                 countByDept.merge(e.getDepartmentId(), 1L, Long::sum);
             }
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Employees");
-            for (Department dept : departments) {
+            for (DepartmentDTO dept : departments) {
                 long count = countByDept.getOrDefault(dept.getDepartmentId(), 0L);
                 addPoint(series, dept.getDepartmentName(), count);
             }
@@ -195,7 +197,7 @@ public class HrDashboardController {
             LocalDate start = today.minusDays(14);
 
             Map<LocalDate, int[]> byDay = new TreeMap<>();
-            for (Attendance a : attendanceService.getAttendanceByDateRange(start, today)) {
+            for (AttendanceDTO a : attendanceApiClient.getAttendanceByDateRange(start, today)) {
                 int[] counts = byDay.computeIfAbsent(a.getWorkDate(), k -> new int[3]);
                 if (a.isPresent())      counts[0]++;
                 else if (a.isLate())    counts[1]++;
@@ -231,20 +233,19 @@ public class HrDashboardController {
         leaveSummaryList.getChildren().clear();
 
         try {
-            Map<Integer, Double> daysByType = new LinkedHashMap<>();
+            Map<String, Double> daysByType = new LinkedHashMap<>();
             for (int typeId : LEAVE_SUMMARY_TYPE_IDS) {
-                daysByType.put(typeId, 0.0);
+                daysByType.put(resolveLeaveTypeName(typeId), 0.0);
             }
 
-            for (LeaveRequest request : leaveService.getAllLeaveRequests()) {
+            for (LeaveRequestRowDTO request : leaveApiClient.getAllLeaveRequests()) {
                 if (request.getStatus() != RequestStatus.APPROVED) continue;
                 double days = request.getLeaveHours() / 8.0;
-                daysByType.computeIfPresent(request.getLeaveTypeId(), (k, v) -> v + days);
+                daysByType.computeIfPresent(request.getLeaveTypeName(), (k, v) -> v + days);
             }
 
-            daysByType.forEach((typeId, days) ->
-                    leaveSummaryList.getChildren().add(
-                            buildLeaveSummaryRow(LeaveService.resolveLeaveTypeName(typeId), days)));
+            daysByType.forEach((typeName, days) ->
+                    leaveSummaryList.getChildren().add(buildLeaveSummaryRow(typeName, days)));
 
         } catch (Exception e) {
             // leave summary stays empty on service error
@@ -280,6 +281,20 @@ public class HrDashboardController {
         data.nodeProperty().addListener((obs, old, node) -> {
             if (node != null) Tooltip.install(node, new Tooltip(data.getXValue() + ": " + data.getYValue()));
         });
+    }
+
+    // resolves a leave type ID to its display name (matches the backend's LeaveService.resolveLeaveTypeName)
+    private static String resolveLeaveTypeName(int leaveTypeId) {
+        return switch (leaveTypeId) {
+            case 1 -> "Vacation Leave";
+            case 2 -> "Sick Leave";
+            case 3 -> "Emergency Leave";
+            case 4 -> "Maternity Leave";
+            case 5 -> "Paternity Leave";
+            case 6 -> "Solo Parent Leave";
+            case 7 -> "Unpaid Leave";
+            default -> "Leave Type " + leaveTypeId;
+        };
     }
 
     // "Jun", "Jul" ... for trend chart categories

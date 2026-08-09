@@ -1,7 +1,9 @@
 package motorph.ui.employee;
 
-import motorph.application.dto.employee.EmployeeProfileDTO;
 import motorph.application.service.EmployeeService;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
@@ -34,7 +36,10 @@ public class EmployeeProfileController {
     private static final double PHOTO_W = 174;
     private static final double PHOTO_H = 220;
 
+    // reads go through the backend; updateOwnContactInfo/updateOwnProfilePhoto
+    // (writes) stay on the legacy direct-DB path until employee CRUD migrates (Phase 3)
     private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
     private EmployeeProfileDTO currentProfile;
     private String pendingPhotoPath;
     private boolean isFormattingPhone = false;
@@ -82,6 +87,7 @@ public class EmployeeProfileController {
     @FXML
     private void initialize() {
         employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
         applyPhotoClip();
         setupPhoneFormatting();
         enterViewMode();
@@ -96,7 +102,7 @@ public class EmployeeProfileController {
         }
 
         try {
-            currentProfile = employeeService.getEmployeeProfile(employeeId);
+            currentProfile = employeeApiClient.getEmployee(employeeId);
             populateFields(currentProfile);
             enterViewMode();
             UiMessageUtil.clearMessage(profileMessageLabel);
@@ -167,7 +173,7 @@ public class EmployeeProfileController {
                 employeeService.updateOwnProfilePhoto(employeeId, pendingPhotoPath);
             }
 
-            currentProfile = employeeService.getEmployeeProfile(employeeId);
+            currentProfile = employeeApiClient.getEmployee(employeeId);
             populateFields(currentProfile);
             pendingPhotoPath = null;
             enterViewMode();

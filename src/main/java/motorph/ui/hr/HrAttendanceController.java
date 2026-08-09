@@ -1,12 +1,12 @@
 package motorph.ui.hr;
 
 import motorph.application.dto.attendance.AttendanceLogRowDTO;
-import motorph.application.dto.employee.EmployeeProfileDTO;
-import motorph.application.service.AttendanceService;
-import motorph.application.service.EmployeeService;
-import motorph.domain.model.Attendance;
 import motorph.domain.value.AttendanceStatus;
-import motorph.ui.factory.HrUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.AttendanceApiClient;
+import motorph.api.EmployeeApiClient;
+import motorph.api.dto.attendance.AttendanceDTO;
+import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -40,8 +40,8 @@ public class HrAttendanceController {
     private static final int HISTORY_DAYS = 90;
     private static final String ALL_DEPARTMENTS = "All Departments";
 
-    private AttendanceService attendanceService;
-    private EmployeeService employeeService;
+    private AttendanceApiClient attendanceApiClient;
+    private EmployeeApiClient employeeApiClient;
 
     private final ObservableList<AttendanceLogRowDTO> logItems = FXCollections.observableArrayList();
     private final ObservableList<AttendanceLogRowDTO> allItems = FXCollections.observableArrayList();
@@ -82,8 +82,8 @@ public class HrAttendanceController {
     // sets up services, tables, filters, and loads the attendance logs
     @FXML
     private void initialize() {
-        attendanceService = HrUIServiceFactory.getInstance().getAttendanceService();
-        employeeService = HrUIServiceFactory.getInstance().getEmployeeService();
+        attendanceApiClient = ApiClientFactory.getInstance().getAttendanceApiClient();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         filteredLogs = setupRecordTable(logItems, logTable, logWorkDateColumn, logEmployeeColumn,
                 logDepartmentColumn, logTimeInColumn, logTimeOutColumn, logHoursColumn, logStatusColumn);
@@ -106,9 +106,9 @@ public class HrAttendanceController {
             LocalDate end = LocalDate.now();
             LocalDate start = end.minusDays(HISTORY_DAYS);
             List<AttendanceLogRowDTO> recentRows =
-                    toRows(attendanceService.getAttendanceByDateRange(start, end), profileCache);
+                    toRows(attendanceApiClient.getAttendanceByDateRange(start, end), profileCache);
             List<AttendanceLogRowDTO> allRows =
-                    toRows(attendanceService.getAllAttendance(), profileCache);
+                    toRows(attendanceApiClient.getAllAttendance(), profileCache);
 
             logItems.setAll(recentRows);
             allItems.setAll(allRows);
@@ -121,9 +121,9 @@ public class HrAttendanceController {
     }
 
     // converts attendance records into display rows using a shared profile cache
-    private List<AttendanceLogRowDTO> toRows(List<Attendance> records, Map<Integer, EmployeeProfileDTO> profileCache) {
+    private List<AttendanceLogRowDTO> toRows(List<AttendanceDTO> records, Map<Integer, EmployeeProfileDTO> profileCache) {
         List<AttendanceLogRowDTO> rows = new ArrayList<>();
-        for (Attendance record : records) {
+        for (AttendanceDTO record : records) {
             EmployeeProfileDTO profile = resolveProfile(record.getEmployeeId(), profileCache);
             rows.add(new AttendanceLogRowDTO(
                     record.getEmployeeId(),
@@ -145,7 +145,7 @@ public class HrAttendanceController {
         }
         EmployeeProfileDTO profile;
         try {
-            profile = employeeService.getEmployeeProfileAdmin(employeeId);
+            profile = employeeApiClient.getEmployee(employeeId);
         } catch (Exception e) {
             profile = null;
         }

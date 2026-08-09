@@ -1,12 +1,13 @@
 package motorph.ui.it;
 
 import motorph.application.service.PasswordResetService;
-import motorph.application.service.SupportTicketService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 import motorph.domain.model.PasswordResetRequest;
-import motorph.domain.model.SupportTicket;
 import motorph.domain.value.RoutingTeam;
+import motorph.api.ApiClientFactory;
+import motorph.api.SupportTicketApiClient;
+import motorph.api.dto.support.SupportTicketDTO;
 import motorph.ui.factory.ITUIServiceFactory;
 
 import javafx.fxml.FXML;
@@ -32,7 +33,7 @@ public class ITDashboardController {
     private UserAccountService   userAccountService;
     private PasswordResetService passwordResetService;
     private UserAccessLogService userAccessLogService;
-    private SupportTicketService supportTicketService;
+    private SupportTicketApiClient supportTicketApiClient;
     private ITMainController     mainController;
 
     // Account metric labels
@@ -55,7 +56,7 @@ public class ITDashboardController {
         userAccountService   = ITUIServiceFactory.getInstance().getUserAccountService();
         passwordResetService = ITUIServiceFactory.getInstance().getPasswordResetService();
         userAccessLogService = ITUIServiceFactory.getInstance().getUserAccessLogService();
-        supportTicketService = ITUIServiceFactory.getInstance().getSupportTicketService();
+        supportTicketApiClient = ApiClientFactory.getInstance().getSupportTicketApiClient();
     }
 
     public void setMainController(ITMainController mainController) {
@@ -98,7 +99,7 @@ public class ITDashboardController {
 
     private void refreshTicketMetrics() {
         try {
-            setText(openTicketsLabel, String.valueOf(supportTicketService.getOpenTicketCount()));
+            setText(openTicketsLabel, String.valueOf(supportTicketApiClient.getOpenTicketCount()));
         } catch (Exception e) {
             setText(openTicketsLabel, "0");
         }
@@ -138,7 +139,7 @@ public class ITDashboardController {
         if (recentTicketsRows == null) return;
         recentTicketsRows.getChildren().clear();
         try {
-            List<SupportTicket> tickets = supportTicketService
+            List<SupportTicketDTO> tickets = supportTicketApiClient
                     .getTicketsByRoutingTeam(RoutingTeam.IT);
             tickets.stream()
                    .limit(5)
@@ -169,7 +170,7 @@ public class ITDashboardController {
         return row;
     }
 
-    private HBox buildTicketRow(SupportTicket ticket) {
+    private HBox buildTicketRow(SupportTicketDTO ticket) {
         HBox row = new HBox();
         row.getStyleClass().add("table-data-row");
 

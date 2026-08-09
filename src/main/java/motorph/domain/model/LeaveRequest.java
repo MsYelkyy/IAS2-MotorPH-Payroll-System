@@ -3,6 +3,7 @@ package motorph.domain.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import motorph.domain.value.RequestStatus;
+import motorph.domain.value.RequestType;
 
 /**
  * Represents a leave request and maps to the leave_request table.
@@ -73,6 +74,12 @@ public class LeaveRequest extends Request {
         validateDateRange(this.startDate, this.endDate);
         this.leaveHours = validateLeaveHours(leaveHours);
         this.reason = requireNonBlank(reason, "Reason is required.");
+    }
+
+    // returns the specific type of this request
+    @Override
+    public RequestType getRequestType() {
+        return RequestType.LEAVE;
     }
 
     // getters

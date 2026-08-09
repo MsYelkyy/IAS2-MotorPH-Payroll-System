@@ -1,14 +1,15 @@
 package motorph.ui.admin;
 
-import motorph.application.dto.employee.EmployeeSummaryDTO;
-import motorph.application.dto.salary.SalaryHistoryDTO;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.SalaryBenefitService;
-import motorph.domain.model.Department;
-import motorph.domain.model.EmployeeBenefit;
-import motorph.domain.model.SalaryHistory;
 import motorph.domain.value.SalaryType;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.SalaryBenefitApiClient;
+import motorph.api.dto.employee.DepartmentDTO;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
+import motorph.api.dto.salary.EmployeeBenefitDTO;
+import motorph.api.dto.salary.SalaryDatesUpdateRequest;
+import motorph.api.dto.salary.SalaryHistoryDTO;
+import motorph.api.dto.salary.SalaryRecordRequest;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiFormatter;
 
@@ -52,19 +53,19 @@ public class AdminSalaryController {
     private static final String DEFAULT_FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.72);";
     private static final String[] BENEFIT_NAMES = {"-", "Rice Subsidy", "Phone Allowance", "Clothing Allowance"};
 
-    private EmployeeService employeeService;
-    private SalaryBenefitService salaryBenefitService;
+    private EmployeeApiClient employeeApiClient;
+    private SalaryBenefitApiClient salaryBenefitApiClient;
 
     private List<EmployeeSummaryDTO> allSummaries = List.of();
     private final Map<Integer, String> departmentNames = new HashMap<>();
     private EmployeeSummaryDTO selectedEmployee;
-    private SalaryHistory selectedSalary;
-    private EmployeeBenefit selectedBenefit;
+    private SalaryHistoryDTO selectedSalary;
+    private EmployeeBenefitDTO selectedBenefit;
     private boolean editSalaryMode;
 
     private final ObservableList<EmployeeSummaryDTO> employeeItems = FXCollections.observableArrayList();
-    private final ObservableList<SalaryHistory> salaryItems = FXCollections.observableArrayList();
-    private final ObservableList<EmployeeBenefit> benefitItems = FXCollections.observableArrayList();
+    private final ObservableList<SalaryHistoryDTO> salaryItems = FXCollections.observableArrayList();
+    private final ObservableList<EmployeeBenefitDTO> benefitItems = FXCollections.observableArrayList();
     private FilteredList<EmployeeSummaryDTO> filteredEmployees;
 
     @FXML private Button backButton;
@@ -85,22 +86,22 @@ public class AdminSalaryController {
     @FXML private Region formBackdrop;
 
     @FXML private VBox employeeDetailPanel;
-    @FXML private TableView<SalaryHistory> salaryTable;
-    @FXML private TableColumn<SalaryHistory, Number> salaryIdColumn;
-    @FXML private TableColumn<SalaryHistory, String> salaryTypeColumn;
-    @FXML private TableColumn<SalaryHistory, Number> salaryBasicColumn;
-    @FXML private TableColumn<SalaryHistory, Number> salaryHourlyColumn;
-    @FXML private TableColumn<SalaryHistory, LocalDate> salaryStartColumn;
-    @FXML private TableColumn<SalaryHistory, LocalDate> salaryEndColumn;
-    @FXML private TableColumn<SalaryHistory, String> salaryStatusColumn;
+    @FXML private TableView<SalaryHistoryDTO> salaryTable;
+    @FXML private TableColumn<SalaryHistoryDTO, Number> salaryIdColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, String> salaryTypeColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, Number> salaryBasicColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, Number> salaryHourlyColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, LocalDate> salaryStartColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, LocalDate> salaryEndColumn;
+    @FXML private TableColumn<SalaryHistoryDTO, String> salaryStatusColumn;
 
-    @FXML private TableView<EmployeeBenefit> benefitTable;
-    @FXML private TableColumn<EmployeeBenefit, Number> benefitIdColumn;
-    @FXML private TableColumn<EmployeeBenefit, String> benefitTypeColumn;
-    @FXML private TableColumn<EmployeeBenefit, Number> benefitAmountColumn;
-    @FXML private TableColumn<EmployeeBenefit, LocalDate> benefitStartColumn;
-    @FXML private TableColumn<EmployeeBenefit, LocalDate> benefitEndColumn;
-    @FXML private TableColumn<EmployeeBenefit, String> benefitStatusColumn;
+    @FXML private TableView<EmployeeBenefitDTO> benefitTable;
+    @FXML private TableColumn<EmployeeBenefitDTO, Number> benefitIdColumn;
+    @FXML private TableColumn<EmployeeBenefitDTO, String> benefitTypeColumn;
+    @FXML private TableColumn<EmployeeBenefitDTO, Number> benefitAmountColumn;
+    @FXML private TableColumn<EmployeeBenefitDTO, LocalDate> benefitStartColumn;
+    @FXML private TableColumn<EmployeeBenefitDTO, LocalDate> benefitEndColumn;
+    @FXML private TableColumn<EmployeeBenefitDTO, String> benefitStatusColumn;
 
     @FXML private VBox salaryFormPanel;
     @FXML private Label salaryFormTitle;
@@ -113,8 +114,8 @@ public class AdminSalaryController {
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
-        salaryBenefitService = EmployeeUIServiceFactory.getInstance().getSalaryBenefitService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
+        salaryBenefitApiClient = ApiClientFactory.getInstance().getSalaryBenefitApiClient();
 
         salaryTypeCombo.getItems().setAll(SalaryType.values());
         salaryTypeCombo.setConverter(new StringConverter<>() {
@@ -189,7 +190,7 @@ public class AdminSalaryController {
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.YES) {
             try {
-                salaryBenefitService.endBenefit(selectedBenefit.getEmployeeBenefitId(), LocalDate.now());
+                salaryBenefitApiClient.endBenefit(selectedBenefit.getEmployeeBenefitId());
                 showEmployeeDetail(selectedEmployee);
                 setMessage("Benefit ended.");
             } catch (Exception e) {
@@ -212,25 +213,25 @@ public class AdminSalaryController {
 
         if (editSalaryMode) {
             try {
-                salaryBenefitService.updateSalaryDates(
+                salaryBenefitApiClient.updateSalaryDates(
                         selectedSalary.getSalaryHistoryId(),
-                        salaryStartDatePicker.getValue(),
-                        salaryEndDatePicker.getValue());
+                        new SalaryDatesUpdateRequest(
+                                salaryStartDatePicker.getValue(),
+                                salaryEndDatePicker.getValue()));
                 showEmployeeDetail(selectedEmployee);
                 setMessage("Salary dates updated.");
             } catch (Exception e) {
                 salaryFormErrorLabel.setText(e.getMessage());
             }
         } else {
-            SalaryHistoryDTO dto = new SalaryHistoryDTO(
-                    selectedEmployee.getEmployeeId(),
+            SalaryRecordRequest request = new SalaryRecordRequest(
                     salaryTypeCombo.getValue().name(),
                     parseDouble(basicSalaryField.getText()),
                     parseDouble(hourlyRateField.getText()),
                     salaryStartDatePicker.getValue(),
                     salaryEndDatePicker.getValue());
             try {
-                salaryBenefitService.addSalaryRecord(dto);
+                salaryBenefitApiClient.addSalaryRecord(selectedEmployee.getEmployeeId(), request);
                 showEmployeeDetail(selectedEmployee);
                 setMessage("Salary record added.");
             } catch (Exception e) {
@@ -277,7 +278,7 @@ public class AdminSalaryController {
     private void loadDepartmentNames() {
         departmentNames.clear();
         try {
-            for (Department department : employeeService.getAllDepartments()) {
+            for (DepartmentDTO department : employeeApiClient.getAllDepartments()) {
                 departmentNames.put(department.getDepartmentId(), department.getDepartmentName());
             }
         } catch (Exception e) {
@@ -305,7 +306,7 @@ public class AdminSalaryController {
         salaryItems.clear();
         benefitItems.clear();
         try {
-            allSummaries = employeeService.getAllEmployeeSummaries();
+            allSummaries = employeeApiClient.getAllEmployeeSummaries();
         } catch (Exception e) {
             allSummaries = List.of();
             setMessage("Failed to load employees: " + e.getMessage());
@@ -346,8 +347,8 @@ public class AdminSalaryController {
         selectedSalary = null;
         selectedBenefit = null;
         try {
-            salaryItems.setAll(salaryBenefitService.getSalaryHistory(employee.getEmployeeId()));
-            benefitItems.setAll(salaryBenefitService.getAllBenefits(employee.getEmployeeId()));
+            salaryItems.setAll(salaryBenefitApiClient.getSalaryHistory(employee.getEmployeeId()));
+            benefitItems.setAll(salaryBenefitApiClient.getAllBenefits(employee.getEmployeeId()));
         } catch (Exception e) {
             salaryItems.clear();
             benefitItems.clear();
@@ -425,14 +426,14 @@ public class AdminSalaryController {
 
         salaryTable.setRowFactory(table -> new TableRow<>() {
             @Override
-            protected void updateItem(SalaryHistory salary, boolean empty) {
+            protected void updateItem(SalaryHistoryDTO salary, boolean empty) {
                 super.updateItem(salary, empty);
                 boolean selected = !empty && salary != null && salary == selectedSalary;
                 setStyle(selected ? "-fx-background-color: rgba(59,130,246,0.10);" : "");
             }
         });
         salaryTable.setOnMouseClicked(event -> {
-            SalaryHistory salary = salaryTable.getSelectionModel().getSelectedItem();
+            SalaryHistoryDTO salary = salaryTable.getSelectionModel().getSelectedItem();
             if (salary != null) {
                 selectedSalary = salary;
                 selectedBenefit = null;
@@ -466,14 +467,14 @@ public class AdminSalaryController {
 
         benefitTable.setRowFactory(table -> new TableRow<>() {
             @Override
-            protected void updateItem(EmployeeBenefit benefit, boolean empty) {
+            protected void updateItem(EmployeeBenefitDTO benefit, boolean empty) {
                 super.updateItem(benefit, empty);
                 boolean selected = !empty && benefit != null && benefit == selectedBenefit;
                 setStyle(selected ? "-fx-background-color: rgba(59,130,246,0.10);" : "");
             }
         });
         benefitTable.setOnMouseClicked(event -> {
-            EmployeeBenefit benefit = benefitTable.getSelectionModel().getSelectedItem();
+            EmployeeBenefitDTO benefit = benefitTable.getSelectionModel().getSelectedItem();
             if (benefit != null) {
                 selectedBenefit = benefit;
                 selectedSalary = null;
@@ -547,15 +548,15 @@ public class AdminSalaryController {
         editSalaryMode = false;
     }
 
-    private boolean isActive(EmployeeBenefit benefit) {
+    private boolean isActive(EmployeeBenefitDTO benefit) {
         return benefit.getEffectiveEndDate() == null || !benefit.getEffectiveEndDate().isBefore(LocalDate.now());
     }
 
-    private boolean isActive(SalaryHistory salary) {
+    private boolean isActive(SalaryHistoryDTO salary) {
         return salary.getEndDate() == null || !salary.getEndDate().isBefore(LocalDate.now());
     }
 
-    private String benefitName(EmployeeBenefit benefit) {
+    private String benefitName(EmployeeBenefitDTO benefit) {
         int typeId = benefit.getBenefitTypeId();
         return typeId >= 1 && typeId <= 3 ? BENEFIT_NAMES[typeId] : "Other";
     }

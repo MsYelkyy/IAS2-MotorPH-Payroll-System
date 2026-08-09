@@ -3,6 +3,8 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -19,63 +21,63 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.finance.FinanceDashboardController">
 
-    <!-- ── Row 1: Payrun metric cards (no icons) ─────────────────── -->
+    <!-- ── Row 1: KPI cards ─────────────────────────────────────── -->
     <HBox spacing="14">
 
         <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="PENDING PAYRUNS" styleClass="metric-label"/>
-            <Label fx:id="pendingPayrunsLabel" text="0" styleClass="metric-value"/>
-            <Label text="Awaiting generation" styleClass="muted-text"/>
+            <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
+            <Label fx:id="totalEmployeesLabel" text="0" styleClass="metric-value"/>
+            <Label text="Across generated payroll reports" styleClass="muted-text"/>
         </VBox>
 
         <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="READY EMPLOYEES" styleClass="metric-label"/>
-            <Label fx:id="readyEmployeesLabel" text="0" styleClass="metric-value"/>
-            <Label text="Eligible for payroll" styleClass="muted-text"/>
+            <Label text="TOTAL GROSS PAY" styleClass="metric-label"/>
+            <Label fx:id="totalGrossPayLabel" text="₱0.00" styleClass="financial-value"/>
+            <Label text="Across generated payroll reports" styleClass="muted-text"/>
         </VBox>
 
         <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="COMPLETED PAYRUNS" styleClass="metric-label"/>
-            <Label fx:id="completedPayrunsLabel" text="0" styleClass="metric-value"/>
-            <Label text="Payroll generated" styleClass="muted-text"/>
+            <Label text="TOTAL DEDUCTIONS" styleClass="metric-label"/>
+            <Label fx:id="totalDeductionsLabel" text="₱0.00" styleClass="financial-value"/>
+            <Label text="Across generated payroll reports" styleClass="muted-text"/>
         </VBox>
 
         <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
-            <Label text="UPCOMING PAY DATE" styleClass="metric-label"/>
-            <Label fx:id="upcomingPayDateLabel" text="—" styleClass="metric-value"/>
-            <Label text="Next pending payrun" styleClass="muted-text"/>
+            <Label text="PAYROLL MONTH" styleClass="metric-label"/>
+            <Label fx:id="payrollMonthLabel" text="—" styleClass="metric-value"/>
+            <Label text="Current payroll period" styleClass="muted-text"/>
         </VBox>
 
     </HBox>
 
-    <!-- ── Row 2: Employees paid · Total net pay ─────────────────── -->
+    <!-- ── Row 2: Net pay · Most recent pay date ─────────────────── -->
     <HBox spacing="14">
-
-        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS">
-            <Label text="EMPLOYEES PAID" styleClass="metric-label"/>
-            <Label fx:id="employeesPaidLabel" text="0" styleClass="metric-value"/>
-            <Label text="Across completed payruns" styleClass="muted-text"/>
-        </VBox>
 
         <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS">
             <Label text="TOTAL NET PAY" styleClass="metric-label"/>
             <Label fx:id="totalNetPayLabel" text="₱0.00" styleClass="financial-value"/>
-            <Label text="Across completed payruns" styleClass="muted-text"/>
+            <Label text="Across generated payroll reports" styleClass="muted-text"/>
+        </VBox>
+
+        <VBox spacing="8" styleClass="content-card" HBox.hgrow="ALWAYS">
+            <Label text="MOST RECENT PAY DATE" styleClass="metric-label"/>
+            <Label fx:id="mostRecentPayDateLabel" text="—" styleClass="metric-value"/>
+            <Label text="Latest completed payroll run" styleClass="muted-text"/>
         </VBox>
 
     </HBox>
 
-    <!-- ── Row 3: Net-pay trend chart (≈70%) · Payroll summary (≈30%) ─ -->
+    <!-- ── Row 3: Net pay trend (≈60%) · Deduction breakdown (≈40%) ─ -->
     <GridPane hgap="14" maxWidth="Infinity">
         <columnConstraints>
-            <ColumnConstraints percentWidth="70" minWidth="420" hgrow="ALWAYS"/>
-            <ColumnConstraints percentWidth="30" minWidth="280" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="60" minWidth="420" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="40" minWidth="320" hgrow="ALWAYS"/>
         </columnConstraints>
 
-        <!-- Net-pay trend chart -->
+        <!-- Net pay by pay period -->
         <VBox spacing="10" minWidth="420" maxWidth="Infinity" maxHeight="Infinity"
               styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-            <Label text="LATEST PAYRUN NET PAY" styleClass="section-title"/>
+            <Label text="NET PAY BY PAY PERIOD" styleClass="section-title"/>
             <LineChart fx:id="netPayChart" animated="false" legendVisible="false"
                        createSymbols="true" minWidth="0" maxWidth="Infinity"
                        styleClass="portal-chart" VBox.vgrow="ALWAYS">
@@ -88,25 +90,57 @@
             </LineChart>
         </VBox>
 
-        <!-- Payroll summary -->
-        <VBox spacing="12" minWidth="280" maxWidth="Infinity" maxHeight="Infinity"
+        <!-- Deduction breakdown donut -->
+        <VBox spacing="10" minWidth="320" maxWidth="Infinity" maxHeight="Infinity"
               styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
-            <Label text="PAYROLL SUMMARY" styleClass="section-title"/>
+            <Label text="DEDUCTION BREAKDOWN" styleClass="section-title"/>
+            <PieChart fx:id="deductionChart" animated="false" legendVisible="true"
+                      labelsVisible="false" minWidth="0" maxWidth="Infinity"
+                      styleClass="portal-chart" VBox.vgrow="ALWAYS"/>
+        </VBox>
 
-            <VBox spacing="4">
-                <Label text="TOTAL NET PAY" styleClass="metric-label"/>
-                <Label fx:id="summaryNetPayLabel" text="₱0.00" styleClass="summary-net-value"/>
-            </VBox>
+    </GridPane>
 
-            <Label fx:id="summaryDescriptionLabel"
-                   text="No completed payruns yet."
-                   wrapText="true" styleClass="muted-text"/>
+    <!-- ── Row 4: Payroll cost by department (≈60%) · Report summary (≈40%) ─ -->
+    <GridPane hgap="14" maxWidth="Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="60" minWidth="420" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="40" minWidth="320" hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <!-- Payroll cost by department (horizontal bars) -->
+        <VBox spacing="10" minWidth="420" maxWidth="Infinity" maxHeight="Infinity"
+              styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+            <Label text="PAYROLL COST BY DEPARTMENT" styleClass="section-title"/>
+            <BarChart fx:id="departmentCostChart" animated="false" legendVisible="false"
+                      minWidth="0" maxWidth="Infinity"
+                      styleClass="portal-chart" VBox.vgrow="ALWAYS">
+                <xAxis>
+                    <NumberAxis fx:id="departmentAmountAxis" tickLabelFill="#A5A8B0" side="BOTTOM"/>
+                </xAxis>
+                <yAxis>
+                    <CategoryAxis fx:id="departmentNameAxis" tickLabelFill="#A5A8B0" side="LEFT"/>
+                </yAxis>
+            </BarChart>
+        </VBox>
+
+        <!-- Report summary -->
+        <VBox spacing="12" minWidth="320" maxWidth="Infinity" maxHeight="Infinity"
+              styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS">
+            <Label text="REPORT SUMMARY" styleClass="section-title"/>
+
+            <Label fx:id="summaryEmployeesLabel" text="0 employees included"
+                   wrapText="true" styleClass="data-line"/>
+            <Label fx:id="summaryCutoffsLabel" text="0 payroll cutoffs summarized"
+                   wrapText="true" styleClass="data-line"/>
+            <Label fx:id="summaryValidationLabel" text="All report validations passed"
+                   wrapText="true" styleClass="data-line"/>
 
             <Region VBox.vgrow="ALWAYS"/>
 
-            <Button text="Open Payroll Management" onAction="#openPayrollManagement"
+            <Button text="Open Payroll Summary" onAction="#openPayrollManagement"
                     maxWidth="Infinity" styleClass="primary-button"/>
-            <Button text="Open Reports" onAction="#openReports"
+            <Button text="Open Payslip Report" onAction="#openReports"
                     maxWidth="Infinity" minHeight="44" styleClass="secondary-button"/>
         </VBox>
 

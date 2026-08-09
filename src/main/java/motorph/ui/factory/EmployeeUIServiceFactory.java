@@ -19,6 +19,7 @@ import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 import motorph.application.service.report.AttendanceReportService;
 import motorph.application.service.report.AuditReportService;
+import motorph.application.service.report.PayrollDashboardService;
 import motorph.application.service.report.PayrollReportService;
 import motorph.application.service.report.TicketReportService;
 
@@ -150,6 +151,10 @@ public final class EmployeeUIServiceFactory {
 
     public PayrollReportService getPayrollReportService() {
         return reports.getPayrollReportService();
+    }
+
+    public PayrollDashboardService getPayrollDashboardService() {
+        return reports.getPayrollDashboardService();
     }
 
     public TicketReportService getTicketReportService() {

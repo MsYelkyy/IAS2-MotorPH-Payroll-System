@@ -1,9 +1,12 @@
 package motorph.ui.auth;
 
-import motorph.application.dto.login.LoginRequestDTO;
+import motorph.application.dto.auth.EmailPreviewDTO;
+import motorph.application.dto.auth.EmailPreviewType;
 import motorph.application.dto.login.LoginResultDTO;
 import motorph.domain.value.Role;
-import motorph.application.service.AuthenticationService;
+import motorph.api.ApiClientFactory;
+import motorph.api.AuthApiClient;
+import motorph.api.dto.auth.LoginResponse;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.AnimationUtil;
@@ -11,6 +14,8 @@ import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
+
+import java.time.LocalDateTime;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -28,7 +33,7 @@ import java.util.List;
 /** Manages employee login page actions and navigation. */
 public class LoginController {
 
-    private AuthenticationService authenticationService;
+    private AuthApiClient authApiClient;
     private boolean passwordVisible = false;
 
     private ComboBox<String> languageCombo;
@@ -58,7 +63,7 @@ public class LoginController {
     // initializes login page dependencies and controls
     @FXML
     private void initialize() {
-        authenticationService = EmployeeUIServiceFactory.getInstance().getAuthenticationService();
+        authApiClient = ApiClientFactory.getInstance().getAuthApiClient();
 
         buildGlobalControls();
         wireSubControllers();
@@ -163,25 +168,28 @@ public class LoginController {
         }
 
         try {
-            LoginResultDTO result = authenticationService.authenticate(
-                    new LoginRequestDTO(email, password)
-            );
+            LoginResponse response = authApiClient.login(email, password);
 
-            if (result.isOtpRequired()) {
-                otpCardController.setPendingLoginResult(result);
-                showCard(otpCard);
-                otpCardController.showWithMessage("OTP sent to your company email address.");
+            if (response.temporaryPasswordChangeRequired()) {
+                // Temporary-password change is not yet migrated to the backend (Phase 1
+                // scope is login/OTP/token only) - the desktop can no longer complete this
+                // flow itself since it no longer talks to the database directly.
+                UiMessageUtil.setError(loginMessageLabel,
+                        "Temporary password detected. Password change is not yet available "
+                                + "in this preview - please contact your administrator.");
                 return;
             }
 
-            if (result.getMessage().contains("Password change required")) {
-                forceChangeCardController.setPendingResult(result);
-                showCard(forceChangeCard);
-                return;
-            }
+            otpCardController.setPendingChallenge(response.challengeId());
+            showCard(otpCard);
+            otpCardController.showWithMessage("OTP sent to " + response.maskedEmail() + ".");
 
-            UiMessageUtil.setSuccess(loginMessageLabel, "Login successful.");
-            onLoginSuccess(result);
+            // No real SMTP is wired up on the backend yet (Phase 1) - when it says so,
+            // show the OTP the same way the app always has: via the existing in-app
+            // email preview dialog (see Main.java's global EmailPreviewService listener).
+            if (response.otpPreview() != null) {
+                showOtpPreview(response.otpPreview());
+            }
 
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
@@ -233,6 +241,24 @@ public class LoginController {
         }
 
         AnimationUtil.slideInFromRight(sidePanel, 280);
+    }
+
+    // feeds the backend's dev-only OTP preview into the app's existing
+    // EmailPreviewService, which Main.java's global listener renders via
+    // EmailPreviewDialog - unchanged from how this always worked pre-migration
+    private void showOtpPreview(motorph.api.dto.auth.OtpPreview otpPreview) {
+        EmailPreviewDTO preview = new EmailPreviewDTO(
+                EmailPreviewType.LOGIN_OTP,
+                otpPreview.senderEmail(),
+                otpPreview.recipientEmail(),
+                otpPreview.subject(),
+                otpPreview.body(),
+                "OTP Code",
+                otpPreview.otpCode(),
+                LocalDateTime.now()
+        );
+
+        EmployeeUIServiceFactory.getInstance().getEmailPreviewService().savePreview(preview);
     }
 
     // validates login input fields

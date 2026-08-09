@@ -1,13 +1,15 @@
 package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
-import motorph.application.service.LeaveService;
 import motorph.application.service.PayrollService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 import motorph.domain.model.Payrun;
 import motorph.domain.model.PayrollResult;
 import motorph.domain.model.UserAccessLog;
+import motorph.api.ApiClientFactory;
+import motorph.api.LeaveApiClient;
+import motorph.api.dto.leave.LeaveSummaryDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 
 import javafx.fxml.FXML;
@@ -36,7 +38,7 @@ public class AdminDashboardController {
             NumberFormat.getCurrencyInstance(Locale.of("en", "PH"));
 
     private EmployeeService      employeeService;
-    private LeaveService         leaveService;
+    private LeaveApiClient       leaveApiClient;
     private PayrollService       payrollService;
     private UserAccountService   userAccountService;
     private UserAccessLogService userAccessLogService;
@@ -69,7 +71,7 @@ public class AdminDashboardController {
     @FXML
     private void initialize() {
         employeeService      = EmployeeUIServiceFactory.getInstance().getEmployeeService();
-        leaveService         = EmployeeUIServiceFactory.getInstance().getLeaveService();
+        leaveApiClient       = ApiClientFactory.getInstance().getLeaveApiClient();
         payrollService       = EmployeeUIServiceFactory.getInstance().getPayrollService();
         userAccountService   = EmployeeUIServiceFactory.getInstance().getUserAccountService();
         userAccessLogService = EmployeeUIServiceFactory.getInstance().getUserAccessLogService();
@@ -110,14 +112,11 @@ public class AdminDashboardController {
         }
 
         try {
-            setText(onLeaveTodayLabel, String.valueOf(leaveService.countApprovedLeavesToday()));
+            LeaveSummaryDTO summary = leaveApiClient.getSummary();
+            setText(onLeaveTodayLabel, String.valueOf(summary.approvedTodayCount()));
+            setText(pendingLeaveLabel, String.valueOf(summary.pendingCount()));
         } catch (Exception e) {
             setText(onLeaveTodayLabel, "—");
-        }
-
-        try {
-            setText(pendingLeaveLabel, String.valueOf(leaveService.countPendingRequests()));
-        } catch (Exception e) {
             setText(pendingLeaveLabel, "—");
         }
     }

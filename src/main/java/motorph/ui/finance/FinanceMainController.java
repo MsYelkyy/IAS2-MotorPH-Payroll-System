@@ -86,7 +86,7 @@ public class FinanceMainController {
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
-        setHeader("Dashboard", "PAYROLL MONITORING");
+        setHeader("Payroll Reporting Dashboard", "REPORTING AND ANALYTICS");
         showView(dashboardView);
         if (dashboardViewController != null) dashboardViewController.refresh();
     }

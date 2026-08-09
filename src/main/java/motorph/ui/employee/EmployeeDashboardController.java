@@ -1,13 +1,14 @@
 package motorph.ui.employee;
 
-import motorph.application.dto.leave.LeaveCreditRowDTO;
-import motorph.application.service.AttendanceService;
-import motorph.application.service.LeaveService;
 import motorph.application.service.PayrollService;
-import motorph.domain.model.Attendance;
 import motorph.domain.model.PayrollResult;
 import motorph.domain.model.Payrun;
 import motorph.domain.value.RequestStatus;
+import motorph.api.ApiClientFactory;
+import motorph.api.AttendanceApiClient;
+import motorph.api.LeaveApiClient;
+import motorph.api.dto.attendance.AttendanceDTO;
+import motorph.api.dto.leave.LeaveCreditRowDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
@@ -46,9 +47,9 @@ public class EmployeeDashboardController {
     private static final int VACATION_LEAVE_TYPE_ID = 1;
     private static final int ATTENDANCE_WINDOW_DAYS = 30;
 
-    private LeaveService leaveService;
+    private LeaveApiClient leaveApiClient;
     private PayrollService payrollService;
-    private AttendanceService attendanceService;
+    private AttendanceApiClient attendanceApiClient;
     private Runnable onNavigateToPayslip;
 
     // Metric cards
@@ -77,9 +78,9 @@ public class EmployeeDashboardController {
 
     @FXML
     private void initialize() {
-        payrollService    = EmployeeUIServiceFactory.getInstance().getPayrollService();
-        leaveService      = EmployeeUIServiceFactory.getInstance().getLeaveService();
-        attendanceService = EmployeeUIServiceFactory.getInstance().getAttendanceService();
+        payrollService      = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        leaveApiClient      = ApiClientFactory.getInstance().getLeaveApiClient();
+        attendanceApiClient = ApiClientFactory.getInstance().getAttendanceApiClient();
     }
 
     // stores a callback invoked when the user clicks "View Payslip"
@@ -135,9 +136,8 @@ public class EmployeeDashboardController {
 
     // updates the pending request count for the current employee
     private void refreshPendingRequests() {
-        int employeeId = CurrentUserSession.getEmployeeId();
         try {
-            long pendingCount = leaveService.getLeaveRequestsByEmployeeId(employeeId)
+            long pendingCount = leaveApiClient.getOwnLeaveRequests()
                     .stream()
                     .filter(request -> request.getStatus() == RequestStatus.PENDING)
                     .count();
@@ -160,8 +160,11 @@ public class EmployeeDashboardController {
             return;
         }
         try {
-            double credits = leaveService.getRemainingLeaveCredits(
-                    employeeId, VACATION_LEAVE_TYPE_ID, LocalDate.now().getYear());
+            double credits = leaveApiClient.getOwnLeaveCredits().stream()
+                    .filter(row -> row.getLeaveTypeId() == VACATION_LEAVE_TYPE_ID)
+                    .mapToDouble(LeaveCreditRowDTO::getRemainingCredits)
+                    .findFirst()
+                    .orElse(0.0);
             setText(dashboardLeaveCreditsLabel, String.format(Locale.ENGLISH, "%.0f", credits));
         } catch (Throwable t) {
             setText(dashboardLeaveCreditsLabel, "0");
@@ -173,7 +176,7 @@ public class EmployeeDashboardController {
         try {
             LocalDate today = LocalDate.now();
             LocalDate start = today.minusDays(ATTENDANCE_WINDOW_DAYS - 1);
-            List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(employeeId, start, today);
+            List<AttendanceDTO> logs = attendanceApiClient.getOwnAttendanceRange(start, today);
 
             long total   = logs.size();
             long worked  = logs.stream().filter(a -> a.isPresent() || a.isLate()).count();
@@ -239,11 +242,11 @@ public class EmployeeDashboardController {
         try {
             LocalDate today = LocalDate.now();
             LocalDate start = today.minusDays(ATTENDANCE_WINDOW_DAYS - 1);
-            List<Attendance> logs = attendanceService.getAttendanceByEmployeeAndDateRange(employeeId, start, today);
+            List<AttendanceDTO> logs = attendanceApiClient.getOwnAttendanceRange(start, today);
 
             // For a single employee each day is at most one record; counts are 0/1 per status.
             Map<LocalDate, int[]> byDay = new TreeMap<>();
-            for (Attendance a : logs) {
+            for (AttendanceDTO a : logs) {
                 int[] counts = byDay.computeIfAbsent(a.getWorkDate(), k -> new int[3]);
                 if (a.isPresent())     counts[0]++;
                 else if (a.isLate())   counts[1]++;
@@ -277,7 +280,7 @@ public class EmployeeDashboardController {
         if (leaveSummaryList == null) return;
         leaveSummaryList.getChildren().clear();
         try {
-            List<LeaveCreditRowDTO> credits = leaveService.getLeaveCreditsForEmployee(employeeId);
+            List<LeaveCreditRowDTO> credits = leaveApiClient.getOwnLeaveCredits();
             for (LeaveCreditRowDTO row : credits) {
                 leaveSummaryList.getChildren().add(
                         buildLeaveSummaryRow(row.getLeaveTypeName(), row.getRemainingCredits()));

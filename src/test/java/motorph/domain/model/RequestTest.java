@@ -2,6 +2,7 @@ package motorph.domain.model;
 
 
 import motorph.domain.value.RequestStatus;
+import motorph.domain.value.RequestType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -91,6 +92,26 @@ class RequestTest {
 
         assertEquals(RequestStatus.CANCELLED, request.getStatus());
         assertEquals("Filed by mistake", request.getRemarks());
+    }
+
+
+    // resolves the concrete request type polymorphically through the base reference
+    @Test
+    @DisplayName("getRequestType should resolve to the concrete subclass type")
+    void getRequestTypeShouldResolveToConcreteSubclass() {
+        logger.info("Testing getRequestType resolves polymorphically.");
+
+        Request overtimeRequest = createPendingRequest();
+        Request leaveRequest = new LeaveRequest(
+                1, 10001, 1,
+                LocalDate.of(2025, 6, 10),
+                LocalDate.of(2025, 6, 10),
+                8.0, "Family emergency",
+                LocalDateTime.of(2025, 6, 9, 9, 0)
+        );
+
+        assertEquals(RequestType.OVERTIME, overtimeRequest.getRequestType());
+        assertEquals(RequestType.LEAVE, leaveRequest.getRequestType());
     }
 
 

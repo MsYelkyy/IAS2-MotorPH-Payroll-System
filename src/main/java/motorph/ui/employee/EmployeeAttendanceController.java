@@ -1,8 +1,8 @@
 package motorph.ui.employee;
 
-import motorph.application.service.AttendanceService;
-import motorph.domain.model.Attendance;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.AttendanceApiClient;
+import motorph.api.dto.attendance.AttendanceDTO;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -32,7 +32,7 @@ public class EmployeeAttendanceController {
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("hh:mm a", Locale.ENGLISH);
 
-    private AttendanceService attendanceService;
+    private AttendanceApiClient attendanceApiClient;
     private final List<AttendanceRowItem> allAttendanceRows = new ArrayList<>();
     private int currentAttendancePage = 1;
 
@@ -55,7 +55,7 @@ public class EmployeeAttendanceController {
 
     @FXML
     private void initialize() {
-        attendanceService = EmployeeUIServiceFactory.getInstance().getAttendanceService();
+        attendanceApiClient = ApiClientFactory.getInstance().getAttendanceApiClient();
         attendanceTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         setupAttendanceColumns();
         updateTodayDate();
@@ -77,7 +77,7 @@ public class EmployeeAttendanceController {
             return;
         }
         try {
-            attendanceService.timeIn(employeeId);
+            attendanceApiClient.timeIn();
             loadAttendanceStatus();
             loadAttendanceHistory();
             UiMessageUtil.setSuccess(attendanceMessageLabel, "Time in recorded.");
@@ -94,7 +94,7 @@ public class EmployeeAttendanceController {
             return;
         }
         try {
-            attendanceService.timeOut(employeeId);
+            attendanceApiClient.timeOut();
             loadAttendanceStatus();
             loadAttendanceHistory();
             UiMessageUtil.setSuccess(attendanceMessageLabel, "Time out recorded.");
@@ -108,7 +108,7 @@ public class EmployeeAttendanceController {
         int employeeId = CurrentUserSession.getEmployeeId();
         if (employeeId <= 0) return;
         try {
-            Attendance record = attendanceService.getAttendanceForDate(employeeId, LocalDate.now());
+            AttendanceDTO record = attendanceApiClient.getOwnAttendanceToday();
             if (todayTimeInLabel != null) todayTimeInLabel.setText(formatTime(record.getTimeIn()));
             if (todayTimeOutLabel != null) todayTimeOutLabel.setText(formatTime(record.getTimeOut()));
             if (todayStatusLabel != null) todayStatusLabel.setText(record.getAttendanceStatus().name());
@@ -134,9 +134,9 @@ public class EmployeeAttendanceController {
 
         allAttendanceRows.clear();
         try {
-            List<Attendance> records = attendanceService.getAttendanceByEmployeeId(employeeId);
-            records.sort(Comparator.comparing(Attendance::getWorkDate).reversed());
-            for (Attendance record : records) {
+            List<AttendanceDTO> records = attendanceApiClient.getOwnAttendance();
+            records.sort(Comparator.comparing(AttendanceDTO::getWorkDate).reversed());
+            for (AttendanceDTO record : records) {
                 allAttendanceRows.add(new AttendanceRowItem(record));
             }
         } catch (Exception e) {
@@ -209,7 +209,7 @@ public class EmployeeAttendanceController {
         return time == null ? "-" : time.format(TIME_FORMATTER);
     }
 
-    private static String formatHours(Attendance attendance) {
+    private static String formatHours(AttendanceDTO attendance) {
         return attendance == null || !attendance.isComplete()
                 ? "-"
                 : String.format(Locale.ENGLISH, "%.2f", attendance.getHoursWorked());
@@ -257,7 +257,7 @@ public class EmployeeAttendanceController {
         private final String hoursWorked;
         private final String status;
 
-        private AttendanceRowItem(Attendance attendance) {
+        private AttendanceRowItem(AttendanceDTO attendance) {
             this.date = attendance.getWorkDate().format(TABLE_DATE_FORMATTER);
             this.timeIn = formatTime(attendance.getTimeIn());
             this.timeOut = formatTime(attendance.getTimeOut());

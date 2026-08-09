@@ -1,10 +1,11 @@
 package motorph.ui.employee;
 
-import motorph.application.service.OvertimeService;
-import motorph.domain.model.Attendance;
-import motorph.domain.model.OvertimeRequest;
 import motorph.domain.value.RequestStatus;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.OvertimeApiClient;
+import motorph.api.dto.attendance.AttendanceDTO;
+import motorph.api.dto.overtime.OvertimeRequestDTO;
+import motorph.api.dto.overtime.OvertimeSubmitRequest;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -38,7 +39,7 @@ public class EmployeeOvertimeController {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, yyyy hh:mm a");
 
-    private OvertimeService overtimeService;
+    private OvertimeApiClient overtimeApiClient;
 
     private final Map<String, Integer> overtimeTypeIds = new LinkedHashMap<>();
     private final Map<Integer, String> overtimeTypeNames = new LinkedHashMap<>();
@@ -77,7 +78,7 @@ public class EmployeeOvertimeController {
 
     @FXML
     private void initialize() {
-        overtimeService = EmployeeUIServiceFactory.getInstance().getOvertimeService();
+        overtimeApiClient = ApiClientFactory.getInstance().getOvertimeApiClient();
 
         loadOvertimeTypes();
         overtimeTypeComboBox.getItems().setAll(overtimeTypeIds.keySet());
@@ -141,14 +142,13 @@ public class EmployeeOvertimeController {
             int overtimeTypeId = overtimeTypeIds.get(overtimeTypeComboBox.getValue());
             double hours = Double.parseDouble(hoursField.getText().trim());
 
-            overtimeService.submitOvertimeRequest(
-                    employeeId,
+            overtimeApiClient.submitOvertimeRequest(new OvertimeSubmitRequest(
                     attendance.attendanceId(),
                     overtimeTypeId,
                     attendance.workDate(),
                     hours,
                     getReasonText()
-            );
+            ));
 
             resetForm();
             refresh();
@@ -186,8 +186,8 @@ public class EmployeeOvertimeController {
         }
 
         try {
-            List<Attendance> eligible = overtimeService.getEligibleAttendanceForOvertime(employeeId, LocalDate.now());
-            for (Attendance attendance : eligible) {
+            List<AttendanceDTO> eligible = overtimeApiClient.getEligibleAttendance(LocalDate.now());
+            for (AttendanceDTO attendance : eligible) {
                 String label = attendance.getWorkDate().format(DATE_FORMAT)
                         + String.format(" (%.1f hrs)", attendance.getHoursWorked());
                 attendanceOptions.put(label, new EligibleAttendance(
@@ -286,9 +286,9 @@ public class EmployeeOvertimeController {
         }
 
         try {
-            List<OvertimeRequest> requests = overtimeService.getOvertimeRequestsByEmployeeId(employeeId);
-            requests.sort(Comparator.comparing(OvertimeRequest::getRequestDate).reversed());
-            for (OvertimeRequest request : requests) {
+            List<OvertimeRequestDTO> requests = overtimeApiClient.getOwnOvertimeRequests();
+            requests.sort(Comparator.comparing(OvertimeRequestDTO::getRequestDate).reversed());
+            for (OvertimeRequestDTO request : requests) {
                 allHistoryRows.add(new OvertimeHistoryRow(request, resolveOvertimeTypeName(request.getOvertimeTypeId())));
             }
 
@@ -360,8 +360,7 @@ public class EmployeeOvertimeController {
         }
 
         try {
-            overtimeService.cancelOvertimeRequest(
-                    employeeId, row.request().getRequestId(), "Cancelled by employee.");
+            overtimeApiClient.cancelOvertimeRequest(row.request().getRequestId());
             refresh();
             UiMessageUtil.showToast(toastRoot, "Pending overtime request cancelled.");
         } catch (Exception e) {
@@ -488,7 +487,7 @@ public class EmployeeOvertimeController {
     }
 
     // holds a single overtime request row for the history table
-    private record OvertimeHistoryRow(OvertimeRequest request, String overtimeType) {
+    private record OvertimeHistoryRow(OvertimeRequestDTO request, String overtimeType) {
         String requestId() {
             return request.getRequestId() == null ? "-" : String.format("OT-%04d", request.getRequestId());
         }

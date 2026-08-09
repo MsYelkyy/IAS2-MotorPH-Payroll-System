@@ -1,8 +1,9 @@
 package motorph.ui.employee;
 
-import motorph.application.service.EmployeeService;
 import motorph.application.service.UserAccountService;
-import motorph.domain.model.Employee;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
@@ -18,7 +19,7 @@ import javafx.scene.control.TextField;
 public class EmployeeSettingsController {
 
     private UserAccountService userAccountService;
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     @FXML
     private TextField settingsEmailField;
@@ -41,7 +42,7 @@ public class EmployeeSettingsController {
     @FXML
     private void initialize() {
         userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
-        employeeService    = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient  = ApiClientFactory.getInstance().getEmployeeApiClient();
     }
 
     // loads account and recovery email for the current employee session
@@ -53,7 +54,7 @@ public class EmployeeSettingsController {
         if (employeeId <= 0) return;
 
         try {
-            Employee employee = employeeService.getEmployeeById(employeeId);
+            EmployeeProfileDTO employee = employeeApiClient.getEmployee(employeeId);
             if (settingsRecoveryEmailField != null) {
                 settingsRecoveryEmailField.setText(UiFormatter.safe(employee.getPersonalEmail(), ""));
             }

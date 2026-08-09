@@ -1,18 +1,24 @@
 package motorph.ui.hr;
 
-import motorph.application.dto.employee.EmployeeProfileDTO;
-import motorph.application.dto.employee.EmployeeSummaryDTO;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.SalaryBenefitService;
+import motorph.application.dto.auth.EmailPreviewDTO;
+import motorph.application.dto.auth.EmailPreviewType;
 import motorph.application.service.UserAccountService;
-import motorph.domain.model.Department;
-import motorph.domain.model.Employee;
-import motorph.domain.model.EmployeeBenefit;
-import motorph.domain.model.GovernmentDetails;
-import motorph.domain.model.Position;
-import motorph.domain.model.SalaryHistory;
+import motorph.api.SalaryBenefitApiClient;
+import motorph.api.dto.salary.EmployeeBenefitDTO;
+import motorph.api.dto.salary.SalaryHistoryDTO;
 import motorph.domain.value.EmploymentStatus;
 import motorph.domain.value.Gender;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.dto.auth.CredentialsPreview;
+import motorph.api.dto.employee.DepartmentDTO;
+import motorph.api.dto.employee.EmployeeCreateRequest;
+import motorph.api.dto.employee.EmployeeCreateResponse;
+import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
+import motorph.api.dto.employee.EmployeeUpdateRequest;
+import motorph.api.dto.employee.GovernmentDetailsDTO;
+import motorph.api.dto.employee.PositionDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.TextFieldFormatters;
@@ -48,6 +54,7 @@ import javafx.scene.layout.VBox;
 
 import java.io.File;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -74,20 +81,21 @@ public class HrEmployeeController {
     /** Tracks which mode the unified form panel is in. */
     private enum FormMode { ADD, VIEW, EDIT }
 
-    private EmployeeService employeeService;
+    // the company-email lookup stays on the legacy direct-DB path until migrated
+    private EmployeeApiClient employeeApiClient;
     private UserAccountService userAccountService;
-    private SalaryBenefitService salaryBenefitService;
+    private SalaryBenefitApiClient salaryBenefitApiClient;
 
     private List<EmployeeSummaryDTO> allSummaries = new ArrayList<>();
-    private List<Department> allDepartments = new ArrayList<>();
-    private List<Position> allPositions = new ArrayList<>();
+    private List<DepartmentDTO> allDepartments = new ArrayList<>();
+    private List<PositionDTO> allPositions = new ArrayList<>();
     private final ObservableList<EmployeeSummaryDTO> employeeItems = FXCollections.observableArrayList();
     private FilteredList<EmployeeSummaryDTO> filteredEmployees;
 
     private final Map<Integer, String>       departmentNames     = new HashMap<>();
-    private final Map<Integer, List<Position>> positionsByDept   = new HashMap<>();
+    private final Map<Integer, List<PositionDTO>> positionsByDept = new HashMap<>();
     private final Map<String, Integer>       deptNameToId        = new LinkedHashMap<>();
-    private final Map<String, Position>      addPositionLabelToObj  = new LinkedHashMap<>();
+    private final Map<String, PositionDTO>   addPositionLabelToObj  = new LinkedHashMap<>();
     private final Map<String, Integer>       addSupervisorLabelToId = new LinkedHashMap<>();
 
     private EmployeeProfileDTO selectedProfile;
@@ -214,9 +222,9 @@ public class HrEmployeeController {
     @FXML
     private void initialize() {
         EmployeeUIServiceFactory serviceFactory = EmployeeUIServiceFactory.getInstance();
-        employeeService     = serviceFactory.getEmployeeService();
+        employeeApiClient   = ApiClientFactory.getInstance().getEmployeeApiClient();
         userAccountService  = serviceFactory.getUserAccountService();
-        salaryBenefitService = serviceFactory.getSalaryBenefitService();
+        salaryBenefitApiClient = ApiClientFactory.getInstance().getSalaryBenefitApiClient();
         loadReferenceData();
         populateStaticCombos();
         setupListFilters();
@@ -278,7 +286,7 @@ public class HrEmployeeController {
         }
 
         try {
-            Employee built = buildEmployeeFromForm();
+            EmployeeFormFields f = buildEmployeeFormFields();
 
             double basicSalary = parsePositiveDouble(addBasicSalaryField.getText());
             double hourlyRate  = computeHourlyRate(basicSalary);
@@ -291,9 +299,16 @@ public class HrEmployeeController {
             String tin        = tinField.getText().trim();
             String pagibig    = pagibigField.getText().trim();
 
-            employeeService.createEmployeeWithSalaryAndBenefits(
-                    built, basicSalary, hourlyRate, sss, philhealth, tin, pagibig,
+            EmployeeCreateRequest request = new EmployeeCreateRequest(
+                    f.firstName(), f.lastName(), f.birthDate(), f.gender(), f.address(), f.civilStatus(),
+                    f.phoneNumber(), f.personalEmail(), f.employmentStatus(), f.positionId(), f.departmentId(),
+                    f.hireDate(), f.supervisorId(), basicSalary, hourlyRate, sss, philhealth, tin, pagibig,
                     rice, phone, clothing);
+
+            EmployeeCreateResponse response = employeeApiClient.createEmployee(request);
+            if (response.credentialsPreview() != null) {
+                showCredentialsPreview(response.credentialsPreview());
+            }
 
             loadEmployees();
             hideFormPanel();
@@ -319,25 +334,22 @@ public class HrEmployeeController {
         }
 
         try {
-            Employee built = buildEmployeeFromForm();
-            built.setEmployeeId(selectedProfile.getEmployeeId());
-            built.setActive(selectedProfile.isActive());
-            employeeService.updateEmployee(built);
-
+            EmployeeFormFields f = buildEmployeeFormFields();
             int employeeId = selectedProfile.getEmployeeId();
-            employeeService.updateGovernmentDetails(
-                    employeeId,
+
+            EmployeeUpdateRequest request = new EmployeeUpdateRequest(
+                    f.firstName(), f.lastName(), f.birthDate(), f.gender(), f.address(), f.civilStatus(),
+                    f.phoneNumber(), f.personalEmail(), f.employmentStatus(), f.positionId(), f.departmentId(),
+                    f.hireDate(), f.supervisorId(),
                     sssField.getText().trim(),
                     philhealthField.getText().trim(),
                     tinField.getText().trim(),
-                    pagibigField.getText().trim());
-            employeeService.updateBenefits(
-                    employeeId,
+                    pagibigField.getText().trim(),
                     parseNonNegativeDouble(riceSubsidyField.getText()),
                     parseNonNegativeDouble(phoneAllowanceField.getText()),
                     parseNonNegativeDouble(clothingAllowanceField.getText()));
 
-            selectedProfile = employeeService.getEmployeeProfileAdmin(selectedProfile.getEmployeeId());
+            selectedProfile = employeeApiClient.updateEmployee(employeeId, request);
             loadEmployees();
             openViewMode(selectedProfile);
             UiMessageUtil.showToast(toastRoot, "Employee updated successfully.");
@@ -353,7 +365,7 @@ public class HrEmployeeController {
 
     private void openViewModal(EmployeeSummaryDTO dto) {
         try {
-            selectedProfile = employeeService.getEmployeeProfileAdmin(dto.getEmployeeId());
+            selectedProfile = employeeApiClient.getEmployee(dto.getEmployeeId());
         } catch (Exception e) {
             showErrorAlert("Could Not Load Employee", UiMessageUtil.toUserMessage(e));
             return;
@@ -440,7 +452,7 @@ public class HrEmployeeController {
         confirm.showAndWait().ifPresent(response -> {
             if ("Delete Employee".equals(response.getText())) {
                 try {
-                    employeeService.deactivateEmployee(selectedProfile.getEmployeeId());
+                    employeeApiClient.deactivateEmployee(selectedProfile.getEmployeeId());
                     hideFormPanel();
                     currentMode = FormMode.ADD;
                     selectedProfile = null;
@@ -835,18 +847,18 @@ public class HrEmployeeController {
 
     private void loadReferenceData() {
         try {
-            allDepartments = employeeService.getAllDepartments();
-            allPositions   = employeeService.getAllPositions();
+            allDepartments = employeeApiClient.getAllDepartments();
+            allPositions   = employeeApiClient.getAllPositions();
 
             departmentNames.clear();
             deptNameToId.clear();
             positionsByDept.clear();
 
-            for (Department d : allDepartments) {
+            for (DepartmentDTO d : allDepartments) {
                 departmentNames.put(d.getDepartmentId(), d.getDepartmentName());
                 deptNameToId.put(d.getDepartmentName(), d.getDepartmentId());
             }
-            for (Position p : allPositions) {
+            for (PositionDTO p : allPositions) {
                 positionsByDept.computeIfAbsent(p.getDepartmentId(), k -> new ArrayList<>()).add(p);
             }
         } catch (Exception e) {
@@ -857,7 +869,7 @@ public class HrEmployeeController {
 
     private void loadEmployees() {
         try {
-            allSummaries = employeeService.getAllEmployeeSummaries();
+            allSummaries = employeeApiClient.getAllEmployeeSummaries();
             employeeItems.setAll(allSummaries);
             updateEmployeeCounts();
             applyEmployeeFilter();
@@ -877,7 +889,7 @@ public class HrEmployeeController {
         addCivilStatusCombo.getItems().setAll("Single", "Married", "Widowed", "Separated");
         addEmploymentStatusCombo.getItems().setAll("REGULAR", "PROBATIONARY", "CONTRACTUAL");
         addDepartmentCombo.getItems().setAll(
-                allDepartments.stream().map(Department::getDepartmentName).collect(Collectors.toList()));
+                allDepartments.stream().map(DepartmentDTO::getDepartmentName).collect(Collectors.toList()));
         addPositionCombo.setDisable(true);
     }
 
@@ -892,7 +904,7 @@ public class HrEmployeeController {
 
         departmentFilterCombo.getItems().setAll("All Departments");
         departmentFilterCombo.getItems().addAll(
-                allDepartments.stream().map(Department::getDepartmentName).collect(Collectors.toList()));
+                allDepartments.stream().map(DepartmentDTO::getDepartmentName).collect(Collectors.toList()));
         departmentFilterCombo.setValue("All Departments");
         departmentFilterCombo.setOnAction(e -> applyEmployeeFilter());
     }
@@ -909,7 +921,7 @@ public class HrEmployeeController {
         Integer deptId = deptNameToId.get(deptName);
         if (deptId == null) { addPositionCombo.setDisable(true); return; }
 
-        List<Position> filtered = positionsByDept.getOrDefault(deptId, Collections.emptyList());
+        List<PositionDTO> filtered = positionsByDept.getOrDefault(deptId, Collections.emptyList());
         filtered.forEach(p -> {
             addPositionCombo.getItems().add(p.getPositionName());
             addPositionLabelToObj.put(p.getPositionName(), p);
@@ -974,9 +986,27 @@ public class HrEmployeeController {
         }
     }
 
-    // ── Build domain object ───────────────────────────────────────────────────
+    // ── Build request fields ──────────────────────────────────────────────────
 
-    private Employee buildEmployeeFromForm() {
+    /** Holds the profile fields shared by EmployeeCreateRequest and EmployeeUpdateRequest. */
+    private record EmployeeFormFields(
+            String firstName,
+            String lastName,
+            LocalDate birthDate,
+            Gender gender,
+            String address,
+            String civilStatus,
+            String phoneNumber,
+            String personalEmail,
+            EmploymentStatus employmentStatus,
+            int positionId,
+            int departmentId,
+            LocalDate hireDate,
+            Integer supervisorId
+    ) {
+    }
+
+    private EmployeeFormFields buildEmployeeFormFields() {
         String firstName   = addFirstNameField.getText().trim();
         String lastName    = addLastNameField.getText().trim();
         String genderStr   = addGenderCombo.getValue();
@@ -995,7 +1025,7 @@ public class HrEmployeeController {
 
         Integer deptId = deptNameToId.get(deptName);
         if (deptId == null) throw new IllegalArgumentException("Invalid department selected.");
-        Position position = addPositionLabelToObj.get(posName);
+        PositionDTO position = addPositionLabelToObj.get(posName);
         if (position == null) throw new IllegalArgumentException("Invalid position selected.");
 
         String supVal = addSupervisorCombo.getValue();
@@ -1017,16 +1047,33 @@ public class HrEmployeeController {
             catch (DateTimeParseException e) { throw new IllegalArgumentException("Invalid birth date format."); }
         }
 
-        return new Employee(
-                null, firstName, lastName, birthDate,
+        return new EmployeeFormFields(
+                firstName, lastName, birthDate,
                 Gender.fromValue(genderStr),
                 addAddressField.getText() != null ? addAddressField.getText().trim() : null,
                 addCivilStatusCombo.getValue(),
                 addPhoneField.getText() != null ? addPhoneField.getText().trim() : null,
                 addEmailField.getText() != null ? addEmailField.getText().trim() : null,
                 EmploymentStatus.fromValue(statusStr),
-                position.getPositionId(), deptId, hireDate, supervisorId, true, null
+                position.getPositionId(), deptId, hireDate, supervisorId
         );
+    }
+
+    // feeds the backend's dev-only credentials preview into the app's existing
+    // EmailPreviewService, same pattern as LoginController's OTP preview
+    private void showCredentialsPreview(CredentialsPreview credentialsPreview) {
+        EmailPreviewDTO preview = new EmailPreviewDTO(
+                EmailPreviewType.EMPLOYEE_ACCOUNT_CREDENTIALS,
+                credentialsPreview.senderEmail(),
+                credentialsPreview.recipientEmail(),
+                credentialsPreview.subject(),
+                credentialsPreview.body(),
+                "Temporary Password",
+                credentialsPreview.temporaryPassword(),
+                LocalDateTime.now()
+        );
+
+        EmployeeUIServiceFactory.getInstance().getEmailPreviewService().savePreview(preview);
     }
 
     // ── Clear form ────────────────────────────────────────────────────────────
@@ -1065,9 +1112,9 @@ public class HrEmployeeController {
 
     private void populateSalaryFields(int employeeId) {
         try {
-            SalaryHistory salary = salaryBenefitService.getCurrentSalary(employeeId);
+            SalaryHistoryDTO salary = salaryBenefitApiClient.getCurrentSalary(employeeId);
             if (salary == null) {
-                salary = salaryBenefitService.getSalaryHistory(employeeId).stream()
+                salary = salaryBenefitApiClient.getSalaryHistory(employeeId).stream()
                         .findFirst()
                         .orElse(null);
             }
@@ -1089,7 +1136,7 @@ public class HrEmployeeController {
 
     private void populateGovernmentFields(int employeeId) {
         try {
-            GovernmentDetails details = employeeService.getGovernmentDetails(employeeId);
+            GovernmentDetailsDTO details = employeeApiClient.getGovernmentDetails(employeeId);
             if (details == null) {
                 sssField.clear();
                 philhealthField.clear();
@@ -1109,10 +1156,10 @@ public class HrEmployeeController {
 
     private void populateBenefitFields(int employeeId) {
         try {
-            Map<Integer, EmployeeBenefit> currentByType = new HashMap<>();
-            Map<Integer, EmployeeBenefit> latestByType = new HashMap<>();
+            Map<Integer, EmployeeBenefitDTO> currentByType = new HashMap<>();
+            Map<Integer, EmployeeBenefitDTO> latestByType = new HashMap<>();
 
-            for (EmployeeBenefit benefit : salaryBenefitService.getAllBenefits(employeeId)) {
+            for (EmployeeBenefitDTO benefit : salaryBenefitApiClient.getAllBenefits(employeeId)) {
                 int typeId = benefit.getBenefitTypeId();
                 if (typeId < 1 || typeId > 3) continue;
 
@@ -1130,15 +1177,15 @@ public class HrEmployeeController {
         }
     }
 
-    private EmployeeBenefit benefitToDisplay(
+    private EmployeeBenefitDTO benefitToDisplay(
             int benefitTypeId,
-            Map<Integer, EmployeeBenefit> currentByType,
-            Map<Integer, EmployeeBenefit> latestByType) {
-        EmployeeBenefit current = currentByType.get(benefitTypeId);
+            Map<Integer, EmployeeBenefitDTO> currentByType,
+            Map<Integer, EmployeeBenefitDTO> latestByType) {
+        EmployeeBenefitDTO current = currentByType.get(benefitTypeId);
         return current != null ? current : latestByType.get(benefitTypeId);
     }
 
-    private void setBenefitField(TextField field, EmployeeBenefit benefit) {
+    private void setBenefitField(TextField field, EmployeeBenefitDTO benefit) {
         if (benefit == null) {
             field.clear();
             return;
