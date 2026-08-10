@@ -1,11 +1,11 @@
 package motorph.ui.hr;
 
-import motorph.application.service.EmployeeService;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
-import motorph.ui.factory.HrUIServiceFactory;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
@@ -22,7 +22,7 @@ import javafx.scene.layout.VBox;
 /** Manages the HR app shell: sidebar navigation, identity card, and global controls. */
 public class HrMainController {
 
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     // Root
     @FXML private StackPane rootPane;
@@ -75,7 +75,7 @@ public class HrMainController {
     // sets up services, controls, and the default dashboard view
     @FXML
     private void initialize() {
-        employeeService = HrUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -197,7 +197,7 @@ public class HrMainController {
     // loads the logged-in HR user's identity into the sidebar
     private void loadSidebarData() {
         SidebarHelper.load(employeeNameLabel, employeeRoleLabel, null,
-                "HR User", "HR", "", employeeService);
+                "HR User", "HR", "", employeeApiClient);
     }
 
     // shows the switch-role button only for multi-role users

@@ -1,7 +1,7 @@
 package motorph.ui.common;
 
-import motorph.application.service.EmployeeService;
-import motorph.domain.model.Employee;
+import motorph.api.EmployeeApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.ui.session.CurrentUserSession;
 
 import javafx.scene.control.Label;
@@ -21,7 +21,7 @@ public final class SidebarHelper {
     public static void load(Label nameLabel, Label roleLabel, Label emailLabel,
                             String fallbackName, String fallbackRole,
                             String rolePrefix,
-                            EmployeeService service) {
+                            EmployeeApiClient employeeApiClient) {
         int employeeId = CurrentUserSession.getEmployeeId();
 
         if (employeeId <= 0) {
@@ -30,7 +30,7 @@ public final class SidebarHelper {
         }
 
         try {
-            Employee employee = service.getEmployeeById(employeeId);
+            EmployeeProfileDTO employee = employeeApiClient.getEmployee(employeeId);
 
             String name  = employee.getFullName();
             String role  = rolePrefix + (CurrentUserSession.getActiveRole() != null

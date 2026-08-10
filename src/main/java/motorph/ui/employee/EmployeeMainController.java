@@ -1,11 +1,11 @@
 package motorph.ui.employee;
 
-import motorph.application.service.EmployeeService;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.AnimationUtil;
 import motorph.ui.util.NavigationUtil;
@@ -25,7 +25,7 @@ import java.util.List;
 /** Manages the Employee app shell. */
 public class EmployeeMainController {
 
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     @FXML
     private StackPane rootPane;
@@ -135,7 +135,7 @@ public class EmployeeMainController {
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         buildGlobalControls();
         wireSubControllers();
@@ -277,7 +277,7 @@ public class EmployeeMainController {
     // loads the current employee's name, role, and email into the sidebar
     private void loadSidebarData() {
         SidebarHelper.load(dashboardEmployeeNameLabel, dashboardEmployeeRoleLabel, null,
-                "Employee", "EMPLOYEE", "", employeeService);
+                "Employee", "EMPLOYEE", "", employeeApiClient);
     }
 
     // configures switch role button visibility

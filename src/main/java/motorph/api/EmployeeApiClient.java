@@ -1,5 +1,6 @@
 package motorph.api;
 
+import motorph.api.dto.employee.ContactInfoUpdateRequest;
 import motorph.api.dto.employee.DepartmentDTO;
 import motorph.api.dto.employee.EmployeeCreateRequest;
 import motorph.api.dto.employee.EmployeeCreateResponse;
@@ -56,6 +57,21 @@ public final class EmployeeApiClient {
 
     public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request) {
         return httpApiClient.put("/api/v1/employees/" + employeeId, request, EmployeeProfileDTO.class);
+    }
+
+    // self-service: the backend applies these to the caller's own record
+    public void updateOwnContactInfo(String phoneNumber, String address) {
+        httpApiClient.put("/api/v1/employees/me/contact",
+                new ContactInfoUpdateRequest(phoneNumber, address), Void.class);
+    }
+
+    public void uploadOwnPhoto(byte[] content, String extension) {
+        httpApiClient.postBytes("/api/v1/employees/me/photo?extension=" + extension, content);
+    }
+
+    /** Raw image bytes; throws ApiException with NOT_FOUND when there is no photo on file. */
+    public byte[] getEmployeePhoto(int employeeId) {
+        return httpApiClient.getBytes("/api/v1/employees/" + employeeId + "/photo");
     }
 
     public void deactivateEmployee(int employeeId) {

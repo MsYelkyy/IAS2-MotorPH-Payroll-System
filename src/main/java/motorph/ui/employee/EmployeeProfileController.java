@@ -1,10 +1,8 @@
 package motorph.ui.employee;
 
-import motorph.application.service.EmployeeService;
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
 import motorph.api.dto.employee.EmployeeProfileDTO;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
@@ -22,7 +20,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,12 +36,10 @@ public class EmployeeProfileController {
     private static final double PHOTO_W = 174;
     private static final double PHOTO_H = 220;
 
-    // reads go through the backend; updateOwnContactInfo/updateOwnProfilePhoto
-    // (writes) stay on the legacy direct-DB path until employee CRUD migrates (Phase 3)
-    private EmployeeService employeeService;
     private EmployeeApiClient employeeApiClient;
     private EmployeeProfileDTO currentProfile;
-    private String pendingPhotoPath;
+    private byte[] pendingPhotoContent;
+    private String pendingPhotoExtension;
     private boolean isFormattingPhone = false;
 
     @FXML private StackPane toastRoot;
@@ -86,7 +84,6 @@ public class EmployeeProfileController {
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
         applyPhotoClip();
         setupPhoneFormatting();
@@ -128,7 +125,8 @@ public class EmployeeProfileController {
         if (currentProfile != null) {
             populateFields(currentProfile);
         }
-        pendingPhotoPath = null;
+        pendingPhotoContent = null;
+        pendingPhotoExtension = null;
         enterViewMode();
         UiMessageUtil.clearMessage(profileMessageLabel);
     }
@@ -167,15 +165,16 @@ public class EmployeeProfileController {
         }
 
         try {
-            employeeService.updateOwnContactInfo(employeeId, phone, address);
+            employeeApiClient.updateOwnContactInfo(phone, address);
 
-            if (pendingPhotoPath != null) {
-                employeeService.updateOwnProfilePhoto(employeeId, pendingPhotoPath);
+            if (pendingPhotoContent != null) {
+                employeeApiClient.uploadOwnPhoto(pendingPhotoContent, pendingPhotoExtension);
             }
 
+            pendingPhotoContent = null;
+            pendingPhotoExtension = null;
             currentProfile = employeeApiClient.getEmployee(employeeId);
             populateFields(currentProfile);
-            pendingPhotoPath = null;
             enterViewMode();
             UiMessageUtil.clearMessage(profileMessageLabel);
             UiMessageUtil.showToast(toastRoot, "Profile updated successfully.");
@@ -196,9 +195,17 @@ public class EmployeeProfileController {
                 profilePhotoView != null ? profilePhotoView.getScene().getWindow() : null
         );
 
-        if (selected != null) {
-            pendingPhotoPath = selected.getAbsolutePath();
-            loadPhoto(pendingPhotoPath);
+        if (selected == null) return;
+
+        try {
+            // held in memory until Save, so cancelling an edit uploads nothing
+            pendingPhotoContent = Files.readAllBytes(selected.toPath());
+            pendingPhotoExtension = extensionOf(selected.getName());
+            showPhoto(pendingPhotoContent);
+        } catch (Exception e) {
+            pendingPhotoContent = null;
+            pendingPhotoExtension = null;
+            UiMessageUtil.setError(profileMessageLabel, "Could not read the selected image.");
         }
     }
 
@@ -282,7 +289,7 @@ public class EmployeeProfileController {
             profilePhotoInitials.setText(buildInitials(profile.getFirstName(), profile.getLastName()));
         }
 
-        loadPhoto(profile.getPhotoPath());
+        loadStoredPhoto(profile.getEmployeeId());
     }
 
     // clips the photo frame so oversized scaled images never overflow the frame
@@ -328,16 +335,37 @@ public class EmployeeProfileController {
         return digits.substring(0, 3) + "-" + digits.substring(3, 6) + "-" + digits.substring(6);
     }
 
-    // loads a profile photo using cover-style scaling (fills frame, crops overflow)
-    private void loadPhoto(String photoPath) {
+    // lowercased file extension of a picked image, defaulting to png
+    private String extensionOf(String filename) {
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 && dot < filename.length() - 1
+                ? filename.substring(dot + 1).toLowerCase(java.util.Locale.ROOT)
+                : "png";
+    }
+
+    // fetches the photo from the backend; falls back to initials when there is none
+    private void loadStoredPhoto(Integer employeeId) {
+        if (employeeId == null || employeeId <= 0) {
+            showPhoto(null);
+            return;
+        }
+
+        try {
+            showPhoto(employeeApiClient.getEmployeePhoto(employeeId));
+        } catch (Exception e) {
+            logger.log(Level.FINE, "No profile photo available", e);
+            showPhoto(null);
+        }
+    }
+
+    // renders image bytes using cover-style scaling (fills frame, crops overflow)
+    private void showPhoto(byte[] content) {
         boolean showPhoto = false;
 
-        if (photoPath != null && !photoPath.isBlank()) {
+        if (content != null && content.length > 0) {
             try {
-                File file = new File(photoPath);
-                if (file.exists()) {
-                    // load at natural size (synchronous)
-                    Image image = new Image(file.toURI().toString());
+                {
+                    Image image = new Image(new ByteArrayInputStream(content));
 
                     if (!image.isError() && profilePhotoView != null) {
                         double imgW = image.getWidth();

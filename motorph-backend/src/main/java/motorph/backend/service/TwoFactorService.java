@@ -23,8 +23,16 @@ public class TwoFactorService {
     private static final int OTP_EXPIRY_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
 
+    public static int getOtpLength() {
+        return OTP_LENGTH;
+    }
+
     public static int getOtpExpiryMinutes() {
         return OTP_EXPIRY_MINUTES;
+    }
+
+    public static int getMaxAttempts() {
+        return MAX_ATTEMPTS;
     }
 
     private final TwoFactorCodeRepository twoFactorCodeRepository;

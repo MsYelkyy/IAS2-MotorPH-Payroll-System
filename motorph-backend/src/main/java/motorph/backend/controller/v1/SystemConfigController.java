@@ -1,6 +1,7 @@
 package motorph.backend.controller.v1;
 
 import motorph.backend.domain.value.Role;
+import motorph.backend.dto.systemconfig.OtpPolicyDTO;
 import motorph.backend.dto.systemconfig.PagIbigRateDTO;
 import motorph.backend.dto.systemconfig.PhilHealthRateDTO;
 import motorph.backend.dto.systemconfig.SssRateDTO;
@@ -9,6 +10,7 @@ import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.SystemConfigService;
+import motorph.backend.service.TwoFactorService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,6 +42,18 @@ public class SystemConfigController {
         this.systemConfigService = systemConfigService;
         this.permissionService = permissionService;
         this.currentUserProvider = currentUserProvider;
+    }
+
+    // read-only view of the OTP policy this backend enforces
+    @GetMapping("/otp-policy")
+    public OtpPolicyDTO getOtpPolicy() {
+        requireAdmin();
+
+        return new OtpPolicyDTO(
+                TwoFactorService.getOtpLength(),
+                TwoFactorService.getOtpExpiryMinutes(),
+                TwoFactorService.getMaxAttempts()
+        );
     }
 
     @GetMapping("/philhealth-rates")

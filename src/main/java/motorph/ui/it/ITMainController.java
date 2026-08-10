@@ -1,11 +1,11 @@
 package motorph.ui.it;
 
-import motorph.application.service.EmployeeService;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
-import motorph.ui.factory.ITUIServiceFactory;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
@@ -23,7 +23,7 @@ import javafx.scene.layout.VBox;
 /** Manages the IT app shell: sidebar navigation, identity card, and global controls. */
 public class ITMainController {
 
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     // Root
     @FXML private StackPane rootPane;
@@ -80,7 +80,7 @@ public class ITMainController {
 
     @FXML
     private void initialize() {
-        employeeService = ITUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -206,7 +206,7 @@ public class ITMainController {
 
     private void loadSidebarData() {
         SidebarHelper.load(employeeNameLabel, employeeRoleLabel, null,
-                "IT User", "IT", "", employeeService);
+                "IT User", "IT", "", employeeApiClient);
     }
 
     private void configureSwitchRoleButton() {

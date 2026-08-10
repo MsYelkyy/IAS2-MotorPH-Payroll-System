@@ -52,6 +52,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1402,23 +1403,23 @@ public class HrEmployeeController {
         setVisible(summaryStatusBadge, true);
 
         String initials = buildInitials(profile.getFirstName(), profile.getLastName());
-        loadSummaryPhoto(profile.getPhotoPath(), initials);
+        loadSummaryPhoto(profile.getEmployeeId(), initials);
     }
 
     /** Size of the circular avatar icon in the summary header. */
     private static final double SUMMARY_AVATAR_SIZE = 64.0;
 
     /** Load a profile photo into the circular summary avatar, falling back to initials. */
-    private void loadSummaryPhoto(String photoPath, String initials) {
+    private void loadSummaryPhoto(Integer employeeId, String initials) {
         summaryPhotoInitials.setText(initials == null || initials.isBlank() ? "?" : initials);
         applySummaryPhotoClip();
         boolean showPhoto = false;
 
-        if (photoPath != null && !photoPath.isBlank()) {
+        if (employeeId != null && employeeId > 0) {
             try {
-                File file = new File(photoPath);
-                if (file.exists()) {
-                    Image image = new Image(file.toURI().toString());
+                byte[] content = employeeApiClient.getEmployeePhoto(employeeId);
+                if (content != null && content.length > 0) {
+                    Image image = new Image(new ByteArrayInputStream(content));
                     if (!image.isError() && summaryPhotoView != null) {
                         double imgW = image.getWidth();
                         double imgH = image.getHeight();
@@ -1434,7 +1435,7 @@ public class HrEmployeeController {
                     }
                 }
             } catch (Exception e) {
-                // falls through to initials
+                // no photo on file, or it could not be fetched
                 LOGGER.log(Level.FINE, "Could not load employee summary photo", e);
             }
         }

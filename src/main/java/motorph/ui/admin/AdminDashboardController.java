@@ -1,7 +1,7 @@
 package motorph.ui.admin;
 
-import motorph.application.service.EmployeeService;
 import motorph.api.AccessLogApiClient;
+import motorph.api.EmployeeApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.LeaveApiClient;
 import motorph.api.PayrunApiClient;
@@ -9,11 +9,11 @@ import motorph.api.UserAccountApiClient;
 import motorph.api.dto.accesslog.AccessLogAction;
 import motorph.api.dto.accesslog.AccessLogCountsDTO;
 import motorph.api.dto.accesslog.UserAccessLogDTO;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
 import motorph.api.dto.leave.LeaveSummaryDTO;
 import motorph.api.dto.user.AccountCountsDTO;
 import motorph.api.dto.payroll.PayrollSummaryDTO;
 import motorph.api.dto.payroll.PayrunDTO;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -40,7 +40,7 @@ public class AdminDashboardController {
     private static final NumberFormat CURRENCY =
             NumberFormat.getCurrencyInstance(Locale.of("en", "PH"));
 
-    private EmployeeService      employeeService;
+    private EmployeeApiClient    employeeApiClient;
     private LeaveApiClient       leaveApiClient;
     private PayrunApiClient      payrunApiClient;
     private UserAccountApiClient userAccountApiClient;
@@ -73,7 +73,7 @@ public class AdminDashboardController {
 
     @FXML
     private void initialize() {
-        employeeService      = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient    = ApiClientFactory.getInstance().getEmployeeApiClient();
         leaveApiClient       = ApiClientFactory.getInstance().getLeaveApiClient();
         payrunApiClient      = ApiClientFactory.getInstance().getPayrunApiClient();
         userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
@@ -105,8 +105,10 @@ public class AdminDashboardController {
     // Metric refresh
     private void refreshEmployeeMetrics() {
         try {
-            int active = employeeService.getAllActiveEmployees().size();
-            int all    = employeeService.getAllEmployees().size();
+            // one call: the endpoint returns everyone, active flag included
+            List<EmployeeSummaryDTO> employees = employeeApiClient.getAllEmployeeSummaries();
+            long active = employees.stream().filter(EmployeeSummaryDTO::isActive).count();
+            int all = employees.size();
             setText(totalActiveEmployeesLabel, String.valueOf(active));
             setText(totalAllEmployeesLabel,    String.valueOf(all));
         } catch (Exception e) {

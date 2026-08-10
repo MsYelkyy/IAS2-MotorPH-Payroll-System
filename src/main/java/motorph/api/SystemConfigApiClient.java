@@ -1,5 +1,6 @@
 package motorph.api;
 
+import motorph.api.dto.systemconfig.OtpPolicyDTO;
 import motorph.api.dto.systemconfig.PagIbigRateDTO;
 import motorph.api.dto.systemconfig.PhilHealthRateDTO;
 import motorph.api.dto.systemconfig.SssRateDTO;
@@ -14,6 +15,10 @@ public final class SystemConfigApiClient {
 
     public SystemConfigApiClient(HttpApiClient httpApiClient) {
         this.httpApiClient = httpApiClient;
+    }
+
+    public OtpPolicyDTO getOtpPolicy() {
+        return httpApiClient.get("/api/v1/system-config/otp-policy", OtpPolicyDTO.class);
     }
 
     public List<PhilHealthRateDTO> getAllPhilHealthRates() {

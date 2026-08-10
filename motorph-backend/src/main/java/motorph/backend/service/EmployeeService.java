@@ -92,6 +92,21 @@ public class EmployeeService {
         return employee;
     }
 
+    // updates the contact details an employee may change on their own profile
+    public void updateOwnContactInfo(int employeeId, String phoneNumber, String address) {
+        getEmployeeById(employeeId);
+
+        if (phoneNumber == null || phoneNumber.isBlank()) {
+            throw new ValidationException("Phone number is required.");
+        }
+
+        if (address == null || address.isBlank()) {
+            throw new ValidationException("Address is required.");
+        }
+
+        employeeRepository.updateContactInfo(employeeId, phoneNumber.trim(), address.trim());
+    }
+
     // returns all active employees
     public List<Employee> getAllActiveEmployees() {
         return employeeRepository.findAllActive();

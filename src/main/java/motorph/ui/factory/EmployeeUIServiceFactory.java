@@ -1,18 +1,23 @@
 package motorph.ui.factory;
 
 import motorph.application.service.EmailPreviewService;
-import motorph.application.service.EmployeeService;
 
-/** Provides the remaining locally-constructed services needed by UI controllers. */
+/**
+ * The desktop's remaining composition root. Everything it used to build -
+ * employee, account, permission, audit, password-reset and backup services,
+ * and the JDBC repositories under them - now lives behind the backend API and
+ * is reached through ApiClientFactory. What is left is the in-app email
+ * preview, which is pure UI state and never touched the database.
+ */
 public final class EmployeeUIServiceFactory {
 
     private static EmployeeUIServiceFactory instance;
 
-    private final CoreServiceGroup core;
+    private final EmailPreviewService emailPreviewService;
 
     // constructors
     private EmployeeUIServiceFactory() {
-        this.core = new CoreServiceGroup();
+        this.emailPreviewService = new EmailPreviewService();
     }
 
     // initializes the singleton; must be called before getInstance()
@@ -31,11 +36,7 @@ public final class EmployeeUIServiceFactory {
     }
 
     // getters
-    public EmployeeService getEmployeeService() {
-        return core.getEmployeeService();
-    }
-
     public EmailPreviewService getEmailPreviewService() {
-        return core.getEmailPreviewService();
+        return emailPreviewService;
     }
 }

@@ -82,6 +82,16 @@ public final class HttpApiClient {
         }
     }
 
+    // for endpoints that take raw bytes rather than JSON (e.g. a photo upload)
+    public void postBytes(String path, byte[] content) {
+        // setHeader, not header: newRequestBuilder already applied application/json
+        HttpRequest.Builder builder = newRequestBuilder(path)
+                .setHeader("Content-Type", "application/octet-stream")
+                .POST(HttpRequest.BodyPublishers.ofByteArray(content));
+
+        send(builder, Void.class);
+    }
+
     // for endpoints that return no body (e.g. logout)
     public void postNoContent(String path, Object body) {
         send(newRequestBuilder(path).POST(jsonBody(body)), Void.class);

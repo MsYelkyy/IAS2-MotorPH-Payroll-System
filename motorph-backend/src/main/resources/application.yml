@@ -18,6 +18,9 @@ motorph:
     secret: ${MOTORPH_JWT_SECRET}
     access-expiry-minutes: ${MOTORPH_JWT_ACCESS_EXPIRY_MINUTES:15}
     refresh-expiry-minutes: ${MOTORPH_JWT_REFRESH_EXPIRY_MINUTES:1440}
+  photo:
+    # employee profile photos are stored on the backend host and served over the API
+    directory: ${MOTORPH_PHOTO_DIR:profile-photos}
   backup:
     # database dumps live on the backend host, not next to the desktop client
     directory: ${MOTORPH_BACKUP_DIR:backups}

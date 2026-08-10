@@ -17,7 +17,6 @@
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
         <jasperreports.version>7.0.6</jasperreports.version>
 
-        <mysql.connector.version>8.3.0</mysql.connector.version>
         <jakarta.mail.version>2.0.1</jakarta.mail.version>
         <jackson.version>2.22.1</jackson.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
@@ -26,13 +25,6 @@
     </properties>
 
     <dependencies>
-
-        <!-- MySQL: retained until every repository is migrated to motorph-backend (see Phase 2-4) -->
-        <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>${mysql.connector.version}</version>
-        </dependency>
 
         <!-- JSON (de)serialization for the motorph.api REST client -->
         <dependency>

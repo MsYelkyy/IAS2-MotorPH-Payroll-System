@@ -1,6 +1,7 @@
 package motorph.ui.admin;
 
-import motorph.application.service.EmployeeService;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
 import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.finance.PayrollManagementController;
 import motorph.ui.hr.HrEmployeeController;
@@ -12,7 +13,6 @@ import motorph.ui.reports.ReportsController;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.ThemeManager;
@@ -28,7 +28,7 @@ import javafx.scene.layout.VBox;
 /** Manages the admin app shell: sidebar navigation, identity card, and global controls. */
 public class AdminMainController {
 
-    private EmployeeService employeeService;
+    private EmployeeApiClient employeeApiClient;
 
     // Root
     @FXML private StackPane rootPane;
@@ -113,7 +113,7 @@ public class AdminMainController {
 
     @FXML
     private void initialize() {
-        employeeService = EmployeeUIServiceFactory.getInstance().getEmployeeService();
+        employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
         buildGlobalControls();
         ThemeManager.getInstance().applyCurrentTo(rootPane);
@@ -288,7 +288,7 @@ public class AdminMainController {
 
     private void loadSidebarData() {
         SidebarHelper.load(employeeNameLabel, employeeRoleLabel, null,
-                "Admin User", "ADMIN", "", employeeService);
+                "Admin User", "ADMIN", "", employeeApiClient);
         updateRoleSwitchButton();
     }
 

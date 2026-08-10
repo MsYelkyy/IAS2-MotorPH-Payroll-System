@@ -1,10 +1,10 @@
 package motorph.ui.admin;
 
-import motorph.application.service.TwoFactorService;
 import motorph.api.ApiClientFactory;
 import motorph.api.SystemConfigApiClient;
 import motorph.api.dto.systemconfig.PhilHealthRateDTO;
 import motorph.api.dto.systemconfig.SssRateDTO;
+import motorph.api.dto.systemconfig.OtpPolicyDTO;
 import motorph.api.dto.systemconfig.PagIbigRateDTO;
 import motorph.api.dto.systemconfig.WithholdingTaxBracketDTO;
 
@@ -186,9 +186,16 @@ public class AdminSystemConfigController {
 
     // Panel 4: OTP info
     private void showOtpPanel() {
-        otpLengthLabel.setText(String.valueOf(TwoFactorService.getOtpLength()));
-        otpExpiryLabel.setText(TwoFactorService.getOtpExpiryMinutes() + " minutes");
-        otpAttemptsLabel.setText(String.valueOf(TwoFactorService.getMaxAttempts()));
+        try {
+            OtpPolicyDTO policy = configApiClient.getOtpPolicy();
+            otpLengthLabel.setText(String.valueOf(policy.otpLength()));
+            otpExpiryLabel.setText(policy.expiryMinutes() + " minutes");
+            otpAttemptsLabel.setText(String.valueOf(policy.maxAttempts()));
+        } catch (Exception e) {
+            otpLengthLabel.setText("—");
+            otpExpiryLabel.setText("—");
+            otpAttemptsLabel.setText("—");
+        }
 
         toolbarTitleLabel.setText(ConfigCategory.OTP_INFO.displayName());
         setVis(backButton,     true);

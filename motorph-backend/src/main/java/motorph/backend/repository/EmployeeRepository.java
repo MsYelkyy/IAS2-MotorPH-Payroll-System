@@ -408,10 +408,66 @@ public class EmployeeRepository {
         );
     }
 
+    // updates the contact details an employee is allowed to change themselves
+    public void updateContactInfo(int employeeId, String phoneNumber, String address) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = """
+                UPDATE employee
+                SET phone_number = ?,
+                    address = ?
+                WHERE employee_id = ?
+                  AND is_active = 1
+                """;
+
+        executeEmployeeUpdate(sql, "Failed to update employee contact info.", stmt -> {
+            stmt.setString(1, phoneNumber.trim());
+            stmt.setString(2, address.trim());
+            stmt.setInt(3, employeeId);
+        });
+    }
+
+    // records the stored filename of an employee's profile photo
+    public void updatePhotoPath(int employeeId, String photoPath) {
+        validatePositive(employeeId, "Employee ID must be positive.");
+
+        String sql = """
+                UPDATE employee
+                SET photo_path = ?
+                WHERE employee_id = ?
+                  AND is_active = 1
+                """;
+
+        executeEmployeeUpdate(sql, "Failed to update employee photo path.", stmt -> {
+            stmt.setString(1, photoPath);
+            stmt.setInt(2, employeeId);
+        });
+    }
+
+    private void executeEmployeeUpdate(String sql, String errorMessage, StatementBinder binder) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            binder.bind(stmt);
+
+            if (stmt.executeUpdate() == 0) {
+                throw new IllegalArgumentException("Active employee not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException(errorMessage, e);
+        }
+    }
+
     private void validatePositive(int value, String message) {
         if (value <= 0) {
             throw new IllegalArgumentException(message);
         }
+    }
+
+    // binds prepared statement parameters
+    private interface StatementBinder {
+        void bind(PreparedStatement stmt) throws SQLException;
     }
 
     private LocalDate getLocalDate(ResultSet rs, String columnName) throws SQLException {
