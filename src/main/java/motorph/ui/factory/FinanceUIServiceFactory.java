@@ -1,7 +1,6 @@
 package motorph.ui.factory;
 
 import motorph.application.service.EmployeeService;
-import motorph.application.service.UserAccountService;
 
 /** Provides Finance-role services to Finance UI controllers. Delegates to the shared factory. */
 public final class FinanceUIServiceFactory {
@@ -9,12 +8,10 @@ public final class FinanceUIServiceFactory {
     private static FinanceUIServiceFactory instance;
 
     private final EmployeeService employeeService;
-    private final UserAccountService userAccountService;
 
     // constructors
     private FinanceUIServiceFactory(EmployeeUIServiceFactory shared) {
-        this.employeeService         = shared.getEmployeeService();
-        this.userAccountService      = shared.getUserAccountService();
+        this.employeeService = shared.getEmployeeService();
     }
 
     // initializes the singleton from the shared factory; must be called after EmployeeUIServiceFactory.initialize()
@@ -35,9 +32,5 @@ public final class FinanceUIServiceFactory {
     // getters
     public EmployeeService getEmployeeService() {
         return employeeService;
-    }
-
-    public UserAccountService getUserAccountService() {
-        return userAccountService;
     }
 }

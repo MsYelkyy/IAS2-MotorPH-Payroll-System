@@ -2,7 +2,7 @@ package motorph.ui.hr;
 
 import motorph.application.dto.auth.EmailPreviewDTO;
 import motorph.application.dto.auth.EmailPreviewType;
-import motorph.application.service.UserAccountService;
+import motorph.api.UserAccountApiClient;
 import motorph.api.SalaryBenefitApiClient;
 import motorph.api.dto.salary.EmployeeBenefitDTO;
 import motorph.api.dto.salary.SalaryHistoryDTO;
@@ -83,7 +83,7 @@ public class HrEmployeeController {
 
     // the company-email lookup stays on the legacy direct-DB path until migrated
     private EmployeeApiClient employeeApiClient;
-    private UserAccountService userAccountService;
+    private UserAccountApiClient userAccountApiClient;
     private SalaryBenefitApiClient salaryBenefitApiClient;
 
     private List<EmployeeSummaryDTO> allSummaries = new ArrayList<>();
@@ -223,7 +223,7 @@ public class HrEmployeeController {
     private void initialize() {
         EmployeeUIServiceFactory serviceFactory = EmployeeUIServiceFactory.getInstance();
         employeeApiClient   = ApiClientFactory.getInstance().getEmployeeApiClient();
-        userAccountService  = serviceFactory.getUserAccountService();
+        userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
         salaryBenefitApiClient = ApiClientFactory.getInstance().getSalaryBenefitApiClient();
         loadReferenceData();
         populateStaticCombos();
@@ -1499,7 +1499,7 @@ public class HrEmployeeController {
 
     private String companyEmailFor(int employeeId) {
         try {
-            return safe(userAccountService.getCompanyEmailByEmployeeId(employeeId));
+            return safe(userAccountApiClient.getAccountSummaryByEmployee(employeeId).companyEmail());
         } catch (Exception e) {
             // returns blank when the account email cannot be resolved
             LOGGER.log(Level.FINE, "Could not resolve company email for employee " + employeeId, e);

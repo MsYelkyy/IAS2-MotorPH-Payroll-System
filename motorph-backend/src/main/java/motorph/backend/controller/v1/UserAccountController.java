@@ -3,6 +3,7 @@ package motorph.backend.controller.v1;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.domain.value.Role;
 import motorph.backend.dto.user.AccountCountsDTO;
+import motorph.backend.dto.user.AccountSummaryDTO;
 import motorph.backend.dto.user.UserAccountRowDTO;
 import motorph.backend.dto.user.UserRolesUpdateRequest;
 import motorph.backend.security.CurrentUserProvider;
@@ -53,6 +54,21 @@ public class UserAccountController {
         return userAccountService.getAccountCounts();
     }
 
+    // display-only lookups used by HR screens that show who approved a request
+    // or an employee's company email, so they also accept the employee-module
+    // permissions rather than requiring full user-administration rights
+    @GetMapping("/{userAccountId}/summary")
+    public AccountSummaryDTO getAccountSummary(@PathVariable int userAccountId) {
+        requireAccountSummaryAccess();
+        return userAccountService.getAccountSummary(userAccountId);
+    }
+
+    @GetMapping("/by-employee/{employeeId}/summary")
+    public AccountSummaryDTO getAccountSummaryByEmployee(@PathVariable int employeeId) {
+        requireAccountSummaryAccess();
+        return userAccountService.getAccountSummaryByEmployeeId(employeeId);
+    }
+
     @PostMapping("/{userAccountId}/lock")
     public void lockAccount(@PathVariable int userAccountId) {
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
@@ -86,6 +102,14 @@ public class UserAccountController {
                 : request.roles().stream().map(Role::fromValue).toList();
 
         userAccountService.updateRoles(userAccountId, roles);
+    }
+
+    private void requireAccountSummaryAccess() {
+        permissionService.requireAnyPermission(
+                PermissionKey.VIEW_USERS,
+                PermissionKey.MANAGE_USERS,
+                PermissionKey.VIEW_EMPLOYEE,
+                PermissionKey.MANAGE_EMPLOYEE);
     }
 
     private int actorUserAccountId() {

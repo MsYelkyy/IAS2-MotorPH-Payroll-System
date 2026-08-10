@@ -1,7 +1,6 @@
 package motorph.ui.hr;
 
-import motorph.application.service.UserAccountService;
-import motorph.domain.model.UserAccount;
+import motorph.api.UserAccountApiClient;
 import motorph.domain.value.RequestStatus;
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
@@ -54,7 +53,7 @@ public class HrLeaveController {
 
     private LeaveApiClient leaveApiClient;
     private OvertimeApiClient overtimeApiClient;
-    private UserAccountService userAccountService;
+    private UserAccountApiClient userAccountApiClient;
     private EmployeeApiClient employeeApiClient;
 
     private List<LeaveRequestRowDTO> allRows = new ArrayList<>();
@@ -144,7 +143,7 @@ public class HrLeaveController {
     private void initialize() {
         leaveApiClient = ApiClientFactory.getInstance().getLeaveApiClient();
         overtimeApiClient = ApiClientFactory.getInstance().getOvertimeApiClient();
-        userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
+        userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
         setupFilters();
         setupLeaveTable();
@@ -383,8 +382,7 @@ public class HrLeaveController {
     private String resolveReviewerName(Integer approverAccountId) {
         if (approverAccountId == null) return "-";
         try {
-            UserAccount reviewer = userAccountService.getById(approverAccountId);
-            return employeeApiClient.getEmployee(reviewer.getEmployeeId()).getFullName();
+            return userAccountApiClient.getAccountSummary(approverAccountId).fullName();
         } catch (Exception e) {
             return "Account #" + approverAccountId;
         }

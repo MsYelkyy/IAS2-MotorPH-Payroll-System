@@ -2,6 +2,7 @@ package motorph.backend.service;
 
 import motorph.backend.dto.auth.CredentialsPreview;
 import motorph.backend.dto.user.AccountCountsDTO;
+import motorph.backend.dto.user.AccountSummaryDTO;
 import motorph.backend.dto.user.UserAccountRowDTO;
 import motorph.backend.domain.Employee;
 import motorph.backend.domain.UserAccount;
@@ -129,6 +130,25 @@ public class UserAccountService {
                 .toList();
     }
 
+    // returns the display-only summary of one account
+    public AccountSummaryDTO getAccountSummary(int userAccountId) {
+        validateUserAccountId(userAccountId);
+        return toSummary(requireAccount(userAccountId));
+    }
+
+    // returns the display-only summary of the account belonging to an employee
+    public AccountSummaryDTO getAccountSummaryByEmployeeId(int employeeId) {
+        validateEmployeeId(employeeId);
+
+        UserAccount account = userAccountRepository.findByEmployeeId(employeeId);
+
+        if (account == null) {
+            throw new EntityNotFoundException("This employee has no user account.");
+        }
+
+        return toSummary(account);
+    }
+
     // returns active/locked/disabled tallies for the dashboards
     public AccountCountsDTO getAccountCounts() {
         return new AccountCountsDTO(
@@ -248,6 +268,17 @@ public class UserAccountService {
         }
 
         return account;
+    }
+
+    private AccountSummaryDTO toSummary(UserAccount account) {
+        Employee employee = employeeRepository.findAnyById(account.getEmployeeId());
+
+        return new AccountSummaryDTO(
+                account.getUserAccountId(),
+                account.getEmployeeId(),
+                employee == null ? "Employee #" + account.getEmployeeId() : employee.getFullName(),
+                account.getCompanyEmail()
+        );
     }
 
     private UserAccountRowDTO toRow(UserAccount account, Map<Integer, String> namesByEmployeeId) {

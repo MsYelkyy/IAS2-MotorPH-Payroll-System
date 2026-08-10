@@ -1,6 +1,7 @@
 package motorph.api;
 
 import motorph.api.dto.user.AccountCountsDTO;
+import motorph.api.dto.user.AccountSummaryDTO;
 import motorph.api.dto.user.UserAccountRowDTO;
 import motorph.api.dto.user.UserRolesUpdateRequest;
 import motorph.domain.value.Role;
@@ -28,6 +29,14 @@ public final class UserAccountApiClient {
 
     public AccountCountsDTO getCounts() {
         return httpApiClient.get(BASE_PATH + "/counts", AccountCountsDTO.class);
+    }
+
+    public AccountSummaryDTO getAccountSummary(int userAccountId) {
+        return httpApiClient.get(BASE_PATH + "/" + userAccountId + "/summary", AccountSummaryDTO.class);
+    }
+
+    public AccountSummaryDTO getAccountSummaryByEmployee(int employeeId) {
+        return httpApiClient.get(BASE_PATH + "/by-employee/" + employeeId + "/summary", AccountSummaryDTO.class);
     }
 
     public void lockAccount(int userAccountId) {
