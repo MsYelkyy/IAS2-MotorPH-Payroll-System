@@ -6,6 +6,8 @@ import motorph.backend.dto.user.UserAccountRowDTO;
 import motorph.backend.domain.Employee;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
+import motorph.backend.exception.AuthenticationException;
+import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
@@ -167,6 +169,58 @@ public class UserAccountService {
         requireAccount(userAccountId);
 
         userAccountRepository.updateRoles(userAccountId, roles);
+    }
+
+    // replaces the caller's own password after re-verifying the current one
+    public void changeOwnPassword(int userAccountId, String currentPassword, String newPassword) {
+        validateUserAccountId(userAccountId);
+
+        if (currentPassword == null || currentPassword.trim().isEmpty()) {
+            throw new ValidationException("Current password is required.");
+        }
+
+        validateNewPassword(newPassword);
+
+        UserAccount account = requireAccount(userAccountId);
+
+        if (!PasswordHasher.verify(currentPassword, account.getPasswordSalt(), account.getPasswordHash())) {
+            throw new AuthenticationException("Current password is incorrect.");
+        }
+
+        writePassword(userAccountId, newPassword);
+    }
+
+    // replaces an IT-issued temporary password with one the user chose
+    public void completeTemporaryPasswordChange(int userAccountId, String newPassword, String confirmPassword) {
+        validateUserAccountId(userAccountId);
+        validateNewPassword(newPassword);
+
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ValidationException("Passwords do not match.");
+        }
+
+        UserAccount account = requireAccount(userAccountId);
+
+        // guards against this path being used to overwrite a normal account's
+        // password - it only ever applies to an account still on a temp password
+        if (!account.mustChangePassword()) {
+            throw new BusinessRuleException("This account is not awaiting a temporary password change.");
+        }
+
+        writePassword(userAccountId, newPassword);
+    }
+
+    private void writePassword(int userAccountId, String newPassword) {
+        String salt = PasswordHasher.generateSalt();
+        String hash = PasswordHasher.hash(newPassword.trim(), salt);
+
+        userAccountRepository.updatePassword(userAccountId, hash, salt);
+    }
+
+    private void validateNewPassword(String newPassword) {
+        if (newPassword == null || newPassword.trim().isEmpty()) {
+            throw new ValidationException("New password is required.");
+        }
     }
 
     // applies a status mutation and audits the before/after status

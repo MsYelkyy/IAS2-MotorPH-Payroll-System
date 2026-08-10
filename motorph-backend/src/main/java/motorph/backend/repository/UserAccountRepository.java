@@ -261,6 +261,35 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return false;
     }
 
+    // installs a permanent password and clears any temporary-password state
+    public void updatePassword(int userAccountId, String hash, String salt) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        String sql = """
+                UPDATE user_account
+                SET password_hash = ?,
+                    password_salt = ?,
+                    must_change_password = 0,
+                    temporary_password_expires_at = NULL
+                WHERE user_account_id = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
+            stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
+            stmt.setInt(3, userAccountId);
+
+            if (stmt.executeUpdate() == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to update password.", e);
+        }
+    }
+
     // installs an IT-issued temporary password the user must replace on next login
     public void updateTemporaryPassword(int userAccountId, String hash, String salt, LocalDateTime expiresAt) {
         validatePositive(userAccountId, "User account ID must be positive.");

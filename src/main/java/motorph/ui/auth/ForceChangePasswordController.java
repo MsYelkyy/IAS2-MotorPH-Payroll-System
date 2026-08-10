@@ -1,8 +1,7 @@
 package motorph.ui.auth;
 
-import motorph.application.dto.login.LoginResultDTO;
-import motorph.application.service.UserAccountService;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.AuthApiClient;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
@@ -15,9 +14,9 @@ import javafx.scene.control.TextField;
 /** Handles forced password change when user logs in with a temporary password. */
 public class ForceChangePasswordController {
 
-    private UserAccountService userAccountService;
+    private AuthApiClient authApiClient;
     private LoginController loginController;
-    private LoginResultDTO pendingResult;
+    private String pendingChallengeId;
 
     private boolean newPasswordVisible     = false;
     private boolean confirmPasswordVisible = false;
@@ -34,7 +33,7 @@ public class ForceChangePasswordController {
 
     @FXML
     private void initialize() {
-        userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
+        authApiClient = ApiClientFactory.getInstance().getAuthApiClient();
     }
 
     // setters called by LoginController during wiring
@@ -42,9 +41,9 @@ public class ForceChangePasswordController {
         this.loginController = loginController;
     }
 
-    // stores the pending login result and resets the form
-    public void setPendingResult(LoginResultDTO result) {
-        this.pendingResult = result;
+    // stores the opaque challenge login issued for this forced change
+    public void setPendingChallenge(String challengeId) {
+        this.pendingChallengeId = challengeId;
         clearForm();
     }
 
@@ -53,7 +52,7 @@ public class ForceChangePasswordController {
     private void handleUpdatePassword() {
         UiMessageUtil.clearMessage(forceChangeMessageLabel);
 
-        if (pendingResult == null) {
+        if (pendingChallengeId == null) {
             UiMessageUtil.setError(forceChangeMessageLabel, "Session expired. Please sign in again.");
             return;
         }
@@ -67,13 +66,9 @@ public class ForceChangePasswordController {
                 : UiValidationUtil.getText(confirmPasswordField);
 
         try {
-            userAccountService.completeTemporaryPasswordChange(
-                    pendingResult.getUserAccountId(),
-                    newPassword,
-                    confirmPassword
-            );
+            authApiClient.completeTemporaryPassword(pendingChallengeId, newPassword, confirmPassword);
 
-            pendingResult = null;
+            pendingChallengeId = null;
 
             if (loginController != null) {
                 loginController.onForceChangePasswordComplete(
@@ -134,7 +129,7 @@ public class ForceChangePasswordController {
     // clears state and returns to the login card
     @FXML
     private void backToLogin() {
-        pendingResult = null;
+        pendingChallengeId = null;
         clearForm();
 
         if (loginController != null) {

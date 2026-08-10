@@ -1,5 +1,7 @@
 package motorph.api;
 
+import motorph.api.dto.auth.ChangePasswordRequest;
+import motorph.api.dto.auth.CompleteTemporaryPasswordRequest;
 import motorph.api.dto.auth.ForgotPasswordRequest;
 import motorph.api.dto.auth.LoginRequest;
 import motorph.api.dto.auth.LoginResponse;
@@ -44,6 +46,18 @@ public final class AuthApiClient {
     // here is not confirmation that the account exists
     public void forgotPassword(String companyEmail) {
         httpApiClient.postNoContent("/api/v1/auth/forgot-password", new ForgotPasswordRequest(companyEmail));
+    }
+
+    // finishes a forced temporary-password change; the challenge came from login
+    public void completeTemporaryPassword(String challengeId, String newPassword, String confirmPassword) {
+        httpApiClient.postNoContent("/api/v1/auth/complete-temporary-password",
+                new CompleteTemporaryPasswordRequest(challengeId, newPassword, confirmPassword));
+    }
+
+    // changes the signed-in user own password; the backend acts on the token holder
+    public void changePassword(String currentPassword, String newPassword) {
+        httpApiClient.postNoContent("/api/v1/auth/change-password",
+                new ChangePasswordRequest(currentPassword, newPassword));
     }
 
     // DB-loaded, for UI display only - never treat as an authorization source

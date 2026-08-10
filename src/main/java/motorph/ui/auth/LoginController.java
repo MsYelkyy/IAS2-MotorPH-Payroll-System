@@ -171,12 +171,10 @@ public class LoginController {
             LoginResponse response = authApiClient.login(email, password);
 
             if (response.temporaryPasswordChangeRequired()) {
-                // Temporary-password change is not yet migrated to the backend (Phase 1
-                // scope is login/OTP/token only) - the desktop can no longer complete this
-                // flow itself since it no longer talks to the database directly.
-                UiMessageUtil.setError(loginMessageLabel,
-                        "Temporary password detected. Password change is not yet available "
-                                + "in this preview - please contact your administrator.");
+                // login stops here on a temporary password; the challenge lets the
+                // change be completed server-side without a token or an account ID
+                forceChangeCardController.setPendingChallenge(response.challengeId());
+                showCard(forceChangeCard);
                 return;
             }
 

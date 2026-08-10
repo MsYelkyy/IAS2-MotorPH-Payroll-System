@@ -1,10 +1,9 @@
 package motorph.ui.employee;
 
-import motorph.application.service.UserAccountService;
 import motorph.api.ApiClientFactory;
+import motorph.api.AuthApiClient;
 import motorph.api.EmployeeApiClient;
 import motorph.api.dto.employee.EmployeeProfileDTO;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
@@ -18,7 +17,7 @@ import javafx.scene.control.TextField;
 /** Displays account info and handles self-service password changes for the employee. */
 public class EmployeeSettingsController {
 
-    private UserAccountService userAccountService;
+    private AuthApiClient authApiClient;
     private EmployeeApiClient employeeApiClient;
 
     @FXML
@@ -41,7 +40,7 @@ public class EmployeeSettingsController {
 
     @FXML
     private void initialize() {
-        userAccountService = EmployeeUIServiceFactory.getInstance().getUserAccountService();
+        authApiClient = ApiClientFactory.getInstance().getAuthApiClient();
         employeeApiClient  = ApiClientFactory.getInstance().getEmployeeApiClient();
     }
 
@@ -112,7 +111,7 @@ public class EmployeeSettingsController {
         }
 
         try {
-            userAccountService.changeOwnPassword(accountId, oldPassword, newPassword);
+            authApiClient.changePassword(oldPassword, newPassword);
             settingsOldPasswordField.clear();
             settingsNewPasswordField.clear();
             settingsConfirmPasswordField.clear();

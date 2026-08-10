@@ -4,6 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import motorph.backend.domain.UserAccount;
+import motorph.backend.domain.value.PermissionKey;
+import motorph.backend.dto.auth.ChangePasswordRequest;
+import motorph.backend.dto.auth.CompleteTemporaryPasswordRequest;
 import motorph.backend.dto.auth.ForgotPasswordRequest;
 import motorph.backend.dto.auth.LoginRequest;
 import motorph.backend.dto.auth.LoginResponse;
@@ -23,6 +26,8 @@ import motorph.backend.service.AuthenticationService;
 import motorph.backend.service.LoginAttemptOutcome;
 import motorph.backend.service.LoginChallengeService;
 import motorph.backend.service.PasswordResetService;
+import motorph.backend.service.PermissionService;
+import motorph.backend.service.UserAccountService;
 import motorph.backend.service.UserAccessLogService;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,6 +58,8 @@ public class AuthController {
     private final LoginRateLimiter loginRateLimiter;
     private final CurrentUserProvider currentUserProvider;
     private final PasswordResetService passwordResetService;
+    private final UserAccountService userAccountService;
+    private final PermissionService permissionService;
 
     public AuthController(AuthenticationService authenticationService,
                           LoginChallengeService loginChallengeService,
@@ -62,7 +69,9 @@ public class AuthController {
                           UserAccessLogService userAccessLogService,
                           LoginRateLimiter loginRateLimiter,
                           CurrentUserProvider currentUserProvider,
-                          PasswordResetService passwordResetService) {
+                          PasswordResetService passwordResetService,
+                          UserAccountService userAccountService,
+                          PermissionService permissionService) {
         this.authenticationService = authenticationService;
         this.loginChallengeService = loginChallengeService;
         this.tokenIssuanceService = tokenIssuanceService;
@@ -72,6 +81,8 @@ public class AuthController {
         this.loginRateLimiter = loginRateLimiter;
         this.currentUserProvider = currentUserProvider;
         this.passwordResetService = passwordResetService;
+        this.userAccountService = userAccountService;
+        this.permissionService = permissionService;
     }
 
     @PostMapping("/login")
@@ -82,7 +93,10 @@ public class AuthController {
         String maskedEmail = maskEmail(outcome.getCompanyEmail());
 
         if (outcome.getType() == LoginAttemptOutcome.Type.TEMPORARY_PASSWORD_CHANGE_REQUIRED) {
-            return new LoginResponse(null, maskedEmail, true, outcome.getMessage(), null);
+            // same opaque challenge the OTP step uses, so the client can finish the
+            // forced password change without ever being handed a user account ID
+            String changeChallengeId = loginChallengeService.issue(outcome.getUserAccountId());
+            return new LoginResponse(changeChallengeId, maskedEmail, true, outcome.getMessage(), null);
         }
 
         String challengeId = loginChallengeService.issue(outcome.getUserAccountId());
@@ -105,6 +119,31 @@ public class AuthController {
     public void forgotPassword(@RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
         passwordResetService.requestPasswordReset(request.companyEmail());
+    }
+
+    // public: reached before any token exists, since login stops at the temporary
+    // password. The account comes from the single-use challenge issued by /login,
+    // never from the request, and the service refuses accounts not awaiting a change
+    @PostMapping("/complete-temporary-password")
+    public void completeTemporaryPassword(@RequestBody CompleteTemporaryPasswordRequest request,
+                                          HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+
+        int userAccountId = loginChallengeService.resolveAndConsume(request.challengeId());
+
+        userAccountService.completeTemporaryPasswordChange(
+                userAccountId, request.newPassword(), request.confirmPassword());
+    }
+
+    // authenticated: acts only on the caller's own account, resolved from the token
+    @PostMapping("/change-password")
+    public void changePassword(@RequestBody ChangePasswordRequest request) {
+        permissionService.requirePermission(PermissionKey.CHANGE_OWN_PASSWORD);
+
+        userAccountService.changeOwnPassword(
+                currentUserProvider.getCurrentUserAccountId(),
+                request.currentPassword(),
+                request.newPassword());
     }
 
     @PostMapping("/refresh")
