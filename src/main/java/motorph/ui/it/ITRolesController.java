@@ -1,10 +1,10 @@
 package motorph.ui.it;
 
-import motorph.application.service.PermissionService;
-import motorph.domain.model.Permission;
+import motorph.api.ApiClientFactory;
+import motorph.api.RolePermissionApiClient;
+import motorph.api.dto.permission.PermissionDTO;
 import motorph.domain.value.PermissionKey;
 import motorph.domain.value.Role;
-import motorph.ui.factory.ITUIServiceFactory;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
@@ -29,11 +29,11 @@ import java.util.stream.Collectors;
  */
 public class ITRolesController {
 
-    private PermissionService permissionService;
+    private RolePermissionApiClient rolePermissionApiClient;
 
     // State
     private Role selectedRole;
-    private List<Permission> allPermissions = new ArrayList<>();
+    private List<PermissionDTO> allPermissions = new ArrayList<>();
     private final Map<PermissionKey, CheckBox> permissionChecks = new LinkedHashMap<>();
 
     // Role selector buttons
@@ -50,7 +50,7 @@ public class ITRolesController {
 
     @FXML
     private void initialize() {
-        permissionService = ITUIServiceFactory.getInstance().getPermissionService();
+        rolePermissionApiClient = ApiClientFactory.getInstance().getRolePermissionApiClient();
         loadAllPermissions();
         selectRole(Role.ADMIN, roleAdminBtn);
     }
@@ -92,7 +92,7 @@ public class ITRolesController {
     // Permission matrix
     private void loadAllPermissions() {
         try {
-            allPermissions = permissionService.getAllPermissions();
+            allPermissions = rolePermissionApiClient.getAllPermissions();
         } catch (Exception e) {
             UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
         }
@@ -102,32 +102,32 @@ public class ITRolesController {
         permissionMatrix.getChildren().clear();
         permissionChecks.clear();
 
-        Set<Permission> rolePermissions;
+        List<PermissionDTO> rolePermissions;
         try {
-            rolePermissions = permissionService.getPermissionsByRole(role);
+            rolePermissions = rolePermissionApiClient.getRolePermissions(role);
         } catch (Exception e) {
             UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
             return;
         }
 
         Set<String> grantedKeys = rolePermissions.stream()
-                .map(Permission::getPermissionKey)
+                .map(PermissionDTO::getPermissionKey)
                 .collect(Collectors.toSet());
 
         // Group by module
-        Map<String, List<Permission>> byModule = new LinkedHashMap<>();
-        for (Permission p : allPermissions) {
+        Map<String, List<PermissionDTO>> byModule = new LinkedHashMap<>();
+        for (PermissionDTO p : allPermissions) {
             String module = p.getModule() != null ? p.getModule() : "Other";
             byModule.computeIfAbsent(module, k -> new ArrayList<>()).add(p);
         }
 
-        for (Map.Entry<String, List<Permission>> entry : byModule.entrySet()) {
+        for (Map.Entry<String, List<PermissionDTO>> entry : byModule.entrySet()) {
             Label moduleHeader = new Label(entry.getKey().toUpperCase());
             moduleHeader.getStyleClass().add("field-label");
             moduleHeader.setStyle("-fx-padding: 8 0 4 0;");
             permissionMatrix.getChildren().add(moduleHeader);
 
-            for (Permission p : entry.getValue()) {
+            for (PermissionDTO p : entry.getValue()) {
                 boolean granted = grantedKeys.contains(p.getPermissionKey());
                 CheckBox cb = new CheckBox();
                 cb.setSelected(granted);
@@ -170,7 +170,7 @@ public class ITRolesController {
         }
 
         try {
-            permissionService.updateRolePermissions(selectedRole, selected);
+            rolePermissionApiClient.updateRolePermissions(selectedRole, selected);
             UiMessageUtil.setSuccess(moduleMessageLabel,
                     "Permissions saved for role: " + selectedRole.name());
             // Re-render to reflect saved state
