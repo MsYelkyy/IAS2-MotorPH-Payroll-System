@@ -1,15 +1,15 @@
 package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
-import motorph.application.service.PayrollService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
-import motorph.domain.model.Payrun;
-import motorph.domain.model.PayrollResult;
 import motorph.domain.model.UserAccessLog;
 import motorph.api.ApiClientFactory;
 import motorph.api.LeaveApiClient;
+import motorph.api.PayrunApiClient;
 import motorph.api.dto.leave.LeaveSummaryDTO;
+import motorph.api.dto.payroll.PayrollSummaryDTO;
+import motorph.api.dto.payroll.PayrunDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 
 import javafx.fxml.FXML;
@@ -39,7 +39,7 @@ public class AdminDashboardController {
 
     private EmployeeService      employeeService;
     private LeaveApiClient       leaveApiClient;
-    private PayrollService       payrollService;
+    private PayrunApiClient      payrunApiClient;
     private UserAccountService   userAccountService;
     private UserAccessLogService userAccessLogService;
 
@@ -72,7 +72,7 @@ public class AdminDashboardController {
     private void initialize() {
         employeeService      = EmployeeUIServiceFactory.getInstance().getEmployeeService();
         leaveApiClient       = ApiClientFactory.getInstance().getLeaveApiClient();
-        payrollService       = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        payrunApiClient      = ApiClientFactory.getInstance().getPayrunApiClient();
         userAccountService   = EmployeeUIServiceFactory.getInstance().getUserAccountService();
         userAccessLogService = EmployeeUIServiceFactory.getInstance().getUserAccessLogService();
     }
@@ -123,7 +123,7 @@ public class AdminDashboardController {
 
     private void refreshPayrollSummary() {
         try {
-            List<Payrun> payruns = payrollService.getAllPayruns();
+            List<PayrunDTO> payruns = payrunApiClient.getAllPayruns();
 
             if (payruns.isEmpty()) {
                 setText(latestPayrunPeriodLabel,    "No payrun yet");
@@ -133,15 +133,15 @@ public class AdminDashboardController {
                 return;
             }
 
-            Payrun latest = payruns.get(0);
+            PayrunDTO latest = payruns.get(0);
             String period = DATE_FMT.format(latest.getStartDate())
                     + " – " + DATE_FMT.format(latest.getEndDate());
             setText(latestPayrunPeriodLabel, period);
 
-            List<PayrollResult> results = payrollService.getPayrollResult(latest.getPayrunId());
+            List<PayrollSummaryDTO> results = payrunApiClient.getPayrollSummaries(latest.getPayrunId());
 
-            double totalGross = results.stream().mapToDouble(PayrollResult::getGrossPay).sum();
-            double totalNet   = results.stream().mapToDouble(PayrollResult::getNetPay).sum();
+            double totalGross = results.stream().mapToDouble(PayrollSummaryDTO::getGrossPay).sum();
+            double totalNet   = results.stream().mapToDouble(PayrollSummaryDTO::getNetPay).sum();
 
             setText(latestPayrunGrossPayLabel,  CURRENCY.format(totalGross));
             setText(latestPayrunNetPayLabel,    CURRENCY.format(totalNet));

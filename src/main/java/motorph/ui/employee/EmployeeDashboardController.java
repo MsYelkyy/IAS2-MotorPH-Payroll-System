@@ -1,15 +1,15 @@
 package motorph.ui.employee;
 
-import motorph.application.service.PayrollService;
-import motorph.domain.model.PayrollResult;
-import motorph.domain.model.Payrun;
+import motorph.api.dto.payroll.PayrunDTO;
+import motorph.api.dto.payroll.PayslipSummaryDTO;
 import motorph.domain.value.RequestStatus;
 import motorph.api.ApiClientFactory;
 import motorph.api.AttendanceApiClient;
 import motorph.api.LeaveApiClient;
+import motorph.api.PayrunApiClient;
+import motorph.api.PayslipApiClient;
 import motorph.api.dto.attendance.AttendanceDTO;
 import motorph.api.dto.leave.LeaveCreditRowDTO;
-import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
 
@@ -48,7 +48,8 @@ public class EmployeeDashboardController {
     private static final int ATTENDANCE_WINDOW_DAYS = 30;
 
     private LeaveApiClient leaveApiClient;
-    private PayrollService payrollService;
+    private PayslipApiClient payslipApiClient;
+    private PayrunApiClient payrunApiClient;
     private AttendanceApiClient attendanceApiClient;
     private Runnable onNavigateToPayslip;
 
@@ -78,9 +79,11 @@ public class EmployeeDashboardController {
 
     @FXML
     private void initialize() {
-        payrollService      = EmployeeUIServiceFactory.getInstance().getPayrollService();
-        leaveApiClient      = ApiClientFactory.getInstance().getLeaveApiClient();
-        attendanceApiClient = ApiClientFactory.getInstance().getAttendanceApiClient();
+        ApiClientFactory factory = ApiClientFactory.getInstance();
+        payslipApiClient    = factory.getPayslipApiClient();
+        payrunApiClient      = factory.getPayrunApiClient();
+        leaveApiClient      = factory.getLeaveApiClient();
+        attendanceApiClient = factory.getAttendanceApiClient();
     }
 
     // stores a callback invoked when the user clicks "View Payslip"
@@ -100,11 +103,11 @@ public class EmployeeDashboardController {
         refreshWidget("pending requests", this::refreshPendingRequests);
         refreshWidget("leave credits", this::refreshLeaveCredits);
         refreshWidget("attendance metrics", () -> refreshAttendanceMetrics(employeeId));
-        refreshWidget("payroll trend chart", () -> refreshPayrollTrendChart(employeeId));
-        refreshWidget("earnings breakdown chart", () -> refreshEarningsBreakdownChart(employeeId));
+        refreshWidget("payroll trend chart", this::refreshPayrollTrendChart);
+        refreshWidget("earnings breakdown chart", this::refreshEarningsBreakdownChart);
         refreshWidget("attendance summary chart", () -> refreshAttendanceSummaryChart(employeeId));
         refreshWidget("leave summary", () -> refreshLeaveSummary(employeeId));
-        refreshWidget("bottom cards", () -> refreshBottomCards(employeeId));
+        refreshWidget("bottom cards", this::refreshBottomCards);
     }
 
     // runs a single widget refresh, logging any failure instead of swallowing it
@@ -126,7 +129,7 @@ public class EmployeeDashboardController {
             return;
         }
         try {
-            Optional<PayrollResult> latest = latestResult(employeeId);
+            Optional<PayslipSummaryDTO> latest = latestResult();
             setText(dashboardNetPayLabel,
                     latest.map(r -> UiFormatter.formatPeso(r.getNetPay())).orElse("PHP 0.00"));
         } catch (Throwable t) {
@@ -199,17 +202,17 @@ public class EmployeeDashboardController {
     // ----- Charts -----
 
     // plots net pay across the employee's payroll history, oldest to newest
-    private void refreshPayrollTrendChart(int employeeId) {
+    private void refreshPayrollTrendChart() {
         if (payrollTrendChart == null) return;
         try {
-            List<PayrollResult> results = payrollService.getPayrollResultsByEmployee(employeeId).stream()
-                    .sorted(Comparator.comparing(PayrollResult::getGeneratedAt))
+            List<PayslipSummaryDTO> results = payslipApiClient.getOwnPayslips().stream()
+                    .sorted(Comparator.comparing(PayslipSummaryDTO::getPeriodStart))
                     .toList();
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Net Pay (PHP)");
-            for (PayrollResult r : results) {
-                addPoint(series, periodLabelForResult(r), r.getNetPay());
+            for (PayslipSummaryDTO r : results) {
+                addPoint(series, PERIOD_FMT.format(r.getPeriodEnd()), r.getNetPay());
             }
             payrollTrendChart.getData().setAll(List.of(series));
         } catch (Exception e) {
@@ -218,16 +221,16 @@ public class EmployeeDashboardController {
     }
 
     // plots gross / deductions / net for the latest payroll result
-    private void refreshEarningsBreakdownChart(int employeeId) {
+    private void refreshEarningsBreakdownChart() {
         if (earningsBreakdownChart == null) return;
         try {
-            Optional<PayrollResult> latest = latestResult(employeeId);
+            Optional<PayslipSummaryDTO> latest = latestResult();
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Amount (PHP)");
             if (latest.isPresent()) {
-                PayrollResult r = latest.get();
+                PayslipSummaryDTO r = latest.get();
                 addPoint(series, "Gross Pay",  r.getGrossPay());
-                addPoint(series, "Deductions", r.getTotalDeductions());
+                addPoint(series, "Deductions", r.getDeductions());
                 addPoint(series, "Net Pay",    r.getNetPay());
             }
             earningsBreakdownChart.getData().setAll(List.of(series));
@@ -313,25 +316,25 @@ public class EmployeeDashboardController {
     // ----- Bottom cards -----
 
     // populates upcoming payday, recent payslip period, and payroll status from real payrun/result data
-    private void refreshBottomCards(int employeeId) {
-        List<Payrun> payruns;
+    private void refreshBottomCards() {
+        List<PayrunDTO> payruns;
         try {
-            payruns = payrollService.getAllPayruns();
+            payruns = payrunApiClient.getAllPayruns();
         } catch (Exception e) {
             payruns = List.of();
         }
 
         refreshUpcomingPayday(payruns);
-        refreshRecentPayslipAndStatus(employeeId, payruns);
+        refreshRecentPayslipAndStatus(payruns);
     }
 
     // shows the nearest future pay date from the payrun table
-    private void refreshUpcomingPayday(List<Payrun> payruns) {
+    private void refreshUpcomingPayday(List<PayrunDTO> payruns) {
         try {
             LocalDate today = LocalDate.now();
-            Optional<Payrun> next = payruns.stream()
+            Optional<PayrunDTO> next = payruns.stream()
                     .filter(p -> p.getPayDate() != null && !p.getPayDate().isBefore(today))
-                    .min(Comparator.comparing(Payrun::getPayDate));
+                    .min(Comparator.comparing(PayrunDTO::getPayDate));
 
             if (next.isEmpty()) {
                 setText(upcomingPaydayLabel, "No scheduled payday");
@@ -351,10 +354,10 @@ public class EmployeeDashboardController {
     }
 
     // shows the latest payslip period and derives payroll status for the latest payrun
-    private void refreshRecentPayslipAndStatus(int employeeId, List<Payrun> payruns) {
-        Optional<PayrollResult> latest = Optional.empty();
+    private void refreshRecentPayslipAndStatus(List<PayrunDTO> payruns) {
+        Optional<PayslipSummaryDTO> latest = Optional.empty();
         try {
-            latest = latestResult(employeeId);
+            latest = latestResult();
         } catch (Exception e) {
             // leaves latest empty so the labels fall back to placeholders
             logger.log(Level.FINE, "Could not load latest payroll result", e);
@@ -362,12 +365,7 @@ public class EmployeeDashboardController {
 
         // Recent payslip period label
         if (latest.isPresent()) {
-            try {
-                Payrun payrun = payrollService.getPayrun(latest.get().getPayrunId());
-                setText(recentPayslipPeriodLabel, periodLabel(payrun));
-            } catch (Exception e) {
-                setText(recentPayslipPeriodLabel, "Latest payslip");
-            }
+            setText(recentPayslipPeriodLabel, periodLabel(latest.get().getPeriodStart(), latest.get().getPeriodEnd()));
         } else {
             setText(recentPayslipPeriodLabel, "No payslip yet");
         }
@@ -379,8 +377,8 @@ public class EmployeeDashboardController {
             return;
         }
 
-        Payrun latestPayrun = payruns.stream()
-                .max(Comparator.comparing(Payrun::getEndDate))
+        PayrunDTO latestPayrun = payruns.stream()
+                .max(Comparator.comparing(PayrunDTO::getEndDate))
                 .orElse(null);
 
         if (latestPayrun == null) {
@@ -389,18 +387,16 @@ public class EmployeeDashboardController {
             return;
         }
 
-        boolean processed = latest.isPresent()
-                && latestPayrun.getPayrunId() != null
-                && latest.get().getPayrunId() == latestPayrun.getPayrunId();
+        boolean processed = latest.isPresent() && latest.get().getPayrunId() == latestPayrun.getPayrunId();
 
         if (processed) {
             setText(payrollStatusLabel, "Processed");
             setText(payrollStatusDetailLabel,
-                    "Your payroll for " + periodLabel(latestPayrun) + " has been processed.");
+                    "Your payroll for " + periodLabel(latestPayrun.getStartDate(), latestPayrun.getEndDate()) + " has been processed.");
         } else {
             setText(payrollStatusLabel, "Pending");
             setText(payrollStatusDetailLabel,
-                    "Your payroll for " + periodLabel(latestPayrun) + " is still being processed.");
+                    "Your payroll for " + periodLabel(latestPayrun.getStartDate(), latestPayrun.getEndDate()) + " is still being processed.");
         }
     }
 
@@ -411,32 +407,19 @@ public class EmployeeDashboardController {
 
     // ----- Helpers -----
 
-    // returns the latest payroll result for the employee, by generation time
-    private Optional<PayrollResult> latestResult(int employeeId) {
-        return payrollService.getPayrollResultsByEmployee(employeeId).stream()
-                .max(Comparator.comparing(PayrollResult::getGeneratedAt));
+    // returns the latest payroll result for the current employee - the backend
+    // already returns the caller's own payslips sorted newest-first
+    private Optional<PayslipSummaryDTO> latestResult() {
+        List<PayslipSummaryDTO> own = payslipApiClient.getOwnPayslips();
+        return own.isEmpty() ? Optional.empty() : Optional.of(own.get(0));
     }
 
-    // "May 16 – May 31, 2026" for a payrun period
-    private String periodLabel(Payrun payrun) {
-        if (payrun == null || payrun.getStartDate() == null || payrun.getEndDate() == null) {
+    // "May 16 – May 31, 2026" for a payroll period
+    private String periodLabel(LocalDate start, LocalDate end) {
+        if (start == null || end == null) {
             return "—";
         }
-        return PERIOD_FMT.format(payrun.getStartDate()) + " – " + PERIOD_FMT_YEAR.format(payrun.getEndDate());
-    }
-
-    // short period label for a result's payrun, used as a chart category; falls back to generation date
-    private String periodLabelForResult(PayrollResult result) {
-        try {
-            Payrun payrun = payrollService.getPayrun(result.getPayrunId());
-            if (payrun != null && payrun.getEndDate() != null) {
-                return PERIOD_FMT.format(payrun.getEndDate());
-            }
-        } catch (Exception e) {
-            // falls back to the generation date below
-            logger.log(Level.FINE, "Could not resolve payrun period for chart label", e);
-        }
-        return result.getGeneratedAt().toLocalDate().format(PERIOD_FMT);
+        return PERIOD_FMT.format(start) + " – " + PERIOD_FMT_YEAR.format(end);
     }
 
     // "Jun 15" for attendance summary categories

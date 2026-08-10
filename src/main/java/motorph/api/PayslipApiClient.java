@@ -1,5 +1,6 @@
 package motorph.api;
 
+import motorph.api.dto.payroll.PayslipReportDTO;
 import motorph.api.dto.payroll.PayslipSummaryDTO;
 
 import java.util.List;
@@ -18,6 +19,12 @@ public final class PayslipApiClient {
     // the caller's own payroll history
     public List<PayslipSummaryDTO> getOwnPayslips() {
         return httpApiClient.getList("/api/v1/payslips", PayslipSummaryDTO.class);
+    }
+
+    // the full payslip breakdown for one employee/payrun - the backend decides
+    // self-view vs. VIEW_PAYSLIP-permitted access server-side
+    public PayslipReportDTO getPayslipReport(int employeeId, int payrunId) {
+        return httpApiClient.get("/api/v1/payslips/" + employeeId + "/" + payrunId, PayslipReportDTO.class);
     }
 
     // the rendered payslip PDF as bytes - the backend decides self-view vs.

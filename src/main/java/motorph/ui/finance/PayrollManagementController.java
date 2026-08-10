@@ -1,18 +1,21 @@
 package motorph.ui.finance;
 
-import motorph.application.dto.payroll.CompletedPayrunSummaryDTO;
-import motorph.application.dto.payroll.PayrollPreviewDTO;
-import motorph.application.dto.payroll.PayrollSummaryDTO;
-import motorph.application.dto.payroll.PayrunCreateDTO;
-import motorph.application.dto.payroll.PayrunReadinessDTO;
-import motorph.application.dto.payroll.PayslipDTO;
-import motorph.application.dto.payroll.PendingPayrunSummaryDTO;
-import motorph.application.service.PayrollService;
-import motorph.application.service.report.PayrollReportService;
-import motorph.domain.model.Payrun;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.PayrunApiClient;
+import motorph.api.PayslipApiClient;
+import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.api.dto.employee.GovernmentDetailsDTO;
+import motorph.api.dto.payroll.CompletedPayrunSummaryDTO;
+import motorph.api.dto.payroll.PayrollPreviewDTO;
+import motorph.api.dto.payroll.PayrollSummaryDTO;
+import motorph.api.dto.payroll.PayrunCreateRequest;
+import motorph.api.dto.payroll.PayrunDTO;
+import motorph.api.dto.payroll.PayrunReadinessDTO;
+import motorph.api.dto.payroll.PayslipReportDTO;
+import motorph.api.dto.payroll.PendingPayrunSummaryDTO;
 import motorph.domain.value.PayrollType;
 import motorph.domain.value.ReadinessStatus;
-import motorph.ui.factory.FinanceUIServiceFactory;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
@@ -42,24 +45,31 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.StringConverter;
 
+import java.awt.Desktop;
+import java.io.File;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Manages the shared payroll management module owned by Finance and reused by Admin. */
 public class PayrollManagementController {
 
+    private static final Logger LOG = Logger.getLogger(PayrollManagementController.class.getName());
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final String FORM_PANEL_CLASS = "payrun-form-active";
     private static final String FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.46);";
 
-    private PayrollService payrollService;
-    private PayrollReportService payrollReportService;
+    private PayrunApiClient payrunApiClient;
+    private PayslipApiClient payslipApiClient;
+    private EmployeeApiClient employeeApiClient;
 
-    private Payrun selectedPayrun;
+    private PayrunDTO selectedPayrun;
     private List<PayrollSummaryDTO> selectedPayrunSummaries;
-    private PayslipDTO currentPayslip;
+    private PayslipReportDTO currentPayslip;
     private Panel lastDetailPanel = Panel.LANDING;
 
     private final ObservableList<PendingPayrunSummaryDTO> pendingItems = FXCollections.observableArrayList();
@@ -176,9 +186,10 @@ public class PayrollManagementController {
 
     @FXML
     private void initialize() {
-        FinanceUIServiceFactory factory = FinanceUIServiceFactory.getInstance();
-        payrollService = factory.getPayrollService();
-        payrollReportService = factory.getPayrollReportService();
+        ApiClientFactory factory = ApiClientFactory.getInstance();
+        payrunApiClient = factory.getPayrunApiClient();
+        payslipApiClient = factory.getPayslipApiClient();
+        employeeApiClient = factory.getEmployeeApiClient();
 
         payrunTypeCombo.getItems().setAll(PayrollType.values());
         payrunTypeCombo.setConverter(new StringConverter<>() {
@@ -261,7 +272,7 @@ public class PayrollManagementController {
         Optional<ButtonType> res = confirm.showAndWait();
         if (res.isPresent() && res.get() == ButtonType.YES) {
             try {
-                int generated = payrollService.generatePayrollForReadyEmployees(selectedPayrun.getPayrunId());
+                int generated = payrunApiClient.generatePayroll(selectedPayrun.getPayrunId());
                 showCompletedDetail(selectedPayrun);
                 UiMessageUtil.showToast(toastRoot, "Payroll generated for " + generated + " employee(s).");
             } catch (Exception e) {
@@ -308,8 +319,7 @@ public class PayrollManagementController {
 
         PayrollPreviewDTO preview;
         try {
-            preview = payrollService.previewPayrollForEmployee(
-                    row.getEmployeeId(), selectedPayrun.getPayrunId());
+            preview = payrunApiClient.previewPayrollForEmployee(selectedPayrun.getPayrunId(), row.getEmployeeId());
         } catch (Exception e) {
             setMessage("Failed to compute preview: " + e.getMessage());
             return;
@@ -353,11 +363,22 @@ public class PayrollManagementController {
         printPayslip(currentPayslip.getEmployeeId(), selectedPayrun.getPayrunId());
     }
 
-    // opens the Jasper payslip preview for a generated payslip
+    // downloads the payslip PDF and opens it in the OS's default PDF viewer -
+    // there is no in-app Jasper preview window anymore now that generation
+    // happens server-side
     private void printPayslip(int employeeId, int payrunId) {
         try {
-            payrollReportService.previewPayslipReport(employeeId, payrunId);
+            byte[] pdf = payslipApiClient.getPayslipPdf(employeeId, payrunId);
+
+            File tempFile = File.createTempFile("payslip-" + employeeId + "-" + payrunId + "-", ".pdf");
+            tempFile.deleteOnExit();
+            Files.write(tempFile.toPath(), pdf);
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            }
         } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to open payslip PDF", e);
             setMessage("Failed to open payslip: " + e.getMessage());
         }
     }
@@ -398,12 +419,12 @@ public class PayrollManagementController {
         }
 
         try {
-            PayrunCreateDTO dto = new PayrunCreateDTO(
+            PayrunCreateRequest request = new PayrunCreateRequest(
                     payrunStartDatePicker.getValue(),
                     payrunEndDatePicker.getValue(),
                     payrunPayDatePicker.getValue(),
                     payrunTypeCombo.getValue());
-            Payrun created = payrollService.createPayrun(dto);
+            PayrunDTO created = payrunApiClient.createPayrun(request);
             hideNewPayrunForm();
             setMessage("Payrun created.");
             showPendingDetail(created);
@@ -443,8 +464,8 @@ public class PayrollManagementController {
 
     private void showLanding() {
         try {
-            pendingItems.setAll(payrollService.getPendingPayruns());
-            completedItems.setAll(payrollService.getCompletedPayruns());
+            pendingItems.setAll(payrunApiClient.getPendingPayruns());
+            completedItems.setAll(payrunApiClient.getCompletedPayruns());
             updateLandingCards();
         } catch (Exception e) {
             setMessage("Failed to load payroll dates: " + e.getMessage());
@@ -452,13 +473,13 @@ public class PayrollManagementController {
         showPanel(Panel.LANDING);
     }
 
-    private void showPendingDetail(Payrun payrun) {
+    private void showPendingDetail(PayrunDTO payrun) {
         if (payrun == null) return;
         selectedPayrun = payrun;
 
         try {
             PendingPayrunSummaryDTO summary = findPendingSummary(payrun.getPayrunId());
-            List<PayrunReadinessDTO> rows = payrollService.getPayrunReadiness(payrun.getPayrunId());
+            List<PayrunReadinessDTO> rows = payrunApiClient.getPayrunReadiness(payrun.getPayrunId());
             int total = summary != null ? summary.getTotalEmployees() : rows.size();
             int ready = summary != null ? summary.getReadyEmployees() : countReadiness(rows, ReadinessStatus.READY);
             int incomplete = summary != null ? summary.getIncompleteEmployees() : countReadiness(rows, ReadinessStatus.INCOMPLETE);
@@ -479,13 +500,13 @@ public class PayrollManagementController {
         showPanel(Panel.PENDING_DETAIL);
     }
 
-    private void showCompletedDetail(Payrun payrun) {
+    private void showCompletedDetail(PayrunDTO payrun) {
         if (payrun == null) return;
         selectedPayrun = payrun;
         clearResultFilters();
 
         try {
-            selectedPayrunSummaries = payrollService.getPayrollSummaries(payrun.getPayrunId());
+            selectedPayrunSummaries = payrunApiClient.getPayrollSummaries(payrun.getPayrunId());
 
             double gross = selectedPayrunSummaries.stream().mapToDouble(PayrollSummaryDTO::getGrossPay).sum();
             double deductions = selectedPayrunSummaries.stream().mapToDouble(PayrollSummaryDTO::getTotalDeductions).sum();
@@ -509,12 +530,12 @@ public class PayrollManagementController {
 
     private void showPayslipDetail(PayrollSummaryDTO summary) {
         try {
-            currentPayslip = payrollService.buildPayslip(summary.getEmployeeId(), summary.getPayrunId());
+            currentPayslip = payslipApiClient.getPayslipReport(summary.getEmployeeId(), summary.getPayrunId());
             populatePayslip(currentPayslip);
-            detailTitleLabel.setText("Payslip - " + currentPayslip.getFullName());
+            detailTitleLabel.setText("Payslip - " + currentPayslip.getEmployeeName());
             detailSubtitleLabel.setText("Pay Period: "
-                    + currentPayslip.getPeriodStart().format(DATE_FMT)
-                    + " - " + currentPayslip.getPeriodEnd().format(DATE_FMT));
+                    + currentPayslip.getStartDate().format(DATE_FMT)
+                    + " - " + currentPayslip.getEndDate().format(DATE_FMT));
             showPanel(Panel.PAYSLIP_DETAIL);
         } catch (Exception e) {
             setMessage("Failed to load payslip: " + e.getMessage());
@@ -550,13 +571,13 @@ public class PayrollManagementController {
                 .count();
     }
 
-    private Payrun toPayrun(PendingPayrunSummaryDTO dto) {
-        return new Payrun(dto.getPayrunId(), dto.getStartDate(), dto.getEndDate(),
+    private PayrunDTO toPayrun(PendingPayrunSummaryDTO dto) {
+        return new PayrunDTO(dto.getPayrunId(), dto.getStartDate(), dto.getEndDate(),
                 dto.getPayDate(), dto.getPayrollType());
     }
 
-    private Payrun toPayrun(CompletedPayrunSummaryDTO dto) {
-        return new Payrun(dto.getPayrunId(), dto.getStartDate(), dto.getEndDate(),
+    private PayrunDTO toPayrun(CompletedPayrunSummaryDTO dto) {
+        return new PayrunDTO(dto.getPayrunId(), dto.getStartDate(), dto.getEndDate(),
                 dto.getPayDate(), dto.getPayrollType());
     }
 
@@ -657,7 +678,7 @@ public class PayrollManagementController {
         readyHoursColumn.setCellValueFactory(d -> new SimpleObjectProperty<>(d.getValue().getTotalHours()));
         readyHoursColumn.setCellFactory(c -> hoursCell());
         readyAttendanceColumn.setCellValueFactory(d ->
-                new SimpleStringProperty(d.getValue().getStatus().label()));
+                new SimpleStringProperty(readinessLabel(d.getValue().getStatus())));
         readyAttendanceColumn.setCellFactory(c -> attendanceBadgeCell());
 
         readyActionColumn.setSortable(false);
@@ -827,6 +848,15 @@ public class PayrollManagementController {
         };
     }
 
+    private String readinessLabel(ReadinessStatus status) {
+        if (status == null) return "";
+        return switch (status) {
+            case READY -> "Ready";
+            case INCOMPLETE -> "Incomplete";
+            case NO_ATTENDANCE -> "No Attendance";
+        };
+    }
+
     // ── Filters (completed detail) ────────────────────────────────────
 
     private void setupFilters() {
@@ -855,7 +885,7 @@ public class PayrollManagementController {
 
     // ── Formatting helpers ────────────────────────────────────────────
 
-    private String formatPeriod(Payrun payrun) {
+    private String formatPeriod(PayrunDTO payrun) {
         return formatPeriod(payrun.getStartDate(), payrun.getEndDate());
     }
 
@@ -904,31 +934,58 @@ public class PayrollManagementController {
 
     // ── Payslip population / text ─────────────────────────────────────
 
-    private void populatePayslip(PayslipDTO payslip) {
-        slipNameLabel.setText(payslip.getFullName());
-        slipPositionLabel.setText(payslip.getPosition());
-        slipSuperLabel.setText("Supervisor: " + payslip.getSupervisor());
-        slipPeriodLabel.setText(payslip.getPeriodStart().format(DATE_FMT)
-                + " - " + payslip.getPeriodEnd().format(DATE_FMT));
-        slipPayDateLabel.setText("Pay Date: " + payslip.getPayrollDate().format(DATE_FMT));
-        slipSssLabel.setText("SSS: " + payslip.getSssNumber());
-        slipPhilhLabel.setText("PhilHealth: " + payslip.getPhilhealthNumber());
-        slipPagibigLabel.setText("Pag-IBIG: " + payslip.getPagibigNumber());
-        slipTinLabel.setText("TIN: " + payslip.getTinNumber());
+    private void populatePayslip(PayslipReportDTO payslip) {
+        slipNameLabel.setText(payslip.getEmployeeName());
+        slipPositionLabel.setText(payslip.getPositionName());
+        slipSuperLabel.setText("Supervisor: " + resolveSupervisorName(payslip.getEmployeeId()));
+        slipPeriodLabel.setText(payslip.getStartDate().format(DATE_FMT)
+                + " - " + payslip.getEndDate().format(DATE_FMT));
+        slipPayDateLabel.setText("Pay Date: " + payslip.getPayDate().format(DATE_FMT));
+
+        GovernmentDetailsDTO govt = resolveGovernmentDetails(payslip.getEmployeeId());
+        slipSssLabel.setText("SSS: " + safe(govt == null ? null : govt.getSssNumber()));
+        slipPhilhLabel.setText("PhilHealth: " + safe(govt == null ? null : govt.getPhilhealthNumber()));
+        slipPagibigLabel.setText("Pag-IBIG: " + safe(govt == null ? null : govt.getPagibigNumber()));
+        slipTinLabel.setText("TIN: " + safe(govt == null ? null : govt.getTinNumber()));
 
         slipBasicPayLabel.setText(UiFormatter.formatPeso(payslip.getBasicPay()));
         slipRiceLabel.setText(UiFormatter.formatPeso(payslip.getRiceSubsidy()));
         slipPhoneLabel.setText(UiFormatter.formatPeso(payslip.getPhoneAllowance()));
         slipClothingLabel.setText(UiFormatter.formatPeso(payslip.getClothingAllowance()));
-        slipTotalCompLabel.setText(UiFormatter.formatPeso(payslip.getTotalCompensation()));
+        slipTotalCompLabel.setText(UiFormatter.formatPeso(
+                payslip.getBasicPay() + payslip.getOvertimePay() + payslip.getTotalBenefits()));
 
         slipSssDedLabel.setText(UiFormatter.formatPeso(payslip.getSssDeduction()));
         slipPhDedLabel.setText(UiFormatter.formatPeso(payslip.getPhilhealthDeduction()));
         slipPagibigDedLabel.setText(UiFormatter.formatPeso(payslip.getPagibigDeduction()));
-        slipTaxDedLabel.setText(UiFormatter.formatPeso(payslip.getTaxDeduction()));
-        slipLateDedLabel.setText(UiFormatter.formatPeso(payslip.getLateDeduction()));
-        slipUndertimeDedLabel.setText(UiFormatter.formatPeso(payslip.getUndertimeDeduction()));
+        slipTaxDedLabel.setText(UiFormatter.formatPeso(payslip.getWithholdingTax()));
+        slipLateDedLabel.setText(UiFormatter.formatPeso(payslip.getOtherDeductions()));
+        slipUndertimeDedLabel.setText("—");
         slipTotalDedLabel.setText(UiFormatter.formatPeso(payslip.getTotalDeductions()));
         slipNetPayLabel.setText(UiFormatter.formatPeso(payslip.getNetPay()));
+    }
+
+    // resolves the employee's supervisor name for display; falls back on error
+    private String resolveSupervisorName(int employeeId) {
+        try {
+            EmployeeProfileDTO profile = employeeApiClient.getEmployee(employeeId);
+            return profile != null && profile.getSupervisorName() != null ? profile.getSupervisorName() : "—";
+        } catch (Exception e) {
+            return "—";
+        }
+    }
+
+    // resolves government ID numbers for display; falls back to null on error
+    // (e.g. the caller's role lacks VIEW_EMPLOYEE) so the payslip still renders
+    private GovernmentDetailsDTO resolveGovernmentDetails(int employeeId) {
+        try {
+            return employeeApiClient.getGovernmentDetails(employeeId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String safe(String value) {
+        return value == null || value.isBlank() ? "—" : value;
     }
 }

@@ -1,15 +1,14 @@
 package motorph.ui.reports;
 
 import motorph.application.exception.ValidationException;
-import motorph.application.service.PayrollService;
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
+import motorph.api.PayrunApiClient;
 import motorph.api.PayslipApiClient;
 import motorph.api.ReportApiClient;
 import motorph.api.dto.employee.DepartmentDTO;
 import motorph.api.dto.employee.EmployeeSummaryDTO;
-import motorph.domain.model.Payrun;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.dto.payroll.PayrunDTO;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiMessageUtil;
 
@@ -82,7 +81,7 @@ public class ReportsController {
 
     // Payrun filter
     @FXML private VBox payrunRow;
-    @FXML private ComboBox<Payrun> payrunCombo;
+    @FXML private ComboBox<PayrunDTO> payrunCombo;
 
     // Attendance status filter
     @FXML private VBox statusRow;
@@ -116,23 +115,21 @@ public class ReportsController {
 
     // --- Services / API clients --------------------------------------------
 
-    // payrun listing stays on the legacy path - PayrollService (beyond payslip
-    // viewing) has not migrated to the backend yet
-    private PayrollService payrollService;
+    private PayrunApiClient payrunApiClient;
     private EmployeeApiClient employeeApiClient;
     private ReportApiClient reportApiClient;
     private PayslipApiClient payslipApiClient;
 
     // Latest payrun with results; resolved once on init, used for "Latest Available".
-    private Payrun latestPayrun;
+    private PayrunDTO latestPayrun;
     // All payruns with results (DESC by start_date)
-    private List<Payrun> allPayrunsWithResults;
+    private List<PayrunDTO> allPayrunsWithResults;
 
     // --- Lifecycle --------------------------------------------------------
 
     @FXML
     private void initialize() {
-        payrollService = EmployeeUIServiceFactory.getInstance().getPayrollService();
+        payrunApiClient = ApiClientFactory.getInstance().getPayrunApiClient();
 
         ApiClientFactory apiClientFactory = ApiClientFactory.getInstance();
         employeeApiClient = apiClientFactory.getEmployeeApiClient();
@@ -164,7 +161,7 @@ public class ReportsController {
 
     private void loadPayrunCache() {
         try {
-            allPayrunsWithResults = payrollService.getPayrunsWithPayrollData();
+            allPayrunsWithResults = payrunApiClient.getPayrunsWithPayrollData();
             latestPayrun = (allPayrunsWithResults != null && !allPayrunsWithResults.isEmpty())
                     ? allPayrunsWithResults.get(0)
                     : null;
@@ -221,17 +218,17 @@ public class ReportsController {
 
     private void setupPayrunCombo() {
         payrunCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(Payrun p) {
+            @Override public String toString(PayrunDTO p) {
                 if (p == null) return "Any Payrun";
                 return DATE_FMT.format(p.getStartDate())
                         + " – " + DATE_FMT.format(p.getEndDate())
                         + "  (Pay date: " + DATE_FMT.format(p.getPayDate()) + ")";
             }
-            @Override public Payrun fromString(String s) { return null; }
+            @Override public PayrunDTO fromString(String s) { return null; }
         });
 
         try {
-            List<Payrun> payruns = payrollService.getPayrunsWithPayrollData();
+            List<PayrunDTO> payruns = payrunApiClient.getPayrunsWithPayrollData();
             payrunCombo.getItems().add(null);
             payrunCombo.getItems().addAll(payruns);
         } catch (Exception ex) {
@@ -523,7 +520,7 @@ public class ReportsController {
         // DR_LATEST
         if (isPayrollReport(type)) {
             // Prefer selected payrun; fall back to latest payrun with results
-            Payrun ref = payrunCombo.getValue();
+            PayrunDTO ref = payrunCombo.getValue();
             if (ref == null) ref = latestPayrun;
             if (ref != null) {
                 return new LocalDate[]{ ref.getStartDate(), ref.getEndDate() };
@@ -803,7 +800,7 @@ public class ReportsController {
     }
 
     private int requirePayrun() {
-        Payrun p = payrunCombo.getValue();
+        PayrunDTO p = payrunCombo.getValue();
         if (p == null) throw new ValidationException("Please select a payrun.");
         return p.getPayrunId();
     }
@@ -825,7 +822,7 @@ public class ReportsController {
     }
 
     private Integer selectedPayrunId() {
-        Payrun p = payrunCombo.getValue();
+        PayrunDTO p = payrunCombo.getValue();
         return p == null ? null : p.getPayrunId();
     }
 

@@ -1,9 +1,6 @@
 package motorph.ui.factory;
 
-import motorph.application.service.AttendanceService;
 import motorph.application.service.EmployeeService;
-import motorph.application.service.LeaveService;
-import motorph.application.service.OvertimeService;
 
 /** Provides HR-role services to HR UI controllers. Delegates to the shared factory. */
 public final class HrUIServiceFactory {
@@ -11,16 +8,10 @@ public final class HrUIServiceFactory {
     private static HrUIServiceFactory instance;
 
     private final EmployeeService employeeService;
-    private final LeaveService leaveService;
-    private final AttendanceService attendanceService;
-    private final OvertimeService overtimeService;
 
     // constructors
     private HrUIServiceFactory(EmployeeUIServiceFactory shared) {
         this.employeeService   = shared.getEmployeeService();
-        this.leaveService      = shared.getLeaveService();
-        this.attendanceService = shared.getAttendanceService();
-        this.overtimeService   = shared.getOvertimeService();
     }
 
     // initializes the singleton from the shared factory; must be called after EmployeeUIServiceFactory.initialize()
@@ -41,17 +32,5 @@ public final class HrUIServiceFactory {
     // getters
     public EmployeeService getEmployeeService() {
         return employeeService;
-    }
-
-    public LeaveService getLeaveService() {
-        return leaveService;
-    }
-
-    public AttendanceService getAttendanceService() {
-        return attendanceService;
-    }
-
-    public OvertimeService getOvertimeService() {
-        return overtimeService;
     }
 }

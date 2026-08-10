@@ -101,27 +101,20 @@ class RequestTest {
     void getRequestTypeShouldResolveToConcreteSubclass() {
         logger.info("Testing getRequestType resolves polymorphically.");
 
-        Request overtimeRequest = createPendingRequest();
-        Request leaveRequest = new LeaveRequest(
-                1, 10001, 1,
-                LocalDate.of(2025, 6, 10),
-                LocalDate.of(2025, 6, 10),
-                8.0, "Family emergency",
-                LocalDateTime.of(2025, 6, 9, 9, 0)
-        );
+        Request leaveRequest = createPendingRequest();
 
-        assertEquals(RequestType.OVERTIME, overtimeRequest.getRequestType());
         assertEquals(RequestType.LEAVE, leaveRequest.getRequestType());
     }
 
 
     // creates a pending request via a concrete subclass
     private Request createPendingRequest() {
-        return new OvertimeRequest(
-                1, 10001, 1, 1,
+        return new LeaveRequest(
+                1, 10001, 1,
                 LocalDate.of(2025, 6, 10),
-                2.0, "Project deadline",
-                LocalDateTime.of(2025, 6, 10, 18, 0)
+                LocalDate.of(2025, 6, 10),
+                8.0, "Family emergency",
+                LocalDateTime.of(2025, 6, 9, 9, 0)
         );
     }
 }

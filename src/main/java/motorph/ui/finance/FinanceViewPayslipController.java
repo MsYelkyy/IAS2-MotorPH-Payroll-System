@@ -1,12 +1,12 @@
 package motorph.ui.finance;
 
-import motorph.application.dto.report.payroll.PayslipReportDTO;
-import motorph.application.service.EmployeeService;
-import motorph.application.service.PayrollService;
-import motorph.application.service.report.PayrollReportService;
-import motorph.domain.model.Employee;
-import motorph.domain.model.Payrun;
-import motorph.ui.factory.FinanceUIServiceFactory;
+import motorph.api.ApiClientFactory;
+import motorph.api.EmployeeApiClient;
+import motorph.api.PayrunApiClient;
+import motorph.api.PayslipApiClient;
+import motorph.api.dto.employee.EmployeeSummaryDTO;
+import motorph.api.dto.payroll.PayrunDTO;
+import motorph.api.dto.payroll.PayslipReportDTO;
 import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
 
@@ -21,26 +21,32 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 
+import java.awt.Desktop;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /** Finance-owned screen to search, preview, export, and print existing persisted payslips. */
 public class FinanceViewPayslipController {
 
+    private static final Logger LOG = Logger.getLogger(FinanceViewPayslipController.class.getName());
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter STAMP_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a");
 
-    private EmployeeService employeeService;
-    private PayrollService payrollService;
-    private PayrollReportService payrollReportService;
+    private EmployeeApiClient employeeApiClient;
+    private PayrunApiClient payrunApiClient;
+    private PayslipApiClient payslipApiClient;
 
     private PayslipReportDTO currentPayslip;
 
     // root / search
     @FXML private StackPane toastRoot;
-    @FXML private ComboBox<Employee> employeeCombo;
-    @FXML private ComboBox<Payrun> payrunCombo;
+    @FXML private ComboBox<EmployeeSummaryDTO> employeeCombo;
+    @FXML private ComboBox<PayrunDTO> payrunCombo;
     @FXML private Button searchButton;
 
     // employee details card
@@ -61,10 +67,10 @@ public class FinanceViewPayslipController {
 
     @FXML
     private void initialize() {
-        FinanceUIServiceFactory factory = FinanceUIServiceFactory.getInstance();
-        employeeService      = factory.getEmployeeService();
-        payrollService       = factory.getPayrollService();
-        payrollReportService = factory.getPayrollReportService();
+        ApiClientFactory factory = ApiClientFactory.getInstance();
+        employeeApiClient = factory.getEmployeeApiClient();
+        payrunApiClient   = factory.getPayrunApiClient();
+        payslipApiClient  = factory.getPayslipApiClient();
 
         setupEmployeeCombo();
         setupPayrunCombo();
@@ -81,8 +87,8 @@ public class FinanceViewPayslipController {
     // searches for the persisted payslip of the selected employee and payrun
     @FXML
     private void handleSearch() {
-        Employee employee = employeeCombo.getValue();
-        Payrun payrun = payrunCombo.getValue();
+        EmployeeSummaryDTO employee = employeeCombo.getValue();
+        PayrunDTO payrun = payrunCombo.getValue();
 
         if (employee == null || payrun == null) {
             showError("Select Employee and Payrun",
@@ -91,7 +97,7 @@ public class FinanceViewPayslipController {
         }
 
         try {
-            currentPayslip = payrollReportService.getPayslipReport(
+            currentPayslip = payslipApiClient.getPayslipReport(
                     employee.getEmployeeId(), payrun.getPayrunId());
             populateDetails(currentPayslip);
             previewArea.setText("Click Preview to view the payslip summary.");
@@ -128,21 +134,32 @@ public class FinanceViewPayslipController {
         if (target == null) return;
 
         try {
-            payrollReportService.exportPayslipReportToPdf(
-                    currentPayslip.getEmployeeId(), currentPayslip.getPayrunId(), target.getAbsolutePath());
+            byte[] pdf = payslipApiClient.getPayslipPdf(currentPayslip.getEmployeeId(), currentPayslip.getPayrunId());
+            Files.write(target.toPath(), pdf);
             UiMessageUtil.showToast(toastRoot, "Payslip exported to " + target.getName() + ".");
         } catch (Exception e) {
             showError("Could Not Export Payslip", UiMessageUtil.toUserMessage(e));
         }
     }
 
-    // opens the Jasper preview where the payslip can be printed
+    // downloads the payslip PDF and opens it in the OS's default PDF viewer
     @FXML
     private void handlePrint() {
         if (currentPayslip == null) return;
         try {
-            payrollReportService.previewPayslipReport(
-                    currentPayslip.getEmployeeId(), currentPayslip.getPayrunId());
+            byte[] pdf = payslipApiClient.getPayslipPdf(currentPayslip.getEmployeeId(), currentPayslip.getPayrunId());
+
+            File tempFile = File.createTempFile(
+                    "payslip-" + currentPayslip.getEmployeeId() + "-" + currentPayslip.getPayrunId() + "-", ".pdf");
+            tempFile.deleteOnExit();
+            Files.write(tempFile.toPath(), pdf);
+
+            if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
+                Desktop.getDesktop().open(tempFile);
+            }
+        } catch (IOException e) {
+            LOG.log(Level.WARNING, "Failed to save or open payslip PDF", e);
+            showError("Could Not Open Payslip", e.getMessage());
         } catch (Exception e) {
             showError("Could Not Open Payslip", UiMessageUtil.toUserMessage(e));
         }
@@ -151,11 +168,11 @@ public class FinanceViewPayslipController {
     // Dropdown setup
     private void setupEmployeeCombo() {
         employeeCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(Employee e) {
+            @Override public String toString(EmployeeSummaryDTO e) {
                 return e == null ? "Select Employee" : e.getEmployeeId() + " - " + e.getFullName();
             }
 
-            @Override public Employee fromString(String value) {
+            @Override public EmployeeSummaryDTO fromString(String value) {
                 return null;
             }
         });
@@ -164,14 +181,14 @@ public class FinanceViewPayslipController {
 
     private void setupPayrunCombo() {
         payrunCombo.setConverter(new StringConverter<>() {
-            @Override public String toString(Payrun p) {
+            @Override public String toString(PayrunDTO p) {
                 return p == null
                         ? "Select Payrun"
                         : p.getPayrunId() + " | " + DATE_FMT.format(p.getStartDate())
                                 + " - " + DATE_FMT.format(p.getEndDate());
             }
 
-            @Override public Payrun fromString(String value) {
+            @Override public PayrunDTO fromString(String value) {
                 return null;
             }
         });
@@ -181,7 +198,9 @@ public class FinanceViewPayslipController {
     // loads active employees into the employee dropdown
     private void loadEmployees() {
         try {
-            List<Employee> employees = employeeService.getAllActiveEmployees();
+            List<EmployeeSummaryDTO> employees = employeeApiClient.getAllEmployeeSummaries().stream()
+                    .filter(EmployeeSummaryDTO::isActive)
+                    .toList();
             employeeCombo.getItems().setAll(employees);
         } catch (Exception e) {
             employeeCombo.getItems().clear();
@@ -192,7 +211,7 @@ public class FinanceViewPayslipController {
     // loads payruns that have payroll results into the payrun dropdown
     private void loadPayruns() {
         try {
-            List<Payrun> payruns = payrollService.getPayrunsWithPayrollData();
+            List<PayrunDTO> payruns = payrunApiClient.getPayrunsWithPayrollData();
             payrunCombo.getItems().setAll(payruns);
         } catch (Exception e) {
             payrunCombo.getItems().clear();
@@ -213,7 +232,7 @@ public class FinanceViewPayslipController {
         detailNetPayLabel.setText(UiFormatter.formatPeso(payslip.getNetPay()));
     }
 
-    // builds the read-only text summary shown before opening the Jasper preview
+    // builds the read-only text summary shown before opening the PDF
     private void populatePreview(PayslipReportDTO payslip) {
         String text = "MotorPH Payroll System\n"
                 + "Payslip Preview\n\n"

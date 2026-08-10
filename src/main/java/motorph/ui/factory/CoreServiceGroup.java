@@ -1,6 +1,5 @@
 package motorph.ui.factory;
 
-import motorph.application.service.AttendanceService;
 import motorph.application.service.EmailPreviewService;
 import motorph.application.service.EmailService;
 import motorph.application.service.EmployeeService;
@@ -8,7 +7,6 @@ import motorph.application.service.TwoFactorService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 import motorph.infrastructure.config.EmailConfig;
-import motorph.infrastructure.repository.AttendanceRepository;
 import motorph.infrastructure.repository.DepartmentRepository;
 import motorph.infrastructure.repository.EmployeeBenefitRepository;
 import motorph.infrastructure.repository.EmployeeRepository;
@@ -26,7 +24,6 @@ class CoreServiceGroup {
     private final EmailService emailService;
     private final UserAccountService userAccountService;
     private final EmployeeService employeeService;
-    private final AttendanceService attendanceService;
     private final TwoFactorService twoFactorService;
     private final UserAccessLogService userAccessLogService;
     private final UserAccountRepository userAccountRepository;
@@ -51,7 +48,6 @@ class CoreServiceGroup {
                 new GovernmentDetailsRepository()
         );
 
-        this.attendanceService = new AttendanceService(new AttendanceRepository());
         this.twoFactorService = new TwoFactorService(new TwoFactorCodeRepository());
         this.userAccessLogService = new UserAccessLogService(new UserAccessLogRepository());
     }
@@ -71,10 +67,6 @@ class CoreServiceGroup {
 
     EmployeeService getEmployeeService() {
         return employeeService;
-    }
-
-    AttendanceService getAttendanceService() {
-        return attendanceService;
     }
 
     TwoFactorService getTwoFactorService() {

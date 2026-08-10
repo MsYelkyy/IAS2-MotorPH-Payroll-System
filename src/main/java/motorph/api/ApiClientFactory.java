@@ -23,6 +23,7 @@ public final class ApiClientFactory {
     private final SalaryBenefitApiClient salaryBenefitApiClient;
     private final SupportTicketApiClient supportTicketApiClient;
     private final SystemConfigApiClient systemConfigApiClient;
+    private final PayrunApiClient payrunApiClient;
 
     private ApiClientFactory(String baseUrl) {
         this.authTokenHolder = AuthTokenHolder.getInstance();
@@ -37,6 +38,7 @@ public final class ApiClientFactory {
         this.salaryBenefitApiClient = new SalaryBenefitApiClient(httpApiClient);
         this.supportTicketApiClient = new SupportTicketApiClient(httpApiClient);
         this.systemConfigApiClient = new SystemConfigApiClient(httpApiClient);
+        this.payrunApiClient = new PayrunApiClient(httpApiClient);
     }
 
     public static synchronized ApiClientFactory getInstance() {
@@ -90,5 +92,9 @@ public final class ApiClientFactory {
 
     public SystemConfigApiClient getSystemConfigApiClient() {
         return systemConfigApiClient;
+    }
+
+    public PayrunApiClient getPayrunApiClient() {
+        return payrunApiClient;
     }
 }

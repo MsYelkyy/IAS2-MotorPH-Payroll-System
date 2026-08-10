@@ -5,7 +5,6 @@ import motorph.application.service.ITPasswordResetService;
 import motorph.application.service.ITUserAccountService;
 import motorph.application.service.PasswordResetService;
 import motorph.application.service.PermissionService;
-import motorph.application.service.SupportTicketService;
 import motorph.application.service.UserAccessLogService;
 import motorph.application.service.UserAccountService;
 
@@ -19,7 +18,6 @@ public final class ITUIServiceFactory {
     private final PasswordResetService passwordResetService;
     private final ITPasswordResetService itPasswordResetService;
     private final UserAccessLogService userAccessLogService;
-    private final SupportTicketService supportTicketService;
     private final PermissionService permissionService;
     private final EmployeeService employeeService;
 
@@ -29,7 +27,6 @@ public final class ITUIServiceFactory {
         this.passwordResetService  = shared.getPasswordResetService();
         this.itPasswordResetService = shared.getITPasswordResetService();
         this.userAccessLogService  = shared.getUserAccessLogService();
-        this.supportTicketService  = shared.getSupportTicketService();
         this.permissionService     = shared.getPermissionService();
         this.employeeService       = shared.getEmployeeService();
     }
@@ -68,10 +65,6 @@ public final class ITUIServiceFactory {
 
     public UserAccessLogService getUserAccessLogService() {
         return userAccessLogService;
-    }
-
-    public SupportTicketService getSupportTicketService() {
-        return supportTicketService;
     }
 
     public PermissionService getPermissionService() {
