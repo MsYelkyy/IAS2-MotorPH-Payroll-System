@@ -261,6 +261,44 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return false;
     }
 
+    // installs an IT-issued temporary password the user must replace on next login
+    public void updateTemporaryPassword(int userAccountId, String hash, String salt, LocalDateTime expiresAt) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        if (expiresAt == null) {
+            throw new IllegalArgumentException("Temporary password expiration is required.");
+        }
+
+        if (!expiresAt.isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Temporary password expiration must be in the future.");
+        }
+
+        String sql = """
+                UPDATE user_account
+                SET password_hash = ?,
+                    password_salt = ?,
+                    must_change_password = 1,
+                    temporary_password_expires_at = ?
+                WHERE user_account_id = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
+            stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
+            stmt.setTimestamp(3, Timestamp.valueOf(expiresAt));
+            stmt.setInt(4, userAccountId);
+
+            if (stmt.executeUpdate() == 0) {
+                throw new IllegalArgumentException("User account not found.");
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to update temporary password.", e);
+        }
+    }
+
     // replaces every role assigned to the account
     public void updateRoles(int userAccountId, List<Role> roles) {
         validatePositive(userAccountId, "User account ID must be positive.");

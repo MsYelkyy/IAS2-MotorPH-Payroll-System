@@ -21,6 +21,7 @@ public class UserAccessLogService {
     public static final String ACTION_LOGIN_FAILED = "LOGIN_FAILED";
     public static final String ACTION_LOGOUT = "LOGOUT";
     public static final String ACTION_ACCOUNT_STATUS_CHANGED = "ACCOUNT_STATUS_CHANGED";
+    public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
 
     private final UserAccessLogRepository repository;
 
@@ -59,6 +60,23 @@ public class UserAccessLogService {
                 userAccountId,
                 ACTION_LOGOUT,
                 "User logged out.",
+                "",
+                ""
+        ));
+    }
+
+    // logs an IT-driven password reset against the resolving user's account
+    public void logPasswordReset(int actorUserAccountId, int targetEmployeeId) {
+        validateUserAccountId(actorUserAccountId);
+
+        if (targetEmployeeId <= 0) {
+            throw new ValidationException("Target employee ID is required.");
+        }
+
+        repository.save(new UserAccessLog(
+                actorUserAccountId,
+                ACTION_PASSWORD_RESET,
+                "Reset password for employee ID " + targetEmployeeId,
                 "",
                 ""
         ));

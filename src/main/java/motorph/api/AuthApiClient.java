@@ -1,5 +1,6 @@
 package motorph.api;
 
+import motorph.api.dto.auth.ForgotPasswordRequest;
 import motorph.api.dto.auth.LoginRequest;
 import motorph.api.dto.auth.LoginResponse;
 import motorph.api.dto.auth.LogoutRequest;
@@ -36,6 +37,13 @@ public final class AuthApiClient {
 
         tokenHolder.store(tokens.accessToken(), tokens.refreshToken(), tokens.expiresIn());
         return tokens;
+    }
+
+    // asks IT to issue a temporary password; the backend answers the same way
+    // whether or not the address maps to an eligible account, so a success
+    // here is not confirmation that the account exists
+    public void forgotPassword(String companyEmail) {
+        httpApiClient.postNoContent("/api/v1/auth/forgot-password", new ForgotPasswordRequest(companyEmail));
     }
 
     // DB-loaded, for UI display only - never treat as an authorization source

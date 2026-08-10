@@ -1,16 +1,16 @@
 package motorph.ui.it;
 
-import motorph.application.service.PasswordResetService;
-import motorph.domain.model.PasswordResetRequest;
+import motorph.domain.value.PasswordResetStatus;
 import motorph.domain.value.RoutingTeam;
 import motorph.api.AccessLogApiClient;
 import motorph.api.ApiClientFactory;
+import motorph.api.PasswordResetApiClient;
 import motorph.api.SupportTicketApiClient;
 import motorph.api.UserAccountApiClient;
 import motorph.api.dto.accesslog.AccessLogCountsDTO;
 import motorph.api.dto.user.AccountCountsDTO;
+import motorph.api.dto.user.PasswordResetRequestRowDTO;
 import motorph.api.dto.support.SupportTicketDTO;
-import motorph.ui.factory.ITUIServiceFactory;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -33,7 +33,7 @@ public class ITDashboardController {
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
 
     private UserAccountApiClient userAccountApiClient;
-    private PasswordResetService passwordResetService;
+    private PasswordResetApiClient passwordResetApiClient;
     private AccessLogApiClient   accessLogApiClient;
     private SupportTicketApiClient supportTicketApiClient;
     private ITMainController     mainController;
@@ -56,7 +56,7 @@ public class ITDashboardController {
     @FXML
     private void initialize() {
         userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
-        passwordResetService = ITUIServiceFactory.getInstance().getPasswordResetService();
+        passwordResetApiClient = ApiClientFactory.getInstance().getPasswordResetApiClient();
         accessLogApiClient   = ApiClientFactory.getInstance().getAccessLogApiClient();
         supportTicketApiClient = ApiClientFactory.getInstance().getSupportTicketApiClient();
     }
@@ -91,7 +91,7 @@ public class ITDashboardController {
 
     private void refreshPasswordResetMetrics() {
         try {
-            setText(pendingResetRequestsLabel, String.valueOf(passwordResetService.getPendingRequestCount()));
+            setText(pendingResetRequestsLabel, String.valueOf(passwordResetApiClient.getCounts().pendingCount()));
         } catch (Exception e) {
             setText(pendingResetRequestsLabel, "0");
         }
@@ -121,7 +121,8 @@ public class ITDashboardController {
         if (pendingResetRows == null) return;
         pendingResetRows.getChildren().clear();
         try {
-            List<PasswordResetRequest> resets = passwordResetService.listPendingRequests();
+            List<PasswordResetRequestRowDTO> resets =
+                    passwordResetApiClient.getRequestsByStatus(PasswordResetStatus.PENDING);
             resets.stream()
                   .limit(5)
                   .map(this::buildResetRow)
@@ -149,14 +150,14 @@ public class ITDashboardController {
     }
 
     // Row builders
-    private HBox buildResetRow(PasswordResetRequest req) {
+    private HBox buildResetRow(PasswordResetRequestRowDTO req) {
         HBox row = new HBox();
         row.getStyleClass().add("table-data-row");
 
-        Label id      = cell("REQ-" + (req.getResetRequestId() != null ? req.getResetRequestId() : "?"), 90);
-        Label account = cell("Account #" + req.getUserAccountId(), 100);
+        Label id      = cell("REQ-" + req.getResetRequestId(), 90);
+        Label account = cell(req.getEmployeeName(), 100);
 
-        Label status = new Label(req.getRequestStatus().name());
+        Label status = new Label(req.getStatus().name());
         status.getStyleClass().add("status-badge");
         status.setPrefWidth(90);
 

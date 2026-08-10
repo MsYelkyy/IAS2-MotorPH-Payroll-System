@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import motorph.backend.domain.UserAccount;
+import motorph.backend.dto.auth.ForgotPasswordRequest;
 import motorph.backend.dto.auth.LoginRequest;
 import motorph.backend.dto.auth.LoginResponse;
 import motorph.backend.dto.auth.LogoutRequest;
@@ -21,6 +22,7 @@ import motorph.backend.security.TokenIssuanceService;
 import motorph.backend.service.AuthenticationService;
 import motorph.backend.service.LoginAttemptOutcome;
 import motorph.backend.service.LoginChallengeService;
+import motorph.backend.service.PasswordResetService;
 import motorph.backend.service.UserAccessLogService;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,6 +52,7 @@ public class AuthController {
     private final UserAccessLogService userAccessLogService;
     private final LoginRateLimiter loginRateLimiter;
     private final CurrentUserProvider currentUserProvider;
+    private final PasswordResetService passwordResetService;
 
     public AuthController(AuthenticationService authenticationService,
                           LoginChallengeService loginChallengeService,
@@ -58,7 +61,8 @@ public class AuthController {
                           UserAccountRepository userAccountRepository,
                           UserAccessLogService userAccessLogService,
                           LoginRateLimiter loginRateLimiter,
-                          CurrentUserProvider currentUserProvider) {
+                          CurrentUserProvider currentUserProvider,
+                          PasswordResetService passwordResetService) {
         this.authenticationService = authenticationService;
         this.loginChallengeService = loginChallengeService;
         this.tokenIssuanceService = tokenIssuanceService;
@@ -67,6 +71,7 @@ public class AuthController {
         this.userAccessLogService = userAccessLogService;
         this.loginRateLimiter = loginRateLimiter;
         this.currentUserProvider = currentUserProvider;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/login")
@@ -92,6 +97,14 @@ public class AuthController {
         UserAccount account = authenticationService.verifyLoginOtp(userAccountId, request.otp());
 
         return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
+    }
+
+    // public: answers the same whether or not the address maps to an eligible
+    // account, so it can not be used to discover which company emails exist
+    @PostMapping("/forgot-password")
+    public void forgotPassword(@RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
+        passwordResetService.requestPasswordReset(request.companyEmail());
     }
 
     @PostMapping("/refresh")

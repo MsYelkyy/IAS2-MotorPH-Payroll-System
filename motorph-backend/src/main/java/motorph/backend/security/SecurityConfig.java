@@ -10,9 +10,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 /**
  * Stateless JWT filter chain. Only the auth-establishment endpoints
- * (login / verify-otp / refresh) are public; everything else - including
- * logout, deliberately, so it is auditable - requires a valid, non-revoked
- * Bearer token.
+ * (login / verify-otp / refresh) and forgot-password are public; everything
+ * else - including logout, deliberately, so it is auditable - requires a
+ * valid, non-revoked Bearer token. forgot-password is rate limited and
+ * answers identically whatever the submitted address turns out to be, so
+ * being public does not make it an account-enumeration oracle.
  */
 @Configuration
 public class SecurityConfig {
@@ -32,7 +34,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/verify-otp",
-                                "/api/v1/auth/refresh"
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/forgot-password"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

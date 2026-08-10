@@ -27,6 +27,7 @@ public final class ApiClientFactory {
     private final UserAccountApiClient userAccountApiClient;
     private final AccessLogApiClient accessLogApiClient;
     private final RolePermissionApiClient rolePermissionApiClient;
+    private final PasswordResetApiClient passwordResetApiClient;
 
     private ApiClientFactory(String baseUrl) {
         this.authTokenHolder = AuthTokenHolder.getInstance();
@@ -45,6 +46,7 @@ public final class ApiClientFactory {
         this.userAccountApiClient = new UserAccountApiClient(httpApiClient);
         this.accessLogApiClient = new AccessLogApiClient(httpApiClient);
         this.rolePermissionApiClient = new RolePermissionApiClient(httpApiClient);
+        this.passwordResetApiClient = new PasswordResetApiClient(httpApiClient);
     }
 
     public static synchronized ApiClientFactory getInstance() {
@@ -114,5 +116,9 @@ public final class ApiClientFactory {
 
     public RolePermissionApiClient getRolePermissionApiClient() {
         return rolePermissionApiClient;
+    }
+
+    public PasswordResetApiClient getPasswordResetApiClient() {
+        return passwordResetApiClient;
     }
 }

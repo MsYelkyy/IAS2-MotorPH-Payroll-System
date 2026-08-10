@@ -1,11 +1,10 @@
 package motorph.ui.it;
 
-import motorph.application.dto.it.PasswordResetRequestDTO;
-import motorph.application.dto.it.PasswordResetRequestRowDTO;
-import motorph.application.service.ITPasswordResetService;
+import motorph.api.ApiClientFactory;
+import motorph.api.PasswordResetApiClient;
+import motorph.api.dto.user.PasswordResetCountsDTO;
+import motorph.api.dto.user.PasswordResetRequestRowDTO;
 import motorph.domain.value.PasswordResetStatus;
-import motorph.ui.factory.ITUIServiceFactory;
-import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -48,7 +47,7 @@ public class PasswordResetRequestController {
     private static final String STATUS_COMPLETED = "Completed";
     private static final String STATUS_CANCELLED = "Cancelled";
 
-    private ITPasswordResetService passwordResetService;
+    private PasswordResetApiClient passwordResetApiClient;
 
     private final ObservableList<PasswordResetRequestRowDTO> allRows      = FXCollections.observableArrayList();
     private final ObservableList<PasswordResetRequestRowDTO> filteredRows = FXCollections.observableArrayList();
@@ -82,7 +81,7 @@ public class PasswordResetRequestController {
 
     @FXML
     private void initialize() {
-        passwordResetService = ITUIServiceFactory.getInstance().getITPasswordResetService();
+        passwordResetApiClient = ApiClientFactory.getInstance().getPasswordResetApiClient();
 
         configureFilters();
         configureTable();
@@ -96,7 +95,7 @@ public class PasswordResetRequestController {
 
     public void refresh() {
         try {
-            allRows.setAll(passwordResetService.getPasswordResetRequestRows());
+            allRows.setAll(passwordResetApiClient.getRequests());
             updateSummaryCards();
             applyFilters();
             UiMessageUtil.setSuccess(messageLabel, "Password reset requests refreshed.");
@@ -184,14 +183,12 @@ public class PasswordResetRequestController {
     }
 
     private void updateSummaryCards() {
-        PasswordResetRequestDTO counts = passwordResetService != null
-                ? passwordResetService.getCounts()
-                : new PasswordResetRequestDTO(0, 0, 0, 0);
+        PasswordResetCountsDTO counts = passwordResetApiClient.getCounts();
 
-        pendingRequestsLabel.setText(String.valueOf(counts.getPendingCount()));
-        completedRequestsLabel.setText(String.valueOf(counts.getCompletedCount()));
-        cancelledRequestsLabel.setText(String.valueOf(counts.getCancelledCount()));
-        totalRequestsLabel.setText(String.valueOf(counts.getTotalCount()));
+        pendingRequestsLabel.setText(String.valueOf(counts.pendingCount()));
+        completedRequestsLabel.setText(String.valueOf(counts.completedCount()));
+        cancelledRequestsLabel.setText(String.valueOf(counts.cancelledCount()));
+        totalRequestsLabel.setText(String.valueOf(counts.totalCount()));
     }
 
     private void clearSummaryCards() {
@@ -239,7 +236,7 @@ public class PasswordResetRequestController {
         performRequestAction(row,
                 "Process Password Reset",
                 "Process password reset request #" + row.getResetRequestId() + " for " + row.getEmployeeName() + "?",
-                () -> passwordResetService.processPasswordResetRequest(row.getResetRequestId(), CurrentUserSession.getEmployeeId()),
+                () -> passwordResetApiClient.processRequest(row.getResetRequestId()),
                 "Password reset processed for " + row.getEmployeeName() + ".");
     }
 
@@ -247,7 +244,7 @@ public class PasswordResetRequestController {
         performRequestAction(row,
                 "Cancel Password Reset",
                 "Cancel password reset request #" + row.getResetRequestId() + " for " + row.getEmployeeName() + "?",
-                () -> passwordResetService.cancelPasswordResetRequest(row.getResetRequestId(), CurrentUserSession.getEmployeeId()),
+                () -> passwordResetApiClient.cancelRequest(row.getResetRequestId()),
                 "Password reset request cancelled for " + row.getEmployeeName() + ".");
     }
 
