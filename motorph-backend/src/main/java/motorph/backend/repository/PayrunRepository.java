@@ -8,13 +8,17 @@ import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Handles database operations for payroll run records. Read-only for the
- * payslip-viewing slice - payrun creation/generation moves in Phase 4.
+ * Handles database operations for payroll run records.
  */
 @Repository
 public class PayrunRepository {
@@ -52,6 +56,155 @@ public class PayrunRepository {
         }
 
         return null;
+    }
+
+    // finds all payruns
+    public List<Payrun> findAll() {
+        List<Payrun> payruns = new ArrayList<>();
+
+        String sql = """
+                SELECT pay_run_id,
+                       start_date,
+                       end_date,
+                       pay_date,
+                       payroll_type
+                FROM payrun
+                ORDER BY start_date DESC
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                payruns.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find payruns.", e);
+        }
+
+        return payruns;
+    }
+
+    // finds payruns that already have generated payroll results
+    public List<Payrun> findAllWithPayrollResults() {
+        List<Payrun> payruns = new ArrayList<>();
+
+        String sql = """
+                SELECT DISTINCT p.pay_run_id,
+                       p.start_date,
+                       p.end_date,
+                       p.pay_date,
+                       p.payroll_type
+                FROM payrun p
+                INNER JOIN payroll_result pr
+                  ON pr.pay_run_id = p.pay_run_id
+                ORDER BY p.start_date DESC
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                payruns.add(mapRow(rs));
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find payruns with payroll results.", e);
+        }
+
+        return payruns;
+    }
+
+    // checks if payrun already exists for the period
+    public boolean existsByPeriod(LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM payrun
+                WHERE start_date = ? AND end_date = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, Date.valueOf(startDate));
+            stmt.setDate(2, Date.valueOf(endDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to check payrun existence.", e);
+        }
+
+        return false;
+    }
+
+    // checks if any existing payrun overlaps with the given period
+    public boolean existsOverlapping(LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT COUNT(*)
+                FROM payrun
+                WHERE start_date <= ? AND end_date >= ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setDate(1, Date.valueOf(endDate));
+            stmt.setDate(2, Date.valueOf(startDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to check overlapping payruns.", e);
+        }
+
+        return false;
+    }
+
+    // saves a payrun and returns the generated id
+    public int saveAndReturnId(Payrun payrun) {
+        String sql = """
+                INSERT INTO payrun (
+                    start_date,
+                    end_date,
+                    pay_date,
+                    payroll_type
+                )
+                VALUES (?, ?, ?, ?)
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            stmt.setDate(1, Date.valueOf(payrun.getStartDate()));
+            stmt.setDate(2, Date.valueOf(payrun.getEndDate()));
+            stmt.setDate(3, Date.valueOf(payrun.getPayDate()));
+            stmt.setString(4, payrun.getPayrollType().name());
+
+            stmt.executeUpdate();
+
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    return generatedKeys.getInt(1);
+                }
+            }
+
+            throw new DataAccessException("No ID generated for payrun.");
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to save payrun.", e);
+        }
     }
 
     private Payrun mapRow(ResultSet rs) throws SQLException {

@@ -46,6 +46,17 @@ public class OvertimeService {
         return overtimeRepository.findAll();
     }
 
+    // sums approved overtime hours within a date range, used by payroll computation
+    public double getApprovedOvertimeHours(int employeeId, LocalDate startDate, LocalDate endDate) {
+        validateEmployeeId(employeeId);
+
+        if (startDate == null || endDate == null) {
+            throw new ValidationException("Start date and end date are required.");
+        }
+
+        return overtimeRepository.getApprovedHours(employeeId, startDate, endDate);
+    }
+
     public OvertimeRequest getOvertimeRequestById(int overtimeRequestId) {
         validateOvertimeRequestId(overtimeRequestId);
 

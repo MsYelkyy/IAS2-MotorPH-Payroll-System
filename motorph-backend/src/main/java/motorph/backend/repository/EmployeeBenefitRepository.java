@@ -62,6 +62,44 @@ public class EmployeeBenefitRepository {
         return benefits;
     }
 
+    // finds an employee's benefits active on a given date
+    public List<EmployeeBenefit> findActiveByEmployeeId(int employeeId, java.time.LocalDate effectiveDate) {
+        List<EmployeeBenefit> benefits = new ArrayList<>();
+
+        String sql = """
+                SELECT employee_benefit_id,
+                       employee_id,
+                       benefit_type_id,
+                       amount,
+                       effective_start_date,
+                       effective_end_date
+                FROM employee_benefit
+                WHERE employee_id = ?
+                  AND effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY effective_start_date DESC
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setDate(2, Date.valueOf(effectiveDate));
+            stmt.setDate(3, Date.valueOf(effectiveDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    benefits.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to find active employee benefits.", e);
+        }
+
+        return benefits;
+    }
+
     // finds employee benefit by id
     public EmployeeBenefit findById(int employeeBenefitId) {
         String sql = """

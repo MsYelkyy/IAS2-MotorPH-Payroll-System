@@ -50,6 +50,26 @@ public class WithholdingTaxBracketRepository {
         return list;
     }
 
+    public List<WithholdingTaxBracketDTO> findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY min_salary ASC
+                """;
+        List<WithholdingTaxBracketDTO> list = new ArrayList<>();
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to load effective tax brackets.", e);
+        }
+        return list;
+    }
+
     public void save(WithholdingTaxBracketDTO dto) {
         String sql = """
                 INSERT INTO withholding_tax_bracket

@@ -50,6 +50,25 @@ public class SssRateRepository {
         return list;
     }
 
+    public SssRateDTO findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY effective_start_date DESC
+                LIMIT 1
+                """;
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                return rs.next() ? mapRow(rs) : null;
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to load effective SSS rate.", e);
+        }
+    }
+
     public void save(SssRateDTO dto) {
         String sql = """
                 INSERT INTO sss_contribution_rate

@@ -52,6 +52,26 @@ public class PagIbigRateRepository {
         return list;
     }
 
+    public List<PagIbigRateDTO> findEffectiveOn(LocalDate date) {
+        String sql = SELECT_COLS + """
+                WHERE effective_start_date <= ?
+                  AND (effective_end_date IS NULL OR effective_end_date >= ?)
+                ORDER BY min_salary ASC
+                """;
+        List<PagIbigRateDTO> list = new ArrayList<>();
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement s = c.prepareStatement(sql)) {
+            s.setDate(1, Date.valueOf(date));
+            s.setDate(2, Date.valueOf(date));
+            try (ResultSet rs = s.executeQuery()) {
+                while (rs.next()) list.add(mapRow(rs));
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to load effective Pag-IBIG rates.", e);
+        }
+        return list;
+    }
+
     public void save(PagIbigRateDTO dto) {
         String sql = """
                 INSERT INTO pagibig_contribution_rate

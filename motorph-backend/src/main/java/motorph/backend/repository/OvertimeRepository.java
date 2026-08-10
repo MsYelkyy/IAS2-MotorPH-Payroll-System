@@ -25,9 +25,9 @@ import java.util.List;
 
 /**
  * Handles database operations for overtime request records. Methods with no
- * UI caller (findByStatus/findPending/findByDateRange/findByEmployeeAndDateRange/
- * getApprovedHours) are not ported, matching the dead-code-skip precedent
- * used elsewhere this session.
+ * UI caller (findByStatus/findPending/findByDateRange/findByEmployeeAndDateRange)
+ * are not ported, matching the dead-code-skip precedent used elsewhere this
+ * session. getApprovedHours is ported for Phase 4 payroll computation.
  */
 @Repository
 public class OvertimeRepository {
@@ -87,6 +87,35 @@ public class OvertimeRepository {
                 """;
 
         return executeListQuery(sql, stmt -> stmt.setInt(1, employeeId));
+    }
+
+    public double getApprovedHours(int employeeId, LocalDate startDate, LocalDate endDate) {
+        String sql = """
+                SELECT COALESCE(SUM(requested_hours), 0)
+                FROM overtime_request
+                WHERE employee_id = ?
+                  AND overtime_status = 'APPROVED'
+                  AND overtime_date BETWEEN ? AND ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, employeeId);
+            stmt.setDate(2, Date.valueOf(startDate));
+            stmt.setDate(3, Date.valueOf(endDate));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to get approved overtime hours.", e);
+        }
+
+        return 0.0;
     }
 
     public boolean existsByAttendanceId(int attendanceId) {
