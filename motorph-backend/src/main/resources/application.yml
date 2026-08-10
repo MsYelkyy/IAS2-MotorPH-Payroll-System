@@ -18,6 +18,9 @@ motorph:
     secret: ${MOTORPH_JWT_SECRET}
     access-expiry-minutes: ${MOTORPH_JWT_ACCESS_EXPIRY_MINUTES:15}
     refresh-expiry-minutes: ${MOTORPH_JWT_REFRESH_EXPIRY_MINUTES:1440}
+  backup:
+    # database dumps live on the backend host, not next to the desktop client
+    directory: ${MOTORPH_BACKUP_DIR:backups}
   auth:
     otp-challenge-expiry-minutes: 10
     login-rate-limit:

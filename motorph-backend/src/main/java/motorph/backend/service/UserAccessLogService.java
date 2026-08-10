@@ -22,6 +22,8 @@ public class UserAccessLogService {
     public static final String ACTION_LOGOUT = "LOGOUT";
     public static final String ACTION_ACCOUNT_STATUS_CHANGED = "ACCOUNT_STATUS_CHANGED";
     public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
+    public static final String ACTION_DATABASE_BACKUP_CREATED = "DATABASE_BACKUP_CREATED";
+    public static final String ACTION_DATABASE_RESTORE = "DATABASE_RESTORE";
 
     private final UserAccessLogRepository repository;
 
@@ -100,6 +102,30 @@ public class UserAccessLogService {
                 actorUserAccountId,
                 ACTION_ACCOUNT_STATUS_CHANGED,
                 details,
+                "",
+                ""
+        ));
+    }
+
+    public void logDatabaseBackupCreated(int actorUserAccountId, String filename) {
+        validateUserAccountId(actorUserAccountId);
+
+        repository.save(new UserAccessLog(
+                actorUserAccountId,
+                ACTION_DATABASE_BACKUP_CREATED,
+                "Created backup: " + clean(filename),
+                "",
+                ""
+        ));
+    }
+
+    public void logDatabaseRestore(int actorUserAccountId, String filename) {
+        validateUserAccountId(actorUserAccountId);
+
+        repository.save(new UserAccessLog(
+                actorUserAccountId,
+                ACTION_DATABASE_RESTORE,
+                "Restored from backup: " + clean(filename),
                 "",
                 ""
         ));

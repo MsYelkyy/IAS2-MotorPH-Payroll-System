@@ -1,8 +1,8 @@
 package motorph.ui.admin;
 
-import motorph.application.service.DatabaseBackupService;
-import motorph.ui.factory.EmployeeUIServiceFactory;
-import motorph.ui.session.CurrentUserSession;
+import motorph.api.ApiClientFactory;
+import motorph.api.DatabaseBackupApiClient;
+import motorph.api.dto.system.BackupFileDTO;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.application.Platform;
@@ -15,13 +15,16 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 
 /** Manages the Database Backup &amp; Recovery sub-view. */
 public class AdminDatabaseToolsController {
 
-    private DatabaseBackupService databaseBackupService;
+    private DatabaseBackupApiClient databaseBackupApiClient;
 
     // Toolbar
     @FXML private Button createBackupButton;
@@ -33,7 +36,7 @@ public class AdminDatabaseToolsController {
 
     @FXML
     private void initialize() {
-        databaseBackupService = EmployeeUIServiceFactory.getInstance().getDatabaseBackupService();
+        databaseBackupApiClient = ApiClientFactory.getInstance().getDatabaseBackupApiClient();
         loadBackups();
     }
 
@@ -48,12 +51,11 @@ public class AdminDatabaseToolsController {
         setControlsDisabled(true);
         UiMessageUtil.clearMessage(moduleMessageLabel);
 
-        int userId = CurrentUserSession.getUserAccountId();
         Thread worker = new Thread(() -> {
             try {
-                var created = databaseBackupService.createBackup(userId);
+                BackupFileDTO created = databaseBackupApiClient.createBackup();
                 Platform.runLater(() -> {
-                    UiMessageUtil.setSuccess(moduleMessageLabel, "Backup created: " + created.getFileName());
+                    UiMessageUtil.setSuccess(moduleMessageLabel, "Backup created: " + created.fileName());
                     loadBackups();
                     setControlsDisabled(false);
                 });
@@ -77,7 +79,7 @@ public class AdminDatabaseToolsController {
     // Data loading
     private void loadBackups() {
         try {
-            List<DatabaseBackupService.BackupEntry> entries = databaseBackupService.listBackups();
+            List<BackupFileDTO> entries = databaseBackupApiClient.listBackups();
             renderRows(entries);
             if (backupCountLabel != null) {
                 int n = entries.size();
@@ -89,10 +91,10 @@ public class AdminDatabaseToolsController {
     }
 
     // Action handlers
-    private void handleRestore(DatabaseBackupService.BackupEntry entry) {
+    private void handleRestore(BackupFileDTO entry) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Restore Database");
-        confirm.setHeaderText("Restore from: " + entry.getFileName());
+        confirm.setHeaderText("Restore from: " + entry.fileName());
         confirm.setContentText("All current data will be replaced with the backup. This cannot be undone. Continue?");
 
         confirm.showAndWait().ifPresent(btn -> {
@@ -100,12 +102,11 @@ public class AdminDatabaseToolsController {
             setControlsDisabled(true);
             UiMessageUtil.clearMessage(moduleMessageLabel);
 
-            int userId = CurrentUserSession.getUserAccountId();
             Thread worker = new Thread(() -> {
                 try {
-                    databaseBackupService.restoreBackup(entry.path, userId);
+                    databaseBackupApiClient.restoreBackup(entry.fileName());
                     Platform.runLater(() -> {
-                        UiMessageUtil.setSuccess(moduleMessageLabel, "Database restored from: " + entry.getFileName());
+                        UiMessageUtil.setSuccess(moduleMessageLabel, "Database restored from: " + entry.fileName());
                         setControlsDisabled(false);
                     });
                 } catch (Exception e) {
@@ -120,17 +121,17 @@ public class AdminDatabaseToolsController {
         });
     }
 
-    private void handleDelete(DatabaseBackupService.BackupEntry entry) {
+    private void handleDelete(BackupFileDTO entry) {
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Delete Backup");
-        confirm.setHeaderText("Delete: " + entry.getFileName());
+        confirm.setHeaderText("Delete: " + entry.fileName());
         confirm.setContentText("This backup file will be permanently deleted. Continue?");
 
         confirm.showAndWait().ifPresent(btn -> {
             if (btn != ButtonType.OK) return;
             try {
-                databaseBackupService.deleteBackup(entry.path);
-                UiMessageUtil.setSuccess(moduleMessageLabel, "Deleted: " + entry.getFileName());
+                databaseBackupApiClient.deleteBackup(entry.fileName());
+                UiMessageUtil.setSuccess(moduleMessageLabel, "Deleted: " + entry.fileName());
                 loadBackups();
             } catch (Exception e) {
                 UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
@@ -138,8 +139,28 @@ public class AdminDatabaseToolsController {
         });
     }
 
+    // backups live on the server now, so getting a local copy is an explicit save
+    private void handleDownload(BackupFileDTO entry) {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Save Backup File");
+        chooser.setInitialFileName(entry.fileName());
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("SQL Files", "*.sql"));
+
+        File target = chooser.showSaveDialog(
+                backupRows.getScene() == null ? null : backupRows.getScene().getWindow());
+
+        if (target == null) return;
+
+        try {
+            Files.write(target.toPath(), databaseBackupApiClient.downloadBackup(entry.fileName()));
+            UiMessageUtil.setSuccess(moduleMessageLabel, "Saved to " + target.getName() + ".");
+        } catch (Exception e) {
+            UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
+        }
+    }
+
     // Row rendering
-    private void renderRows(List<DatabaseBackupService.BackupEntry> entries) {
+    private void renderRows(List<BackupFileDTO> entries) {
         backupRows.getChildren().clear();
         if (entries.isEmpty()) {
             Label empty = new Label("No backups found. Click \"Create Backup\" to generate one.");
@@ -151,19 +172,23 @@ public class AdminDatabaseToolsController {
         entries.forEach(e -> backupRows.getChildren().add(buildRow(e)));
     }
 
-    private HBox buildRow(DatabaseBackupService.BackupEntry entry) {
+    private HBox buildRow(BackupFileDTO entry) {
         HBox row = new HBox(0);
         row.getStyleClass().add("table-data-row");
         row.setAlignment(Pos.CENTER_LEFT);
         row.setMaxWidth(Double.MAX_VALUE);
 
-        Label nameLbl = new Label(entry.getFileName());
+        Label nameLbl = new Label(entry.fileName());
         nameLbl.getStyleClass().addAll("data-line", "table-cell");
         nameLbl.setMinWidth(320);
         HBox.setHgrow(nameLbl, Priority.ALWAYS);
 
         Label dateLbl = col(entry.getFormattedDate(), 185);
         Label sizeLbl = col(entry.getFormattedSize(), 90);
+
+        Button downloadBtn = new Button("Download");
+        downloadBtn.getStyleClass().add("secondary-button");
+        downloadBtn.setOnAction(e -> handleDownload(entry));
 
         Button restoreBtn = new Button("Restore");
         restoreBtn.getStyleClass().add("secondary-button");
@@ -173,10 +198,10 @@ public class AdminDatabaseToolsController {
         deleteBtn.getStyleClass().add("danger-outline-button");
         deleteBtn.setOnAction(e -> handleDelete(entry));
 
-        HBox actions = new HBox(8, restoreBtn, deleteBtn);
+        HBox actions = new HBox(8, downloadBtn, restoreBtn, deleteBtn);
         actions.setAlignment(Pos.CENTER);
-        actions.setMinWidth(220);
-        actions.setPrefWidth(220);
+        actions.setMinWidth(320);
+        actions.setPrefWidth(320);
 
         row.getChildren().addAll(nameLbl, dateLbl, sizeLbl, actions);
         return row;
