@@ -1,8 +1,9 @@
 package motorph.ui.it;
 
-import motorph.application.service.UserAccessLogService;
-import motorph.domain.model.UserAccessLog;
-import motorph.ui.factory.ITUIServiceFactory;
+import motorph.api.AccessLogApiClient;
+import motorph.api.ApiClientFactory;
+import motorph.api.dto.accesslog.AccessLogAction;
+import motorph.api.dto.accesslog.UserAccessLogDTO;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -34,11 +35,11 @@ public class ITAccessLogsController {
 
     private static final int PAGE_SIZE = 7;
 
-    private UserAccessLogService userAccessLogService;
+    private AccessLogApiClient accessLogApiClient;
 
-    private final ObservableList<UserAccessLog> allLogs      = FXCollections.observableArrayList();
-    private final ObservableList<UserAccessLog> filteredLogs = FXCollections.observableArrayList();
-    private final ObservableList<UserAccessLog> pagedLogs    = FXCollections.observableArrayList();
+    private final ObservableList<UserAccessLogDTO> allLogs      = FXCollections.observableArrayList();
+    private final ObservableList<UserAccessLogDTO> filteredLogs = FXCollections.observableArrayList();
+    private final ObservableList<UserAccessLogDTO> pagedLogs    = FXCollections.observableArrayList();
 
     private int currentPage = 1;
 
@@ -54,11 +55,11 @@ public class ITAccessLogsController {
     @FXML private Label            messageLabel;
 
     // Table
-    @FXML private TableView<UserAccessLog>           logsTable;
-    @FXML private TableColumn<UserAccessLog, String> userIdColumn;
-    @FXML private TableColumn<UserAccessLog, String> actionColumn;
-    @FXML private TableColumn<UserAccessLog, String> detailsColumn;
-    @FXML private TableColumn<UserAccessLog, String> timestampColumn;
+    @FXML private TableView<UserAccessLogDTO>           logsTable;
+    @FXML private TableColumn<UserAccessLogDTO, String> userIdColumn;
+    @FXML private TableColumn<UserAccessLogDTO, String> actionColumn;
+    @FXML private TableColumn<UserAccessLogDTO, String> detailsColumn;
+    @FXML private TableColumn<UserAccessLogDTO, String> timestampColumn;
 
     @FXML private Button logsPrevButton;
     @FXML private Button logsNextButton;
@@ -67,7 +68,7 @@ public class ITAccessLogsController {
 
     @FXML
     private void initialize() {
-        userAccessLogService = ITUIServiceFactory.getInstance().getUserAccessLogService();
+        accessLogApiClient = ApiClientFactory.getInstance().getAccessLogApiClient();
         configureFilters();
         configureTable();
         refresh();
@@ -81,8 +82,8 @@ public class ITAccessLogsController {
     /** Called by ITMainController each time the User Access Logs nav item is activated. */
     public void refresh() {
         try {
-            List<UserAccessLog> logs = new ArrayList<>(userAccessLogService.getAllLogs());
-            java.util.Collections.reverse(logs); // most recent first
+            // the endpoint already returns newest-first
+            List<UserAccessLogDTO> logs = new ArrayList<>(accessLogApiClient.getAllLogs());
             allLogs.setAll(logs);
             updateMetrics();
             applyFilters();
@@ -101,13 +102,13 @@ public class ITAccessLogsController {
     private void configureFilters() {
         actionFilterCombo.getItems().setAll(
                 "All Actions",
-                UserAccessLogService.ACTION_LOGIN_SUCCESS,
-                UserAccessLogService.ACTION_LOGIN_FAILED,
-                UserAccessLogService.ACTION_OPEN_VIEW,
-                UserAccessLogService.ACTION_PASSWORD_RESET,
-                UserAccessLogService.ACTION_ACCOUNT_STATUS_CHANGED,
-                UserAccessLogService.ACTION_GENERATED_REPORT,
-                UserAccessLogService.ACTION_DATABASE_BACKUP_DOWNLOADED
+                AccessLogAction.LOGIN_SUCCESS,
+                AccessLogAction.LOGIN_FAILED,
+                AccessLogAction.LOGOUT,
+                AccessLogAction.PASSWORD_RESET,
+                AccessLogAction.ACCOUNT_STATUS_CHANGED,
+                AccessLogAction.DATABASE_BACKUP_CREATED,
+                AccessLogAction.DATABASE_RESTORE
         );
         actionFilterCombo.setValue("All Actions");
         searchField.textProperty().addListener((obs, old, val) -> applyFilters());
@@ -138,9 +139,9 @@ public class ITAccessLogsController {
                     return;
                 }
                 setText(action);
-                if (UserAccessLogService.ACTION_LOGIN_FAILED.equals(action)) {
+                if (AccessLogAction.LOGIN_FAILED.equals(action)) {
                     setStyle("-fx-text-fill: #ef4444;");
-                } else if (UserAccessLogService.ACTION_LOGIN_SUCCESS.equals(action)) {
+                } else if (AccessLogAction.LOGIN_SUCCESS.equals(action)) {
                     setStyle("-fx-text-fill: #22c55e;");
                 } else {
                     setStyle("");
@@ -164,7 +165,7 @@ public class ITAccessLogsController {
         String query  = norm(searchField.getText());
         String action = actionFilterCombo.getValue();
 
-        List<UserAccessLog> result = allLogs.stream()
+        List<UserAccessLogDTO> result = allLogs.stream()
                 .filter(l -> matchesAction(l, action))
                 .filter(l -> matchesSearch(l, query))
                 .collect(Collectors.toList());
@@ -174,12 +175,12 @@ public class ITAccessLogsController {
         renderPage();
     }
 
-    private boolean matchesAction(UserAccessLog l, String filter) {
+    private boolean matchesAction(UserAccessLogDTO l, String filter) {
         if (filter == null || "All Actions".equals(filter)) return true;
         return filter.equals(l.getAction());
     }
 
-    private boolean matchesSearch(UserAccessLog l, String query) {
+    private boolean matchesSearch(UserAccessLogDTO l, String query) {
         if (query.isBlank()) return true;
         String text = String.join(" ",
                 l.getUserAccountId() != null ? String.valueOf(l.getUserAccountId()) : "",
@@ -191,9 +192,9 @@ public class ITAccessLogsController {
     // Metrics
     private void updateMetrics() {
         long success = allLogs.stream()
-                .filter(l -> UserAccessLogService.ACTION_LOGIN_SUCCESS.equals(l.getAction())).count();
+                .filter(l -> AccessLogAction.LOGIN_SUCCESS.equals(l.getAction())).count();
         long failed  = allLogs.stream()
-                .filter(l -> UserAccessLogService.ACTION_LOGIN_FAILED.equals(l.getAction())).count();
+                .filter(l -> AccessLogAction.LOGIN_FAILED.equals(l.getAction())).count();
         long other   = allLogs.size() - success - failed;
 
         totalLogsLabel.setText(String.valueOf(allLogs.size()));

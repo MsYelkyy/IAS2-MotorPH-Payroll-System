@@ -1,11 +1,10 @@
 package motorph.ui.it;
 
-import motorph.application.dto.user.UserAccountRowDTO;
-import motorph.application.service.ITUserAccountService;
-import motorph.application.service.UserAccountService;
+import motorph.api.ApiClientFactory;
+import motorph.api.UserAccountApiClient;
+import motorph.api.dto.user.UserAccountRowDTO;
 import motorph.domain.value.AccountStatus;
 import motorph.domain.value.Role;
-import motorph.ui.factory.ITUIServiceFactory;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -55,8 +54,7 @@ public class ITUserAccountController {
     private static final String TEXT_LOCKED = "LOCKED";
     private static final String TEXT_DISABLED = "DISABLED";
 
-    private ITUserAccountService itUserAccountService;
-    private UserAccountService userAccountService;
+    private UserAccountApiClient userAccountApiClient;
 
     // State
     private List<UserAccountRowDTO> allRows = new ArrayList<>();
@@ -100,9 +98,7 @@ public class ITUserAccountController {
 
     @FXML
     private void initialize() {
-        ITUIServiceFactory factory = ITUIServiceFactory.getInstance();
-        itUserAccountService = factory.getITUserAccountService();
-        userAccountService = factory.getUserAccountService();
+        userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
 
         filterCombo.getItems().setAll(STATUS_ALL, STATUS_ACTIVE, STATUS_LOCKED, STATUS_DISABLED);
         filterCombo.setValue(STATUS_ALL);
@@ -123,7 +119,7 @@ public class ITUserAccountController {
     // Data loading
     private void loadAccounts() {
         try {
-            allRows = itUserAccountService.getUserAccountRows();
+            allRows = userAccountApiClient.getUserAccounts();
             accountItems.setAll(allRows);
             applyFilter();
             UiMessageUtil.setSuccess(moduleMessageLabel, "User accounts refreshed.");
@@ -297,10 +293,10 @@ public class ITUserAccountController {
         int id = selectedAccount.getUserAccountId();
         try {
             if (isLocked(selectedAccount)) {
-                userAccountService.unlockAccount(id);
+                userAccountApiClient.unlockAccount(id);
                 UiMessageUtil.setSuccess(moduleMessageLabel, "Account unlocked.");
             } else {
-                userAccountService.lockAccount(id);
+                userAccountApiClient.lockAccount(id);
                 UiMessageUtil.setSuccess(moduleMessageLabel, "Account locked.");
             }
             reloadAndReselect(id);
@@ -327,10 +323,10 @@ public class ITUserAccountController {
             if (response == ButtonType.OK) {
                 try {
                     if (disabled) {
-                        userAccountService.enableAccount(id);
+                        userAccountApiClient.enableAccount(id);
                         UiMessageUtil.setSuccess(moduleMessageLabel, "Account enabled.");
                     } else {
-                        userAccountService.disableAccount(id);
+                        userAccountApiClient.disableAccount(id);
                         UiMessageUtil.setSuccess(moduleMessageLabel, "Account disabled.");
                     }
                     reloadAndReselect(id);
@@ -359,7 +355,7 @@ public class ITUserAccountController {
 
         int id = selectedAccount.getUserAccountId();
         try {
-            userAccountService.updateRoles(id, roles);
+            userAccountApiClient.updateRoles(id, roles);
             UiMessageUtil.setSuccess(moduleMessageLabel,
                     "Roles updated for " + nullSafe(selectedAccount.getCompanyEmail()));
             reloadAndReselect(id);

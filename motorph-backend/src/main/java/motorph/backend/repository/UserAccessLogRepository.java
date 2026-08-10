@@ -21,6 +21,17 @@ import java.util.List;
 @Repository
 public class UserAccessLogRepository {
 
+    private static final String BASE_SELECT = """
+            SELECT log_id,
+                   user_account_id,
+                   action,
+                   details,
+                   ip_address,
+                   device_info,
+                   logged_at
+            FROM user_access_logs
+            """;
+
     private final DataSource dataSource;
 
     public UserAccessLogRepository(DataSource dataSource) {
@@ -64,25 +75,61 @@ public class UserAccessLogRepository {
 
     // finds logs by user account id
     public List<UserAccessLog> findByUserAccountId(int userAccountId) {
-        String sql = """
-                SELECT log_id,
-                       user_account_id,
-                       action,
-                       details,
-                       ip_address,
-                       device_info,
-                       logged_at
-                FROM user_access_logs
+        String sql = BASE_SELECT + """
                 WHERE user_account_id = ?
                 ORDER BY logged_at DESC
                 """;
 
+        return executeListQuery(sql, stmt -> stmt.setInt(1, userAccountId));
+    }
+
+    // finds every log, latest first
+    public List<UserAccessLog> findAll() {
+        return executeListQuery(BASE_SELECT + "ORDER BY logged_at DESC", null);
+    }
+
+    // finds the newest logs only - powers the dashboard activity feed without
+    // pulling the entire log table across the wire
+    public List<UserAccessLog> findRecent(int limit) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit must be positive.");
+        }
+
+        String sql = BASE_SELECT + """
+                ORDER BY logged_at DESC
+                LIMIT ?
+                """;
+
+        return executeListQuery(sql, stmt -> stmt.setInt(1, limit));
+    }
+
+    // counts logs recorded for one action
+    public int countByAction(String action) {
+        String sql = "SELECT COUNT(*) FROM user_access_logs WHERE action = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, action);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to count user access logs.", e);
+        }
+    }
+
+    private List<UserAccessLog> executeListQuery(String sql, StatementBinder binder) {
         List<UserAccessLog> logs = new ArrayList<>();
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
-            stmt.setInt(1, userAccountId);
+            if (binder != null) {
+                binder.bind(stmt);
+            }
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
@@ -121,5 +168,10 @@ public class UserAccessLogRepository {
     private Integer getNullableInteger(ResultSet rs, String columnName) throws SQLException {
         int value = rs.getInt(columnName);
         return rs.wasNull() ? null : value;
+    }
+
+    // binds prepared statement parameters
+    private interface StatementBinder {
+        void bind(PreparedStatement stmt) throws SQLException;
     }
 }

@@ -129,6 +129,21 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return null;
     }
 
+    // counts accounts that can currently log in
+    public int countActive() {
+        return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_active = 1 AND is_locked = 0");
+    }
+
+    // counts locked accounts
+    public int countLocked() {
+        return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_locked = 1");
+    }
+
+    // counts disabled accounts
+    public int countDisabled() {
+        return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_active = 0");
+    }
+
     // saves a new account and assigns its roles
     @Override
     public void save(UserAccount userAccount) {
@@ -246,6 +261,24 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return false;
     }
 
+    // replaces every role assigned to the account
+    public void updateRoles(int userAccountId, List<Role> roles) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+        validateRoles(roles);
+
+        try (Connection conn = dataSource.getConnection()) {
+            conn.setAutoCommit(false);
+
+            deleteRoles(conn, userAccountId);
+            assignRoles(conn, userAccountId, roles);
+
+            conn.commit();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to update account roles.", e);
+        }
+    }
+
     // updates the last login time
     public void updateLastLogin(int userAccountId) {
         validatePositive(userAccountId, "User account ID must be positive.");
@@ -345,12 +378,34 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return accounts;
     }
 
+    private int executeCountQuery(String sql) {
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            return rs.next() ? rs.getInt(1) : 0;
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to count user accounts.", e);
+        }
+    }
+
     // assigns all roles to the user account
     private void assignRoles(Connection conn, int userAccountId, List<Role> roles) throws SQLException {
         validateRoles(roles);
 
         for (Role role : roles) {
             assignRole(conn, userAccountId, role);
+        }
+    }
+
+    // deletes every existing role assignment for the user account
+    private void deleteRoles(Connection conn, int userAccountId) throws SQLException {
+        String sql = "DELETE FROM user_role WHERE user_account_id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, userAccountId);
+            stmt.executeUpdate();
         }
     }
 

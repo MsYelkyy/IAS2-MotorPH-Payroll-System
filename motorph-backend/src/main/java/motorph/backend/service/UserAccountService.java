@@ -1,9 +1,14 @@
 package motorph.backend.service;
 
 import motorph.backend.dto.auth.CredentialsPreview;
+import motorph.backend.dto.user.AccountCountsDTO;
+import motorph.backend.dto.user.UserAccountRowDTO;
+import motorph.backend.domain.Employee;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
+import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.ValidationException;
+import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.PasswordHasher;
 
@@ -11,13 +16,20 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.function.IntConsumer;
+import java.util.stream.Collectors;
 
 /**
- * Handles account provisioning for newly created/deactivated employees.
- * Ported from the desktop's UserAccountService, trimmed to only the methods
- * EmployeeService's write paths need (create/deactivate) - password
- * change/lock/unlock/role management belong to a separate IT-account-
- * management feature, not employee CRUD, and stay off the backend for now.
+ * Handles account provisioning for newly created/deactivated employees plus
+ * the IT account-management operations (list/lock/unlock/enable/disable/
+ * roles) ported from the desktop's UserAccountService + ITUserAccountService
+ * in Phase 5a.
+ *
+ * The employee-name join reads EmployeeRepository directly rather than
+ * EmployeeService: EmployeeService already depends on this service for
+ * account provisioning, so going back through it would be a constructor
+ * injection cycle.
  */
 @Service
 public class UserAccountService {
@@ -31,12 +43,18 @@ public class UserAccountService {
     }
 
     private final UserAccountRepository userAccountRepository;
+    private final EmployeeRepository employeeRepository;
     private final EmployeeCredentialsDeliveryService credentialsDeliveryService;
+    private final UserAccessLogService userAccessLogService;
 
     public UserAccountService(UserAccountRepository userAccountRepository,
-                              EmployeeCredentialsDeliveryService credentialsDeliveryService) {
+                              EmployeeRepository employeeRepository,
+                              EmployeeCredentialsDeliveryService credentialsDeliveryService,
+                              UserAccessLogService userAccessLogService) {
         this.userAccountRepository = userAccountRepository;
+        this.employeeRepository = employeeRepository;
         this.credentialsDeliveryService = credentialsDeliveryService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     // creates an active employee account with a temporary password
@@ -97,6 +115,107 @@ public class UserAccountService {
         userAccountRepository.updateActiveStatus(account.getUserAccountId(), false);
     }
 
+    // returns every account as a display row, joined with the employee's name
+    public List<UserAccountRowDTO> getUserAccountRows() {
+        Map<Integer, String> namesByEmployeeId = employeeRepository.findAllWithInactive()
+                .stream()
+                .collect(Collectors.toMap(Employee::getEmployeeId, Employee::getFullName, (first, second) -> first));
+
+        return userAccountRepository.findAll()
+                .stream()
+                .map(account -> toRow(account, namesByEmployeeId))
+                .toList();
+    }
+
+    // returns active/locked/disabled tallies for the dashboards
+    public AccountCountsDTO getAccountCounts() {
+        return new AccountCountsDTO(
+                userAccountRepository.countActive(),
+                userAccountRepository.countLocked(),
+                userAccountRepository.countDisabled()
+        );
+    }
+
+    // locks an account, blocking login until IT unlocks it
+    public void lockAccount(int actorUserAccountId, int userAccountId) {
+        changeStatus(actorUserAccountId, userAccountId,
+                id -> userAccountRepository.updateLockStatus(id, true));
+    }
+
+    // unlocks a locked account
+    public void unlockAccount(int actorUserAccountId, int userAccountId) {
+        changeStatus(actorUserAccountId, userAccountId,
+                id -> userAccountRepository.updateLockStatus(id, false));
+    }
+
+    // enables a disabled account
+    public void enableAccount(int actorUserAccountId, int userAccountId) {
+        changeStatus(actorUserAccountId, userAccountId,
+                id -> userAccountRepository.updateActiveStatus(id, true));
+    }
+
+    // disables an account
+    public void disableAccount(int actorUserAccountId, int userAccountId) {
+        changeStatus(actorUserAccountId, userAccountId,
+                id -> userAccountRepository.updateActiveStatus(id, false));
+    }
+
+    // replaces the roles assigned to an account
+    public void updateRoles(int userAccountId, List<Role> roles) {
+        validateUserAccountId(userAccountId);
+        validateRoles(roles);
+        requireAccount(userAccountId);
+
+        userAccountRepository.updateRoles(userAccountId, roles);
+    }
+
+    // applies a status mutation and audits the before/after status
+    private void changeStatus(int actorUserAccountId, int userAccountId, IntConsumer mutation) {
+        validateUserAccountId(actorUserAccountId);
+        validateUserAccountId(userAccountId);
+
+        UserAccount before = requireAccount(userAccountId);
+        mutation.accept(userAccountId);
+        UserAccount after = requireAccount(userAccountId);
+
+        userAccessLogService.logAccountStatusChanged(
+                actorUserAccountId,
+                before.getEmployeeId(),
+                before.getAccountStatus().name(),
+                after.getAccountStatus().name()
+        );
+    }
+
+    private UserAccount requireAccount(int userAccountId) {
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null) {
+            throw new EntityNotFoundException("User account not found.");
+        }
+
+        return account;
+    }
+
+    private UserAccountRowDTO toRow(UserAccount account, Map<Integer, String> namesByEmployeeId) {
+        String fullName = namesByEmployeeId.getOrDefault(
+                account.getEmployeeId(),
+                "Employee #" + account.getEmployeeId());
+
+        return new UserAccountRowDTO(
+                account.getUserAccountId(),
+                account.getEmployeeId(),
+                fullName,
+                account.getCompanyEmail(),
+                account.getRoles(),
+                account.getActiveRole(),
+                account.getAccountStatus(),
+                account.isLocked(),
+                account.isActive(),
+                account.hasMultipleRoles(),
+                account.getLastLoginAt()
+        );
+    }
+
     // generates a unique company email for a new account
     private String generateUniqueCompanyEmail(String firstName, String lastName) {
         String baseEmail = buildBaseCompanyEmail(firstName, lastName);
@@ -151,6 +270,24 @@ public class UserAccountService {
     private void validateEmployeeId(int employeeId) {
         if (employeeId <= 0) {
             throw new ValidationException("Employee ID is required.");
+        }
+    }
+
+    private void validateUserAccountId(int userAccountId) {
+        if (userAccountId <= 0) {
+            throw new ValidationException("User account ID is required.");
+        }
+    }
+
+    private void validateRoles(List<Role> roles) {
+        if (roles == null || roles.isEmpty()) {
+            throw new ValidationException("At least one role is required.");
+        }
+
+        for (Role role : roles) {
+            if (role == null) {
+                throw new ValidationException("Role cannot be null.");
+            }
         }
     }
 

@@ -1,10 +1,13 @@
 package motorph.backend.service;
 
+import motorph.backend.dto.accesslog.AccessLogCountsDTO;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.domain.UserAccessLog;
 import motorph.backend.repository.UserAccessLogRepository;
 
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Handles creation of user access logs for audit tracking. Every write path
@@ -17,6 +20,7 @@ public class UserAccessLogService {
     public static final String ACTION_LOGIN_SUCCESS = "LOGIN_SUCCESS";
     public static final String ACTION_LOGIN_FAILED = "LOGIN_FAILED";
     public static final String ACTION_LOGOUT = "LOGOUT";
+    public static final String ACTION_ACCOUNT_STATUS_CHANGED = "ACCOUNT_STATUS_CHANGED";
 
     private final UserAccessLogRepository repository;
 
@@ -58,6 +62,51 @@ public class UserAccessLogService {
                 "",
                 ""
         ));
+    }
+
+    // logs an account lock/unlock/enable/disable performed by IT
+    public void logAccountStatusChanged(int actorUserAccountId,
+                                        int targetEmployeeId,
+                                        String oldStatus,
+                                        String newStatus) {
+        validateUserAccountId(actorUserAccountId);
+
+        String details = "Changed account status of employee ID "
+                + targetEmployeeId
+                + " from "
+                + clean(oldStatus)
+                + " to "
+                + clean(newStatus);
+
+        repository.save(new UserAccessLog(
+                actorUserAccountId,
+                ACTION_ACCOUNT_STATUS_CHANGED,
+                details,
+                "",
+                ""
+        ));
+    }
+
+    // returns every log, latest first
+    public List<UserAccessLog> getAllLogs() {
+        return repository.findAll();
+    }
+
+    // returns only the newest logs - dashboard activity feed
+    public List<UserAccessLog> getRecentLogs(int limit) {
+        if (limit <= 0) {
+            throw new ValidationException("Limit must be positive.");
+        }
+
+        return repository.findRecent(limit);
+    }
+
+    // returns login success/failure tallies for the dashboards
+    public AccessLogCountsDTO getLoginActivityCounts() {
+        return new AccessLogCountsDTO(
+                repository.countByAction(ACTION_LOGIN_SUCCESS),
+                repository.countByAction(ACTION_LOGIN_FAILED)
+        );
     }
 
     // logs a custom action - used by SystemConfigService for statutory rate change auditing

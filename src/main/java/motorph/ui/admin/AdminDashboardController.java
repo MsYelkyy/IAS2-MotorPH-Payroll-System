@@ -1,13 +1,16 @@
 package motorph.ui.admin;
 
 import motorph.application.service.EmployeeService;
-import motorph.application.service.UserAccessLogService;
-import motorph.application.service.UserAccountService;
-import motorph.domain.model.UserAccessLog;
+import motorph.api.AccessLogApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.LeaveApiClient;
 import motorph.api.PayrunApiClient;
+import motorph.api.UserAccountApiClient;
+import motorph.api.dto.accesslog.AccessLogAction;
+import motorph.api.dto.accesslog.AccessLogCountsDTO;
+import motorph.api.dto.accesslog.UserAccessLogDTO;
 import motorph.api.dto.leave.LeaveSummaryDTO;
+import motorph.api.dto.user.AccountCountsDTO;
 import motorph.api.dto.payroll.PayrollSummaryDTO;
 import motorph.api.dto.payroll.PayrunDTO;
 import motorph.ui.factory.EmployeeUIServiceFactory;
@@ -40,8 +43,8 @@ public class AdminDashboardController {
     private EmployeeService      employeeService;
     private LeaveApiClient       leaveApiClient;
     private PayrunApiClient      payrunApiClient;
-    private UserAccountService   userAccountService;
-    private UserAccessLogService userAccessLogService;
+    private UserAccountApiClient userAccountApiClient;
+    private AccessLogApiClient   accessLogApiClient;
 
     // Parent shell for dashboard navigation
     private AdminMainController mainController;
@@ -73,8 +76,8 @@ public class AdminDashboardController {
         employeeService      = EmployeeUIServiceFactory.getInstance().getEmployeeService();
         leaveApiClient       = ApiClientFactory.getInstance().getLeaveApiClient();
         payrunApiClient      = ApiClientFactory.getInstance().getPayrunApiClient();
-        userAccountService   = EmployeeUIServiceFactory.getInstance().getUserAccountService();
-        userAccessLogService = EmployeeUIServiceFactory.getInstance().getUserAccessLogService();
+        userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
+        accessLogApiClient   = ApiClientFactory.getInstance().getAccessLogApiClient();
     }
 
     /** Called by AdminMainController whenever the dashboard tab is shown. */
@@ -157,9 +160,10 @@ public class AdminDashboardController {
 
     private void refreshAccountMetrics() {
         try {
-            setText(activeAccountsLabel,   String.valueOf(userAccountService.getActiveAccountCount()));
-            setText(lockedAccountsLabel,   String.valueOf(userAccountService.getLockedAccountCount()));
-            setText(disabledAccountsLabel, String.valueOf(userAccountService.getDisabledAccountCount()));
+            AccountCountsDTO counts = userAccountApiClient.getCounts();
+            setText(activeAccountsLabel,   String.valueOf(counts.activeCount()));
+            setText(lockedAccountsLabel,   String.valueOf(counts.lockedCount()));
+            setText(disabledAccountsLabel, String.valueOf(counts.disabledCount()));
         } catch (Exception e) {
             setText(activeAccountsLabel,   "—");
             setText(lockedAccountsLabel,   "—");
@@ -169,12 +173,9 @@ public class AdminDashboardController {
 
     private void refreshLoginActivity() {
         try {
-            int success = userAccessLogService
-                    .getLogsByAction(UserAccessLogService.ACTION_LOGIN_SUCCESS).size();
-            int failed  = userAccessLogService
-                    .getLogsByAction(UserAccessLogService.ACTION_LOGIN_FAILED).size();
-            setText(successLoginsLabel, String.valueOf(success));
-            setText(failedLoginsLabel,  String.valueOf(failed));
+            AccessLogCountsDTO counts = accessLogApiClient.getCounts();
+            setText(successLoginsLabel, String.valueOf(counts.loginSuccessCount()));
+            setText(failedLoginsLabel,  String.valueOf(counts.loginFailedCount()));
         } catch (Exception e) {
             setText(successLoginsLabel, "—");
             setText(failedLoginsLabel,  "—");
@@ -186,9 +187,8 @@ public class AdminDashboardController {
         activityRows.getChildren().clear();
 
         try {
-            List<UserAccessLog> logs = userAccessLogService.getAllLogs();
+            List<UserAccessLogDTO> logs = accessLogApiClient.getRecent(10);
             logs.stream()
-                .limit(10)
                 .map(this::buildActivityRow)
                 .forEach(activityRows.getChildren()::add);
         } catch (Exception e) {
@@ -198,16 +198,16 @@ public class AdminDashboardController {
     }
 
     // Row builder
-    private HBox buildActivityRow(UserAccessLog log) {
+    private HBox buildActivityRow(UserAccessLogDTO log) {
         HBox row = new HBox();
         row.getStyleClass().addAll("table-data-row", "admin-activity-row");
 
         String actionText = log.getAction() != null ? log.getAction() : "N/A";
         Label action = activityCell(formatActivityAction(actionText), 200);
         action.getStyleClass().add("admin-activity-status");
-        if (UserAccessLogService.ACTION_LOGIN_SUCCESS.equals(actionText)) {
+        if (AccessLogAction.LOGIN_SUCCESS.equals(actionText)) {
             action.getStyleClass().add("admin-activity-success");
-        } else if (UserAccessLogService.ACTION_LOGIN_FAILED.equals(actionText)) {
+        } else if (AccessLogAction.LOGIN_FAILED.equals(actionText)) {
             action.getStyleClass().add("admin-activity-failed");
         }
 
@@ -237,10 +237,10 @@ public class AdminDashboardController {
     }
 
     private String formatActivityAction(String action) {
-        if (UserAccessLogService.ACTION_LOGIN_SUCCESS.equals(action)) {
+        if (AccessLogAction.LOGIN_SUCCESS.equals(action)) {
             return "SUCCESSFUL";
         }
-        if (UserAccessLogService.ACTION_LOGIN_FAILED.equals(action)) {
+        if (AccessLogAction.LOGIN_FAILED.equals(action)) {
             return "FAILED";
         }
         return action;

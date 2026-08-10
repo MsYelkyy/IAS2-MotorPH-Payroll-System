@@ -1,12 +1,14 @@
 package motorph.ui.it;
 
 import motorph.application.service.PasswordResetService;
-import motorph.application.service.UserAccessLogService;
-import motorph.application.service.UserAccountService;
 import motorph.domain.model.PasswordResetRequest;
 import motorph.domain.value.RoutingTeam;
+import motorph.api.AccessLogApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.SupportTicketApiClient;
+import motorph.api.UserAccountApiClient;
+import motorph.api.dto.accesslog.AccessLogCountsDTO;
+import motorph.api.dto.user.AccountCountsDTO;
 import motorph.api.dto.support.SupportTicketDTO;
 import motorph.ui.factory.ITUIServiceFactory;
 
@@ -30,9 +32,9 @@ public class ITDashboardController {
     private static final DateTimeFormatter DATE_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
 
-    private UserAccountService   userAccountService;
+    private UserAccountApiClient userAccountApiClient;
     private PasswordResetService passwordResetService;
-    private UserAccessLogService userAccessLogService;
+    private AccessLogApiClient   accessLogApiClient;
     private SupportTicketApiClient supportTicketApiClient;
     private ITMainController     mainController;
 
@@ -53,9 +55,9 @@ public class ITDashboardController {
 
     @FXML
     private void initialize() {
-        userAccountService   = ITUIServiceFactory.getInstance().getUserAccountService();
+        userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
         passwordResetService = ITUIServiceFactory.getInstance().getPasswordResetService();
-        userAccessLogService = ITUIServiceFactory.getInstance().getUserAccessLogService();
+        accessLogApiClient   = ApiClientFactory.getInstance().getAccessLogApiClient();
         supportTicketApiClient = ApiClientFactory.getInstance().getSupportTicketApiClient();
     }
 
@@ -76,12 +78,10 @@ public class ITDashboardController {
     // Metric refresh methods
     private void refreshAccountMetrics() {
         try {
-            int active   = userAccountService.getActiveAccountCount();
-            int locked   = userAccountService.getLockedAccountCount();
-            int disabled = userAccountService.getDisabledAccountCount();
-            setText(activeAccountsLabel,   String.valueOf(active));
-            setText(lockedAccountsLabel,   String.valueOf(locked));
-            setText(disabledAccountsLabel, String.valueOf(disabled));
+            AccountCountsDTO counts = userAccountApiClient.getCounts();
+            setText(activeAccountsLabel,   String.valueOf(counts.activeCount()));
+            setText(lockedAccountsLabel,   String.valueOf(counts.lockedCount()));
+            setText(disabledAccountsLabel, String.valueOf(counts.disabledCount()));
         } catch (Exception e) {
             setText(activeAccountsLabel,   "0");
             setText(lockedAccountsLabel,   "0");
@@ -107,12 +107,9 @@ public class ITDashboardController {
 
     private void refreshLoginActivity() {
         try {
-            int success = userAccessLogService
-                    .getLogsByAction(UserAccessLogService.ACTION_LOGIN_SUCCESS).size();
-            int failed = userAccessLogService
-                    .getLogsByAction(UserAccessLogService.ACTION_LOGIN_FAILED).size();
-            setText(successLoginsLabel, String.valueOf(success));
-            setText(failedLoginsLabel,  String.valueOf(failed));
+            AccessLogCountsDTO counts = accessLogApiClient.getCounts();
+            setText(successLoginsLabel, String.valueOf(counts.loginSuccessCount()));
+            setText(failedLoginsLabel,  String.valueOf(counts.loginFailedCount()));
         } catch (Exception e) {
             setText(successLoginsLabel, "0");
             setText(failedLoginsLabel,  "0");
