@@ -12,6 +12,7 @@ import motorph.api.dto.salary.SalaryHistoryDTO;
 import motorph.api.dto.salary.SalaryRecordRequest;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiFormatter;
+import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -42,12 +43,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Handles the Admin Salary and Benefits screen.
  * Includes salary history, employee benefits, and edit forms.
  */
 public class AdminSalaryController {
+
+    private static final Logger LOGGER = Logger.getLogger(AdminSalaryController.class.getName());
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final String DEFAULT_FORM_BACKDROP_STYLE = "-fx-background-color: rgba(0,0,0,0.72);";
@@ -346,17 +351,24 @@ public class AdminSalaryController {
         selectedEmployee = employee;
         selectedSalary = null;
         selectedBenefit = null;
+        boolean loaded = false;
+
         try {
             salaryItems.setAll(salaryBenefitApiClient.getSalaryHistory(employee.getEmployeeId()));
             benefitItems.setAll(salaryBenefitApiClient.getAllBenefits(employee.getEmployeeId()));
+            loaded = true;
         } catch (Exception e) {
             salaryItems.clear();
             benefitItems.clear();
-            setMessage("Failed to load data: " + e.getMessage());
+            LOGGER.log(Level.WARNING, "Failed to load salary/benefit data for employee "
+                    + employee.getEmployeeId(), e);
+            setMessage("Failed to load data: " + UiMessageUtil.toUserMessage(e));
         }
 
         showPanel(Panel.EMPLOYEE_DETAIL);
-        setMessage("Viewing: " + employee.getFullName());
+        if (loaded) {
+            setMessage("Viewing: " + employee.getFullName());
+        }
     }
 
     private void setupEmployeeTable() {

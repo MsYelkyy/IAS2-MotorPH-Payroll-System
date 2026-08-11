@@ -38,6 +38,28 @@ public final class UiMessageUtil {
         notify(label, message, "toast-label");
     }
 
+    /**
+     * Writes an error message into the label itself instead of toasting it.
+     * Reserved for the login card, where the message has to stay on screen
+     * next to the field the user is about to correct.
+     */
+    public static void setInlineError(Label label, String message) {
+        label.getStyleClass().remove("success-message");
+        if (!label.getStyleClass().contains("error-message")) {
+            label.getStyleClass().add("error-message");
+        }
+        label.setText(message);
+    }
+
+    /** Inline counterpart of {@link #setInlineError} — see that method for why. */
+    public static void setInlineSuccess(Label label, String message) {
+        label.getStyleClass().remove("error-message");
+        if (!label.getStyleClass().contains("success-message")) {
+            label.getStyleClass().add("success-message");
+        }
+        label.setText(message);
+    }
+
     /** Shows an error toast anchored on any node in the target window. */
     public static void showError(Node anchor, String message) {
         notify(anchor, message, "toast-label-error");

@@ -124,13 +124,13 @@ public class LoginController {
     // returns to login after password reset
     public void onPasswordResetComplete(String successMessage) {
         showLoginCard();
-        UiMessageUtil.setSuccess(loginMessageLabel, successMessage);
+        UiMessageUtil.setInlineSuccess(loginMessageLabel, successMessage);
     }
 
     // returns to login after forced password change and shows a confirmation message
     public void onForceChangePasswordComplete(String successMessage) {
         showLoginCard();
-        UiMessageUtil.setSuccess(loginMessageLabel, successMessage);
+        UiMessageUtil.setInlineSuccess(loginMessageLabel, successMessage);
     }
 
     // shows the login card
@@ -151,19 +151,19 @@ public class LoginController {
 
         if (email.isBlank()) {
             UiValidationUtil.markInvalid(companyEmailField);
-            UiMessageUtil.setError(loginMessageLabel, "Please enter your company email.");
+            UiMessageUtil.setInlineError(loginMessageLabel, "Please enter your company email.");
             return;
         }
 
         if (password.isBlank()) {
             UiValidationUtil.markInvalid(passwordVisible ? passwordTextField : passwordField);
-            UiMessageUtil.setError(loginMessageLabel, "Please enter your password.");
+            UiMessageUtil.setInlineError(loginMessageLabel, "Please enter your password.");
             return;
         }
 
         if (!UiValidationUtil.isMotorphEmail(email)) {
             UiValidationUtil.markInvalid(companyEmailField);
-            UiMessageUtil.setError(loginMessageLabel, "Please enter a valid MotorPH email.");
+            UiMessageUtil.setInlineError(loginMessageLabel, "Please enter a valid MotorPH email.");
             return;
         }
 
@@ -192,7 +192,7 @@ public class LoginController {
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
             UiValidationUtil.markInvalid(passwordVisible ? passwordTextField : passwordField);
-            UiMessageUtil.setError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
+            UiMessageUtil.setInlineError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
         }
     }
 
