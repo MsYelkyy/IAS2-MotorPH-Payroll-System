@@ -1,9 +1,9 @@
 # MotorPH Payroll Management System
 
 MotorPH Payroll Management System is a Java 21 payroll and HR application built
-for the Advanced Object-Oriented Programming (AOOP) subject. The project now has
-a JavaFX desktop client, a Spring Boot REST backend, a MySQL 8 database, and a
-database reporting CI pipeline.
+for the Advanced Object-Oriented Programming (AOOP) subject. The project is a
+JavaFX desktop client talking to a Spring Boot REST backend over HTTP, with a
+MySQL 8 database and a database reporting CI pipeline.
 
 The system supports employee management, attendance, leave and overtime requests,
 payroll processing, payslip viewing, role-based access control, support tickets,
@@ -13,21 +13,34 @@ audit logs, database tools, and PDF report generation.
 
 ## Current Architecture
 
-The codebase is split into three main areas:
+The desktop client never touches MySQL. It has no database driver and no
+database credentials; every read and write goes through the backend, which is
+where all authentication, permission, validation, and audit logic runs. A
+modified client cannot bypass those checks because they are not in the client.
 
 ```text
-IAS2-MotorPH-Payroll-System/
-|-- src/                         # JavaFX desktop client
-|   |-- main/java/motorph/
-|   |   |-- api/                 # REST API clients used by the UI
+JavaFX Desktop Client  ->  HTTP/REST  ->  Spring Boot Backend  ->  JDBC  ->  MySQL
+```
+
+The repository is a Maven multi-module build with two peer applications:
+
+```text
+DPA-MotorPH/
+|-- pom.xml                      # Aggregator only (packaging=pom), builds both modules
+|
+|-- motorph-desktop/             # JavaFX desktop client
+|   |-- pom.xml
+|   |-- src/main/java/motorph/
+|   |   |-- api/                 # REST clients + wire DTOs (the only way out of the app)
 |   |   |-- app/                 # JavaFX application entry point
-|   |   |-- application/         # Desktop use cases, DTOs, and services
-|   |   |-- domain/              # Domain models, value objects, calculators
-|   |   |-- infrastructure/      # Legacy JDBC repositories/config/reporting
+|   |   |-- application/         # UI-side DTOs, exceptions, session, email preview
+|   |   |-- domain/              # Value objects and models shared with the UI layer
+|   |   |-- infrastructure/      # Email preview config only
 |   |   `-- ui/                  # JavaFX controllers and UI helpers
-|   `-- main/resources/          # FXML, CSS, images, fonts, report templates
+|   `-- src/main/resources/      # FXML, CSS, images, fonts
 |
 |-- motorph-backend/             # Spring Boot REST API
+|   |-- pom.xml
 |   |-- src/main/java/motorph/backend/
 |   |   |-- configuration/       # Backend configuration
 |   |   |-- controller/          # REST controllers under /api/v1
@@ -38,6 +51,7 @@ IAS2-MotorPH-Payroll-System/
 |   |   |-- repository/          # JDBC repositories
 |   |   |-- security/            # Spring Security, JWT, password handling
 |   |   `-- service/             # Backend business services
+|   |-- src/test/java/           # Service and permission-gate tests
 |   `-- src/main/resources/
 |       |-- application.yml      # Backend runtime configuration
 |       `-- motorph/             # Backend report templates and images
@@ -51,9 +65,22 @@ IAS2-MotorPH-Payroll-System/
     `-- database-report-ci.yml   # Database Report CI/CD Pipeline
 ```
 
-The desktop app still contains some local service and JDBC classes because the
-migration to the REST backend is in progress. New UI flows use the `motorph.api`
-clients to call the Spring Boot backend at `http://localhost:8080` by default.
+The root `pom.xml` aggregates the two modules; it is not a parent they inherit
+from. `motorph-backend` keeps `spring-boot-starter-parent` as its real parent,
+and `motorph-desktop` stays a standalone POM.
+
+### Security Model
+
+- **No client-side authorization.** The desktop's role state is a display cache.
+  Every endpoint re-checks the caller's permissions against the database.
+- **Roles are never embedded in the JWT.** They are loaded per request, so a role
+  change takes effect on the user's very next call rather than when a token expires.
+- **Tokens are revocable.** Logout writes to a `token_revocation` table that the
+  auth filter checks on every request, so a copied token dies at logout.
+- **Audit identity is server-derived.** No endpoint accepts a user ID, role, or
+  "acting as" field from a request body for auditing purposes.
+- **Unauthenticated endpoints do not leak account existence.** `forgot-password`
+  answers identically whether or not the address maps to an eligible account.
 
 ---
 
@@ -67,12 +94,11 @@ clients to call the Spring Boot backend at `http://localhost:8080` by default.
 | Backend API | Spring Boot 3.5.16, Spring MVC |
 | Backend Security | Spring Security, JWT (`jjwt`), PBKDF2 password hashing |
 | Validation | Spring Boot Validation / Jakarta Validation |
-| Database | MySQL 8 |
-| Data Access | JDBC, Spring JDBC, HikariCP |
+| Database | MySQL 8 (backend only) |
+| Data Access | JDBC, Spring JDBC, HikariCP (backend only) |
 | Reporting | SQL views, JasperReports 7.0.6, PDF export |
-| Email | Jakarta Mail |
-| Build Tool | Maven |
-| Testing | JUnit 5, Mockito, Spring Boot Test |
+| Build Tool | Maven (multi-module) |
+| Testing | JUnit 5, Mockito, AssertJ, Spring Boot Test |
 | CI | GitHub Actions with MySQL 8 service container |
 
 ---
@@ -82,13 +108,16 @@ clients to call the Spring Boot backend at `http://localhost:8080` by default.
 - Role-based login for Admin, HR, Finance, IT, and Employee users
 - Two-factor authentication and JWT-backed API sessions
 - Employee profile, salary, benefits, and government details management
+- Employee self-service: contact details, profile photo, and password changes
 - Attendance time-in/time-out and attendance history
 - Leave and overtime submission, approval, rejection, and cancellation
-- Payroll and payslip viewing
-- PDF reports through JasperReports
+- Payroll processing, payslip viewing, and PDF payslips
+- PDF reports through JasperReports, generated server-side
 - Support ticket routing and resolution
 - System configuration for government rates and tax brackets
-- User access logs, role permissions, and database backup tools
+- User account administration, role permissions, and user access logs
+- Password reset requests with IT resolution
+- Database backup, download, restore, and delete
 - Database report validation through GitHub Actions
 
 ---
@@ -124,7 +153,10 @@ Username: emp{EmployeeNumber}
 Password: MotorPH@{EmployeeNumber}
 ```
 
-The backend also supports OTP verification as part of the login flow.
+Login is a two-step flow: credentials are verified first, then an OTP is
+confirmed before any token is issued. If the account is still on a temporary
+password, login stops there and the client is sent to the forced password-change
+screen instead.
 
 ---
 
@@ -154,6 +186,20 @@ The application and backend expect the database name to be:
 ```text
 payrollsystem_db
 ```
+
+### Backend Database Account
+
+The backend should not connect as `root`. Create a least-privilege account for it:
+
+```sql
+CREATE USER 'motorph_backend'@'127.0.0.1' IDENTIFIED BY '<strong-generated-password>';
+GRANT SELECT, INSERT, UPDATE, DELETE ON payrollsystem_db.* TO 'motorph_backend'@'127.0.0.1';
+FLUSH PRIVILEGES;
+```
+
+No `GRANT OPTION`, no DDL rights, no access to other schemas, and the host is
+scoped to `127.0.0.1` rather than `%`. Use a separate account for schema
+migrations.
 
 ### Reporting Views and SQL Tests
 
@@ -187,14 +233,15 @@ mysql -h 127.0.0.1 -P 3306 -u root -p --default-character-set=utf8mb4 --table < 
 
 ## Backend Setup
 
-The backend reads its database and JWT settings from environment variables.
+The backend reads its settings from environment variables. Secrets are never
+committed; `application.yml` only holds placeholders.
 
 Required:
 
 ```text
 MOTORPH_DB_USER
 MOTORPH_DB_PASSWORD
-MOTORPH_JWT_SECRET
+MOTORPH_JWT_SECRET          # 32+ bytes; startup fails if missing or too short
 ```
 
 Optional:
@@ -206,6 +253,8 @@ SERVER_PORT=8080
 MOTORPH_PROFILE=default
 MOTORPH_JWT_ACCESS_EXPIRY_MINUTES=15
 MOTORPH_JWT_REFRESH_EXPIRY_MINUTES=1440
+MOTORPH_BACKUP_DIR=backups          # where database backups are written
+MOTORPH_PHOTO_DIR=profile-photos    # where employee profile photos are stored
 ```
 
 Run the backend:
@@ -234,54 +283,68 @@ export SERVER_PORT=8081
 mvn spring-boot:run
 ```
 
+> **Profile photos:** photos are stored in `MOTORPH_PHOTO_DIR` on the backend
+> host and served over the API. Photos saved before this layout was introduced
+> are recorded with their old client-side path; copy those image files into the
+> photo directory once and they resolve by filename. Employees without a
+> resolvable photo simply show their initials.
+
 ---
 
 ## Desktop App Setup
 
-The JavaFX desktop app uses the backend API at `http://localhost:8080` by
-default. Start the backend first, then run the desktop app from the repository
-root:
+The desktop app uses the backend API at `http://localhost:8080` by default.
+Start the backend first, then run the desktop app from the repository root:
 
 ```bash
-mvn clean javafx:run
+mvn -pl motorph-desktop javafx:run
+```
+
+Or from inside the module:
+
+```bash
+cd motorph-desktop
+mvn javafx:run
 ```
 
 To point the desktop client at a different backend URL:
 
 ```bash
-mvn javafx:run -Dmotorph.api.baseUrl=http://localhost:8081
+mvn -pl motorph-desktop javafx:run -Dmotorph.api.baseUrl=http://localhost:8081
 ```
 
-Some older desktop services still use the local JDBC settings in:
+With the backend stopped, the desktop app fails at the network boundary with a
+connection error. It can no longer fall back to a direct database connection,
+because it does not have one.
 
-```text
-src/main/java/motorph/infrastructure/config/DatabaseConnection.java
-```
+### HTTPS
 
-Default local values:
-
-```java
-private static final String URL = "jdbc:mysql://localhost:3306/payrollsystem_db";
-private static final String USER = "root";
-private static final String PASSWORD = "root123";
-```
+Plain HTTP on `localhost` is a local-development convenience only. Any
+deployment where the client and server are on different machines must run
+behind TLS, and the desktop `HttpApiClient` must keep certificate validation
+enabled. Treat this as a go-live requirement, not optional hardening.
 
 ---
 
 ## Testing
 
-Run desktop/module unit tests from the repository root:
+Run every test in the repository from the root:
 
 ```bash
 mvn test
 ```
 
-Run backend tests:
+That builds both modules through the aggregator. To test one module on its own:
 
 ```bash
-cd motorph-backend
-mvn test
+mvn -pl motorph-desktop test
+mvn -pl motorph-backend test
 ```
+
+Backend coverage focuses on the rules that are only enforced server-side:
+permission gates on each endpoint, the account-enumeration contract of
+`forgot-password`, backup filename validation against path traversal, profile
+photo upload validation, and the temporary-password replay guard.
 
 Run the database report validation locally with the MySQL client:
 
@@ -309,6 +372,9 @@ The workflow:
 4. Runs `database/ci-cd/run_all_tests.sql`.
 5. Fails if any report test returns `FAIL`.
 6. Uploads `database/ci-cd/test_output.log` as an artifact.
+
+The workflow validates the database layer only; it does not build or test the
+Java modules.
 
 The workflow depends on the SQL files in:
 

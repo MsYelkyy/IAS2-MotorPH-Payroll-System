@@ -6,131 +6,21 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>motorph</groupId>
-    <artifactId>AOOP-MotorPH</artifactId>
+    <artifactId>motorph-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>MotorPH</name>
 
-    <properties>
-        <maven.compiler.release>21</maven.compiler.release>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <javafx.version>21.0.6</javafx.version>
-        <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
-        <jasperreports.version>7.0.6</jasperreports.version>
-
-        <jakarta.mail.version>2.0.1</jakarta.mail.version>
-        <jackson.version>2.22.1</jackson.version>
-        <junit.jupiter.version>5.10.2</junit.jupiter.version>
-        <mockito.version>5.12.0</mockito.version>
-        <maven.surefire.version>3.2.5</maven.surefire.version>
-    </properties>
-
-    <dependencies>
-
-        <!-- JSON (de)serialization for the motorph.api REST client -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- Email -->
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
-            <version>${jakarta.mail.version}</version>
-        </dependency>
-
-        <!-- JavaFX -->
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-media</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-web</artifactId>
-            <version>${javafx.version}</version>
-        </dependency>
-
-        <!-- JasperReports -->
-        <dependency>
-            <groupId>net.sf.jasperreports</groupId>
-            <artifactId>jasperreports</artifactId>
-            <version>${jasperreports.version}</version>
-        </dependency>
-
-        <!-- JasperReports PDF export extension (required for exportReportToPdfFile) -->
-        <dependency>
-            <groupId>net.sf.jasperreports</groupId>
-            <artifactId>jasperreports-pdf</artifactId>
-            <version>${jasperreports.version}</version>
-        </dependency>
-
-        <!-- JUnit 5 -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Mockito -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Mockito JUnit 5 Support -->
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-
-            <!-- JavaFX Runner -->
-            <plugin>
-                <groupId>org.openjfx</groupId>
-                <artifactId>javafx-maven-plugin</artifactId>
-                <version>${javafx.maven.plugin.version}</version>
-                <configuration>
-                    <mainClass>motorph.app.Main</mainClass>
-                </configuration>
-            </plugin>
-
-            <!-- JUnit Test Runner -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>${maven.surefire.version}</version>
-            </plugin>
-
-        </plugins>
-    </build>
+    <!--
+        Aggregator only - it builds both applications together, it is not a
+        parent they inherit from. motorph-backend keeps spring-boot-starter-parent
+        as its actual parent (with an empty relativePath, so it resolves from the
+        repository rather than from this file), and motorph-desktop stays a plain
+        standalone POM. Aggregation and inheritance are separate concerns in Maven.
+    -->
+    <modules>
+        <module>motorph-desktop</module>
+        <module>motorph-backend</module>
+    </modules>
 
 </project>
