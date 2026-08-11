@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static motorph.backend.service.report.ReportGuards.requireRows;
+
 /**
  * Organization-wide and per-department payroll reports. Individual payslip
  * viewing lives in PayslipService, migrated separately.
@@ -44,6 +46,7 @@ public class PayrollReportService {
                                                         Integer payrunId, LocalDate startDate, LocalDate endDate) {
         List<OrganizationPayrollReportDTO> data =
                 getOrganizationPayrollReport(departmentId, departmentName, employeeId, payrunId, startDate, endDate);
+        requireRows(data, "No payroll records match the selected filters.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 ORGANIZATION_PAYROLL_REPORT,
@@ -63,6 +66,7 @@ public class PayrollReportService {
     public byte[] generatePayrollSummaryReportPdf(Integer departmentId, Integer payrunId,
                                                    LocalDate startDate, LocalDate endDate) {
         List<PayrollSummaryReportDTO> data = getPayrollSummaryReport(departmentId, payrunId, startDate, endDate);
+        requireRows(data, "No payroll records match the selected filters.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 PAYROLL_SUMMARY_REPORT,

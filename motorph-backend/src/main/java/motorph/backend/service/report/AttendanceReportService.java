@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static motorph.backend.service.report.ReportGuards.requireRows;
+
 @Service
 public class AttendanceReportService {
 
@@ -39,6 +41,7 @@ public class AttendanceReportService {
     public byte[] generateAttendanceReportPdf(Integer departmentId, Integer employeeId, String attendanceStatus,
                                               LocalDate startDate, LocalDate endDate) {
         List<AttendanceReportDTO> data = getAttendanceReport(departmentId, employeeId, attendanceStatus, startDate, endDate);
+        requireRows(data, "No attendance records match the selected filters.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 ATTENDANCE_REPORT,
@@ -57,6 +60,8 @@ public class AttendanceReportService {
 
     public byte[] generateEmployeeTimecardReportPdf(int employeeId, LocalDate startDate, LocalDate endDate) {
         EmployeeTimecardReportDTO data = getEmployeeTimecardReport(employeeId, startDate, endDate);
+        requireRows(data == null ? null : data.getEntries(),
+                "No timecard entries found for this employee in the selected period.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 EMPLOYEE_TIMECARD_REPORT,

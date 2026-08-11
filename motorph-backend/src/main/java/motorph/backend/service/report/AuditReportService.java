@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static motorph.backend.service.report.ReportGuards.requireRows;
+
 @Service
 public class AuditReportService {
 
@@ -34,6 +36,7 @@ public class AuditReportService {
 
     public byte[] generateAuditReportPdf(Integer userAccountId, String action, LocalDate startDate, LocalDate endDate) {
         List<AuditReportDTO> data = getAuditReport(userAccountId, action, startDate, endDate);
+        requireRows(data, "No audit log entries match the selected filters.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 AUDIT_REPORT,

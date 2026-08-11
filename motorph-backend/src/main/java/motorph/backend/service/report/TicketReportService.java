@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static motorph.backend.service.report.ReportGuards.requireRows;
+
 @Service
 public class TicketReportService {
 
@@ -36,6 +38,7 @@ public class TicketReportService {
     public byte[] generateTicketReportPdf(Integer departmentId, Integer employeeId, String category,
                                           String routingTeam, String status, LocalDate startDate, LocalDate endDate) {
         List<TicketReportDTO> data = getTicketReport(departmentId, employeeId, category, routingTeam, status, startDate, endDate);
+        requireRows(data, "No support tickets match the selected filters.");
 
         JasperPrint jasperPrint = jasperReportGenerator.generateReport(
                 TICKET_REPORT,

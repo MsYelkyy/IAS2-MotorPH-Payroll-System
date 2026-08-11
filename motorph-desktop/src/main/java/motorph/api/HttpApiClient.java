@@ -1,5 +1,6 @@
 package motorph.api;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,7 +36,12 @@ public final class HttpApiClient {
                 .build();
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                // the backend serializes its domain objects whole, so responses carry
+                // derived getters the wire DTOs deliberately recompute client-side
+                // (hoursWorked, complete, pending, open, ...). Failing on those would
+                // reject otherwise-valid responses, so unknown fields are skipped.
+                .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
     public <T> T get(String path, Class<T> responseType) {

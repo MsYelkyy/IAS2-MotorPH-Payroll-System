@@ -4,6 +4,7 @@ import motorph.backend.dto.auth.ErrorResponse;
 import motorph.backend.exception.AuthenticationException;
 import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.DataAccessException;
+import motorph.backend.exception.EmptyReportException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.TooManyRequestsException;
 import motorph.backend.exception.UnauthorizedException;
@@ -64,6 +65,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException e) {
         return respond(HttpStatus.NOT_FOUND, "NOT_FOUND", e.getMessage());
+    }
+
+    // the report ran fine but matched nothing - clients show a message instead
+    // of opening a blank PDF
+    @ExceptionHandler(EmptyReportException.class)
+    public ResponseEntity<ErrorResponse> handleEmptyReport(EmptyReportException e) {
+        return respond(HttpStatus.NOT_FOUND, "NO_REPORT_DATA", e.getMessage());
     }
 
     @ExceptionHandler(BusinessRuleException.class)
