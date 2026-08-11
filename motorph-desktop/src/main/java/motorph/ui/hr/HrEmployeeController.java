@@ -1513,10 +1513,6 @@ public class HrEmployeeController {
     }
 
     private void showErrorAlert(String header, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Employee Management");
-        alert.setHeaderText(header);
-        alert.setContentText(message);
-        alert.showAndWait();
+        UiMessageUtil.showErrorToastTop(toastRoot, message);
     }
 }

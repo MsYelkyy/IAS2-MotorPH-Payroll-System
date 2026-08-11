@@ -11,9 +11,7 @@ import motorph.ui.util.UiFormatter;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -273,14 +271,8 @@ public class FinanceViewPayslipController {
         printButton.setDisable(disabled);
     }
 
-    // shows a blocking validation/error dialog
+    // surfaces a validation/error notification in the window's toast corner
     private void showError(String header, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-        alert.setTitle("View Payslip");
-        alert.setHeaderText(header);
-        if (toastRoot.getScene() != null) {
-            alert.initOwner(toastRoot.getScene().getWindow());
-        }
-        alert.showAndWait();
+        UiMessageUtil.showErrorToastTop(toastRoot, message);
     }
 }

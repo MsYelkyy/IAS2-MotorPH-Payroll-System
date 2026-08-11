@@ -4,6 +4,7 @@ import motorph.api.ApiClientFactory;
 import motorph.api.ReportApiClient;
 import motorph.api.dto.report.PayrollDashboardDTO;
 import motorph.ui.util.UiFormatter;
+import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.chart.BarChart;
@@ -17,6 +18,8 @@ import javafx.util.StringConverter;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Displays the Payroll Reporting Dashboard for the Finance workspace.
@@ -25,6 +28,7 @@ import java.util.List;
  */
 public class FinanceDashboardController {
 
+    private static final Logger LOG = Logger.getLogger(FinanceDashboardController.class.getName());
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
 
     private ReportApiClient reportApiClient;
@@ -74,7 +78,7 @@ public class FinanceDashboardController {
         }
         refreshKpis(dashboard);
         refreshNetPayChart(dashboard.getNetPayByMonth());
-        refreshDeductionChart(dashboard.getDeductionBreakdown());
+        refreshDeductionChart(dashboard);
         refreshDepartmentChart(dashboard.getDepartmentCosts());
         refreshSummary(dashboard);
     }
@@ -105,18 +109,34 @@ public class FinanceDashboardController {
     }
 
     // ── Deduction breakdown donut ───────────────────────────────────
-    private void refreshDeductionChart(PayrollDashboardDTO.DeductionBreakdown d) {
+    private void refreshDeductionChart(PayrollDashboardDTO dashboard) {
         if (deductionChart == null) return;
         deductionChart.getData().clear();
-        if (d == null || d.getTotal() <= 0) return;
 
-        deductionChart.getData().addAll(
-                new PieChart.Data("SSS", d.getSss()),
-                new PieChart.Data("PhilHealth", d.getPhilhealth()),
-                new PieChart.Data("Pag-IBIG", d.getPagibig()),
-                new PieChart.Data("Withholding Tax", d.getWithholdingTax()));
+        PayrollDashboardDTO.DeductionBreakdown d = dashboard.getDeductionBreakdown();
+        double government = d == null ? 0 : d.getTotal();
 
-        installPieTooltips(d.getTotal());
+        // whatever the month withheld beyond the four government contributions
+        // (late, undertime, absence) - without this the donut reads as "no data"
+        // for a period whose deductions are all non-government
+        double other = Math.max(0, dashboard.getTotalDeductions() - government);
+        double total = government + other;
+
+        if (total <= 0) return;
+
+        if (d != null) {
+            deductionChart.getData().addAll(
+                    new PieChart.Data("SSS", d.getSss()),
+                    new PieChart.Data("PhilHealth", d.getPhilhealth()),
+                    new PieChart.Data("Pag-IBIG", d.getPagibig()),
+                    new PieChart.Data("Withholding Tax", d.getWithholdingTax()));
+        }
+
+        if (other > 0) {
+            deductionChart.getData().add(new PieChart.Data("Other Deductions", other));
+        }
+
+        installPieTooltips(total);
     }
 
     // ── Payroll cost by department (horizontal bars) ────────────────
@@ -176,6 +196,10 @@ public class FinanceDashboardController {
         try {
             return reportApiClient.getLatestPayrollDashboard();
         } catch (Exception e) {
+            LOG.log(Level.WARNING, "Failed to load the payroll dashboard", e);
+            // silent on the first paint (no window yet); visible on manual refresh
+            UiMessageUtil.showError(totalEmployeesLabel,
+                    "Could not load payroll figures: " + UiMessageUtil.toUserMessage(e));
             return null;
         }
     }

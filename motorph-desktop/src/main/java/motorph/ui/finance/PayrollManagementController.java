@@ -282,20 +282,12 @@ public class PayrollManagementController {
     }
 
     private void showGenerateErrorAlert(String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
-        alert.setTitle("Generate Payroll");
-        alert.setHeaderText("Could Not Generate Payroll");
-        alert.showAndWait();
+        UiMessageUtil.showErrorToastTop(toastRoot, "Could not generate payroll: " + message);
     }
 
     private void showCannotGeneratePayrollAlert() {
-        Alert alert = new Alert(Alert.AlertType.WARNING,
-                "No ready employees are available for this payroll period.\n\n"
-                        + "Please review attendance records before generating payroll.",
-                ButtonType.OK);
-        alert.setTitle("Cannot Generate Payroll");
-        alert.setHeaderText("Cannot Generate Payroll");
-        alert.showAndWait();
+        UiMessageUtil.showErrorToastTop(toastRoot,
+                "No ready employees for this period. Review attendance records before generating payroll.");
     }
 
     // checks if the payrun already has generated payroll results
@@ -304,13 +296,8 @@ public class PayrollManagementController {
     }
 
     private void showAlreadyGeneratedAlert() {
-        Alert alert = new Alert(Alert.AlertType.WARNING,
-                "Payroll has already been generated for this payroll period.\n\n"
-                        + "Open it from the Completed tab to view the results.",
-                ButtonType.OK);
-        alert.setTitle("Payroll Already Generated");
-        alert.setHeaderText("Payroll Already Generated");
-        alert.showAndWait();
+        UiMessageUtil.showErrorToastTop(toastRoot,
+                "Payroll is already generated for this period. Open it from the Completed tab.");
     }
 
     // shows a non-persisted payroll preview for a ready employee

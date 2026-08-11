@@ -42,7 +42,6 @@ DPA-MotorPH/
 |-- motorph-backend/             # Spring Boot REST API
 |   |-- pom.xml
 |   |-- src/main/java/motorph/backend/
-|   |   |-- configuration/       # Backend configuration
 |   |   |-- controller/          # REST controllers under /api/v1
 |   |   |-- domain/              # Backend domain model
 |   |   |-- dto/                 # Request/response DTOs

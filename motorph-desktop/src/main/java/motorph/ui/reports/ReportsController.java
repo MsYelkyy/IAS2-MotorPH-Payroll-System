@@ -2,6 +2,7 @@ package motorph.ui.reports;
 
 import motorph.application.exception.ValidationException;
 import motorph.api.ApiClientFactory;
+import motorph.api.ApiException;
 import motorph.api.EmployeeApiClient;
 import motorph.api.PayrunApiClient;
 import motorph.api.PayslipApiClient;
@@ -13,7 +14,6 @@ import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
@@ -558,9 +558,19 @@ public class ReportsController {
             openPdf(pdf, type.name().toLowerCase());
         } catch (ValidationException ex) {
             showError("Validation Error", ex.getMessage());
+        } catch (ApiException ex) {
+            // an empty report is not a failure - say so instead of opening a blank PDF
+            showError("Report", isEmptyReport(ex)
+                    ? ex.getMessage() + " There is nothing to preview."
+                    : "Could not generate report: " + ex.getMessage());
         } catch (Exception ex) {
-            showError("Report Error", "Could not generate report:\n" + ex.getMessage());
+            showError("Report Error", "Could not generate report: " + ex.getMessage());
         }
+    }
+
+    // true when the backend ran the report fine but it matched no rows
+    private boolean isEmptyReport(ApiException ex) {
+        return "NO_REPORT_DATA".equals(ex.getCode());
     }
 
     // --- Per-report PDF fetch methods (shared by preview and export) ------
@@ -696,8 +706,12 @@ public class ReportsController {
             reportExported(path);
         } catch (ValidationException ex) {
             showError("Validation Error", ex.getMessage());
+        } catch (ApiException ex) {
+            showError("Report", isEmptyReport(ex)
+                    ? ex.getMessage() + " There is nothing to export."
+                    : "Could not export report: " + ex.getMessage());
         } catch (Exception ex) {
-            showError("Report Error", "Could not export report:\n" + ex.getMessage());
+            showError("Report Error", "Could not export report: " + ex.getMessage());
         }
     }
 
@@ -829,10 +843,6 @@ public class ReportsController {
     // --- UI helpers -------------------------------------------------------
 
     private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        UiMessageUtil.setError(moduleMessageLabel, message);
     }
 }
