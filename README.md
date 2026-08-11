@@ -25,7 +25,7 @@ JavaFX Desktop Client  ->  HTTP/REST  ->  Spring Boot Backend  ->  JDBC  ->  MyS
 The repository is a Maven multi-module build with two peer applications:
 
 ```text
-DPA-MotorPH/
+IAS2-MotorPH/
 |-- pom.xml                      # Aggregator only (packaging=pom), builds both modules
 |
 |-- motorph-desktop/             # JavaFX desktop client
