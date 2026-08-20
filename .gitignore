@@ -4,6 +4,15 @@ target/
 out/
 .tools/
 .DS_Store
+
+# Local environment files and secrets - never commit these.
+# .env.example (placeholders only) is deliberately kept.
+.env
+.env.*
+!.env.example
 motorph-backend/.env
 motorph-backend/.local-db-password.txt
 motorph-backend/.local-env.sh
+
+# Database backups written by the backend contain payroll data.
+backups/

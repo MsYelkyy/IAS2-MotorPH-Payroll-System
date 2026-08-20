@@ -1,0 +1,157 @@
+# =============================================================================
+# MotorPH Payroll System - local Docker environment
+# -----------------------------------------------------------------------------
+# Containerizes the backend REST API and MySQL only. The JavaFX desktop client
+# is NOT containerized: it keeps running on the host and talks to the backend at
+# http://localhost:8080, exactly as before.
+#
+# Every value below comes from the root .env file (copy it from .env.example).
+# No password or signing secret is written into this file.
+#
+#   docker compose up -d --build      start
+#   docker compose down               stop  (database is kept)
+#   docker compose down -v            reset (database is destroyed)
+# =============================================================================
+
+name: motorph
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # MySQL 8 - owns the payroll database. Only the backend talks to it.
+  # ---------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0.46           # pinned patch version; matches the server the
+                                  # dump in database/ was produced on
+    container_name: motorph-mysql
+    restart: unless-stopped
+
+    # utf8mb4 to match the dump's own charset/collation.
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is missing - copy .env.example to .env and fill it in}
+      # The backend's JDBC URL hardcodes this database name, so it is fixed.
+      MYSQL_DATABASE: payrollsystem_db
+      # Consumed by 05-create-backend-user.sh. MYSQL_USER / MYSQL_PASSWORD are
+      # deliberately NOT used: the image would grant that account ALL PRIVILEGES,
+      # which is wider than the account documented in README.md.
+      MOTORPH_DB_USER: ${MOTORPH_DB_USER:?MOTORPH_DB_USER is missing - see .env.example}
+      MOTORPH_DB_PASSWORD: ${MOTORPH_DB_PASSWORD:?MOTORPH_DB_PASSWORD is missing - see .env.example}
+      MOTORPH_DB_CLIENT_HOST: ${MOTORPH_DB_CLIENT_HOST:-172.28.%}
+      TZ: ${TZ:-Asia/Manila}
+
+    ports:
+      # Bound to the loopback interface only - reachable from this machine (MySQL
+      # Workbench, the report test scripts) but not from the network. Delete this
+      # whole ports block if you do not need direct database access; the backend
+      # reaches MySQL over the private compose network either way.
+      - "127.0.0.1:${MYSQL_LOCAL_PORT:-3307}:3306"
+
+    volumes:
+      # Persistent database storage. Survives `docker compose down`.
+      - mysql-data:/var/lib/mysql
+
+      # First-start initialization, read-only, run in filename order. These are
+      # the repository's existing scripts, following the same order as
+      # database/ci-cd/deploy_reports.sql - that file itself cannot be used here
+      # because its SOURCE ../... paths are resolved by the mysql client's
+      # working directory, which does not exist inside the container.
+      - ./database/payrollsystem_db.sql:/docker-entrypoint-initdb.d/01-schema-and-data.sql:ro
+
+      # The dump predates the Phase 1 auth tables (login_challenge,
+      # token_revocation), so a database built from the dump alone is missing
+      # them and every login fails on "table doesn't exist". This migration is
+      # the repository's own script; it must run after the dump because both
+      # tables carry a foreign key to user_account.
+      - ./motorph-backend/src/main/resources/db/migration/phase1_auth_tables.sql:/docker-entrypoint-initdb.d/02-auth-tables.sql:ro
+
+      - ./database/sql_scripts/seed_payroll_earning.sql:/docker-entrypoint-initdb.d/03-seed-payroll-earning.sql:ro
+      - ./database/sql_scripts/employee_payslip_report_view.sql:/docker-entrypoint-initdb.d/04-employee-payslip-report-view.sql:ro
+      - ./database/sql_scripts/payroll_summary_monthly_view.sql:/docker-entrypoint-initdb.d/05-payroll-summary-monthly-view.sql:ro
+      - ./docker/mysql/init/06-create-backend-user.sh:/docker-entrypoint-initdb.d/06-create-backend-user.sh:ro
+
+    healthcheck:
+      # $$ escapes to a single $ for the container shell, so the root password is
+      # read from the container environment and never appears on a command line.
+      # During initialization MySQL listens on a socket only, so this TCP ping
+      # stays red until the dump and the init scripts have finished loading -
+      # which is exactly the gate the backend waits on.
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h 127.0.0.1 -u root --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+    networks:
+      - motorph-net
+
+  # ---------------------------------------------------------------------------
+  # Spring Boot REST API - the only component that touches the database.
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./motorph-backend
+      dockerfile: Dockerfile
+    image: motorph-backend:local
+    container_name: motorph-backend
+    restart: unless-stopped
+
+    depends_on:
+      mysql:
+        # Do not start until MySQL reports healthy, i.e. until the schema, the
+        # seed and both report views are loaded.
+        condition: service_healthy
+
+    environment:
+      # Service name on the compose network, not localhost.
+      MOTORPH_DB_HOST: mysql
+      MOTORPH_DB_PORT: 3306
+      MOTORPH_DB_USER: ${MOTORPH_DB_USER:?MOTORPH_DB_USER is missing - see .env.example}
+      MOTORPH_DB_PASSWORD: ${MOTORPH_DB_PASSWORD:?MOTORPH_DB_PASSWORD is missing - see .env.example}
+
+      # Startup fails fast if the secret is missing or shorter than 32 bytes.
+      MOTORPH_JWT_SECRET: ${MOTORPH_JWT_SECRET:?MOTORPH_JWT_SECRET is missing - see .env.example}
+      MOTORPH_JWT_ACCESS_EXPIRY_MINUTES: ${MOTORPH_JWT_ACCESS_EXPIRY_MINUTES:-15}
+      MOTORPH_JWT_REFRESH_EXPIRY_MINUTES: ${MOTORPH_JWT_REFRESH_EXPIRY_MINUTES:-1440}
+
+      MOTORPH_PROFILE: ${MOTORPH_PROFILE:-default}
+
+      # Absolute paths inside the container; both are bind-mounted below.
+      MOTORPH_PHOTO_DIR: /app/profile-photos
+      MOTORPH_BACKUP_DIR: /app/backups
+
+      # Keeps container timestamps aligned with the host-run setup.
+      TZ: ${TZ:-Asia/Manila}
+
+    ports:
+      # Backend stays reachable from the host on 8080, on the loopback interface
+      # only, so the desktop client needs no change at all.
+      - "127.0.0.1:${BACKEND_LOCAL_PORT:-8080}:8080"
+
+    volumes:
+      # Profile photos and database backups live on the backend host. Bind mounts
+      # keep the photos already committed in the repository visible to the
+      # container, and keep anything written at run time on the host.
+      - ./motorph-backend/profile-photos:/app/profile-photos
+      - ./backups:/app/backups
+
+    networks:
+      - motorph-net
+
+volumes:
+  mysql-data:
+    name: motorph-mysql-data
+
+networks:
+  motorph-net:
+    name: motorph-net
+    ipam:
+      config:
+        # Fixed subnet so the backend database account can stay host-scoped
+        # (MOTORPH_DB_CLIENT_HOST=172.28.%) instead of being opened to '%'.
+        # If this range clashes with something else on your machine, change it
+        # here and change MOTORPH_DB_CLIENT_HOST in .env to match.
+        - subnet: 172.28.0.0/16
