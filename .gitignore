@@ -4,3 +4,6 @@ target/
 out/
 .tools/
 .DS_Store
+motorph-backend/.env
+motorph-backend/.local-db-password.txt
+motorph-backend/.local-env.sh
