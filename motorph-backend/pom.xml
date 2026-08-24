@@ -82,6 +82,12 @@
             <artifactId>jasperreports-pdf</artifactId>
             <version>${jasperreports.version}</version>
         </dependency>
+        <!-- In-process report compiler - without it Jasper shells out to javac, which the JRE runtime image does not have -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports-jdt</artifactId>
+            <version>${jasperreports.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
