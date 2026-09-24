@@ -46,7 +46,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         this.dataSource = dataSource;
     }
 
-    // finds an account by company email
     public UserAccount findByCompanyEmail(String companyEmail) {
         String sql = BASE_SELECT + """
                 WHERE ua.company_email = ?
@@ -70,7 +69,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return null;
     }
 
-    // finds an account by user account id
     @Override
     public UserAccount findById(Integer userAccountId) {
         validatePositive(userAccountId, "User account ID must be positive.");
@@ -103,7 +101,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return executeListQuery(sql);
     }
 
-    // finds an account by employee id
     public UserAccount findByEmployeeId(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -129,22 +126,24 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return null;
     }
 
-    // counts accounts that can currently log in
+    /**
+     * Counts accounts that are active and not locked.
+     */
     public int countActive() {
         return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_active = 1 AND is_locked = 0");
     }
 
-    // counts locked accounts
     public int countLocked() {
         return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_locked = 1");
     }
 
-    // counts disabled accounts
     public int countDisabled() {
         return executeCountQuery("SELECT COUNT(*) FROM user_account WHERE is_active = 0");
     }
 
-    // saves a new account and assigns its roles
+    /**
+     * Saves a new account and assigns its roles in a single transaction.
+     */
     @Override
     public void save(UserAccount userAccount) {
         validateUserAccount(userAccount);
@@ -193,7 +192,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // updates the lock status
     public void updateLockStatus(int userAccountId, boolean isLocked) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -216,7 +214,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // updates the active status
     public void updateActiveStatus(int userAccountId, boolean isActive) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -239,7 +236,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // checks if a company email already exists
     public boolean existsByCompanyEmail(String companyEmail) {
         String sql = "SELECT COUNT(*) FROM user_account WHERE company_email = ?";
 
@@ -261,7 +257,9 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         return false;
     }
 
-    // installs a permanent password and clears any temporary-password state
+    /**
+     * Sets a permanent password and clears any temporary-password state.
+     */
     public void updatePassword(int userAccountId, String hash, String salt) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -290,7 +288,9 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // installs an IT-issued temporary password the user must replace on next login
+    /**
+     * Sets an IT-issued temporary password that the user must change at next login.
+     */
     public void updateTemporaryPassword(int userAccountId, String hash, String salt, LocalDateTime expiresAt) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -328,7 +328,9 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // replaces every role assigned to the account
+    /**
+     * Replaces all roles assigned to the account.
+     */
     public void updateRoles(int userAccountId, List<Role> roles) {
         validatePositive(userAccountId, "User account ID must be positive.");
         validateRoles(roles);
@@ -346,7 +348,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // updates the last login time
     public void updateLastLogin(int userAccountId) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -368,7 +369,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // maps the result set to a user account
     private UserAccount mapRow(Connection conn, ResultSet rs) throws SQLException {
         int userAccountId = rs.getInt("user_account_id");
 
@@ -402,7 +402,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         );
     }
 
-    // finds all roles assigned to one user account
     private List<Role> findRolesByUserAccountId(Connection conn, int userAccountId) throws SQLException {
         List<Role> roles = new ArrayList<>();
 
@@ -457,7 +456,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // assigns all roles to the user account
     private void assignRoles(Connection conn, int userAccountId, List<Role> roles) throws SQLException {
         validateRoles(roles);
 
@@ -466,7 +464,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // deletes every existing role assignment for the user account
     private void deleteRoles(Connection conn, int userAccountId) throws SQLException {
         String sql = "DELETE FROM user_role WHERE user_account_id = ?";
 
@@ -476,7 +473,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // assigns one role to the user account
     private void assignRole(Connection conn, int userAccountId, Role role) throws SQLException {
         String sql = """
                 INSERT IGNORE INTO user_role (user_account_id, role_id)
@@ -490,7 +486,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
-    // resolves the role id from the role name
     private int resolveRoleId(Connection conn, Role role) throws SQLException {
         String sql = "SELECT role_id FROM role WHERE role_name = ?";
 
@@ -507,7 +502,6 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         throw new IllegalArgumentException("Role not found: " + role);
     }
 
-    // gets the generated user account id
     private int getGeneratedId(PreparedStatement stmt) throws SQLException {
         try (ResultSet rs = stmt.getGeneratedKeys()) {
             if (rs.next()) {

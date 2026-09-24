@@ -158,7 +158,6 @@ public class PayrollResultRepository {
         return false;
     }
 
-    // saves a payroll result and returns the generated id
     public int save(PayrollResult payrollResult) {
         String sql = """
             INSERT INTO payroll_result (

@@ -18,10 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Reads the pre-joined, pre-pivoted payslip view for individual payslips, plus
- * two aggregate payroll reports (organization-wide monthly, and per-department
- * summary). All join/aggregation logic and official figures live in the
- * underlying views/tables; these queries only select and filter.
+ * Reads payslip data and the organization-wide and per-department payroll reports. All joins,
+ * aggregation, and official figures come from the underlying views; these queries only select and
+ * filter.
  */
 @Repository
 public class PayrollReportRepository {
@@ -38,8 +37,8 @@ public class PayrollReportRepository {
                                                                             Integer payrunId,
                                                                             LocalDate startDate,
                                                                             LocalDate endDate) {
-        // payrunId is deliberately unused: this report merges both semi-monthly
-        // cutoffs into one monthly row, so a single payrun/cutoff has no meaning here
+        // payrunId is intentionally unused: this report merges both semi-monthly cutoffs
+        // into one monthly row, so a single payrun has no meaning here.
         StringBuilder sql = new StringBuilder("""
                 SELECT employee_id, employee_name, position_name, department_name,
                        payroll_month, month_start, month_end, monthly_gross_pay,

@@ -28,7 +28,6 @@ public class TwoFactorCodeRepository {
         this.dataSource = dataSource;
     }
 
-    // Saves a new two-factor code.
     public void save(TwoFactorCode code) {
         validateCode(code);
 
@@ -67,7 +66,9 @@ public class TwoFactorCodeRepository {
         }
     }
 
-    // Finds the latest valid two-factor code for a user account and purpose.
+    /**
+     * Finds the most recent valid code for the account and purpose.
+     */
     public TwoFactorCode findLatestValidCode(int userAccountId, OtpPurpose purpose) {
         validatePositive(userAccountId, "User account ID must be positive.");
         validatePurpose(purpose);
@@ -111,7 +112,6 @@ public class TwoFactorCodeRepository {
         return null;
     }
 
-    // Increments the failed attempt count.
     public void incrementAttemptCount(int twoFactorCodeId) {
         validatePositive(twoFactorCodeId, "Two-factor code ID must be positive.");
 
@@ -124,7 +124,6 @@ public class TwoFactorCodeRepository {
         executeUpdateById(sql, twoFactorCodeId, "Failed to increment OTP attempt count.");
     }
 
-    // Marks the two-factor code as used.
     public void markAsUsed(int twoFactorCodeId) {
         validatePositive(twoFactorCodeId, "Two-factor code ID must be positive.");
 
@@ -138,7 +137,9 @@ public class TwoFactorCodeRepository {
         executeUpdateById(sql, twoFactorCodeId, "Failed to mark OTP as used.");
     }
 
-    // Expires old valid codes for one user and purpose.
+    /**
+     * Expires all valid codes for the account and purpose, so only a newly issued code can be used.
+     */
     public void expireOldCodes(int userAccountId, OtpPurpose purpose) {
         validatePositive(userAccountId, "User account ID must be positive.");
         validatePurpose(purpose);

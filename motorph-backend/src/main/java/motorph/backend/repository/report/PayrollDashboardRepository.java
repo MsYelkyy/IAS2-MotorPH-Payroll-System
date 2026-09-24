@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/** All queries read the vw_payroll_summary_monthly view. */
+/** Reads payroll dashboard data from the {@code vw_payroll_summary_monthly} view. */
 @Repository
 public class PayrollDashboardRepository {
 

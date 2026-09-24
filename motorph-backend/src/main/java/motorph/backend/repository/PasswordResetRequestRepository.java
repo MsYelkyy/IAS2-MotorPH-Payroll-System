@@ -41,7 +41,6 @@ public class PasswordResetRequestRepository {
         this.dataSource = dataSource;
     }
 
-    // saves a new password reset request and returns the generated id
     public int saveAndReturnId(PasswordResetRequest request) {
         validateRequest(request);
 
@@ -82,7 +81,6 @@ public class PasswordResetRequestRepository {
         throw new IllegalStateException("Failed to retrieve generated reset request ID.");
     }
 
-    // finds one password reset request by id
     public PasswordResetRequest findById(int resetRequestId) {
         validatePositive(resetRequestId, "Reset request ID must be positive.");
 
@@ -93,7 +91,6 @@ public class PasswordResetRequestRepository {
                 "Failed to find password reset request by id.");
     }
 
-    // finds the latest pending password reset request for a user account
     public PasswordResetRequest findLatestPendingByUserAccountId(int userAccountId) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
@@ -109,7 +106,6 @@ public class PasswordResetRequestRepository {
                 "Failed to find latest pending password reset request.");
     }
 
-    // finds all pending password reset requests
     public List<PasswordResetRequest> findPendingRequests() {
         String sql = BASE_SELECT + """
                 WHERE request_status = 'PENDING'
@@ -119,14 +115,12 @@ public class PasswordResetRequestRepository {
         return executeListQuery(sql, null, "Failed to find pending password reset requests.");
     }
 
-    // finds all password reset requests
     public List<PasswordResetRequest> findAll() {
         String sql = BASE_SELECT + "ORDER BY requested_at DESC";
 
         return executeListQuery(sql, null, "Failed to find password reset requests.");
     }
 
-    // counts password reset requests in one status
     public int countByStatus(PasswordResetStatus status) {
         if (status == null) {
             throw new IllegalArgumentException("Password reset status is required.");
@@ -137,12 +131,10 @@ public class PasswordResetRequestRepository {
         return executeCountQuery(sql, stmt -> stmt.setString(1, status.name()));
     }
 
-    // counts every password reset request
     public int countAll() {
         return executeCountQuery("SELECT COUNT(*) FROM password_reset_request", null);
     }
 
-    // marks a password reset request as manually resolved by IT
     public void markManuallyResolved(int resetRequestId, int resolvedByEmployeeId) {
         validatePositive(resetRequestId, "Reset request ID must be positive.");
         validatePositive(resolvedByEmployeeId, "Resolver employee ID must be positive.");
@@ -160,7 +152,6 @@ public class PasswordResetRequestRepository {
                 "Failed to mark password reset request as manually resolved.");
     }
 
-    // marks a password reset request as cancelled
     public void markCancelled(int resetRequestId, int cancelledByEmployeeId) {
         validatePositive(resetRequestId, "Reset request ID must be positive.");
         validatePositive(cancelledByEmployeeId, "Canceller employee ID must be positive.");
@@ -249,7 +240,9 @@ public class PasswordResetRequestRepository {
         return results;
     }
 
-    // applies a resolution update, rejecting requests that are no longer pending
+    /**
+     * Applies a resolution update, failing if the request is no longer pending.
+     */
     private void executeResolutionUpdate(String sql, int employeeId, int resetRequestId, String errorMessage) {
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -318,7 +311,6 @@ public class PasswordResetRequestRepository {
         return rs.wasNull() ? null : value;
     }
 
-    // binds prepared statement parameters
     private interface StatementBinder {
         void bind(PreparedStatement stmt) throws SQLException;
     }

@@ -30,7 +30,6 @@ public class SalaryHistoryRepository {
         this.dataSource = dataSource;
     }
 
-    // finds salary history by employee id
     public List<SalaryHistory> findByEmployeeId(int employeeId) {
         List<SalaryHistory> histories = new ArrayList<>();
 
@@ -65,7 +64,9 @@ public class SalaryHistoryRepository {
         return histories;
     }
 
-    // finds current salary by employee id
+    /**
+     * Finds the salary record in effect for the employee on the given date.
+     */
     public SalaryHistory findCurrentByEmployeeId(int employeeId, LocalDate effectiveDate) {
         String sql = """
                 SELECT salary_history_id,
@@ -103,7 +104,6 @@ public class SalaryHistoryRepository {
         return null;
     }
 
-    // finds salary history by id
     public SalaryHistory findById(int salaryHistoryId) {
         String sql = """
                 SELECT salary_history_id,
@@ -135,7 +135,6 @@ public class SalaryHistoryRepository {
         return null;
     }
 
-    // saves salary history
     public void save(SalaryHistory salaryHistory) {
         String sql = """
                 INSERT INTO salary_history (
@@ -166,7 +165,6 @@ public class SalaryHistoryRepository {
         }
     }
 
-    // updates salary history
     public void update(SalaryHistory salaryHistory) {
         String sql = """
                 UPDATE salary_history
