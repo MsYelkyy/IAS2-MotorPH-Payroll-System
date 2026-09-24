@@ -13,8 +13,8 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 /**
- * Handles OTP generation and verification for two-factor authentication.
- * Phase 1 scope: login OTP only (password reset OTP moves in a later phase).
+ * Generates and verifies login OTPs. Codes are stored hashed, expire after 10 minutes, and stop
+ * working after 5 failed attempts.
  */
 @Service
 public class TwoFactorService {
@@ -42,7 +42,9 @@ public class TwoFactorService {
         this.twoFactorCodeRepository = twoFactorCodeRepository;
     }
 
-    // Creates a new login OTP and returns the raw code for sending.
+    /**
+     * Creates a login OTP, expiring any earlier one, and returns the raw code for delivery.
+     */
     public String createLoginOtp(int userAccountId) {
         validateUserAccountId(userAccountId);
 
@@ -65,7 +67,9 @@ public class TwoFactorService {
         return rawOtp;
     }
 
-    // Verifies a login OTP.
+    /**
+     * Verifies a login OTP and marks it as used. Each wrong code counts as a failed attempt.
+     */
     public void verifyLoginOtp(int userAccountId, String rawOtp) {
         validateUserAccountId(userAccountId);
         validateRawOtp(rawOtp);

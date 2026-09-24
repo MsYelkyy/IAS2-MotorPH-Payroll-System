@@ -16,13 +16,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Handles business rules for employee support tickets. Ported from the
- * desktop's SupportTicketService. The role checks in resolveTicket/
- * cancelTicket are role-based, not permission-key based, matching the
- * original exactly - there is no dedicated ticket-management permission key
- * in the system, and this preserves the original's precise role set (note
- * the asymmetry: resolve allows IT/HR/ADMIN/FINANCE, cancel's privileged set
- * is IT/ADMIN/HR only - FINANCE cannot cancel another employee's ticket).
+ * Handles employee support tickets. Resolve and cancel use role checks because there is no ticket
+ * permission key. Finance can resolve tickets but cannot cancel another employee's ticket.
  */
 @Service
 public class SupportTicketService {
@@ -33,7 +28,6 @@ public class SupportTicketService {
         this.supportTicketRepository = supportTicketRepository;
     }
 
-    // submits a new employee support ticket - employeeId is always the caller's own
     public void submitTicket(int employeeId,
                              SupportTicketCategory category,
                              String subject,
@@ -90,7 +84,9 @@ public class SupportTicketService {
         return supportTicketRepository.findAll();
     }
 
-    // resolves an open support ticket; only IT, HR, ADMIN, or FINANCE roles may resolve
+    /**
+     * Resolves an open ticket. Only the IT, HR, Admin, and Finance roles can resolve tickets.
+     */
     public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
         validateTicketId(ticketId);
 
@@ -108,7 +104,10 @@ public class SupportTicketService {
         supportTicketRepository.markResolved(ticketId, resolvedByUserAccountId);
     }
 
-    // cancels an open ticket; owner may cancel their own, IT/Admin/HR may cancel any
+    /**
+     * Cancels an open ticket. Employees can cancel their own; IT, HR, and Admin can cancel any
+     * ticket.
+     */
     public void cancelTicket(int ticketId, int actorEmployeeId, Role actorRole) {
         validateTicketId(ticketId);
 

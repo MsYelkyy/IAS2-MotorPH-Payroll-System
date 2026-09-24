@@ -30,10 +30,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Handles employee lookups and CRUD. Ported from the desktop's
- * EmployeeService; write methods (create/update/deactivate) were added in
- * Phase 3 alongside a narrow backend UserAccountService slice for account
- * provisioning/deactivation.
+ * Handles employee lookups, creation, updates, and deactivation.
  */
 @Service
 public class EmployeeService {
@@ -66,7 +63,9 @@ public class EmployeeService {
         this.userAccountService = userAccountService;
     }
 
-    // returns an active employee by id
+    /**
+     * Returns an active employee by ID.
+     */
     public Employee getEmployeeById(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -79,7 +78,9 @@ public class EmployeeService {
         return employee;
     }
 
-    // returns any employee by id including inactive (for IT display use only)
+    /**
+     * Returns an employee by ID, including inactive employees.
+     */
     public Employee getEmployeeByIdAny(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -92,7 +93,6 @@ public class EmployeeService {
         return employee;
     }
 
-    // updates the contact details an employee may change on their own profile
     public void updateOwnContactInfo(int employeeId, String phoneNumber, String address) {
         getEmployeeById(employeeId);
 
@@ -107,32 +107,32 @@ public class EmployeeService {
         employeeRepository.updateContactInfo(employeeId, phoneNumber.trim(), address.trim());
     }
 
-    // returns all active employees
     public List<Employee> getAllActiveEmployees() {
         return employeeRepository.findAllActive();
     }
 
-    // returns all employees including inactive
+    /**
+     * Returns all employees, including inactive ones.
+     */
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAllWithInactive();
     }
 
-    // returns all active departments
+    /**
+     * Returns all active departments.
+     */
     public List<Department> getAllDepartments() {
         return departmentRepository.findAllActive();
     }
 
-    // returns all positions
     public List<Position> getAllPositions() {
         return positionRepository.findAll();
     }
 
-    // returns all positions for a given department
     public List<Position> getPositionsByDepartment(int departmentId) {
         return positionRepository.findByDepartmentId(departmentId);
     }
 
-    // returns all employees as summary DTOs
     public List<EmployeeSummaryDTO> getAllEmployeeSummaries() {
         return employeeRepository.findAllWithInactive()
                 .stream()
@@ -141,7 +141,9 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    // returns employee profile DTO for an active employee (used by employee portal)
+    /**
+     * Returns the profile of an active employee.
+     */
     public EmployeeProfileDTO getEmployeeProfile(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -154,7 +156,9 @@ public class EmployeeService {
         return toProfileDTO(result);
     }
 
-    // returns employee profile DTO for any employee including inactive (used by admin)
+    /**
+     * Returns an employee's profile, including inactive employees.
+     */
     public EmployeeProfileDTO getEmployeeProfileAdmin(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -167,7 +171,9 @@ public class EmployeeService {
         return toProfileDTO(result);
     }
 
-    // returns government details for an employee, or null when not recorded
+    /**
+     * Returns the employee's government details, or {@code null} if none are recorded.
+     */
     public GovernmentDetails getGovernmentDetails(int employeeId) {
         validateEmployeeId(employeeId);
         return governmentDetailsRepository.findByEmployeeId(employeeId);
@@ -210,7 +216,10 @@ public class EmployeeService {
         );
     }
 
-    // creates a new employee together with initial salary, government IDs, and benefit records
+    /**
+     * Creates an employee together with their initial salary, government IDs, benefits, and login
+     * account.
+     */
     public EmployeeCreateResponse createEmployeeWithSalaryAndBenefits(EmployeeCreateRequest request) {
         Employee employee = buildEmployeeForCreate(request);
         validateEmployee(employee);
@@ -245,7 +254,9 @@ public class EmployeeService {
         return new EmployeeCreateResponse(getEmployeeProfileAdmin(employeeId), provisioning.credentialsPreview());
     }
 
-    // updates an existing employee's profile, government IDs, and benefits
+    /**
+     * Updates an employee's profile, government IDs, and benefits.
+     */
     public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request) {
         validateEmployeeId(employeeId);
 
@@ -283,7 +294,9 @@ public class EmployeeService {
         return getEmployeeProfileAdmin(employeeId);
     }
 
-    // updates (or creates) the government IDs for an existing employee
+    /**
+     * Updates the employee's government IDs, creating the record if it does not exist yet.
+     */
     private void updateGovernmentDetails(int employeeId, String sssNumber, String philhealthNumber,
                                          String tinNumber, String pagibigNumber) {
         GovernmentDetails existing = governmentDetailsRepository.findByEmployeeId(employeeId);
@@ -297,14 +310,16 @@ public class EmployeeService {
         }
     }
 
-    // updates the three allowance benefits for an existing employee, keyed by benefit type
     private void updateBenefits(int employeeId, double riceSubsidy, double phoneAllowance, double clothingAllowance) {
         upsertBenefit(employeeId, BENEFIT_RICE_SUBSIDY, riceSubsidy);
         upsertBenefit(employeeId, BENEFIT_PHONE_ALLOWANCE, phoneAllowance);
         upsertBenefit(employeeId, BENEFIT_CLOTHING, clothingAllowance);
     }
 
-    // sets a benefit amount: updates the current record, ends it when cleared, or adds a new one
+    /**
+     * Sets a benefit amount. Updates the current record, ends it when the amount is cleared, or
+     * adds a new record if there is none.
+     */
     private void upsertBenefit(int employeeId, int benefitTypeId, double amount) {
         EmployeeBenefit current = null;
         for (EmployeeBenefit benefit : employeeBenefitRepository.findByEmployeeId(employeeId)) {
@@ -330,7 +345,10 @@ public class EmployeeService {
         }
     }
 
-    // deactivates an employee and disables the linked user account; an actor can never deactivate themselves
+    /**
+     * Deactivates an employee and disables their user account. Employees cannot deactivate their
+     * own record.
+     */
     public void deactivateEmployee(int employeeId, int actingEmployeeId) {
         validateEmployeeId(employeeId);
 

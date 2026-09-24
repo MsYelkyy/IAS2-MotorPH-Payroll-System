@@ -5,14 +5,11 @@ import motorph.backend.exception.EmptyReportException;
 import java.util.Collection;
 
 /**
- * Shared precondition for report generation. Jasper happily renders a
- * header-only PDF from an empty dataset, which reaches the user as a blank
- * document; every report checks here first so the client can say "nothing to
- * show" instead.
+ * Shared checks for report generation. Jasper renders a header-only PDF from an empty dataset, so
+ * every report checks here first and the client can report that there is nothing to show.
  */
 final class ReportGuards {
 
-    // utility class — no instances
     private ReportGuards() {
     }
 

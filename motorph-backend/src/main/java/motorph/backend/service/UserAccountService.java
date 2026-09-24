@@ -24,15 +24,11 @@ import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 /**
- * Handles account provisioning for newly created/deactivated employees plus
- * the IT account-management operations (list/lock/unlock/enable/disable/
- * roles) ported from the desktop's UserAccountService + ITUserAccountService
- * in Phase 5a.
+ * Creates and manages user accounts: provisioning accounts for new employees, disabling them on
+ * deactivation, and the IT operations for locking, enabling, and assigning roles.
  *
- * The employee-name join reads EmployeeRepository directly rather than
- * EmployeeService: EmployeeService already depends on this service for
- * account provisioning, so going back through it would be a constructor
- * injection cycle.
+ * <p>Employee names are read through {@link EmployeeRepository} rather than {@code
+ * EmployeeService}, because {@code EmployeeService} already depends on this class.
  */
 @Service
 public class UserAccountService {
@@ -41,7 +37,10 @@ public class UserAccountService {
     private static final String TEMPORARY_PASSWORD_PREFIX = "MotorPH@";
     private static final String COMPANY_EMAIL_DOMAIN = "@motorph.com";
 
-    /** Carries the newly created account together with its delivery preview (dev-only, may be null). */
+    /**
+     * The newly created account and its credentials preview. The preview is only set in preview
+     * mode.
+     */
     public record AccountProvisioningResult(UserAccount account, CredentialsPreview credentialsPreview) {
     }
 
@@ -60,7 +59,9 @@ public class UserAccountService {
         this.userAccessLogService = userAccessLogService;
     }
 
-    // creates an active employee account with a temporary password
+    /**
+     * Creates an active account for the employee with a temporary password.
+     */
     public AccountProvisioningResult createTemporaryEmployeeAccount(int employeeId,
                                                                      String firstName,
                                                                      String lastName,
@@ -104,7 +105,9 @@ public class UserAccountService {
         return new AccountProvisioningResult(savedAccount, preview);
     }
 
-    // disables and locks the account linked to an employee
+    /**
+     * Disables and locks the account linked to the employee.
+     */
     public void deactivateAccountByEmployeeId(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -118,7 +121,9 @@ public class UserAccountService {
         userAccountRepository.updateActiveStatus(account.getUserAccountId(), false);
     }
 
-    // returns every account as a display row, joined with the employee's name
+    /**
+     * Returns every account as a display row, including the employee's name.
+     */
     public List<UserAccountRowDTO> getUserAccountRows() {
         Map<Integer, String> namesByEmployeeId = employeeRepository.findAllWithInactive()
                 .stream()
@@ -130,13 +135,11 @@ public class UserAccountService {
                 .toList();
     }
 
-    // returns the display-only summary of one account
     public AccountSummaryDTO getAccountSummary(int userAccountId) {
         validateUserAccountId(userAccountId);
         return toSummary(requireAccount(userAccountId));
     }
 
-    // returns the display-only summary of the account belonging to an employee
     public AccountSummaryDTO getAccountSummaryByEmployeeId(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -149,7 +152,6 @@ public class UserAccountService {
         return toSummary(account);
     }
 
-    // returns active/locked/disabled tallies for the dashboards
     public AccountCountsDTO getAccountCounts() {
         return new AccountCountsDTO(
                 userAccountRepository.countActive(),
@@ -158,31 +160,32 @@ public class UserAccountService {
         );
     }
 
-    // locks an account, blocking login until IT unlocks it
+    /**
+     * Locks an account, blocking login until IT unlocks it.
+     */
     public void lockAccount(int actorUserAccountId, int userAccountId) {
         changeStatus(actorUserAccountId, userAccountId,
                 id -> userAccountRepository.updateLockStatus(id, true));
     }
 
-    // unlocks a locked account
     public void unlockAccount(int actorUserAccountId, int userAccountId) {
         changeStatus(actorUserAccountId, userAccountId,
                 id -> userAccountRepository.updateLockStatus(id, false));
     }
 
-    // enables a disabled account
     public void enableAccount(int actorUserAccountId, int userAccountId) {
         changeStatus(actorUserAccountId, userAccountId,
                 id -> userAccountRepository.updateActiveStatus(id, true));
     }
 
-    // disables an account
     public void disableAccount(int actorUserAccountId, int userAccountId) {
         changeStatus(actorUserAccountId, userAccountId,
                 id -> userAccountRepository.updateActiveStatus(id, false));
     }
 
-    // replaces the roles assigned to an account
+    /**
+     * Replaces all roles assigned to the account.
+     */
     public void updateRoles(int userAccountId, List<Role> roles) {
         validateUserAccountId(userAccountId);
         validateRoles(roles);
@@ -191,7 +194,9 @@ public class UserAccountService {
         userAccountRepository.updateRoles(userAccountId, roles);
     }
 
-    // replaces the caller's own password after re-verifying the current one
+    /**
+     * Changes the user's password after verifying their current one.
+     */
     public void changeOwnPassword(int userAccountId, String currentPassword, String newPassword) {
         validateUserAccountId(userAccountId);
 
@@ -210,7 +215,9 @@ public class UserAccountService {
         writePassword(userAccountId, newPassword);
     }
 
-    // replaces an IT-issued temporary password with one the user chose
+    /**
+     * Replaces an IT-issued temporary password with one chosen by the user.
+     */
     public void completeTemporaryPasswordChange(int userAccountId, String newPassword, String confirmPassword) {
         validateUserAccountId(userAccountId);
         validateNewPassword(newPassword);
@@ -221,8 +228,8 @@ public class UserAccountService {
 
         UserAccount account = requireAccount(userAccountId);
 
-        // guards against this path being used to overwrite a normal account's
-        // password - it only ever applies to an account still on a temp password
+        // Only accounts still on a temporary password can use this path,
+        // so it cannot be used to overwrite a normal password.
         if (!account.mustChangePassword()) {
             throw new BusinessRuleException("This account is not awaiting a temporary password change.");
         }
@@ -243,7 +250,9 @@ public class UserAccountService {
         }
     }
 
-    // applies a status mutation and audits the before/after status
+    /**
+     * Applies a status change and records the before and after status in the audit log.
+     */
     private void changeStatus(int actorUserAccountId, int userAccountId, IntConsumer mutation) {
         validateUserAccountId(actorUserAccountId);
         validateUserAccountId(userAccountId);
@@ -301,7 +310,6 @@ public class UserAccountService {
         );
     }
 
-    // generates a unique company email for a new account
     private String generateUniqueCompanyEmail(String firstName, String lastName) {
         String baseEmail = buildBaseCompanyEmail(firstName, lastName);
         String candidate = baseEmail;

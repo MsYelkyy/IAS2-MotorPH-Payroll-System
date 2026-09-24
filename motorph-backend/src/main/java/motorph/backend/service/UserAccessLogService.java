@@ -10,9 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Handles creation of user access logs for audit tracking. Every write path
- * on the backend calls this with an identity resolved from the validated
- * token (CurrentUserProvider) - never from anything the client asserts.
+ * Writes and reads audit log entries. Callers always pass the actor ID taken from the access token,
+ * never a value supplied by the client.
  */
 @Service
 public class UserAccessLogService {
@@ -67,7 +66,9 @@ public class UserAccessLogService {
         ));
     }
 
-    // logs an IT-driven password reset against the resolving user's account
+    /**
+     * Logs a password reset under the IT user who performed it.
+     */
     public void logPasswordReset(int actorUserAccountId, int targetEmployeeId) {
         validateUserAccountId(actorUserAccountId);
 
@@ -84,7 +85,9 @@ public class UserAccessLogService {
         ));
     }
 
-    // logs an account lock/unlock/enable/disable performed by IT
+    /**
+     * Logs an account lock, unlock, enable, or disable performed by IT.
+     */
     public void logAccountStatusChanged(int actorUserAccountId,
                                         int targetEmployeeId,
                                         String oldStatus,
@@ -131,12 +134,16 @@ public class UserAccessLogService {
         ));
     }
 
-    // returns every log, latest first
+    /**
+     * Returns all log entries, newest first.
+     */
     public List<UserAccessLog> getAllLogs() {
         return repository.findAll();
     }
 
-    // returns only the newest logs - dashboard activity feed
+    /**
+     * Returns the newest log entries for the dashboard activity feed.
+     */
     public List<UserAccessLog> getRecentLogs(int limit) {
         if (limit <= 0) {
             throw new ValidationException("Limit must be positive.");
@@ -145,7 +152,6 @@ public class UserAccessLogService {
         return repository.findRecent(limit);
     }
 
-    // returns login success/failure tallies for the dashboards
     public AccessLogCountsDTO getLoginActivityCounts() {
         return new AccessLogCountsDTO(
                 repository.countByAction(ACTION_LOGIN_SUCCESS),
@@ -153,7 +159,9 @@ public class UserAccessLogService {
         );
     }
 
-    // logs a custom action - used by SystemConfigService for statutory rate change auditing
+    /**
+     * Logs a custom action. Used for auditing changes to government rates.
+     */
     public void logAction(Integer userAccountId, String action, String details, String ipAddress, String deviceInfo) {
         validateRequired(action, "Action is required.");
 

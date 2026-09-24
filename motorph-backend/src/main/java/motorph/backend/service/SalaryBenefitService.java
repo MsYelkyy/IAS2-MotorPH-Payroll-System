@@ -14,11 +14,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Manages salary history records and employee benefit allocations. Ported
- * from the desktop's SalaryBenefitService. addBenefit() was not ported -
- * grepping the desktop UI found no caller (dead code, same precedent as
- * other skipped methods this session); benefit creation only happens
- * through EmployeeService.createEmployeeWithSalaryAndBenefits/updateBenefits.
+ * Manages salary history and employee benefits. New benefits are created through {@link
+ * EmployeeService}, not here.
  */
 @Service
 public class SalaryBenefitService {
@@ -42,7 +39,9 @@ public class SalaryBenefitService {
         return salaryHistoryRepository.findCurrentByEmployeeId(employeeId, LocalDate.now());
     }
 
-    // adds a new salary record; auto-closes any currently open salary to prevent overlap
+    /**
+     * Adds a salary record and closes any currently open one so the periods do not overlap.
+     */
     public void addSalaryRecord(int employeeId, SalaryRecordRequest request) {
         validateId(employeeId, "Employee ID");
         if (request.startDate() == null) throw new ValidationException("Start date is required.");
@@ -74,7 +73,9 @@ public class SalaryBenefitService {
         ));
     }
 
-    // updates only the start and end dates of an existing salary record
+    /**
+     * Updates only the start and end dates of a salary record.
+     */
     public void updateSalaryDates(int salaryHistoryId, LocalDate startDate, LocalDate endDate) {
         validateId(salaryHistoryId, "Salary history ID");
         if (startDate == null) throw new ValidationException("Start date is required.");
@@ -98,7 +99,6 @@ public class SalaryBenefitService {
         return employeeBenefitRepository.findByEmployeeId(employeeId);
     }
 
-    // ends an active benefit by setting its effective end date
     public void endBenefit(int employeeBenefitId, LocalDate endDate) {
         validateId(employeeBenefitId, "Employee benefit ID");
         if (endDate == null) throw new ValidationException("End date is required.");
