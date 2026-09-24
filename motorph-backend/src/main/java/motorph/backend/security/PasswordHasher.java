@@ -7,7 +7,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 /**
- * Handles password hashing, salt generation, and password verification for user authentication.
+ * Hashes and verifies passwords using PBKDF2 with HMAC-SHA256 and a random salt per password.
  */
 public final class PasswordHasher {
 

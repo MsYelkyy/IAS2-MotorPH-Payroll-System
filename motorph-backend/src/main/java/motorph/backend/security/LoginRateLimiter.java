@@ -11,12 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Simple in-memory fixed-window limiter for the public login/verify-otp
- * endpoints, keyed by source IP. Combined with TwoFactorService's existing
- * per-account 5-attempt OTP lockout, this stops account lockout from being
- * weaponized into a denial-of-service against a known username (an attacker
- * spamming one account's OTP from many IPs is still capped by the account-level
- * lockout; an attacker spamming many accounts from one IP is capped here).
+ * In-memory, fixed-window rate limiter for the public authentication endpoints, keyed by client IP
+ * together with the submitted email or challenge ID. OTP guessing is additionally capped per code
+ * by {@code TwoFactorService}.
  */
 @Component
 public class LoginRateLimiter {
