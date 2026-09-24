@@ -23,14 +23,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Overtime request endpoints. Submitting/cancelling always act on the
- * caller's own employeeId. Approving/rejecting has no static permission gate
- * at all, matching the desktop's original OvertimeService exactly: the sole
- * check is the service's dynamic rule that the actor is either ADMIN or the
- * specific employee's assigned supervisor. Supervisors are ordinary EMPLOYEE-
- * role accounts with no APPROVE_OVERTIME permission of their own (confirmed
- * against the seed role_permission table - only ADMIN/HR hold that key), so
- * gating on it here would silently break supervisor approval entirely.
+ * Overtime request endpoints. Submitting and cancelling always act on the caller's own record.
+ *
+ * <p>Approval has no permission-key check because supervisors are regular Employee accounts.
+ * Instead, the service only lets an Admin or the employee's assigned supervisor approve or reject a
+ * request.
  */
 @RestController
 @RequestMapping("/api/v1/overtime-requests")

@@ -19,10 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Database backup administration, every endpoint gated BACKUP_DATABASE.
- * Backups live on the backend host, so restore takes a filename rather than
- * an upload. Filenames arriving in the URL are validated against the exact
- * generated pattern inside the service before any filesystem access.
+ * Database backup administration. Every endpoint requires {@code BACKUP_DATABASE}. Backups are
+ * stored on the backend host, so a restore takes a filename rather than an upload; the service
+ * validates each filename before touching the filesystem.
  */
 @RestController
 @RequestMapping("/api/v1/system/backups")

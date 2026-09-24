@@ -21,10 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * IT user account management. Reads accept either VIEW_USERS or MANAGE_USERS;
- * every status/role change requires MANAGE_USERS. The acting IT user is always
- * resolved from the validated token, never from the request body, so the audit
- * trail can't be forged by a modified client.
+ * IT user account management. Viewing accounts requires {@code VIEW_USERS} or {@code MANAGE_USERS};
+ * any status or role change requires {@code MANAGE_USERS}. The acting user is taken from the access
+ * token so audit entries cannot be forged by the client.
  */
 @RestController
 @RequestMapping("/api/v1/user-accounts")
@@ -54,9 +53,10 @@ public class UserAccountController {
         return userAccountService.getAccountCounts();
     }
 
-    // display-only lookups used by HR screens that show who approved a request
-    // or an employee's company email, so they also accept the employee-module
-    // permissions rather than requiring full user-administration rights
+    /**
+     * Returns a display-only summary of an account. HR screens use this to show who approved a
+     * request or an employee's company email, so employee-module permissions are accepted as well.
+     */
     @GetMapping("/{userAccountId}/summary")
     public AccountSummaryDTO getAccountSummary(@PathVariable int userAccountId) {
         requireAccountSummaryAccess();

@@ -18,11 +18,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Role/permission administration for the IT roles screen. Reading the
- * permission catalogue or one role's grants needs VIEW_ROLES or MANAGE_ROLES;
- * rewriting a role's grants needs MANAGE_ROLES. Because permission checks
- * resolve from the DB on every request, a role edit takes effect on the
- * affected users' very next call.
+ * Role and permission administration. Viewing requires {@code VIEW_ROLES} or {@code MANAGE_ROLES};
+ * changing a role's permissions requires {@code MANAGE_ROLES}. Changes apply on the affected users'
+ * next request because permissions are loaded from the database each time.
  */
 @RestController
 public class RolePermissionController {

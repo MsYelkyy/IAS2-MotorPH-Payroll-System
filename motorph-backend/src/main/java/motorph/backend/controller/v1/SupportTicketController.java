@@ -21,13 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Support ticket endpoints. Submitting always acts on the caller's own
- * employeeId. Viewing the cross-employee ticket lists (all tickets / one
- * routing team / open count) requires an IT/HR/ADMIN/FINANCE active role -
- * a check the original desktop service never had at all (only its UI menu
- * structure restricted access). Since this API is reachable directly, that
- * gate is added here as a hardening step; resolve/cancel keep the original's
- * exact role logic, enforced in the service.
+ * Support ticket endpoints. Employees submit and view their own tickets. Listing tickets across
+ * employees requires the IT, HR, Admin, or Finance role, since there is no ticket permission key.
+ * Resolve and cancel rules are enforced in the service.
  */
 @RestController
 @RequestMapping("/api/v1/support-tickets")

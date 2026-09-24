@@ -22,11 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Statutory government rate configuration endpoints. Admin-only - the
- * desktop's System Configuration screen has always lived exclusively under
- * the Admin module, and there is no dedicated permission key for it, so
- * this checks the active role directly (same pattern as SupportTicketController's
- * hardening gate).
+ * Government rate configuration endpoints. Restricted to the Admin role because there is no
+ * permission key for system configuration.
  */
 @RestController
 @RequestMapping("/api/v1/system-config")
@@ -44,7 +41,9 @@ public class SystemConfigController {
         this.currentUserProvider = currentUserProvider;
     }
 
-    // read-only view of the OTP policy this backend enforces
+    /**
+     * Returns the OTP policy currently enforced by the backend.
+     */
     @GetMapping("/otp-policy")
     public OtpPolicyDTO getOtpPolicy() {
         requireAdmin();

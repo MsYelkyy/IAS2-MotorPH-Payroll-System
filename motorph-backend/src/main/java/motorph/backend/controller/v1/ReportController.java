@@ -22,10 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 /**
- * Report generation endpoints. Every report is a PDF download - the desktop
- * UI never showed report data in a table, only a Jasper preview/export, so
- * there is no JSON list endpoint here (the payroll dashboard is the one
- * exception: it always was pure JSON feeding JavaFX charts, no PDF).
+ * Report endpoints. Reports are returned as PDF downloads, except the payroll dashboard, which
+ * returns JSON for the client's charts.
  */
 @RestController
 @RequestMapping("/api/v1/reports")

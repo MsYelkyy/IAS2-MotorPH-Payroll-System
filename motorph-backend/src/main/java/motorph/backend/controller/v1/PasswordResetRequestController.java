@@ -20,10 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * IT resolution of password reset requests, gated MANAGE_PASSWORD_RESET.
- * Who processed or cancelled a request is taken from the caller's token, not
- * from the request - the desktop version passed the acting employee ID in
- * from the client, which a modified client could have forged.
+ * IT handling of password reset requests. Requires {@code MANAGE_PASSWORD_RESET}. The IT user who
+ * processes or cancels a request is taken from the access token, not from the request.
  */
 @RestController
 @RequestMapping("/api/v1/password-reset-requests")

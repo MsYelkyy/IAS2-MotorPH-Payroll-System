@@ -40,10 +40,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Phase 1 auth boundary. Login never returns account internals before OTP
- * verification (challenge-based flow); logout is authenticated so it is
- * auditable and can revoke the presented token(s); roles are never embedded
- * in a token and are always resolved fresh from the DB (see /me).
+ * Authentication endpoints: login with OTP verification, token refresh, logout, and password
+ * changes. Login returns only an opaque challenge ID until the OTP is verified. Roles are never
+ * stored in tokens; they are loaded from the database on each request.
  */
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -93,8 +92,8 @@ public class AuthController {
         String maskedEmail = maskEmail(outcome.getCompanyEmail());
 
         if (outcome.getType() == LoginAttemptOutcome.Type.TEMPORARY_PASSWORD_CHANGE_REQUIRED) {
-            // same opaque challenge the OTP step uses, so the client can finish the
-            // forced password change without ever being handed a user account ID
+            // Reuse the login challenge so the client can finish the forced password change
+            // without ever receiving the user account ID.
             String changeChallengeId = loginChallengeService.issue(outcome.getUserAccountId());
             return new LoginResponse(changeChallengeId, maskedEmail, true, outcome.getMessage(), null);
         }
@@ -113,17 +112,21 @@ public class AuthController {
         return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
     }
 
-    // public: answers the same whether or not the address maps to an eligible
-    // account, so it can not be used to discover which company emails exist
+    /**
+     * Records a password reset request. The response is the same whether or not the email belongs
+     * to an eligible account, so this endpoint cannot be used to find out which company emails
+     * exist.
+     */
     @PostMapping("/forgot-password")
     public void forgotPassword(@RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
         passwordResetService.requestPasswordReset(request.companyEmail());
     }
 
-    // public: reached before any token exists, since login stops at the temporary
-    // password. The account comes from the single-use challenge issued by /login,
-    // never from the request, and the service refuses accounts not awaiting a change
+    /**
+     * Replaces a temporary password during login, before any token has been issued. The account
+     * comes from the single-use challenge issued by {@code /login}, never from the request body.
+     */
     @PostMapping("/complete-temporary-password")
     public void completeTemporaryPassword(@RequestBody CompleteTemporaryPasswordRequest request,
                                           HttpServletRequest httpRequest) {
@@ -135,7 +138,9 @@ public class AuthController {
                 userAccountId, request.newPassword(), request.confirmPassword());
     }
 
-    // authenticated: acts only on the caller's own account, resolved from the token
+    /**
+     * Changes the caller's own password. The account is taken from the access token.
+     */
     @PostMapping("/change-password")
     public void changePassword(@RequestBody ChangePasswordRequest request) {
         permissionService.requirePermission(PermissionKey.CHANGE_OWN_PASSWORD);
@@ -151,8 +156,10 @@ public class AuthController {
         return tokenIssuanceService.refresh(request.refreshToken());
     }
 
-    // authenticated: only a caller holding a still-valid access token can log out with it,
-    // and the acting identity for the audit log always comes from that token, never the body
+    /**
+     * Revokes the caller's access token and, if supplied, their refresh token. Requires
+     * authentication so the logout is attributed to the right user in the audit log.
+     */
     @PostMapping("/logout")
     public void logout(@RequestBody(required = false) LogoutRequest request) {
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
@@ -187,8 +194,10 @@ public class AuthController {
         );
     }
 
-    // revokes the paired refresh token if the client supplied one; a malformed/expired
-    // refresh token here is not fatal to logout itself, so failures are swallowed
+    /**
+     * Revokes the refresh token sent with a logout request. An invalid or expired token is ignored,
+     * since it can no longer be used anyway.
+     */
     private void revokeRefreshTokenBestEffort(String refreshToken) {
         try {
             Claims claims = jwtTokenProvider.parseClaims(refreshToken);
@@ -198,7 +207,7 @@ public class AuthController {
                 tokenIssuanceService.revoke(claims.getId(), userAccountId, claims.getExpiration().toInstant());
             }
         } catch (JwtException | IllegalArgumentException e) {
-            // token already invalid/expired - nothing to revoke
+            // Already invalid or expired; nothing to revoke.
         }
     }
 

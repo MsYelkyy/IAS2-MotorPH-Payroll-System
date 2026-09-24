@@ -21,13 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Payrun listing, processing, and generation endpoints. Payrun period listing
- * (getAllPayruns/getPayrunsWithPayrollData/getPayrun) carries no employee-
- * specific figures and matches the original desktop's PayrollService, which
- * had no permission check at all - any authenticated user could see payrun
- * schedule dates (the employee dashboard's upcoming-payday widget depends on
- * this). Everything that touches actual payroll figures or triggers
- * computation is gated by VIEW_PAYROLL/PROCESS_PAYROLL.
+ * Payrun endpoints. Listing payruns is open to any authenticated user because it only exposes
+ * period dates, which the employee dashboard uses to show the next payday. Anything that exposes
+ * payroll amounts or runs a computation requires {@code VIEW_PAYROLL} or {@code PROCESS_PAYROLL}.
  */
 @RestController
 @RequestMapping("/api/v1/payruns")

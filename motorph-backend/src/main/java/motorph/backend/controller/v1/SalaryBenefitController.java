@@ -20,11 +20,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Salary history and employee benefit endpoints. Gated by MANAGE_EMPLOYEE -
- * the only desktop screens that view or edit this data (AdminSalaryController,
- * HrEmployeeController's edit form) are already employee-management surfaces;
- * there is no employee-facing self-view of salary/benefit data in the
- * original app.
+ * Salary history and employee benefit endpoints. All of them require {@code MANAGE_EMPLOYEE};
+ * employees have no self-service view of this data.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -69,7 +66,9 @@ public class SalaryBenefitController {
         return salaryBenefitService.getAllBenefits(employeeId);
     }
 
-    // ends the benefit effective today - the only caller (AdminSalaryController) always uses today's date
+    /**
+     * Ends the benefit effective today.
+     */
     @PostMapping("/employee-benefits/{employeeBenefitId}/end")
     public void endBenefit(@PathVariable int employeeBenefitId) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);

@@ -25,10 +25,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Leave request endpoints. Submitting/cancelling always act on the caller's
- * own employeeId (never trusted from the client). Approving/rejecting
- * requires APPROVE_LEAVE, re-checked server-side every call; the service
- * still separately blocks self-approval as a business rule.
+ * Leave request endpoints. Submitting and cancelling always act on the caller's own record.
+ * Approving or rejecting requires {@code APPROVE_LEAVE}, and the service separately prevents
+ * employees from approving their own requests.
  */
 @RestController
 @RequestMapping("/api/v1/leave-requests")

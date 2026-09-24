@@ -20,10 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Payslip viewing endpoints. An employee always sees their own payslips;
- * viewing someone else's requires VIEW_PAYSLIP (HR/Finance), re-checked
- * server-side on every call - the desktop's role-based menu visibility is a
- * display hint only.
+ * Payslip endpoints. Employees can always view their own payslips; viewing another employee's
+ * requires {@code VIEW_PAYSLIP}.
  */
 @RestController
 @RequestMapping("/api/v1/payslips")
@@ -41,7 +39,9 @@ public class PayslipController {
         this.currentUserProvider = currentUserProvider;
     }
 
-    // the caller's own payroll history
+    /**
+     * Returns the caller's own payroll history.
+     */
     @GetMapping
     public List<PayslipSummaryDTO> getOwnPayslips() {
         int employeeId = currentUserProvider.getCurrentPrincipal().employeeId();
