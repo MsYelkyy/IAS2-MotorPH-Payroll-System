@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import motorph.backend.domain.value.EmploymentStatus;
 import motorph.backend.domain.value.Gender;
 
-/** Wire request body for POST /api/v1/employees. */
+/** Request body for {@code POST /api/v1/employees}. */
 public record EmployeeCreateRequest(
         String firstName,
         String lastName,

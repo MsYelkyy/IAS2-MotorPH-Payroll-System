@@ -20,7 +20,6 @@ public class CompletedPayrunSummaryDTO {
     private final double totalDeductions;
     private final double totalNetPay;
 
-    // constructors
     public CompletedPayrunSummaryDTO(int payrunId,
                                      LocalDate startDate,
                                      LocalDate endDate,

@@ -1,6 +1,6 @@
 package motorph.backend.dto.leave;
 
-/** Dashboard counts used by HR/Admin dashboards. */
+/** Leave counts for the HR and Admin dashboards. */
 public record LeaveSummaryDTO(
         int pendingCount,
         int approvedTodayCount

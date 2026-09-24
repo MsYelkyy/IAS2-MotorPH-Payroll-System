@@ -1,12 +1,9 @@
 package motorph.backend.dto.auth;
 
 /**
- * Dev-only stand-in for a sent email, returned inline on the login response
- * when no real SMTP integration exists yet (see OtpDeliveryService). Mirrors
- * the desktop's existing EmailPreviewDTO fields so LoginController can feed
- * it straight into the app's existing EmailPreviewDialog. Gated by
- * motorph.auth.otp-preview-enabled - must be off wherever a real mail
- * integration is wired up (Phase 2+).
+ * Development stand-in for the login OTP email. It is returned in the login response only while
+ * {@code motorph.auth.otp-preview-enabled} is true, which must be turned off once real email
+ * delivery is configured.
  */
 public record OtpPreview(
         String senderEmail,

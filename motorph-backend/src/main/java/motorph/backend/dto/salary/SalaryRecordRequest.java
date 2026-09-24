@@ -2,7 +2,7 @@ package motorph.backend.dto.salary;
 
 import java.time.LocalDate;
 
-/** Wire request body for POST /api/v1/employees/{employeeId}/salary-history. */
+/** Request body for {@code POST /api/v1/employees/{employeeId}/salary-history}. */
 public record SalaryRecordRequest(
         String salaryType,
         Double basicSalary,

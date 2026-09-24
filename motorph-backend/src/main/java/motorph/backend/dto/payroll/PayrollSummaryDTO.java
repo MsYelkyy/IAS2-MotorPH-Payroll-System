@@ -18,7 +18,6 @@ public class PayrollSummaryDTO {
     private final double totalDeductions;
     private final double netPay;
 
-    // constructors
     public PayrollSummaryDTO(
             int payrollResultId,
             int employeeId,

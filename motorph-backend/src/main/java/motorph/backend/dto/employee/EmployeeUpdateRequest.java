@@ -6,9 +6,8 @@ import motorph.backend.domain.value.EmploymentStatus;
 import motorph.backend.domain.value.Gender;
 
 /**
- * Wire request body for PUT /api/v1/employees/{employeeId}. Salary is not
- * editable through this endpoint - the desktop's edit form never exposed
- * salary changes either, only profile fields plus government IDs/benefits.
+ * Request body for {@code PUT /api/v1/employees/{employeeId}}. Salary is not part of this request;
+ * it is changed through the salary history endpoints.
  */
 public record EmployeeUpdateRequest(
         String firstName,

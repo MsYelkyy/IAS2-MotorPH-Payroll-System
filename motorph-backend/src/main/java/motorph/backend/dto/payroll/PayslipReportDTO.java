@@ -3,12 +3,9 @@ package motorph.backend.dto.payroll;
 import java.time.LocalDate;
 
 /**
- * Mirrors the {@code vw_employee_payslip_report} database view one-to-one -
- * every field is a pass-through column from that view. No payroll figure is
- * computed here; the view remains the single source of truth. Field/getter
- * names are also what the payslip_report.jrxml template binds against
- * (Jasper's JRBeanCollectionDataSource reads bean getters by convention),
- * so do not rename these without updating the template too.
+ * Maps one-to-one to the {@code vw_employee_payslip_report} view; no figures are computed here. The
+ * getter names are bound by {@code payslip_report.jrxml}, so renaming a field requires updating the
+ * template as well.
  */
 public class PayslipReportDTO {
 

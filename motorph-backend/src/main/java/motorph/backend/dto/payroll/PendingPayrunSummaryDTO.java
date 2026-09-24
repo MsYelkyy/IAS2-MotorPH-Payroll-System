@@ -20,7 +20,6 @@ public class PendingPayrunSummaryDTO {
     private final int incompleteEmployees;
     private final int noAttendanceEmployees;
 
-    // constructors
     public PendingPayrunSummaryDTO(int payrunId,
                                    LocalDate startDate,
                                    LocalDate endDate,

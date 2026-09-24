@@ -16,7 +16,6 @@ public class PayrunReadinessDTO {
     private final double totalHours;
     private final ReadinessStatus status;
 
-    // constructors
     public PayrunReadinessDTO(int employeeId,
                               String fullName,
                               String department,
