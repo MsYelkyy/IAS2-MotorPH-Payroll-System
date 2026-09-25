@@ -135,60 +135,42 @@
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileEmployees"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128101;" styleClass="module-tile-icon"/>
-                <Label text="Employees" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="Employees" styleClass="module-tile-label"/>
             <Label text="Manage workforce" styleClass="module-tile-sub"/>
         </VBox>
 
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTilePayroll"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128176;" styleClass="module-tile-icon"/>
-                <Label text="Payroll" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="Payroll" styleClass="module-tile-label"/>
             <Label text="Process pay runs" styleClass="module-tile-sub"/>
         </VBox>
 
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileReports"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128202;" styleClass="module-tile-icon"/>
-                <Label text="Reports" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="Reports" styleClass="module-tile-label"/>
             <Label text="Generate reports" styleClass="module-tile-sub"/>
         </VBox>
 
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileLeaveOvertime"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128198;" styleClass="module-tile-icon"/>
-                <Label text="Leave &amp; OT" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="Leave &amp; OT" styleClass="module-tile-label"/>
             <Label text="Approve requests" styleClass="module-tile-sub"/>
         </VBox>
 
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileUserMgmt"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128273;" styleClass="module-tile-icon"/>
-                <Label text="User Mgmt" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="User Mgmt" styleClass="module-tile-label"/>
             <Label text="Accounts &amp; access" styleClass="module-tile-sub"/>
         </VBox>
 
         <VBox spacing="6" styleClass="module-tile" onMouseClicked="#onTileRoleMgmt"
               minHeight="72" prefHeight="72" maxHeight="72" maxWidth="Infinity"
               HBox.hgrow="ALWAYS">
-            <HBox spacing="8" alignment="CENTER_LEFT">
-                <Label text="&#128737;" styleClass="module-tile-icon"/>
-                <Label text="Role Mgmt" styleClass="module-tile-label"/>
-            </HBox>
+            <Label text="Role Mgmt" styleClass="module-tile-label"/>
             <Label text="Permissions" styleClass="module-tile-sub"/>
         </VBox>
     </HBox>
@@ -202,19 +184,19 @@
             <Region HBox.hgrow="ALWAYS"/>
         </HBox>
 
-        <HBox styleClass="table-header-row" spacing="0">
-            <Label text="ACTION" styleClass="table-head" prefWidth="200"/>
-            <Label text="DETAILS" styleClass="table-head" HBox.hgrow="ALWAYS"/>
-            <Label text="TIMESTAMP" styleClass="table-head" prefWidth="160"/>
+        <HBox styleClass="table-header-row, admin-activity-header" spacing="0">
+            <Label text="ACTION" styleClass="table-head" minWidth="240" prefWidth="240" maxWidth="240"/>
+            <Label text="DETAILS" styleClass="table-head" minWidth="0" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+            <Label text="TIMESTAMP" styleClass="table-head" minWidth="170" prefWidth="170" maxWidth="170"/>
         </HBox>
 
         <ScrollPane fitToWidth="true"
                     hbarPolicy="NEVER"
-                    vbarPolicy="AS_NEEDED"
+                    vbarPolicy="ALWAYS"
                     minHeight="142"
                     prefHeight="142"
                     maxHeight="142"
-                    styleClass="workspace-scroll">
+                    styleClass="workspace-scroll, admin-activity-scroll">
             <content>
                 <VBox fx:id="activityRows" spacing="0"/>
             </content>

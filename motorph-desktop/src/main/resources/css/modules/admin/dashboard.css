@@ -60,6 +60,30 @@
     -fx-padding: 6 0;
 }
 
+/* The header sits outside the ScrollPane, so its right padding reserves the
+   same 8px the always-visible scrollbar takes from the rows below it. */
+.admin-dashboard-view .admin-activity-header {
+    -fx-padding: 10 8 10 0;
+}
+
+.admin-dashboard-view .admin-activity-scroll .scroll-bar:vertical {
+    -fx-pref-width: 8;
+    -fx-min-width: 8;
+    -fx-max-width: 8;
+}
+
+.admin-dashboard-view .admin-activity-scroll .scroll-bar:vertical .increment-button,
+.admin-dashboard-view .admin-activity-scroll .scroll-bar:vertical .decrement-button {
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+}
+
+.admin-dashboard-view .admin-activity-scroll .scroll-bar:vertical .increment-arrow,
+.admin-dashboard-view .admin-activity-scroll .scroll-bar:vertical .decrement-arrow {
+    -fx-shape: " ";
+    -fx-padding: 0;
+}
+
 .admin-dashboard-view .admin-activity-status {
     -fx-font-weight: 800;
 }
@@ -110,11 +134,6 @@
 .module-tile:hover {
     -fx-background-color: rgba(255,255,255,0.08);
     -fx-border-color: rgba(255,255,255,0.14);
-}
-
-.module-tile-icon {
-    -fx-font-size: 20px;
-    -fx-min-width: 32;
 }
 
 .module-tile-label {
@@ -171,7 +190,6 @@
     -fx-border-color: rgba(0,0,0,0.16);
 }
 
-.root-canvas.light-mode .admin-dashboard-view .module-tile-icon,
 .root-canvas.light-mode .admin-dashboard-view .module-tile-label {
     -fx-text-fill: #111827;
 }
