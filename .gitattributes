@@ -1,0 +1,9 @@
+# core.autocrlf is enabled on Windows checkouts. These files are consumed by
+# Linux containers (or copied into a file that is), so they must stay LF: a CR
+# breaks the container shell, and a CR at the end of a value in an env file ends
+# up inside the password docker compose passes to MySQL.
+docker/mysql/init/*.sh      text eol=lf
+motorph-backend/Dockerfile  text eol=lf
+motorph-backend/.dockerignore text eol=lf
+.env.example                text eol=lf
+docker-compose.yml          text eol=lf

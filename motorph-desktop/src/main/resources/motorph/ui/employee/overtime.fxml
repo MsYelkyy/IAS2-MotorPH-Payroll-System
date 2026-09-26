@@ -26,7 +26,8 @@
       maxWidth="Infinity"
       maxHeight="Infinity">
 
-    <VBox spacing="0" maxWidth="Infinity" styleClass="content-card, leave-card, leave-form-card">
+    <VBox spacing="0" maxWidth="Infinity" minHeight="-Infinity"
+          styleClass="content-card, leave-card, leave-form-card">
         <Label text="New Overtime Request" styleClass="leave-card-title"/>
 
         <Region prefHeight="6"/>
@@ -106,7 +107,7 @@
             <VBox spacing="4">
                 <Label text="My Overtime Requests" styleClass="section-title"/>
                 <Label fx:id="overtimeHistoryLabel"
-                       text="Pending requests can be cancelled. Approved overtime is included in payroll."
+                       text="View and track your overtime requests."
                        wrapText="true" styleClass="note-text"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
@@ -134,16 +135,17 @@
 
         <Region prefHeight="14"/>
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="prevButton" text="&#8592; Previous" onAction="#handlePrevPage"
-                    styleClass="secondary-button"/>
-            <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="recordInfoLabel" text="" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="nextButton" text="Next &#8594;" onAction="#handleNextPage"
-                    styleClass="secondary-button"/>
-        </HBox>
+        <StackPane>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Button fx:id="prevButton" text="&#8592; Previous" onAction="#handlePrevPage"
+                        styleClass="secondary-button"/>
+                <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="note-text"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="nextButton" text="Next &#8594;" onAction="#handleNextPage"
+                        styleClass="secondary-button"/>
+            </HBox>
+            <Label fx:id="recordInfoLabel" text="0 requests" styleClass="note-text" mouseTransparent="true"/>
+        </StackPane>
     </VBox>
 
 </VBox>

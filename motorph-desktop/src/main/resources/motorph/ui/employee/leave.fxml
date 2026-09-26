@@ -116,7 +116,7 @@
             <VBox spacing="4">
                 <Label text="Leave Request History" styleClass="section-title"/>
                 <Label fx:id="leaveHistoryLabel"
-                       text="Pending requests can be cancelled. Approved requests consume leave credits."
+                       text="View and track your leave requests."
                        wrapText="true" styleClass="note-text"/>
             </VBox>
             <Region HBox.hgrow="ALWAYS"/>
@@ -145,16 +145,17 @@
 
         <Region prefHeight="14"/>
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="leavePrevButton" text="&#8592; Previous" onAction="#handleLeavePrevPage"
-                    styleClass="secondary-button"/>
-            <Label fx:id="leavePageLabel" text="Page 1 of 1" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="leaveRecordInfoLabel" text="" styleClass="note-text"/>
-            <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="leaveNextButton" text="Next &#8594;" onAction="#handleLeaveNextPage"
-                    styleClass="secondary-button"/>
-        </HBox>
+        <StackPane>
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Button fx:id="leavePrevButton" text="&#8592; Previous" onAction="#handleLeavePrevPage"
+                        styleClass="secondary-button"/>
+                <Label fx:id="leavePageLabel" text="Page 1 of 1" styleClass="note-text"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="leaveNextButton" text="Next &#8594;" onAction="#handleLeaveNextPage"
+                        styleClass="secondary-button"/>
+            </HBox>
+            <Label fx:id="leaveRecordInfoLabel" text="0 requests" styleClass="note-text" mouseTransparent="true"/>
+        </StackPane>
     </VBox>
 
 </VBox>

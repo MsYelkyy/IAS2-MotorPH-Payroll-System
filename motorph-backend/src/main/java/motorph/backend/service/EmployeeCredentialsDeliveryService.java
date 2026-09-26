@@ -8,10 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Phase-3-scoped credentials delivery for newly created employee accounts.
- * Mirrors OtpDeliveryService: no real EmailService/SMTP integration exists
- * on the backend yet, so this logs server-side always and returns a preview
- * for the client to display only when no real delivery channel exists.
+ * Delivers login credentials for newly created employee accounts. There is no mail integration yet,
+ * so the credentials are logged on the server and, while preview mode is enabled, returned for the
+ * client to display.
  */
 @Service
 public class EmployeeCredentialsDeliveryService {

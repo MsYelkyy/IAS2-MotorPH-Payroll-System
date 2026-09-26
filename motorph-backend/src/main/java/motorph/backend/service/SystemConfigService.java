@@ -16,10 +16,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Manages statutory government rate configuration. Ported from the
- * desktop's SystemConfigService; every mutation is audited via
- * UserAccessLogService with an actor account ID resolved server-side by
- * the controller (never trusted from the client).
+ * Manages government contribution rate configuration. Every change is recorded in the audit log
+ * under the acting user, whose ID the controller takes from the access token.
  */
 @Service
 public class SystemConfigService {

@@ -2,7 +2,7 @@ package motorph.backend.dto.user;
 
 import java.util.List;
 
-/** Replaces the full role set of one account. Role names, not IDs. */
+/** Replaces all roles assigned to an account. Roles are given by name. */
 public record UserRolesUpdateRequest(
         List<String> roles
 ) {

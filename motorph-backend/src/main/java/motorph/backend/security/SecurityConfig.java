@@ -9,12 +9,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Stateless JWT filter chain. Only the auth-establishment endpoints
- * (login / verify-otp / refresh) and forgot-password are public; everything
- * else - including logout, deliberately, so it is auditable - requires a
- * valid, non-revoked Bearer token. forgot-password is rate limited and
- * answers identically whatever the submitted address turns out to be, so
- * being public does not make it an account-enumeration oracle.
+ * Stateless security configuration using JWT bearer tokens. Only the endpoints needed before a user
+ * has a token are public: login, OTP verification, token refresh, forgot password, and completing a
+ * temporary password change. Logout requires a valid token so it can be recorded in the audit log.
  */
 @Configuration
 public class SecurityConfig {

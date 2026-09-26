@@ -13,9 +13,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Tracks revoked JWT ids (jti). Checked on every authenticated request so a
- * logged-out or otherwise revoked token stops working immediately, instead
- * of remaining valid until its natural expiry.
+ * Tracks revoked token IDs ({@code jti}). Checked on every authenticated request so a revoked token
+ * stops working immediately rather than at its natural expiry.
  */
 @Repository
 public class TokenRevocationRepository {
@@ -63,7 +62,9 @@ public class TokenRevocationRepository {
         }
     }
 
-    // deletes revocation rows whose underlying token has already naturally expired
+    /**
+     * Removes entries for tokens that have already expired, since those tokens are rejected anyway.
+     */
     public void deleteExpiredBefore(LocalDateTime cutoff) {
         String sql = "DELETE FROM token_revocation WHERE expires_at < ?";
 

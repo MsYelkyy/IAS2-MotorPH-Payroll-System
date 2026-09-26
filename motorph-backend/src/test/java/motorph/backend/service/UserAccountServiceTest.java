@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /** Covers the two self-service password paths and the status-change audit trail. */
@@ -51,6 +52,8 @@ class UserAccountServiceTest {
         userAccountService.changeOwnPassword(ACCOUNT_ID, CURRENT_PASSWORD, "BrandNewPass1");
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
+        verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Changed own password.");
     }
 
     @Test
@@ -62,6 +65,7 @@ class UserAccountServiceTest {
                 .isInstanceOf(AuthenticationException.class);
 
         verify(userAccountRepository, never()).updatePassword(anyInt(), anyString(), anyString());
+        verifyNoInteractions(userAccessLogService);
     }
 
     @Test
@@ -72,6 +76,8 @@ class UserAccountServiceTest {
         userAccountService.completeTemporaryPasswordChange(ACCOUNT_ID, "BrandNewPass1", "BrandNewPass1");
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
+        verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Replaced temporary password.");
     }
 
     @Test
@@ -116,6 +122,18 @@ class UserAccountServiceTest {
 
         verify(userAccountRepository).updateLockStatus(ACCOUNT_ID, true);
         verify(userAccessLogService).logAccountStatusChanged(ACTOR_ID, 101, "ACTIVE", "LOCKED");
+    }
+
+    @Test
+    @DisplayName("Changing an account's roles audits the old and new roles against the acting user")
+    void updateRolesAuditsRoleChange() {
+        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(true, false, false));
+
+        userAccountService.updateRoles(ACTOR_ID, ACCOUNT_ID, List.of(Role.EMPLOYEE, Role.HR));
+
+        verify(userAccountRepository).updateRoles(ACCOUNT_ID, List.of(Role.EMPLOYEE, Role.HR));
+        verify(userAccessLogService).logEvent(ACTOR_ID, UserAccessLogService.ACTION_USER_ROLES_UPDATED,
+                "Changed roles of employee ID 101 from [EMPLOYEE] to [EMPLOYEE, HR]");
     }
 
     private UserAccount accountWithPassword(String rawPassword) {

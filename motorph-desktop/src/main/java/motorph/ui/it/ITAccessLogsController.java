@@ -108,7 +108,27 @@ public class ITAccessLogsController {
                 AccessLogAction.PASSWORD_RESET,
                 AccessLogAction.ACCOUNT_STATUS_CHANGED,
                 AccessLogAction.DATABASE_BACKUP_CREATED,
-                AccessLogAction.DATABASE_RESTORE
+                AccessLogAction.DATABASE_RESTORE,
+                AccessLogAction.DATABASE_BACKUP_DOWNLOADED,
+                AccessLogAction.DATABASE_BACKUP_DELETED,
+                AccessLogAction.PASSWORD_CHANGED,
+                AccessLogAction.PASSWORD_RESET_CANCELLED,
+                AccessLogAction.USER_ROLES_UPDATED,
+                AccessLogAction.ROLE_PERMISSIONS_UPDATED,
+                AccessLogAction.EMPLOYEE_CREATED,
+                AccessLogAction.EMPLOYEE_UPDATED,
+                AccessLogAction.EMPLOYEE_DEACTIVATED,
+                AccessLogAction.SALARY_RECORD_ADDED,
+                AccessLogAction.SALARY_RECORD_UPDATED,
+                AccessLogAction.BENEFIT_ENDED,
+                AccessLogAction.LEAVE_APPROVED,
+                AccessLogAction.LEAVE_REJECTED,
+                AccessLogAction.OVERTIME_APPROVED,
+                AccessLogAction.OVERTIME_REJECTED,
+                AccessLogAction.PAYRUN_CREATED,
+                AccessLogAction.PAYROLL_GENERATED,
+                AccessLogAction.PAYSLIP_EXPORTED,
+                AccessLogAction.REPORT_EXPORTED
         );
         actionFilterCombo.setValue("All Actions");
         searchField.textProperty().addListener((obs, old, val) -> applyFilters());

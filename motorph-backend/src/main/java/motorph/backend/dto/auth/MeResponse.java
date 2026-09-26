@@ -3,9 +3,8 @@ package motorph.backend.dto.auth;
 import java.util.List;
 
 /**
- * Wire response body for GET /api/v1/auth/me - always DB-loaded at request
- * time, for UI display purposes only. Never treat this as an authorization
- * source; the backend re-checks permissions independently on every request.
+ * Response body for {@code GET /api/v1/auth/me}. Intended for display only; the backend never
+ * relies on it for authorization.
  */
 public record MeResponse(
         int userAccountId,

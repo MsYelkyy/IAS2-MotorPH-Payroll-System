@@ -18,11 +18,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Attendance endpoints. time-in/time-out always act on the caller's own
- * employeeId, resolved server-side via CurrentUserProvider - never trusted
- * from the client, so a modified desktop client can never clock in as
- * someone else. Viewing all-employee records requires VIEW_ATTENDANCE or
- * MANAGE_ATTENDANCE; viewing one's own records needs no extra permission.
+ * Attendance endpoints. Time-in and time-out always apply to the caller's own record, taken from
+ * the access token, so a client cannot clock in for someone else. Viewing other employees'
+ * attendance requires {@code VIEW_ATTENDANCE} or {@code MANAGE_ATTENDANCE}.
  */
 @RestController
 @RequestMapping("/api/v1/attendance")

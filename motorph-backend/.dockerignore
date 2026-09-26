@@ -1,0 +1,22 @@
+# Keep build output, local secrets and runtime data out of the build context so
+# they can never be baked into the image layers.
+
+target/
+
+# Local secrets - these must never reach the image.
+.env
+.env.*
+!.env.example
+.local-db-password.txt
+.local-env.sh
+application-local.yml
+
+# Runtime data - bind-mounted at run time, not part of the image.
+profile-photos/
+backups/
+
+# Tooling noise
+.idea/
+*.iml
+Dockerfile
+.dockerignore

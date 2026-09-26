@@ -14,10 +14,8 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * Server-side Jasper report generation. Unlike the desktop's original
- * JasperReportGenerator, this has no showPreview() (Swing, not available
- * headless) and no file-based exportToPdf() (a backend has no meaningful
- * local output path) - callers get PDF bytes to stream in an HTTP response.
+ * Fills Jasper report templates on the server and returns the result as PDF bytes for the HTTP
+ * response.
  */
 @Component
 public class JasperReportGenerator {

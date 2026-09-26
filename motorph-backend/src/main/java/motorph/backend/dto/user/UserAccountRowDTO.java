@@ -7,9 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Carries user account details for the IT account management table, joined
- * with the employee's display name server-side. Never carries password
- * hash/salt - those stay inside the backend.
+ * User account row for the IT account management table, including the employee's display name.
+ * Password hashes and salts are never included.
  */
 public record UserAccountRowDTO(
         int userAccountId,

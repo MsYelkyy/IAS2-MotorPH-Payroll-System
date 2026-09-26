@@ -12,10 +12,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 /**
- * Issues access+refresh token pairs and handles refresh/revocation. This is
- * the only place that talks to both JwtTokenProvider and TokenRevocationRepository,
- * so the "logout must actually invalidate" and "refresh must check revocation
- * too" rules live in one auditable spot.
+ * Issues access and refresh tokens and handles refresh and revocation. Revocation is also checked
+ * on refresh, so a revoked refresh token cannot be used to obtain new access tokens.
  */
 @Service
 public class TokenIssuanceService {
@@ -40,7 +38,10 @@ public class TokenIssuanceService {
         );
     }
 
-    // exchanges a valid, non-revoked refresh token for a new access token
+    /**
+     * Exchanges a valid, non-revoked refresh token for a new access token. The refresh token itself
+     * is returned unchanged.
+     */
     public TokenResponse refresh(String refreshToken) {
         Claims claims = parseOrThrow(refreshToken);
 
@@ -66,7 +67,9 @@ public class TokenIssuanceService {
         );
     }
 
-    // revokes both the presented access token and (if present) its paired refresh token
+    /**
+     * Marks a token as revoked. The entry is kept until the token would have expired anyway.
+     */
     public void revoke(String jti, int userAccountId, java.time.Instant expiresAt) {
         LocalDateTime expiresAtLocal = LocalDateTime.ofInstant(expiresAt, ZoneId.systemDefault());
         tokenRevocationRepository.revoke(jti, userAccountId, expiresAtLocal);

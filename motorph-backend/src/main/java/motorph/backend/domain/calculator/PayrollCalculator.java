@@ -17,10 +17,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Computes payroll breakdown from payroll input data and attendance logs.
- * Ported from the desktop's motorph.domain.calculator.PayrollCalculator with
- * identical math - this is the single source of truth for payroll figures
- * now that computation runs server-side.
+ * Computes the payroll breakdown from an employee's payroll data, attendance logs, and the
+ * government rates in effect for the cutoff. This is the single source of truth for payroll
+ * figures.
  */
 @Component
 public class PayrollCalculator {
@@ -30,7 +29,10 @@ public class PayrollCalculator {
     private static final double UNPAID_LUNCH_HOURS = 1.0;
     private static final double MAX_REGULAR_HOURS_PER_DAY = 8.0;
 
-    // computes payroll breakdown for the given cutoff date using effective government rates
+    /**
+     * Computes the full payroll breakdown for one employee using the government rates effective on
+     * the cutoff date.
+     */
     public PayrollBreakdown computeDeductions(
             PayrollInputDTO input,
             List<Attendance> logs,
@@ -127,7 +129,10 @@ public class PayrollCalculator {
         );
     }
 
-    // calculates paid regular hours with unpaid lunch deducted
+    /**
+     * Returns the paid regular hours for one attendance record, excluding the one-hour unpaid lunch
+     * and capped at eight hours.
+     */
     public static double calculatePaidRegularHours(Attendance attendance) {
         if (attendance == null) {
             return 0.0;
@@ -135,7 +140,6 @@ public class PayrollCalculator {
         return calculatePaidRegularHours(attendance.getTimeIn(), attendance.getTimeOut());
     }
 
-    // overload: same calculation but takes the time-in and time-out directly
     public static double calculatePaidRegularHours(LocalTime timeIn, LocalTime timeOut) {
         if (timeIn == null || timeOut == null) {
             return 0.0;
@@ -147,7 +151,9 @@ public class PayrollCalculator {
         return Math.max(0.0, Math.min(paidHours, MAX_REGULAR_HOURS_PER_DAY));
     }
 
-    // computes withholding tax from monthly taxable income using the effective tax brackets
+    /**
+     * Computes withholding tax from monthly taxable income using the effective tax brackets.
+     */
     public static double computeMonthlyTax(
             double taxableIncome,
             List<WithholdingTaxBracketDTO> brackets) {
@@ -170,7 +176,6 @@ public class PayrollCalculator {
         return 0.0;
     }
 
-    // filters attendance logs within the current cutoff range
     private static List<Attendance> filterLogsByDateRange(
             List<Attendance> logs,
             LocalDate cutoffDate,
@@ -194,7 +199,6 @@ public class PayrollCalculator {
         return filtered;
     }
 
-    // calculates late and undertime deductions from attendance logs
     private static AttendanceDeduction calculateAttendanceDeductions(
             PayrollInputDTO input,
             List<Attendance> logs) {
@@ -221,7 +225,10 @@ public class PayrollCalculator {
         return new AttendanceDeduction(lateTotal, undertimeTotal);
     }
 
-    // calculates the employee SSS share; uses fixed cap contribution when salary exceeds max_salary, otherwise prorates
+    /**
+     * Calculates the employee's SSS share. Salaries above the table's maximum use the fixed capped
+     * contribution; otherwise the contribution is prorated.
+     */
     private static double calculateSSS(double monthlyBasic, GovernmentRatesDTO rates) {
         var rate = rates.getSssRate();
         if (rate == null) {
@@ -241,7 +248,6 @@ public class PayrollCalculator {
         return Math.min(prorated, maxContribution);
     }
 
-    // calculates the employee PhilHealth share using the effective rate
     private static double calculatePhilHealth(double monthlyBasic, GovernmentRatesDTO rates) {
         var rate = rates.getPhilHealthRate();
         if (rate == null) {
@@ -252,7 +258,6 @@ public class PayrollCalculator {
         return (salary * rate.getPremiumRate()) * rate.getEmployeeShareRatio();
     }
 
-    // calculates the employee Pag-IBIG share using the effective salary tiers
     private static double calculatePagIbig(double monthlySalary, GovernmentRatesDTO rates) {
         List<PagIbigRateDTO> tiers = rates.getPagIbigRates();
         if (tiers == null || tiers.isEmpty()) {
@@ -270,7 +275,6 @@ public class PayrollCalculator {
         return 0.0;
     }
 
-    // validates that a numeric value is not negative
     private static double requireNonNegative(double value, String message) {
         if (value < 0) {
             throw new IllegalArgumentException(message);
@@ -279,7 +283,6 @@ public class PayrollCalculator {
         return value;
     }
 
-    // Holds the computed attendance deductions.
     private static class AttendanceDeduction {
 
         private final double lateDeduction;

@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Wire copy of the backend's Position domain model (read-only reference
- * data), mirroring the desktop's original motorph.domain.model.Position
- * getter names so call sites need no changes.
+ * Client-side copy of the backend's {@code Position} reference data.
  */
 public class PositionDTO {
 

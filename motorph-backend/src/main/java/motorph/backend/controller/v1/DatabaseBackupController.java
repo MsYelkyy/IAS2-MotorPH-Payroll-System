@@ -19,10 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Database backup administration, every endpoint gated BACKUP_DATABASE.
- * Backups live on the backend host, so restore takes a filename rather than
- * an upload. Filenames arriving in the URL are validated against the exact
- * generated pattern inside the service before any filesystem access.
+ * Database backup administration. Every endpoint requires {@code BACKUP_DATABASE}. Backups are
+ * stored on the backend host, so a restore takes a filename rather than an upload; the service
+ * validates each filename before touching the filesystem.
  */
 @RestController
 @RequestMapping("/api/v1/system/backups")
@@ -56,7 +55,7 @@ public class DatabaseBackupController {
     public ResponseEntity<byte[]> downloadBackup(@PathVariable String filename) {
         permissionService.requirePermission(PermissionKey.BACKUP_DATABASE);
 
-        byte[] content = databaseBackupService.readBackup(filename);
+        byte[] content = databaseBackupService.readBackup(filename, currentUserProvider.getCurrentUserAccountId());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -67,7 +66,7 @@ public class DatabaseBackupController {
     @DeleteMapping("/{filename}")
     public void deleteBackup(@PathVariable String filename) {
         permissionService.requirePermission(PermissionKey.BACKUP_DATABASE);
-        databaseBackupService.deleteBackup(filename);
+        databaseBackupService.deleteBackup(filename, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PostMapping("/{filename}/restore")

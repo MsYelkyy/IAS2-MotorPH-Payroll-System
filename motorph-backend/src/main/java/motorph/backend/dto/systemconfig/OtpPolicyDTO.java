@@ -1,9 +1,8 @@
 package motorph.backend.dto.systemconfig;
 
 /**
- * The OTP rules the backend actually enforces, surfaced so the Admin system
- * config screen displays the live policy rather than its own copy of the
- * numbers.
+ * The OTP rules enforced by the backend, exposed so the system configuration screen shows the live
+ * values instead of its own copy.
  */
 public record OtpPolicyDTO(
         int otpLength,

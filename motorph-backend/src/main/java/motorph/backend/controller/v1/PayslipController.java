@@ -8,6 +8,7 @@ import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayslipService;
 import motorph.backend.service.PermissionService;
+import motorph.backend.service.UserAccessLogService;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -20,10 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Payslip viewing endpoints. An employee always sees their own payslips;
- * viewing someone else's requires VIEW_PAYSLIP (HR/Finance), re-checked
- * server-side on every call - the desktop's role-based menu visibility is a
- * display hint only.
+ * Payslip endpoints. Employees can always view their own payslips; viewing another employee's
+ * requires {@code VIEW_PAYSLIP}.
  */
 @RestController
 @RequestMapping("/api/v1/payslips")
@@ -32,16 +31,21 @@ public class PayslipController {
     private final PayslipService payslipService;
     private final PermissionService permissionService;
     private final CurrentUserProvider currentUserProvider;
+    private final UserAccessLogService userAccessLogService;
 
     public PayslipController(PayslipService payslipService,
                              PermissionService permissionService,
-                             CurrentUserProvider currentUserProvider) {
+                             CurrentUserProvider currentUserProvider,
+                             UserAccessLogService userAccessLogService) {
         this.payslipService = payslipService;
         this.permissionService = permissionService;
         this.currentUserProvider = currentUserProvider;
+        this.userAccessLogService = userAccessLogService;
     }
 
-    // the caller's own payroll history
+    /**
+     * Returns the caller's own payroll history.
+     */
     @GetMapping
     public List<PayslipSummaryDTO> getOwnPayslips() {
         int employeeId = currentUserProvider.getCurrentPrincipal().employeeId();
@@ -59,6 +63,10 @@ public class PayslipController {
         requireOwnOrPermitted(employeeId);
 
         byte[] pdf = payslipService.generatePayslipPdf(employeeId, payrunId);
+
+        userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
+                UserAccessLogService.ACTION_PAYSLIP_EXPORTED,
+                "Exported payslip of employee ID " + employeeId + " for payrun ID " + payrunId);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

@@ -20,10 +20,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 /**
- * Maps backend exception types to a stable {code, message, fieldErrors}
- * contract. `code` is the public API surface - Java exception class names
- * are never exposed to clients, so the backend is free to refactor its
- * exception hierarchy without breaking desktop clients pinned to old codes.
+ * Translates exceptions into the {@link ErrorResponse} format. Clients only ever see the stable
+ * {@code code} values, never Java exception class names, so the exception hierarchy can change
+ * without breaking them.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -50,13 +49,18 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", e.getMessage());
     }
 
-    // a required @RequestParam (e.g. a report's startDate/endDate) was omitted entirely
+    /**
+     * Handles a required request parameter that was not sent, such as a report's start or end date.
+     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParameter(MissingServletRequestParameterException e) {
         return respond(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", e.getParameterName() + " is required.");
     }
 
-    // a @RequestParam was present but couldn't be parsed as its declared type (e.g. a malformed date)
+    /**
+     * Handles a request parameter that could not be converted to its type, such as a malformed
+     * date.
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException e) {
         return respond(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", e.getName() + " is invalid.");
@@ -67,8 +71,10 @@ public class GlobalExceptionHandler {
         return respond(HttpStatus.NOT_FOUND, "NOT_FOUND", e.getMessage());
     }
 
-    // the report ran fine but matched nothing - clients show a message instead
-    // of opening a blank PDF
+    /**
+     * Handles a report that matched no rows, so the client can show a message instead of a blank
+     * PDF.
+     */
     @ExceptionHandler(EmptyReportException.class)
     public ResponseEntity<ErrorResponse> handleEmptyReport(EmptyReportException e) {
         return respond(HttpStatus.NOT_FOUND, "NO_REPORT_DATA", e.getMessage());

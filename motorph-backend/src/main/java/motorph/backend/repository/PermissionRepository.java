@@ -30,7 +30,6 @@ public class PermissionRepository {
         this.dataSource = dataSource;
     }
 
-    // finds permission keys assigned to a role
     public Set<String> findPermissionKeysByRole(Role role) {
         validateRole(role);
 
@@ -62,7 +61,6 @@ public class PermissionRepository {
         return permissionKeys;
     }
 
-    // finds permissions assigned to a role
     public Set<Permission> findPermissionsByRole(Role role) {
         validateRole(role);
 
@@ -102,7 +100,6 @@ public class PermissionRepository {
         return permissions;
     }
 
-    // finds all system permissions
     public List<Permission> findAllPermissions() {
         String sql = """
             SELECT permission_id,
@@ -134,7 +131,6 @@ public class PermissionRepository {
         return permissions;
     }
 
-    // checks if a role has one permission key
     public boolean roleHasPermission(Role role, String permissionKey) {
         validateRole(role);
         validatePermissionKey(permissionKey);
@@ -164,7 +160,9 @@ public class PermissionRepository {
         }
     }
 
-    // updates all permissions assigned to a role
+    /**
+     * Replaces all permissions assigned to the role.
+     */
     public void updateRolePermissions(Role role, Set<PermissionKey> permissionKeys) {
         validateRole(role);
 

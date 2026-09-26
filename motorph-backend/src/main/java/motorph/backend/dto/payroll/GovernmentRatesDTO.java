@@ -15,7 +15,6 @@ public class GovernmentRatesDTO {
     private final List<PagIbigRateDTO> pagIbigRates;
     private final List<WithholdingTaxBracketDTO> taxBrackets;
 
-    // constructors
     public GovernmentRatesDTO(
             SssRateDTO sssRate,
             PhilHealthRateDTO philHealthRate,

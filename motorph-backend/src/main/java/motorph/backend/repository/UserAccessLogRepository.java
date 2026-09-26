@@ -38,7 +38,6 @@ public class UserAccessLogRepository {
         this.dataSource = dataSource;
     }
 
-    // saves a user access log record
     public void save(UserAccessLog log) {
         if (log == null) {
             throw new IllegalArgumentException("User access log is required.");
@@ -73,7 +72,6 @@ public class UserAccessLogRepository {
         }
     }
 
-    // finds logs by user account id
     public List<UserAccessLog> findByUserAccountId(int userAccountId) {
         String sql = BASE_SELECT + """
                 WHERE user_account_id = ?
@@ -83,13 +81,17 @@ public class UserAccessLogRepository {
         return executeListQuery(sql, stmt -> stmt.setInt(1, userAccountId));
     }
 
-    // finds every log, latest first
+    /**
+     * Returns every log entry, newest first.
+     */
     public List<UserAccessLog> findAll() {
         return executeListQuery(BASE_SELECT + "ORDER BY logged_at DESC", null);
     }
 
-    // finds the newest logs only - powers the dashboard activity feed without
-    // pulling the entire log table across the wire
+    /**
+     * Returns the most recent log entries for the dashboard activity feed, without loading the
+     * whole table.
+     */
     public List<UserAccessLog> findRecent(int limit) {
         if (limit <= 0) {
             throw new IllegalArgumentException("Limit must be positive.");
@@ -103,7 +105,6 @@ public class UserAccessLogRepository {
         return executeListQuery(sql, stmt -> stmt.setInt(1, limit));
     }
 
-    // counts logs recorded for one action
     public int countByAction(String action) {
         String sql = "SELECT COUNT(*) FROM user_access_logs WHERE action = ?";
 
@@ -170,7 +171,6 @@ public class UserAccessLogRepository {
         return rs.wasNull() ? null : value;
     }
 
-    // binds prepared statement parameters
     private interface StatementBinder {
         void bind(PreparedStatement stmt) throws SQLException;
     }

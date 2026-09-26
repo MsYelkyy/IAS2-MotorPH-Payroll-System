@@ -14,9 +14,8 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 /**
- * Persists opaque OTP login challenges. The client only ever sees the
- * challengeId (a random token); the mapping to a real userAccountId lives
- * here, server-side, so the client can never assert who it is mid-login.
+ * Stores OTP login challenges. The client only receives the random challenge ID; the mapping to the
+ * user account stays on the server.
  */
 @Repository
 public class LoginChallengeRepository {
@@ -94,7 +93,9 @@ public class LoginChallengeRepository {
         }
     }
 
-    // deletes challenges past their expiry, called opportunistically to keep the table small
+    /**
+     * Deletes challenges that expired before the cutoff.
+     */
     public void deleteExpiredBefore(LocalDateTime cutoff) {
         String sql = "DELETE FROM login_challenge WHERE expires_at < ?";
 

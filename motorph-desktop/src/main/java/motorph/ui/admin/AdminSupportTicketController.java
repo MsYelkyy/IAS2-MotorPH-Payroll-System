@@ -18,6 +18,11 @@ public class AdminSupportTicketController extends BaseSupportTicketController {
     }
 
     @Override
+    protected boolean canCancelTickets() {
+        return true;
+    }
+
+    @Override
     protected List<String> categoryFilterOptions() {
         return List.of(CAT_ALL, "PAYROLL", "ATTENDANCE", "ACCOUNT", "SYSTEM", "OTHER");
     }

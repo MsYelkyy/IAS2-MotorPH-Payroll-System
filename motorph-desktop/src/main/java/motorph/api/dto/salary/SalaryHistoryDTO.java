@@ -8,8 +8,7 @@ import motorph.domain.value.SalaryType;
 import java.time.LocalDate;
 
 /**
- * Wire copy of the backend's SalaryHistory domain model, mirroring the old
- * motorph.domain.model.SalaryHistory getter names.
+ * Client-side copy of the backend's {@code SalaryHistory}.
  */
 public class SalaryHistoryDTO {
 

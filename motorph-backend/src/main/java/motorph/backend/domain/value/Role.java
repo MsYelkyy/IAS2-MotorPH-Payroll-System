@@ -11,7 +11,6 @@ public enum Role {
     IT,
     EMPLOYEE;
 
-    // converts text to role
     public static Role fromValue(String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Role is required.");

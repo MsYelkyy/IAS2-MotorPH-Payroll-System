@@ -19,10 +19,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Validates the Bearer access token on every request: signature, expiry, and
- * NOT revoked (checked against token_revocation on every call, not just at
- * issuance) - this is what makes logout actually invalidate a token instead
- * of leaving it usable until natural expiry.
+ * Authenticates requests that carry a Bearer access token. The signature, expiry, and revocation
+ * status are checked on every request, which is what lets logout take effect immediately.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -77,7 +75,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (JwtException | IllegalArgumentException e) {
-            // leave SecurityContext unauthenticated; SecurityConfig rejects with 401/403 downstream
+            // Leave the request unauthenticated; Spring Security rejects it further down the chain.
         }
     }
 }

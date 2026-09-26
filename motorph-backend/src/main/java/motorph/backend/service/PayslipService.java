@@ -22,11 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Read-only payslip viewing: history list + PDF generation. Ported from the
- * desktop's PayrollService.getPayrollResultsByEmployee/getPayrun (list) and
- * PayrollReportService.previewPayslipReport (PDF, now byte[] instead of a
- * Swing preview window). Payroll computation/persistence stays out of scope
- * here - see Phase 4.
+ * Payslip history and PDF generation for employees.
  */
 @Service
 public class PayslipService {
@@ -48,7 +44,9 @@ public class PayslipService {
         this.jasperReportGenerator = jasperReportGenerator;
     }
 
-    // returns the employee's payroll history, newest first
+    /**
+     * Returns the employee's payroll history, newest first.
+     */
     public List<PayslipSummaryDTO> getPayslipSummaries(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -77,7 +75,9 @@ public class PayslipService {
         return summaries;
     }
 
-    // returns the payslip report data (used for the PDF and available as JSON)
+    /**
+     * Returns the payslip data used to build the PDF.
+     */
     public PayslipReportDTO getPayslipReport(int employeeId, int payrunId) {
         validateEmployeeId(employeeId);
         validatePayrunId(payrunId);
@@ -91,7 +91,6 @@ public class PayslipService {
         return payslip;
     }
 
-    // generates the payslip PDF as bytes
     public byte[] generatePayslipPdf(int employeeId, int payrunId) {
         PayslipReportDTO payslip = getPayslipReport(employeeId, payrunId);
 

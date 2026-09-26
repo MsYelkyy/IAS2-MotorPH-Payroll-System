@@ -3,10 +3,8 @@ package motorph.backend.dto.payroll;
 import java.time.LocalDate;
 
 /**
- * One row in an employee's payroll history table. Mirrors the desktop's old
- * PayrollRowItem view-model, including its basicPay==grossPay simplification
- * (the underlying payroll_result table doesn't break out a separate basic
- * pay figure at the summary level - only the payslip PDF does).
+ * One row in an employee's payroll history. {@code basicPay} equals {@code grossPay} because {@code
+ * payroll_result} does not store basic pay separately; the full breakdown is only on the payslip.
  */
 public class PayslipSummaryDTO {
 

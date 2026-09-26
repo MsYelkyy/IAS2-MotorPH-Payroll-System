@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 
 /**
- * Wire copy of the backend's EmployeeBenefit domain model, mirroring the old
- * motorph.domain.model.EmployeeBenefit getter names.
+ * Client-side copy of the backend's {@code EmployeeBenefit}.
  */
 public class EmployeeBenefitDTO {
 

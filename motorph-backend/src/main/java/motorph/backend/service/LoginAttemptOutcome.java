@@ -3,9 +3,8 @@ package motorph.backend.service;
 import motorph.backend.dto.auth.OtpPreview;
 
 /**
- * Internal, non-wire result of a password-verification attempt. AuthController
- * maps this into the public {@code LoginResponse} - this type never leaves the
- * backend, so it is free to carry the userAccountId that the wire contract must not.
+ * Result of a password check, used only inside the backend. {@code AuthController} converts it into
+ * the public {@code LoginResponse}, so it can safely carry the user account ID.
  */
 public final class LoginAttemptOutcome {
 

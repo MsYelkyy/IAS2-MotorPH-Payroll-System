@@ -1,9 +1,8 @@
 package motorph.backend.dto.user;
 
 /**
- * Account status tallies for the IT/Admin dashboards. Computed with COUNT
- * queries so a dashboard never has to pull the whole account list just to
- * size three labels.
+ * Account status counts for the IT and Admin dashboards, computed with COUNT queries instead of
+ * loading every account.
  */
 public record AccountCountsDTO(
         int activeCount,

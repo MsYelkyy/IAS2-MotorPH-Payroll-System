@@ -1,6 +1,7 @@
 package motorph.backend.domain;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Objects;
 
 import motorph.backend.domain.value.EmploymentStatus;
@@ -164,7 +165,8 @@ public class Employee {
     }
 
     public void setCivilStatus(String civilStatus) {
-        this.civilStatus = clean(civilStatus);
+        String cleaned = clean(civilStatus);
+        this.civilStatus = cleaned == null || cleaned.isEmpty() ? cleaned : cleaned.toUpperCase(Locale.ROOT);
     }
 
     public void setPhoneNumber(String phoneNumber) {

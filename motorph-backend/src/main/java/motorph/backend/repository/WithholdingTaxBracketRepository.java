@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manages withholding tax bracket records. findEffectiveOn is not ported -
- * it's only used by PayrollCalculator, out of scope until Phase 4.
+ * Manages withholding tax bracket records.
  */
 @Repository
 public class WithholdingTaxBracketRepository {

@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Handles the Admin System Configuration screen.
@@ -244,43 +245,29 @@ public class AdminSystemConfigController {
         rateRows.getChildren().clear();
         try {
             switch (cat) {
-                case PHILHEALTH -> {
-                    List<PhilHealthRateDTO> list = configApiClient.getAllPhilHealthRates();
-                    if (list.isEmpty()) {
-                        rateRows.getChildren().add(emptyLabel("No PhilHealth rates configured."));
-                    } else {
-                        for (PhilHealthRateDTO dto : list) rateRows.getChildren().add(buildPhilHealthRow(dto));
-                    }
-                }
-                case SSS -> {
-                    List<SssRateDTO> list = configApiClient.getAllSssRates();
-                    if (list.isEmpty()) {
-                        rateRows.getChildren().add(emptyLabel("No SSS rates configured."));
-                    } else {
-                        for (SssRateDTO dto : list) rateRows.getChildren().add(buildSssRow(dto));
-                    }
-                }
-                case PAGIBIG -> {
-                    List<PagIbigRateDTO> list = configApiClient.getAllPagIbigRates();
-                    if (list.isEmpty()) {
-                        rateRows.getChildren().add(emptyLabel("No Pag-IBIG rates configured."));
-                    } else {
-                        for (PagIbigRateDTO dto : list) rateRows.getChildren().add(buildPagIbigRow(dto));
-                    }
-                }
-                case TAX -> {
-                    List<WithholdingTaxBracketDTO> list = configApiClient.getAllTaxBrackets();
-                    if (list.isEmpty()) {
-                        rateRows.getChildren().add(emptyLabel("No tax brackets configured."));
-                    } else {
-                        for (WithholdingTaxBracketDTO dto : list) rateRows.getChildren().add(buildTaxRow(dto));
-                    }
-                }
+                case PHILHEALTH -> addRateRows(configApiClient.getAllPhilHealthRates(),
+                        "No PhilHealth rates configured.", this::buildPhilHealthRow);
+                case SSS -> addRateRows(configApiClient.getAllSssRates(),
+                        "No SSS rates configured.", this::buildSssRow);
+                case PAGIBIG -> addRateRows(configApiClient.getAllPagIbigRates(),
+                        "No Pag-IBIG rates configured.", this::buildPagIbigRow);
+                case TAX -> addRateRows(configApiClient.getAllTaxBrackets(),
+                        "No tax brackets configured.", this::buildTaxRow);
                 default -> rateRows.getChildren().add(emptyLabel("Select a category."));
             }
         } catch (Exception e) {
             rateRows.getChildren().add(emptyLabel("Failed to load rates: " + e.getMessage()));
             setMessage("Error loading rates: " + e.getMessage());
+        }
+    }
+
+    private <T> void addRateRows(List<T> rates, String emptyMessage, Function<T, HBox> rowBuilder) {
+        if (rates.isEmpty()) {
+            rateRows.getChildren().add(emptyLabel(emptyMessage));
+            return;
+        }
+        for (T rate : rates) {
+            rateRows.getChildren().add(rowBuilder.apply(rate));
         }
     }
 

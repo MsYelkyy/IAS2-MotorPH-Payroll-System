@@ -4,36 +4,39 @@ import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.exception.ValidationException;
+import motorph.backend.domain.Employee;
 import motorph.backend.domain.SupportTicket;
 import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.RoutingTeam;
 import motorph.backend.domain.value.SupportTicketCategory;
 import motorph.backend.domain.value.SupportTicketStatus;
+import motorph.backend.dto.support.SupportTicketRowDTO;
+import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.SupportTicketRepository;
 
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * Handles business rules for employee support tickets. Ported from the
- * desktop's SupportTicketService. The role checks in resolveTicket/
- * cancelTicket are role-based, not permission-key based, matching the
- * original exactly - there is no dedicated ticket-management permission key
- * in the system, and this preserves the original's precise role set (note
- * the asymmetry: resolve allows IT/HR/ADMIN/FINANCE, cancel's privileged set
- * is IT/ADMIN/HR only - FINANCE cannot cancel another employee's ticket).
+ * Handles employee support tickets. Each team sees and resolves only the tickets routed to it
+ * (IT, HR, and Finance for payroll), Admin sees and resolves every ticket, and only Admin can
+ * cancel one.
  */
 @Service
 public class SupportTicketService {
 
     private final SupportTicketRepository supportTicketRepository;
+    private final EmployeeRepository employeeRepository;
 
-    public SupportTicketService(SupportTicketRepository supportTicketRepository) {
+    public SupportTicketService(SupportTicketRepository supportTicketRepository,
+                                EmployeeRepository employeeRepository) {
         this.supportTicketRepository = supportTicketRepository;
+        this.employeeRepository = employeeRepository;
     }
 
-    // submits a new employee support ticket - employeeId is always the caller's own
     public void submitTicket(int employeeId,
                              SupportTicketCategory category,
                              String subject,
@@ -69,8 +72,18 @@ public class SupportTicketService {
         return ticket;
     }
 
-    public int getOpenTicketCount() {
-        return supportTicketRepository.findOpenTickets().size();
+    /**
+     * Counts open tickets the caller can handle: every open ticket for Admin, otherwise their team's.
+     */
+    public int getOpenTicketCount(Role actorRole) {
+        List<SupportTicket> open = supportTicketRepository.findOpenTickets();
+
+        if (actorRole == Role.ADMIN) {
+            return open.size();
+        }
+
+        RoutingTeam team = requireHandlingTeam(actorRole);
+        return (int) open.stream().filter(ticket -> ticket.getRoutingTeam() == team).count();
     }
 
     public List<SupportTicket> getTicketsByEmployee(int employeeId) {
@@ -78,28 +91,37 @@ public class SupportTicketService {
         return supportTicketRepository.findByEmployeeId(employeeId);
     }
 
-    public List<SupportTicket> getTicketsByRoutingTeam(RoutingTeam routingTeam) {
+    public List<SupportTicketRowDTO> getTicketsByRoutingTeam(RoutingTeam routingTeam, Role actorRole) {
         if (routingTeam == null) {
             throw new ValidationException("Routing team is required.");
         }
 
-        return supportTicketRepository.findByRoutingTeam(routingTeam);
+        if (actorRole != Role.ADMIN && requireHandlingTeam(actorRole) != routingTeam) {
+            throw new UnauthorizedException("You can only view tickets routed to your team.");
+        }
+
+        return toRows(supportTicketRepository.findByRoutingTeam(routingTeam));
     }
 
-    public List<SupportTicket> getAllTickets() {
-        return supportTicketRepository.findAll();
+    public List<SupportTicketRowDTO> getAllTickets(Role actorRole) {
+        if (actorRole != Role.ADMIN) {
+            throw new UnauthorizedException("Only Admin can view all support tickets.");
+        }
+
+        return toRows(supportTicketRepository.findAll());
     }
 
-    // resolves an open support ticket; only IT, HR, ADMIN, or FINANCE roles may resolve
+    /**
+     * Resolves an open ticket. Admin can resolve any ticket; a team can resolve only its own.
+     */
     public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
         validateTicketId(ticketId);
 
-        if (resolverRole != Role.IT && resolverRole != Role.HR
-                && resolverRole != Role.ADMIN && resolverRole != Role.FINANCE) {
-            throw new UnauthorizedException("Only IT, HR, Admin, or Finance roles can resolve tickets.");
-        }
-
         SupportTicket ticket = getTicketById(ticketId);
+
+        if (resolverRole != Role.ADMIN && requireHandlingTeam(resolverRole) != ticket.getRoutingTeam()) {
+            throw new UnauthorizedException("You can only resolve tickets routed to your team.");
+        }
 
         if (ticket.getStatus() != SupportTicketStatus.OPEN) {
             throw new BusinessRuleException("Only open tickets can be resolved.");
@@ -108,25 +130,57 @@ public class SupportTicketService {
         supportTicketRepository.markResolved(ticketId, resolvedByUserAccountId);
     }
 
-    // cancels an open ticket; owner may cancel their own, IT/Admin/HR may cancel any
-    public void cancelTicket(int ticketId, int actorEmployeeId, Role actorRole) {
+    public void cancelTicket(int ticketId, Role actorRole) {
         validateTicketId(ticketId);
 
-        SupportTicket ticket = getTicketById(ticketId);
-
-        boolean isPrivileged = actorRole == Role.IT
-                || actorRole == Role.ADMIN
-                || actorRole == Role.HR;
-
-        if (!isPrivileged && ticket.getEmployeeId() != actorEmployeeId) {
-            throw new UnauthorizedException("You can only cancel your own support ticket.");
+        if (actorRole != Role.ADMIN) {
+            throw new UnauthorizedException("Only Admin can cancel a support ticket.");
         }
+
+        SupportTicket ticket = getTicketById(ticketId);
 
         if (ticket.getStatus() != SupportTicketStatus.OPEN) {
             throw new BusinessRuleException("Only open tickets can be cancelled.");
         }
 
         supportTicketRepository.markCancelled(ticketId);
+    }
+
+    private RoutingTeam requireHandlingTeam(Role role) {
+        RoutingTeam team = switch (role) {
+            case IT -> RoutingTeam.IT;
+            case HR -> RoutingTeam.HR;
+            case FINANCE -> RoutingTeam.PAYROLL;
+            case ADMIN, EMPLOYEE -> null;
+        };
+
+        if (team == null) {
+            throw new UnauthorizedException("You do not have permission to perform this action.");
+        }
+
+        return team;
+    }
+
+    private List<SupportTicketRowDTO> toRows(List<SupportTicket> tickets) {
+        Map<Integer, String> namesByEmployeeId = employeeRepository.findAllWithInactive()
+                .stream()
+                .collect(Collectors.toMap(Employee::getEmployeeId, Employee::getFullName, (a, b) -> a));
+
+        return tickets.stream()
+                .map(ticket -> new SupportTicketRowDTO(
+                        ticket.getTicketId(),
+                        ticket.getEmployeeId(),
+                        namesByEmployeeId.getOrDefault(ticket.getEmployeeId(), "Employee #" + ticket.getEmployeeId()),
+                        ticket.getCategory(),
+                        ticket.getRoutingTeam(),
+                        ticket.getSubject(),
+                        ticket.getDescription(),
+                        ticket.getStatus(),
+                        ticket.getResolvedByUserAccountId(),
+                        ticket.getResolvedAt(),
+                        ticket.getCreatedAt(),
+                        ticket.getUpdatedAt()))
+                .toList();
     }
 
     private RoutingTeam resolveRoutingTeam(SupportTicketCategory category) {

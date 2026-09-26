@@ -9,7 +9,8 @@ import motorph.backend.domain.value.AccountStatus;
 import motorph.backend.domain.value.Role;
 
 /**
- * Represents a system login account with assigned roles.
+ * Represents a system login account with assigned roles. The default active role is the most
+ * senior one in {@link Role} order, so a staff account never defaults to {@code EMPLOYEE}.
  */
 public class UserAccount {
 
@@ -48,7 +49,7 @@ public class UserAccount {
                 passwordHash,
                 passwordSalt,
                 roles,
-                roles == null || roles.isEmpty() ? null : roles.get(0),
+                roles == null || roles.isEmpty() ? null : Collections.min(roles),
                 locked,
                 active,
                 lastLoginAt,
@@ -146,7 +147,10 @@ public class UserAccount {
         return roles.size() > 1;
     }
 
-    // returns computed account status
+    /**
+     * Derives the account status from the locked and active flags. A locked account is reported as
+     * {@code LOCKED} even if it is also disabled.
+     */
     public AccountStatus getAccountStatus() {
         if (locked) {
             return AccountStatus.LOCKED;
@@ -226,7 +230,7 @@ public class UserAccount {
         this.roles = cleanRoles;
 
         if (activeRole == null || !this.roles.contains(activeRole)) {
-            this.activeRole = this.roles.get(0);
+            this.activeRole = Collections.min(this.roles);
         }
     }
 

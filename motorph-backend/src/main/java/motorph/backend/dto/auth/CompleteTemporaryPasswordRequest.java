@@ -1,9 +1,8 @@
 package motorph.backend.dto.auth;
 
 /**
- * Replaces an IT-issued temporary password. Carries the opaque challenge
- * issued by /login rather than a user account ID - the client is never told
- * which account it is acting on before authentication completes.
+ * Request to replace an IT-issued temporary password during login. The account is identified by the
+ * challenge ID from {@code /login}, never by user account ID.
  */
 public record CompleteTemporaryPasswordRequest(
         String challengeId,

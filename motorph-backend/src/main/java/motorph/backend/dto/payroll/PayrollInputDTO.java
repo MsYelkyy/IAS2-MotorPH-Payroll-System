@@ -7,29 +7,24 @@ public class PayrollInputDTO {
 
     private final int employeeId;
 
-    // personal info
     private final String firstName;
     private final String lastName;
     private final int positionId;
     private final Integer supervisorId;
 
-    // government details
     private final String tinNumber;
     private final String sssNumber;
     private final String philhealthNumber;
     private final String pagibigNumber;
 
-    // salary info
     private final double basicSalary;
     private final double grossSemiMonthly;
     private final double hourlyRate;
 
-    // benefits
     private final double riceSubsidy;
     private final double phoneAllowance;
     private final double clothingAllowance;
 
-    // constructors
     public PayrollInputDTO(
             int employeeId,
             String firstName,
@@ -64,7 +59,6 @@ public class PayrollInputDTO {
         this.clothingAllowance = clothingAllowance;
     }
 
-    // getters
     public int getEmployeeId() {
         return employeeId;
     }
@@ -77,7 +71,6 @@ public class PayrollInputDTO {
         return lastName;
     }
 
-    // returns the employee full name
     public String getFullName() {
         return firstName + " " + lastName;
     }

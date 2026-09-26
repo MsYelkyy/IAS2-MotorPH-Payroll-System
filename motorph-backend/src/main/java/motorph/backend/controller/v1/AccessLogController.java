@@ -14,9 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Read-only access to the audit trail, gated on VIEW_ACCESS_LOGS. Writes are
- * never exposed - log entries are only ever created by the backend itself
- * from a token-derived identity.
+ * Read-only access to the audit trail. Requires {@code VIEW_ACCESS_LOGS}. There are no write
+ * endpoints; log entries are only created by the backend itself.
  */
 @RestController
 @RequestMapping("/api/v1/access-logs")

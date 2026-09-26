@@ -9,27 +9,28 @@ import motorph.backend.repository.EmployeeBenefitRepository;
 import motorph.backend.repository.SalaryHistoryRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Manages salary history records and employee benefit allocations. Ported
- * from the desktop's SalaryBenefitService. addBenefit() was not ported -
- * grepping the desktop UI found no caller (dead code, same precedent as
- * other skipped methods this session); benefit creation only happens
- * through EmployeeService.createEmployeeWithSalaryAndBenefits/updateBenefits.
+ * Manages salary history and employee benefits. New benefits are created through {@link
+ * EmployeeService}, not here.
  */
 @Service
 public class SalaryBenefitService {
 
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
+    private final UserAccessLogService userAccessLogService;
 
     public SalaryBenefitService(SalaryHistoryRepository salaryHistoryRepository,
-                                EmployeeBenefitRepository employeeBenefitRepository) {
+                                EmployeeBenefitRepository employeeBenefitRepository,
+                                UserAccessLogService userAccessLogService) {
         this.salaryHistoryRepository = salaryHistoryRepository;
         this.employeeBenefitRepository = employeeBenefitRepository;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<SalaryHistory> getSalaryHistory(int employeeId) {
@@ -42,8 +43,11 @@ public class SalaryBenefitService {
         return salaryHistoryRepository.findCurrentByEmployeeId(employeeId, LocalDate.now());
     }
 
-    // adds a new salary record; auto-closes any currently open salary to prevent overlap
-    public void addSalaryRecord(int employeeId, SalaryRecordRequest request) {
+    /**
+     * Adds a salary record and closes any currently open one so the periods do not overlap.
+     */
+    @Transactional
+    public void addSalaryRecord(int employeeId, SalaryRecordRequest request, int actorUserAccountId) {
         validateId(employeeId, "Employee ID");
         if (request.startDate() == null) throw new ValidationException("Start date is required.");
         if (request.salaryType() == null || request.salaryType().isBlank())
@@ -72,10 +76,16 @@ public class SalaryBenefitService {
                 request.startDate(),
                 request.endDate()
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_ADDED,
+                "Added salary record for employee ID " + employeeId + " effective " + request.startDate());
     }
 
-    // updates only the start and end dates of an existing salary record
-    public void updateSalaryDates(int salaryHistoryId, LocalDate startDate, LocalDate endDate) {
+    /**
+     * Updates only the start and end dates of a salary record.
+     */
+    public void updateSalaryDates(int salaryHistoryId, LocalDate startDate, LocalDate endDate,
+                                  int actorUserAccountId) {
         validateId(salaryHistoryId, "Salary history ID");
         if (startDate == null) throw new ValidationException("Start date is required.");
 
@@ -91,6 +101,10 @@ public class SalaryBenefitService {
                 startDate,
                 endDate
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_UPDATED,
+                "Changed dates of salary record ID " + salaryHistoryId + " for employee ID "
+                        + existing.getEmployeeId() + " to " + startDate + " - " + (endDate == null ? "open" : endDate));
     }
 
     public List<EmployeeBenefit> getAllBenefits(int employeeId) {
@@ -98,8 +112,7 @@ public class SalaryBenefitService {
         return employeeBenefitRepository.findByEmployeeId(employeeId);
     }
 
-    // ends an active benefit by setting its effective end date
-    public void endBenefit(int employeeBenefitId, LocalDate endDate) {
+    public void endBenefit(int employeeBenefitId, LocalDate endDate, int actorUserAccountId) {
         validateId(employeeBenefitId, "Employee benefit ID");
         if (endDate == null) throw new ValidationException("End date is required.");
 
@@ -114,6 +127,10 @@ public class SalaryBenefitService {
                 existing.getEffectiveStartDate(),
                 endDate
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_BENEFIT_ENDED,
+                "Ended benefit ID " + employeeBenefitId + " for employee ID " + existing.getEmployeeId()
+                        + " effective " + endDate);
     }
 
     private void validateId(int id, String label) {

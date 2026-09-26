@@ -8,12 +8,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Delivery of IT-issued temporary passwords. Same shape as
- * OtpDeliveryService/EmployeeCredentialsDeliveryService: no real SMTP
- * integration exists on the backend yet, so this logs server-side always and
- * returns a preview only while preview mode is on. The preview goes to the IT
- * user resolving the request, not to the account holder, so switch preview
- * mode off as soon as real mail delivery exists.
+ * Delivers IT-issued temporary passwords. There is no mail integration yet, so the password is
+ * logged on the server and, in preview mode, returned to the IT user handling the request rather
+ * than to the account holder. Turn preview mode off once real email delivery is available.
  */
 @Service
 public class PasswordResetDeliveryService {

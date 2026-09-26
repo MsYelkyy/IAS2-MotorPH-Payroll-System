@@ -10,10 +10,8 @@ import motorph.backend.repository.UserAccountRepository;
 import org.springframework.stereotype.Service;
 
 /**
- * Handles user authentication with password validation and OTP verification.
- * Ported from the desktop's AuthenticationService. Ownership of RBAC/roles
- * has moved to being resolved per-request from the DB (see CurrentUserProvider) -
- * this class only establishes "who is this" and "did the password match."
+ * Verifies login credentials and OTPs. Roles and permissions are not handled here; they are
+ * resolved per request by {@link PermissionService}.
  */
 @Service
 public class AuthenticationService {
@@ -37,7 +35,10 @@ public class AuthenticationService {
         this.userAccessLogService = userAccessLogService;
     }
 
-    // authenticates email and password, then sends OTP when needed
+    /**
+     * Verifies the email and password. If the account has a temporary password, the outcome asks
+     * for a password change; otherwise a login OTP is sent.
+     */
     public LoginAttemptOutcome authenticate(String companyEmailInput, String passwordInput) {
         validateCredentialsInput(companyEmailInput, passwordInput);
 
@@ -75,7 +76,9 @@ public class AuthenticationService {
         );
     }
 
-    // verifies login OTP, completes login, and returns the authenticated account
+    /**
+     * Verifies the login OTP, records the successful login, and returns the authenticated account.
+     */
     public UserAccount verifyLoginOtp(int userAccountId, String rawOtp) {
         validateUserAccountId(userAccountId);
 

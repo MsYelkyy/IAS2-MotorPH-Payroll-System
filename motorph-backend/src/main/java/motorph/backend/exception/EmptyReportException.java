@@ -1,9 +1,9 @@
 package motorph.backend.exception;
 
 /**
- * Thrown when a report matched no rows. Kept distinct from ValidationException
- * because the request was perfectly valid - there is simply nothing to render,
- * and a client should say so rather than hand the user an empty PDF.
+ * Thrown when a report query returns no rows. Kept separate from {@link ValidationException}
+ * because the request itself is valid; the client should say there is nothing to show instead of
+ * opening an empty PDF.
  */
 public class EmptyReportException extends RuntimeException {
 

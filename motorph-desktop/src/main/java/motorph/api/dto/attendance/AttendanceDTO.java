@@ -10,10 +10,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 /**
- * Wire copy of the backend's Attendance domain model, mirroring the old
- * motorph.domain.model.Attendance getter names (including the computed
- * getHoursWorked()/isComplete() helpers, recomputed client-side since they're
- * pure functions of timeIn/timeOut/status).
+ * Client-side copy of the backend's {@code Attendance}. {@link #getHoursWorked()} and
+ * {@link #isComplete()} are recomputed here because they depend only on the time-in, time-out,
+ * and status fields.
  */
 public class AttendanceDTO {
 
