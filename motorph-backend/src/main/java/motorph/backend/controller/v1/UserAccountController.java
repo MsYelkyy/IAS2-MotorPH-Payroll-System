@@ -101,7 +101,7 @@ public class UserAccountController {
                 ? List.of()
                 : request.roles().stream().map(Role::fromValue).toList();
 
-        userAccountService.updateRoles(userAccountId, roles);
+        userAccountService.updateRoles(actorUserAccountId(), userAccountId, roles);
     }
 
     private void requireAccountSummaryAccess() {

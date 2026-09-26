@@ -55,7 +55,7 @@ public class DatabaseBackupController {
     public ResponseEntity<byte[]> downloadBackup(@PathVariable String filename) {
         permissionService.requirePermission(PermissionKey.BACKUP_DATABASE);
 
-        byte[] content = databaseBackupService.readBackup(filename);
+        byte[] content = databaseBackupService.readBackup(filename, currentUserProvider.getCurrentUserAccountId());
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -66,7 +66,7 @@ public class DatabaseBackupController {
     @DeleteMapping("/{filename}")
     public void deleteBackup(@PathVariable String filename) {
         permissionService.requirePermission(PermissionKey.BACKUP_DATABASE);
-        databaseBackupService.deleteBackup(filename);
+        databaseBackupService.deleteBackup(filename, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PostMapping("/{filename}/restore")

@@ -7,7 +7,6 @@ public class PayrollEarning extends PayrollComponent {
 
     private int earningTypeId;
 
-    // constructors
     public PayrollEarning(
             Integer payrollEarningId,
             int payrollResultId,
@@ -18,7 +17,6 @@ public class PayrollEarning extends PayrollComponent {
         setEarningTypeId(earningTypeId);
     }
 
-    // getters
     public Integer getPayrollEarningId() {
         return getPayrollComponentId();
     }
@@ -27,7 +25,6 @@ public class PayrollEarning extends PayrollComponent {
         return earningTypeId;
     }
 
-    // setters
     public void setEarningTypeId(int earningTypeId) {
         if (earningTypeId <= 0) {
             throw new IllegalArgumentException("Earning type ID must be positive.");

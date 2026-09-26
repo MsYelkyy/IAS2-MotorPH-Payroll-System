@@ -8,6 +8,7 @@ import motorph.backend.dto.payroll.PayrollSummaryDTO;
 import motorph.backend.dto.payroll.PayrunCreateRequest;
 import motorph.backend.dto.payroll.PayrunReadinessDTO;
 import motorph.backend.dto.payroll.PendingPayrunSummaryDTO;
+import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayrollService;
 import motorph.backend.service.PermissionService;
 
@@ -31,10 +32,14 @@ public class PayrunController {
 
     private final PayrollService payrollService;
     private final PermissionService permissionService;
+    private final CurrentUserProvider currentUserProvider;
 
-    public PayrunController(PayrollService payrollService, PermissionService permissionService) {
+    public PayrunController(PayrollService payrollService,
+                            PermissionService permissionService,
+                            CurrentUserProvider currentUserProvider) {
         this.payrollService = payrollService;
         this.permissionService = permissionService;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @GetMapping
@@ -85,12 +90,12 @@ public class PayrunController {
     @PostMapping
     public Payrun createPayrun(@RequestBody PayrunCreateRequest request) {
         permissionService.requirePermission(PermissionKey.PROCESS_PAYROLL);
-        return payrollService.createPayrun(request);
+        return payrollService.createPayrun(request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PostMapping("/{payrunId}/generate")
     public int generatePayroll(@PathVariable int payrunId) {
         permissionService.requirePermission(PermissionKey.PROCESS_PAYROLL);
-        return payrollService.generatePayrollForReadyEmployees(payrunId);
+        return payrollService.generatePayrollForReadyEmployees(payrunId, currentUserProvider.getCurrentUserAccountId());
     }
 }

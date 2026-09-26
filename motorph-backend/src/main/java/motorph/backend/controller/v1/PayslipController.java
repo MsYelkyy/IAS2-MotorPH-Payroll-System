@@ -8,6 +8,7 @@ import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayslipService;
 import motorph.backend.service.PermissionService;
+import motorph.backend.service.UserAccessLogService;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -30,13 +31,16 @@ public class PayslipController {
     private final PayslipService payslipService;
     private final PermissionService permissionService;
     private final CurrentUserProvider currentUserProvider;
+    private final UserAccessLogService userAccessLogService;
 
     public PayslipController(PayslipService payslipService,
                              PermissionService permissionService,
-                             CurrentUserProvider currentUserProvider) {
+                             CurrentUserProvider currentUserProvider,
+                             UserAccessLogService userAccessLogService) {
         this.payslipService = payslipService;
         this.permissionService = permissionService;
         this.currentUserProvider = currentUserProvider;
+        this.userAccessLogService = userAccessLogService;
     }
 
     /**
@@ -59,6 +63,10 @@ public class PayslipController {
         requireOwnOrPermitted(employeeId);
 
         byte[] pdf = payslipService.generatePayslipPdf(employeeId, payrunId);
+
+        userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
+                UserAccessLogService.ACTION_PAYSLIP_EXPORTED,
+                "Exported payslip of employee ID " + employeeId + " for payrun ID " + payrunId);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

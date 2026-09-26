@@ -6,7 +6,6 @@ import motorph.backend.dto.leave.LeaveCreditRowDTO;
 import motorph.backend.dto.leave.LeaveRequestRowDTO;
 import motorph.backend.dto.leave.LeaveSubmitRequest;
 import motorph.backend.dto.leave.LeaveSummaryDTO;
-import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.LeaveService;

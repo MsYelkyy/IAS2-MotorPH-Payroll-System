@@ -146,13 +146,13 @@ public class EmployeeController {
     @PostMapping("/employees")
     public EmployeeCreateResponse createEmployee(@RequestBody EmployeeCreateRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
-        return employeeService.createEmployeeWithSalaryAndBenefits(request);
+        return employeeService.createEmployeeWithSalaryAndBenefits(request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PutMapping("/employees/{employeeId}")
     public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody EmployeeUpdateRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
-        return employeeService.updateEmployee(employeeId, request);
+        return employeeService.updateEmployee(employeeId, request, currentUserProvider.getCurrentUserAccountId());
     }
 
     /**
@@ -162,7 +162,7 @@ public class EmployeeController {
     public void deactivateEmployee(@PathVariable int employeeId) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
-        employeeService.deactivateEmployee(employeeId, principal.employeeId());
+        employeeService.deactivateEmployee(employeeId, principal.employeeId(), principal.userAccountId());
     }
     private void requireOwnOrEmployeeViewer(int employeeId) {
         if (permissionService.hasAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE)) {

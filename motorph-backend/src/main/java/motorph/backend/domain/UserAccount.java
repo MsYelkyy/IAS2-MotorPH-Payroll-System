@@ -146,7 +146,10 @@ public class UserAccount {
         return roles.size() > 1;
     }
 
-    // returns computed account status
+    /**
+     * Derives the account status from the locked and active flags. A locked account is reported as
+     * {@code LOCKED} even if it is also disabled.
+     */
     public AccountStatus getAccountStatus() {
         if (locked) {
             return AccountStatus.LOCKED;

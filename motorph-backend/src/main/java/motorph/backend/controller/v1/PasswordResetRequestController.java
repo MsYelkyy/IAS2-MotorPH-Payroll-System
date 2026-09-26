@@ -70,7 +70,9 @@ public class PasswordResetRequestController {
     public void cancelRequest(@PathVariable int resetRequestId) {
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+
         passwordResetService.cancelPasswordResetRequest(
-                resetRequestId, currentUserProvider.getCurrentPrincipal().employeeId());
+                resetRequestId, principal.userAccountId(), principal.employeeId());
     }
 }

@@ -7,7 +7,6 @@ public class PayrollBenefit extends PayrollComponent {
 
     private int benefitTypeId;
 
-    // constructors
     public PayrollBenefit(
             Integer payrollBenefitId,
             int payrollResultId,
@@ -18,7 +17,6 @@ public class PayrollBenefit extends PayrollComponent {
         setBenefitTypeId(benefitTypeId);
     }
 
-    // getters
     public Integer getPayrollBenefitId() {
         return getPayrollComponentId();
     }
@@ -27,7 +25,6 @@ public class PayrollBenefit extends PayrollComponent {
         return benefitTypeId;
     }
 
-    // setters
     public void setBenefitTypeId(int benefitTypeId) {
         if (benefitTypeId <= 0) {
             throw new IllegalArgumentException("Benefit type ID must be positive.");

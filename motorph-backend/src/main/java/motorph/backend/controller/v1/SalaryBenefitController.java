@@ -5,6 +5,7 @@ import motorph.backend.domain.SalaryHistory;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.salary.SalaryDatesUpdateRequest;
 import motorph.backend.dto.salary.SalaryRecordRequest;
+import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.SalaryBenefitService;
 
@@ -29,11 +30,14 @@ public class SalaryBenefitController {
 
     private final SalaryBenefitService salaryBenefitService;
     private final PermissionService permissionService;
+    private final CurrentUserProvider currentUserProvider;
 
     public SalaryBenefitController(SalaryBenefitService salaryBenefitService,
-                                   PermissionService permissionService) {
+                                   PermissionService permissionService,
+                                   CurrentUserProvider currentUserProvider) {
         this.salaryBenefitService = salaryBenefitService;
         this.permissionService = permissionService;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @GetMapping("/employees/{employeeId}/salary-history")
@@ -51,13 +55,14 @@ public class SalaryBenefitController {
     @PostMapping("/employees/{employeeId}/salary-history")
     public void addSalaryRecord(@PathVariable int employeeId, @RequestBody SalaryRecordRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
-        salaryBenefitService.addSalaryRecord(employeeId, request);
+        salaryBenefitService.addSalaryRecord(employeeId, request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PutMapping("/salary-history/{salaryHistoryId}")
     public void updateSalaryDates(@PathVariable int salaryHistoryId, @RequestBody SalaryDatesUpdateRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
-        salaryBenefitService.updateSalaryDates(salaryHistoryId, request.startDate(), request.endDate());
+        salaryBenefitService.updateSalaryDates(salaryHistoryId, request.startDate(), request.endDate(),
+                currentUserProvider.getCurrentUserAccountId());
     }
 
     @GetMapping("/employees/{employeeId}/benefits")
@@ -72,6 +77,6 @@ public class SalaryBenefitController {
     @PostMapping("/employee-benefits/{employeeBenefitId}/end")
     public void endBenefit(@PathVariable int employeeBenefitId) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
-        salaryBenefitService.endBenefit(employeeBenefitId, LocalDate.now());
+        salaryBenefitService.endBenefit(employeeBenefitId, LocalDate.now(), currentUserProvider.getCurrentUserAccountId());
     }
 }
