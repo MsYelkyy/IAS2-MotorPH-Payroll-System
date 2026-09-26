@@ -89,6 +89,7 @@ public class PayrollService {
     private final OvertimeService overtimeService;
     private final EmployeeService employeeService;
     private final PayrollCalculator payrollCalculator;
+    private final UserAccessLogService userAccessLogService;
 
     public PayrollService(PayrunRepository payrunRepository,
                           PayrollResultRepository payrollResultRepository,
@@ -108,7 +109,8 @@ public class PayrollService {
                           AttendanceService attendanceService,
                           OvertimeService overtimeService,
                           EmployeeService employeeService,
-                          PayrollCalculator payrollCalculator) {
+                          PayrollCalculator payrollCalculator,
+                          UserAccessLogService userAccessLogService) {
 
         this.payrunRepository = payrunRepository;
         this.payrollResultRepository = payrollResultRepository;
@@ -129,6 +131,7 @@ public class PayrollService {
         this.overtimeService = overtimeService;
         this.employeeService = employeeService;
         this.payrollCalculator = payrollCalculator;
+        this.userAccessLogService = userAccessLogService;
     }
 
     /**
@@ -477,7 +480,7 @@ public class PayrollService {
      * Creates a payrun. Rejects periods that are invalid, in the future, or that duplicate or
      * overlap an existing payrun.
      */
-    public Payrun createPayrun(PayrunCreateRequest request) {
+    public Payrun createPayrun(PayrunCreateRequest request, int actorUserAccountId) {
         if (request == null) {
             throw new ValidationException("Payrun create data is required.");
         }
@@ -503,6 +506,10 @@ public class PayrollService {
         Payrun payrun = new Payrun(null, request.getStartDate(), request.getEndDate(),
                 request.getPayDate(), request.getPayrollType());
         int id = payrunRepository.saveAndReturnId(payrun);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYRUN_CREATED,
+                "Created payrun ID " + id + " for " + request.getStartDate() + " to " + request.getEndDate());
+
         return payrunRepository.findById(id);
     }
 
@@ -697,7 +704,7 @@ public class PayrollService {
      * Generates payroll for the payrun, processing only employees whose attendance
      * is READY and who do not already have a result. Returns the number generated.
      */
-    public int generatePayrollForReadyEmployees(int payrunId) {
+    public int generatePayrollForReadyEmployees(int payrunId, int actorUserAccountId) {
         validate(payrunId, "Payrun ID");
         Payrun payrun = getPayrunOrThrow(payrunId);
 
@@ -713,6 +720,10 @@ public class PayrollService {
             runPayrollForEmployee(employeeId, payrunId);
             generated++;
         }
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYROLL_GENERATED,
+                "Generated payroll for " + generated + " employee(s) in payrun ID " + payrunId);
+
         return generated;
     }
 

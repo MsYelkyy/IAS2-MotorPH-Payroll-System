@@ -186,12 +186,16 @@ public class UserAccountService {
     /**
      * Replaces all roles assigned to the account.
      */
-    public void updateRoles(int userAccountId, List<Role> roles) {
+    public void updateRoles(int actorUserAccountId, int userAccountId, List<Role> roles) {
         validateUserAccountId(userAccountId);
         validateRoles(roles);
-        requireAccount(userAccountId);
+        UserAccount account = requireAccount(userAccountId);
 
         userAccountRepository.updateRoles(userAccountId, roles);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_USER_ROLES_UPDATED,
+                "Changed roles of employee ID " + account.getEmployeeId()
+                        + " from " + account.getRoles() + " to " + roles);
     }
 
     /**
@@ -213,6 +217,9 @@ public class UserAccountService {
         }
 
         writePassword(userAccountId, newPassword);
+
+        userAccessLogService.logEvent(userAccountId, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Changed own password.");
     }
 
     /**
@@ -235,6 +242,9 @@ public class UserAccountService {
         }
 
         writePassword(userAccountId, newPassword);
+
+        userAccessLogService.logEvent(userAccountId, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Replaced temporary password.");
     }
 
     private void writePassword(int userAccountId, String newPassword) {

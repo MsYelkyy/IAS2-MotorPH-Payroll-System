@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Checks permissions for the caller's active role. The role is loaded from the database on every
@@ -29,13 +31,16 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final UserAccountRepository userAccountRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final UserAccessLogService userAccessLogService;
 
     public PermissionService(PermissionRepository permissionRepository,
                              UserAccountRepository userAccountRepository,
-                             CurrentUserProvider currentUserProvider) {
+                             CurrentUserProvider currentUserProvider,
+                             UserAccessLogService userAccessLogService) {
         this.permissionRepository = permissionRepository;
         this.userAccountRepository = userAccountRepository;
         this.currentUserProvider = currentUserProvider;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public boolean hasPermission(String permissionKey) {
@@ -109,7 +114,7 @@ public class PermissionService {
     }
 
     /**
-     * Replaces the full permission set of a role.
+     * Replaces the full permission set of a role and logs which permissions were added and removed.
      */
     public void updateRolePermissions(Role role, Set<PermissionKey> permissionKeys) {
         if (role == null) {
@@ -118,7 +123,21 @@ public class PermissionService {
         if (permissionKeys == null) {
             throw new ValidationException("Permission keys are required.");
         }
+        Set<String> before = permissionRepository.findPermissionKeysByRole(role);
+        Set<String> after = permissionKeys.stream().map(Enum::name).collect(Collectors.toCollection(TreeSet::new));
+
         permissionRepository.updateRolePermissions(role, permissionKeys);
+
+        Set<String> added = new TreeSet<>(after);
+        added.removeAll(before);
+        Set<String> removed = new TreeSet<>(before);
+        removed.removeAll(after);
+
+        userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
+                UserAccessLogService.ACTION_ROLE_PERMISSIONS_UPDATED,
+                "Updated permissions of role " + role.name()
+                        + ". Added: " + (added.isEmpty() ? "none" : String.join(", ", added))
+                        + ". Removed: " + (removed.isEmpty() ? "none" : String.join(", ", removed)));
     }
 
     public boolean hasPermission(PermissionKey permissionKey) {

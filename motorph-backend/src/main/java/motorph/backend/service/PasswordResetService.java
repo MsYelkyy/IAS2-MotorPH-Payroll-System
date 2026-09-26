@@ -166,11 +166,16 @@ public class PasswordResetService {
         return preview;
     }
 
-    public void cancelPasswordResetRequest(int resetRequestId, int cancellerEmployeeId) {
+    public void cancelPasswordResetRequest(int resetRequestId,
+                                           int cancellerUserAccountId,
+                                           int cancellerEmployeeId) {
         validateResetRequestId(resetRequestId);
 
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
         passwordResetRequestRepository.markCancelled(request.getResetRequestId(), cancellerEmployeeId);
+
+        userAccessLogService.logEvent(cancellerUserAccountId, UserAccessLogService.ACTION_PASSWORD_RESET_CANCELLED,
+                "Cancelled password reset request ID " + resetRequestId);
     }
 
     private PasswordResetRequestRowDTO toRow(PasswordResetRequest request,

@@ -23,6 +23,28 @@ public class UserAccessLogService {
     public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
     public static final String ACTION_DATABASE_BACKUP_CREATED = "DATABASE_BACKUP_CREATED";
     public static final String ACTION_DATABASE_RESTORE = "DATABASE_RESTORE";
+    public static final String ACTION_DATABASE_BACKUP_DOWNLOADED = "DATABASE_BACKUP_DOWNLOADED";
+    public static final String ACTION_DATABASE_BACKUP_DELETED = "DATABASE_BACKUP_DELETED";
+    public static final String ACTION_PASSWORD_CHANGED = "PASSWORD_CHANGED";
+    public static final String ACTION_PASSWORD_RESET_CANCELLED = "PASSWORD_RESET_CANCELLED";
+    public static final String ACTION_USER_ROLES_UPDATED = "USER_ROLES_UPDATED";
+    public static final String ACTION_ROLE_PERMISSIONS_UPDATED = "ROLE_PERMISSIONS_UPDATED";
+    public static final String ACTION_EMPLOYEE_CREATED = "EMPLOYEE_CREATED";
+    public static final String ACTION_EMPLOYEE_UPDATED = "EMPLOYEE_UPDATED";
+    public static final String ACTION_EMPLOYEE_DEACTIVATED = "EMPLOYEE_DEACTIVATED";
+    public static final String ACTION_SALARY_RECORD_ADDED = "SALARY_RECORD_ADDED";
+    public static final String ACTION_SALARY_RECORD_UPDATED = "SALARY_RECORD_UPDATED";
+    public static final String ACTION_BENEFIT_ENDED = "BENEFIT_ENDED";
+    public static final String ACTION_LEAVE_APPROVED = "LEAVE_APPROVED";
+    public static final String ACTION_LEAVE_REJECTED = "LEAVE_REJECTED";
+    public static final String ACTION_OVERTIME_APPROVED = "OVERTIME_APPROVED";
+    public static final String ACTION_OVERTIME_REJECTED = "OVERTIME_REJECTED";
+    public static final String ACTION_PAYRUN_CREATED = "PAYRUN_CREATED";
+    public static final String ACTION_PAYROLL_GENERATED = "PAYROLL_GENERATED";
+    public static final String ACTION_PAYSLIP_EXPORTED = "PAYSLIP_EXPORTED";
+    public static final String ACTION_REPORT_EXPORTED = "REPORT_EXPORTED";
+
+    private static final int MAX_DETAILS_LENGTH = 255;
 
     private final UserAccessLogRepository repository;
 
@@ -49,6 +71,23 @@ public class UserAccessLogService {
                 null,
                 ACTION_LOGIN_FAILED,
                 buildFailedLoginDetails(companyEmail, details),
+                "",
+                ""
+        ));
+    }
+
+    /**
+     * Logs an action performed by an authenticated user. Details longer than the column allows are
+     * truncated rather than failing the write.
+     */
+    public void logEvent(int actorUserAccountId, String action, String details) {
+        validateUserAccountId(actorUserAccountId);
+        validateRequired(action, "Action is required.");
+
+        repository.save(new UserAccessLog(
+                actorUserAccountId,
+                action.trim(),
+                truncate(clean(details)),
                 "",
                 ""
         ));
@@ -188,6 +227,10 @@ public class UserAccessLogService {
 
     private String clean(String value) {
         return value == null ? "" : value.trim();
+    }
+
+    private String truncate(String value) {
+        return value.length() <= MAX_DETAILS_LENGTH ? value : value.substring(0, MAX_DETAILS_LENGTH - 3) + "...";
     }
 
     private String buildFailedLoginDetails(String email, String details) {

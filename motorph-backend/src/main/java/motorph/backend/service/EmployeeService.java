@@ -46,6 +46,7 @@ public class EmployeeService {
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
     private final UserAccountService userAccountService;
+    private final UserAccessLogService userAccessLogService;
 
     public EmployeeService(EmployeeRepository employeeRepository,
                            DepartmentRepository departmentRepository,
@@ -53,7 +54,8 @@ public class EmployeeService {
                            GovernmentDetailsRepository governmentDetailsRepository,
                            SalaryHistoryRepository salaryHistoryRepository,
                            EmployeeBenefitRepository employeeBenefitRepository,
-                           UserAccountService userAccountService) {
+                           UserAccountService userAccountService,
+                           UserAccessLogService userAccessLogService) {
         this.employeeRepository = employeeRepository;
         this.departmentRepository = departmentRepository;
         this.positionRepository = positionRepository;
@@ -61,6 +63,7 @@ public class EmployeeService {
         this.salaryHistoryRepository = salaryHistoryRepository;
         this.employeeBenefitRepository = employeeBenefitRepository;
         this.userAccountService = userAccountService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     /**
@@ -220,7 +223,8 @@ public class EmployeeService {
      * Creates an employee together with their initial salary, government IDs, benefits, and login
      * account.
      */
-    public EmployeeCreateResponse createEmployeeWithSalaryAndBenefits(EmployeeCreateRequest request) {
+    public EmployeeCreateResponse createEmployeeWithSalaryAndBenefits(EmployeeCreateRequest request,
+                                                                     int actorUserAccountId) {
         Employee employee = buildEmployeeForCreate(request);
         validateEmployee(employee);
 
@@ -251,13 +255,16 @@ public class EmployeeService {
         UserAccountService.AccountProvisioningResult provisioning = userAccountService.createTemporaryEmployeeAccount(
                 employeeId, employee.getFirstName(), employee.getLastName(), employee.getPersonalEmail());
 
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_CREATED,
+                "Created employee ID " + employeeId + " (" + employee.getFullName() + ")");
+
         return new EmployeeCreateResponse(getEmployeeProfileAdmin(employeeId), provisioning.credentialsPreview());
     }
 
     /**
      * Updates an employee's profile, government IDs, and benefits.
      */
-    public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request) {
+    public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request, int actorUserAccountId) {
         validateEmployeeId(employeeId);
 
         Employee existing = employeeRepository.findAnyById(employeeId);
@@ -290,6 +297,9 @@ public class EmployeeService {
         updateGovernmentDetails(employeeId, request.sssNumber(), request.philhealthNumber(),
                 request.tinNumber(), request.pagibigNumber());
         updateBenefits(employeeId, request.riceSubsidy(), request.phoneAllowance(), request.clothingAllowance());
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_UPDATED,
+                "Updated profile, government IDs, and benefits of employee ID " + employeeId);
 
         return getEmployeeProfileAdmin(employeeId);
     }
@@ -349,7 +359,7 @@ public class EmployeeService {
      * Deactivates an employee and disables their user account. Employees cannot deactivate their
      * own record.
      */
-    public void deactivateEmployee(int employeeId, int actingEmployeeId) {
+    public void deactivateEmployee(int employeeId, int actingEmployeeId, int actorUserAccountId) {
         validateEmployeeId(employeeId);
 
         if (employeeId == actingEmployeeId) {
@@ -358,6 +368,9 @@ public class EmployeeService {
 
         employeeRepository.deactivate(employeeId);
         userAccountService.deactivateAccountByEmployeeId(employeeId);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_DEACTIVATED,
+                "Deactivated employee ID " + employeeId + " and disabled their user account");
     }
 
     private Employee buildEmployeeForCreate(EmployeeCreateRequest request) {

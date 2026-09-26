@@ -34,13 +34,16 @@ public class LeaveService {
     private final LeaveRepository leaveRepository;
     private final LeaveCreditRepository leaveCreditRepository;
     private final EmployeeService employeeService;
+    private final UserAccessLogService userAccessLogService;
 
     public LeaveService(LeaveRepository leaveRepository,
                         LeaveCreditRepository leaveCreditRepository,
-                        EmployeeService employeeService) {
+                        EmployeeService employeeService,
+                        UserAccessLogService userAccessLogService) {
         this.leaveRepository = leaveRepository;
         this.leaveCreditRepository = leaveCreditRepository;
         this.employeeService = employeeService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<LeaveRequest> getAllLeaveRequests() {
@@ -180,6 +183,10 @@ public class LeaveService {
                 year,
                 request.getLeaveHours()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_APPROVED,
+                "Approved leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId()
+                        + " (" + request.getStartDate() + " to " + request.getEndDate() + ")");
     }
 
     public void rejectLeaveRequest(int actorEmployeeId, int actorUserAccountId, int leaveRequestId) {
@@ -199,6 +206,9 @@ public class LeaveService {
                 request.getStatus(),
                 request.getApproverAccountId()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_REJECTED,
+                "Rejected leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId());
     }
 
     /**

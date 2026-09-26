@@ -22,11 +22,14 @@ public class SalaryBenefitService {
 
     private final SalaryHistoryRepository salaryHistoryRepository;
     private final EmployeeBenefitRepository employeeBenefitRepository;
+    private final UserAccessLogService userAccessLogService;
 
     public SalaryBenefitService(SalaryHistoryRepository salaryHistoryRepository,
-                                EmployeeBenefitRepository employeeBenefitRepository) {
+                                EmployeeBenefitRepository employeeBenefitRepository,
+                                UserAccessLogService userAccessLogService) {
         this.salaryHistoryRepository = salaryHistoryRepository;
         this.employeeBenefitRepository = employeeBenefitRepository;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<SalaryHistory> getSalaryHistory(int employeeId) {
@@ -42,7 +45,7 @@ public class SalaryBenefitService {
     /**
      * Adds a salary record and closes any currently open one so the periods do not overlap.
      */
-    public void addSalaryRecord(int employeeId, SalaryRecordRequest request) {
+    public void addSalaryRecord(int employeeId, SalaryRecordRequest request, int actorUserAccountId) {
         validateId(employeeId, "Employee ID");
         if (request.startDate() == null) throw new ValidationException("Start date is required.");
         if (request.salaryType() == null || request.salaryType().isBlank())
@@ -71,12 +74,16 @@ public class SalaryBenefitService {
                 request.startDate(),
                 request.endDate()
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_ADDED,
+                "Added salary record for employee ID " + employeeId + " effective " + request.startDate());
     }
 
     /**
      * Updates only the start and end dates of a salary record.
      */
-    public void updateSalaryDates(int salaryHistoryId, LocalDate startDate, LocalDate endDate) {
+    public void updateSalaryDates(int salaryHistoryId, LocalDate startDate, LocalDate endDate,
+                                  int actorUserAccountId) {
         validateId(salaryHistoryId, "Salary history ID");
         if (startDate == null) throw new ValidationException("Start date is required.");
 
@@ -92,6 +99,10 @@ public class SalaryBenefitService {
                 startDate,
                 endDate
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_UPDATED,
+                "Changed dates of salary record ID " + salaryHistoryId + " for employee ID "
+                        + existing.getEmployeeId() + " to " + startDate + " - " + (endDate == null ? "open" : endDate));
     }
 
     public List<EmployeeBenefit> getAllBenefits(int employeeId) {
@@ -99,7 +110,7 @@ public class SalaryBenefitService {
         return employeeBenefitRepository.findByEmployeeId(employeeId);
     }
 
-    public void endBenefit(int employeeBenefitId, LocalDate endDate) {
+    public void endBenefit(int employeeBenefitId, LocalDate endDate, int actorUserAccountId) {
         validateId(employeeBenefitId, "Employee benefit ID");
         if (endDate == null) throw new ValidationException("End date is required.");
 
@@ -114,6 +125,10 @@ public class SalaryBenefitService {
                 existing.getEffectiveStartDate(),
                 endDate
         ));
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_BENEFIT_ENDED,
+                "Ended benefit ID " + employeeBenefitId + " for employee ID " + existing.getEmployeeId()
+                        + " effective " + endDate);
     }
 
     private void validateId(int id, String label) {

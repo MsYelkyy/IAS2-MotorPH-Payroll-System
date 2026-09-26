@@ -28,13 +28,16 @@ public class OvertimeService {
     private final OvertimeRepository overtimeRepository;
     private final AttendanceService attendanceService;
     private final EmployeeService employeeService;
+    private final UserAccessLogService userAccessLogService;
 
     public OvertimeService(OvertimeRepository overtimeRepository,
                            AttendanceService attendanceService,
-                           EmployeeService employeeService) {
+                           EmployeeService employeeService,
+                           UserAccessLogService userAccessLogService) {
         this.overtimeRepository = overtimeRepository;
         this.attendanceService = attendanceService;
         this.employeeService = employeeService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<OvertimeRequest> getAllOvertimeRequests() {
@@ -141,6 +144,10 @@ public class OvertimeService {
                 request.getApproverAccountId(),
                 request.getRemarks()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_APPROVED,
+                "Approved overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
+                        + " on " + request.getOvertimeDate());
     }
 
     public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorIsAdmin,
@@ -155,6 +162,10 @@ public class OvertimeService {
                 request.getApproverAccountId(),
                 request.getRemarks()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_REJECTED,
+                "Rejected overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
+                        + " on " + request.getOvertimeDate());
     }
 
     /**

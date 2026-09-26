@@ -125,14 +125,20 @@ public class DatabaseBackupService {
         return entries;
     }
 
-    public byte[] readBackup(String filename) {
+    public byte[] readBackup(String filename, int performedByUserAccountId) {
         Path path = resolveExisting(filename);
+        byte[] content;
 
         try {
-            return Files.readAllBytes(path);
+            content = Files.readAllBytes(path);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read backup file.", e);
         }
+
+        userAccessLogService.logEvent(performedByUserAccountId,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DOWNLOADED, "Downloaded backup: " + filename);
+
+        return content;
     }
 
     /**
@@ -175,7 +181,7 @@ public class DatabaseBackupService {
         userAccessLogService.logDatabaseRestore(performedByUserAccountId, filename);
     }
 
-    public void deleteBackup(String filename) {
+    public void deleteBackup(String filename, int performedByUserAccountId) {
         Path path = resolveExisting(filename);
 
         try {
@@ -183,6 +189,9 @@ public class DatabaseBackupService {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to delete backup file.", e);
         }
+
+        userAccessLogService.logEvent(performedByUserAccountId,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DELETED, "Deleted backup: " + filename);
     }
 
     /**
