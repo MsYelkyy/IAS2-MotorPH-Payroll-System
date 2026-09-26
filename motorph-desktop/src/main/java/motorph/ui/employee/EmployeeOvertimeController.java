@@ -278,8 +278,8 @@ public class EmployeeOvertimeController {
     private void refreshOvertimeHistory() {
         int employeeId = CurrentUserSession.getEmployeeId();
         allHistoryRows.clear();
+        overtimeHistoryLabel.setText("View and track your overtime requests.");
         if (employeeId <= 0) {
-            overtimeHistoryLabel.setText("No overtime requests found.");
             currentPage = 1;
             renderHistoryRows();
             return;
@@ -292,9 +292,6 @@ public class EmployeeOvertimeController {
                 allHistoryRows.add(new OvertimeHistoryRow(request, resolveOvertimeTypeName(request.getOvertimeTypeId())));
             }
 
-            overtimeHistoryLabel.setText(requests.isEmpty()
-                    ? "No overtime requests found."
-                    : "Pending requests can be cancelled. Approved overtime is included in payroll.");
         } catch (Exception e) {
             overtimeHistoryLabel.setText(userMessage(e));
         }
@@ -327,8 +324,12 @@ public class EmployeeOvertimeController {
         overtimeHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         pageLabel.setText("Page " + currentPage + " of " + totalPages);
         recordInfoLabel.setText(total == 0
-                ? "No overtime requests found."
+                ? "0 requests"
                 : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        for (var control : List.of(prevButton, pageLabel, nextButton)) {
+            control.setVisible(total > 0);
+            control.setManaged(total > 0);
+        }
         prevButton.setDisable(currentPage <= 1);
         nextButton.setDisable(currentPage >= totalPages);
     }

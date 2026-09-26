@@ -337,6 +337,7 @@ public class HrEmployeeController {
         try {
             EmployeeFormFields f = buildEmployeeFormFields();
             int employeeId = selectedProfile.getEmployeeId();
+            double basicSalary = parsePositiveDouble(addBasicSalaryField.getText());
 
             EmployeeUpdateRequest request = new EmployeeUpdateRequest(
                     f.firstName(), f.lastName(), f.birthDate(), f.gender(), f.address(), f.civilStatus(),
@@ -348,7 +349,9 @@ public class HrEmployeeController {
                     pagibigField.getText().trim(),
                     parseNonNegativeDouble(riceSubsidyField.getText()),
                     parseNonNegativeDouble(phoneAllowanceField.getText()),
-                    parseNonNegativeDouble(clothingAllowanceField.getText()));
+                    parseNonNegativeDouble(clothingAllowanceField.getText()),
+                    basicSalary,
+                    computeHourlyRate(basicSalary));
 
             selectedProfile = employeeApiClient.updateEmployee(employeeId, request);
             loadEmployees();
@@ -643,11 +646,12 @@ public class HrEmployeeController {
         ok &= requireCombo(addDepartmentCombo, addDepartmentError, "Required");
         ok &= requireCombo(addPositionCombo, addPositionError, "Required");
         ok &= requireDatePicker(addHireDatePicker, addHireDateError, "Required");
-        // government IDs and allowances are editable in edit mode → validate them too
+        // government IDs, basic salary, and allowances are editable in edit mode → validate them too
         ok &= validateGovId(sssField, sssError, "00-0000000-0", 12);
         ok &= validateGovId(philhealthField, philhealthError, "00-000000000-0", 14);
         ok &= validateGovId(tinField, tinError, "000-000-000-000", 15);
         ok &= validateGovId(pagibigField, pagibigError, "0000-0000-0000", 14);
+        ok &= validateBasicSalary();
         ok &= validateNonNegative(riceSubsidyField, riceSubsidyError);
         ok &= validateNonNegative(phoneAllowanceField, phoneAllowanceError);
         ok &= validateNonNegative(clothingAllowanceField, clothingAllowanceError);
@@ -1237,6 +1241,8 @@ public class HrEmployeeController {
         SortedList<EmployeeSummaryDTO> sorted = new SortedList<>(filteredEmployees);
         sorted.comparatorProperty().bind(employeeTable.comparatorProperty());
         employeeTable.setItems(sorted);
+        employeeIdColumn.setSortType(TableColumn.SortType.ASCENDING);
+        employeeTable.getSortOrder().setAll(List.of(employeeIdColumn));
     }
 
     private TableCell<EmployeeSummaryDTO, String> statusCell() {

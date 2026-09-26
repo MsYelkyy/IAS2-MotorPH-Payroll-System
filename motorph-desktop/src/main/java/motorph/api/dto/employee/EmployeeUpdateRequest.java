@@ -26,6 +26,8 @@ public record EmployeeUpdateRequest(
         String pagibigNumber,
         double riceSubsidy,
         double phoneAllowance,
-        double clothingAllowance
+        double clothingAllowance,
+        Double basicSalary,
+        Double hourlyRate
 ) {
 }

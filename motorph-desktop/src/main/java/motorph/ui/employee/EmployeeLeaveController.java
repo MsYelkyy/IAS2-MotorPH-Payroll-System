@@ -456,8 +456,8 @@ public class EmployeeLeaveController {
     private void refreshLeaveHistory() {
         int employeeId = CurrentUserSession.getEmployeeId();
         allHistoryRows.clear();
+        leaveHistoryLabel.setText("View and track your leave requests.");
         if (employeeId <= 0) {
-            leaveHistoryLabel.setText("No leave requests found.");
             currentLeavePage = 1;
             renderHistoryRows();
             return;
@@ -470,9 +470,6 @@ public class EmployeeLeaveController {
                 allHistoryRows.add(new LeaveHistoryRow(request, resolveLeaveTypeName(request.getLeaveTypeId())));
             }
 
-            leaveHistoryLabel.setText(requests.isEmpty()
-                    ? "No leave requests found."
-                    : "Pending requests can be cancelled. Approved requests consume leave credits.");
         } catch (Exception e) {
             leaveHistoryLabel.setText(userMessage(e));
         }
@@ -505,8 +502,12 @@ public class EmployeeLeaveController {
         leaveHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         leavePageLabel.setText("Page " + currentLeavePage + " of " + totalPages);
         leaveRecordInfoLabel.setText(total == 0
-                ? "No leave requests found."
+                ? "0 requests"
                 : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        for (var control : List.of(leavePrevButton, leavePageLabel, leaveNextButton)) {
+            control.setVisible(total > 0);
+            control.setManaged(total > 0);
+        }
         leavePrevButton.setDisable(currentLeavePage <= 1);
         leaveNextButton.setDisable(currentLeavePage >= totalPages);
     }
