@@ -16,7 +16,9 @@ import motorph.api.dto.payroll.PayrollSummaryDTO;
 import motorph.api.dto.payroll.PayrunDTO;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -69,6 +71,9 @@ public class AdminDashboardController {
     @FXML private Label failedLoginsLabel;
 
     // Recent activity table
+    private static final double ACTION_COLUMN_WIDTH = 240;
+    private static final double TIME_COLUMN_WIDTH = 170;
+
     @FXML private VBox activityRows;
 
     @FXML
@@ -199,13 +204,13 @@ public class AdminDashboardController {
         }
     }
 
-    // Row builder
     private HBox buildActivityRow(UserAccessLogDTO log) {
         HBox row = new HBox();
         row.getStyleClass().addAll("table-data-row", "admin-activity-row");
+        row.setAlignment(Pos.CENTER_LEFT);
 
         String actionText = log.getAction() != null ? log.getAction() : "N/A";
-        Label action = activityCell(formatActivityAction(actionText), 200);
+        Label action = fixedCell(formatActivityAction(actionText), ACTION_COLUMN_WIDTH);
         action.getStyleClass().add("admin-activity-status");
         if (AccessLogAction.LOGIN_SUCCESS.equals(actionText)) {
             action.getStyleClass().add("admin-activity-success");
@@ -217,27 +222,29 @@ public class AdminDashboardController {
         details.getStyleClass().addAll("table-cell", "data-line");
         details.setMinWidth(0);
         details.setMaxWidth(Double.MAX_VALUE);
+        details.setTooltip(new Tooltip(details.getText()));
         HBox.setHgrow(details, Priority.ALWAYS);
 
-        String dateText = log.getLoggedAt() != null
-                ? DT_FMT.format(log.getLoggedAt()) : "—";
-        Label date = new Label(dateText);
-        date.getStyleClass().addAll("table-cell", "data-line", "admin-activity-time");
-        date.setMinWidth(0);
-        date.setPrefWidth(160);
+        String dateText = log.getLoggedAt() != null ? DT_FMT.format(log.getLoggedAt()) : "—";
+        Label date = fixedCell(dateText, TIME_COLUMN_WIDTH);
+        date.getStyleClass().add("admin-activity-time");
 
         row.getChildren().addAll(action, details, date);
         return row;
     }
 
-    private Label activityCell(String text, double prefWidth) {
+    // Fixed-width cell; widths must match the header labels in Dashboard.fxml
+    private Label fixedCell(String text, double width) {
         Label label = new Label(text);
         label.getStyleClass().addAll("table-cell", "data-line");
-        label.setMinWidth(0);
-        if (prefWidth > 0) label.setPrefWidth(prefWidth);
+        label.setMinWidth(width);
+        label.setPrefWidth(width);
+        label.setMaxWidth(width);
+        label.setTooltip(new Tooltip(text));
         return label;
     }
 
+    // Login outcomes read as SUCCESSFUL/FAILED; other actions drop the underscores
     private String formatActivityAction(String action) {
         if (AccessLogAction.LOGIN_SUCCESS.equals(action)) {
             return "SUCCESSFUL";
@@ -245,7 +252,7 @@ public class AdminDashboardController {
         if (AccessLogAction.LOGIN_FAILED.equals(action)) {
             return "FAILED";
         }
-        return action;
+        return action.replace('_', ' ');
     }
 
     // Utility
