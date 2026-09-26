@@ -1,333 +1,123 @@
 # MotorPH Payroll Management System
 
-MotorPH Payroll Management System is a Java 21 payroll and HR application built as a multi-module system with a JavaFX desktop client, Spring Boot REST backend, and MySQL database.
+A payroll and HR application for Admin, HR, Finance, IT, and Employee users.
 
-The system supports employee management, attendance, leave and overtime, payroll processing, payslips, reports, role-based access control, audit logs, support tickets, and administrative tools.
-
----
-
-## Architecture
-
-```text
-Admin / HR / Finance / IT / Employee
-                  |
-                  v
-          JavaFX Desktop Client
-          motorph-desktop
-                  |
-               REST API
-                  |
-                  v
-          Spring Boot Backend
-          motorph-backend
-                  |
-                  v
-                MySQL
-```
-
-The JavaFX desktop does not connect directly to MySQL.
-
-All authentication, authorization, validation, business rules, reporting, audit behavior, and database access are handled by the Spring Boot backend.
-
-> **Desktop shows. Backend decides. Database stores.**
-
----
+Supports employee records, attendance, leave and overtime requests, payroll, payslips, reports, support tickets, and audit logs.
 
 ## Tech Stack
 
-| Layer             | Technology                         |
-| ----------------- | ---------------------------------- |
-| Language          | Java 21                            |
-| Desktop UI        | JavaFX 21, FXML, CSS               |
-| Backend           | Spring Boot 3.5                    |
-| API               | REST / HTTP / JSON                 |
-| Security          | Spring Security, JWT, PBKDF2, OTP  |
-| Database          | MySQL 8                            |
-| Data Access       | JDBC, Spring JDBC, HikariCP        |
-| Reporting         | JasperReports                      |
-| Build             | Maven                              |
-| Testing           | JUnit 5, Mockito, Spring Boot Test |
-| Local Environment | Docker Compose                     |
-| CI                | GitHub Actions                     |
+- Java 21 and JavaFX
+- Spring Boot REST API
+- MySQL 8
+- Spring Security, JWT, and OTP
+- JasperReports
+- Maven, Docker Compose, and GitHub Actions
 
----
+The desktop connects to the backend API. Only the backend connects to the database.
 
-# Getting Started
+## Setup
 
-## Prerequisites
+### 1. Install the requirements
 
-Install:
+- Git
+- JDK 21
+- Maven 3.9+
+- Docker Desktop
 
-* **Git**
-* **JDK 21**
-* **Maven 3.9+**
-* **Docker Desktop**
+Docker runs MySQL, so you do not need to install it separately.
 
-MySQL does **not** need to be installed separately when using Docker.
-
----
-
-## 1. Clone the Repository
+### 2. Clone the repository
 
 ```bash
 git clone https://github.com/MsYelkyy/IAS2-MotorPH-Payroll-System.git
 cd IAS2-MotorPH-Payroll-System
 ```
 
----
+### 3. Configure your environment
 
-## 2. Create Your Local Environment File
+Copy `.env.example` to `.env`.
 
-Copy the provided template:
-
-### PowerShell
+PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-### Git Bash
+Git Bash:
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and replace all placeholder values.
+Fill in the settings and passwords in `.env`. Do not commit this file or share its secrets.
 
-At minimum, configure:
+### 4. Start the backend and database
 
-```env
-MYSQL_ROOT_PASSWORD=<your-local-root-password>
-MOTORPH_DB_PASSWORD=<your-local-backend-db-password>
-MOTORPH_JWT_SECRET=<your-long-random-jwt-secret>
-```
-
-Do not commit `.env`.
-
-Only `.env.example` should be stored in Git.
-
----
-
-## 3. Start the Backend and Database
-
-From the repository root:
+Make sure Docker Desktop is running, then run:
 
 ```bash
 docker compose up -d --build
 ```
 
-Docker automatically:
+On first setup, Docker loads the database schema and seed data, including authentication tables and role permissions. It also creates the report views and backend database account.
 
-* starts MySQL;
-* creates `payrollsystem_db`;
-* loads the database schema and seed data;
-* applies required authentication tables;
-* creates reporting views;
-* creates the backend database account;
-* starts the Spring Boot backend after MySQL becomes healthy.
-
-Check the containers:
+Check the services:
 
 ```bash
 docker compose ps
 ```
 
-Expected:
+Wait for MySQL and the backend to become healthy.
 
-```text
-motorph-mysql      healthy
-motorph-backend    healthy
-```
-
-The backend is available at:
-
-```text
-http://localhost:8080
-```
-
----
-
-## 4. Run the JavaFX Desktop
-
-The JavaFX application runs normally on the host and is **not containerized**.
-
-From the repository root:
+### 5. Run the desktop
 
 ```bash
 mvn -pl motorph-desktop javafx:run
 ```
 
-The desktop automatically communicates with:
+Log in with your company email and password, then complete OTP verification.
 
-```text
-http://localhost:8080
-```
+The JavaFX desktop runs on your computer, outside Docker.
 
-Log in using your company email and password, then complete OTP verification to access MotorPH.
+## Daily Use
 
----
-
-# Daily Development
-
-After the first setup, you normally do **not** need `--build` every time.
-
-Start the containers:
+Start the services and desktop:
 
 ```bash
 docker compose up -d
-```
-
-Run the desktop:
-
-```bash
 mvn -pl motorph-desktop javafx:run
 ```
 
-When finished:
+Stop the services when finished:
 
 ```bash
 docker compose stop
 ```
 
----
-
-# Useful Docker Commands
-
-### Check container status
+After changing backend code, rebuild it:
 
 ```bash
-docker compose ps
+docker compose up -d --build backend
 ```
 
-### View backend logs
+## Default Ports
 
-```bash
-docker compose logs -f backend
-```
+| Service | Address |
+| --- | --- |
+| Backend | http://localhost:8080 |
+| MySQL | localhost:3307 |
 
-### View MySQL logs
+## Project Folders
 
-```bash
-docker compose logs -f mysql
-```
+| Folder | Contents |
+| --- | --- |
+| `motorph-desktop/` | JavaFX app |
+| `motorph-backend/` | API and business logic |
+| `database/` | Database dump, report views, and SQL tests |
+| `docker/` | Database setup scripts |
+| `.github/workflows/` | CI workflows |
 
-### Stop containers
-
-```bash
-docker compose stop
-```
-
-### Stop and remove containers
-
-Database data is preserved:
-
-```bash
-docker compose down
-```
-
-### Completely reset the local database
-
-```bash
-docker compose down -v
-docker compose up -d --build
-```
-
-> `docker compose down -v` deletes the local Docker database volume and recreates the database from the repository initialization scripts on the next startup.
-
----
-
-# Local Ports
-
-| Service             | Address          |
-| ------------------- | ---------------- |
-| Spring Boot Backend | `localhost:8080` |
-| MySQL               | `localhost:3307` |
-
-The backend communicates with MySQL through Docker's internal network.
-
-The JavaFX desktop communicates with the backend through `localhost:8080`.
-
----
-
-# Repository Structure
-
-```text
-IAS2-MotorPH/
-├── docker-compose.yml
-├── .env.example
-├── pom.xml
-│
-├── motorph-desktop/
-│   ├── pom.xml
-│   └── src/
-│
-├── motorph-backend/
-│   ├── Dockerfile
-│   ├── pom.xml
-│   └── src/
-│
-├── database/
-│   ├── payrollsystem_db.sql
-│   ├── ci-cd/
-│   └── sql_scripts/
-│
-├── docker/
-│   └── mysql/
-│       └── init/
-│
-└── .github/
-    └── workflows/
-```
-
-### `motorph-desktop`
-
-JavaFX desktop client used by:
-
-* Admin
-* HR
-* Finance
-* IT
-* Employee
-
-### `motorph-backend`
-
-Spring Boot REST API responsible for:
-
-* authentication;
-* authorization;
-* validation;
-* payroll and business rules;
-* reporting;
-* audit logging;
-* database access.
-
-### `database`
-
-Contains the MotorPH database schema, seed data, reporting views, and SQL validation scripts.
-
----
-
-# Main Features
-
-* Multi-role authentication
-* OTP-based login
-* Role-based access control
-* Employee management
-* Attendance
-* Leave and overtime
-* Payroll processing
-* Payslips
-* JasperReports PDF reports
-* Employee self-service
-* Support tickets
-* Password reset workflow
-* Audit logs
-* Role and permission administration
-* Database administration tools
-
----
-
-# Testing
+## Tests
 
 Run all Java tests:
 
@@ -335,90 +125,47 @@ Run all Java tests:
 mvn test
 ```
 
-Desktop only:
-
-```bash
-mvn -pl motorph-desktop test
-```
-
-Backend only:
+Run tests for one module:
 
 ```bash
 mvn -pl motorph-backend test
+mvn -pl motorph-desktop test
 ```
 
-For API testing, the backend can be tested directly using tools such as Postman while the Docker stack is running.
+## Troubleshooting
 
----
+### Desktop cannot connect
 
-# Troubleshooting
-
-## Backend is still starting
-
-Check:
+Check the services and backend logs:
 
 ```bash
 docker compose ps
+docker compose logs -f backend
 ```
 
-Then:
+Make sure the backend is healthy and port 8080 is available.
+
+For database errors:
 
 ```bash
-docker compose logs backend
+docker compose logs -f mysql
 ```
 
-Wait until the backend becomes healthy before launching or testing the desktop.
+### Database changes are missing
 
----
+The database dump and setup scripts run only when the database volume is empty. Rebuilding the backend does not reload them.
 
-## Port 8080 is already in use
+To start over with the current database dump:
 
-Stop the existing application using port `8080`, or configure a different backend port in your local `.env`.
-
----
-
-## I changed the database initialization scripts but nothing changed
-
-Docker initialization scripts run only when a new database volume is created.
-
-Reset the local database:
+**This deletes your local Docker database. Back up anything you need first.**
 
 ```bash
 docker compose down -v
 docker compose up -d --build
 ```
 
----
+To remove containers while keeping the database, use `docker compose down` without `-v`.
 
-## Desktop cannot connect to MotorPH
+## About
 
-Make sure the backend container is running:
-
-```bash
-docker compose ps
-```
-
-and confirm the backend is available on:
-
-```text
-localhost:8080
-```
-
----
-
-# Security Notes
-
-* Never commit `.env`.
-* Never commit database passwords, JWT secrets, OTPs, or access tokens.
-* The backend database account follows least-privilege access.
-* The JavaFX client has no direct database credentials.
-* Backend and MySQL Docker ports are bound to the local machine for development.
-* Production deployment must use HTTPS/TLS.
-
----
-
-# Team
-
-**MotorPH Payroll Management System**
-
-Developed as a group academic project and continued for Information Assurance and Security evaluation and refinement.
+Developed as a group academic project and continued for Information Assurance and Security.
