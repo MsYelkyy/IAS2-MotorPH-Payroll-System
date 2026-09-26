@@ -17,8 +17,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Handles overtime requests and approvals. Approval is checked per request: an Admin can approve
- * any request, and anyone else only requests from employees they directly supervise.
+ * Handles overtime requests and approvals. Holders of {@code APPROVE_OVERTIME} (HR and Admin) can
+ * approve any request, supervisors can approve their direct reports' requests, and nobody can
+ * approve their own.
  */
 @Service
 public class OvertimeService {
@@ -132,9 +133,9 @@ public class OvertimeService {
         overtimeRepository.save(request);
     }
 
-    public void approveOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorIsAdmin,
+    public void approveOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorCanApproveAny,
                                        int overtimeRequestId, String remarks) {
-        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorIsAdmin, overtimeRequestId);
+        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorCanApproveAny, overtimeRequestId);
 
         request.approve(actorUserAccountId, remarks);
 
@@ -150,9 +151,9 @@ public class OvertimeService {
                         + " on " + request.getOvertimeDate());
     }
 
-    public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorIsAdmin,
+    public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorCanApproveAny,
                                       int overtimeRequestId, String remarks) {
-        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorIsAdmin, overtimeRequestId);
+        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorCanApproveAny, overtimeRequestId);
 
         request.reject(actorUserAccountId, remarks);
 
@@ -195,12 +196,17 @@ public class OvertimeService {
         );
     }
 
-    private OvertimeRequest validateApprovalAction(int actorEmployeeId, boolean actorIsAdmin, int overtimeRequestId) {
+    private OvertimeRequest validateApprovalAction(int actorEmployeeId, boolean actorCanApproveAny,
+                                                   int overtimeRequestId) {
         validateOvertimeRequestId(overtimeRequestId);
 
         OvertimeRequest request = getOvertimeRequestById(overtimeRequestId);
 
-        requireActiveSupervisorOrAdmin(actorEmployeeId, actorIsAdmin, request);
+        if (request.getEmployeeId() == actorEmployeeId) {
+            throw new UnauthorizedException("You cannot approve or reject your own overtime request.");
+        }
+
+        requireApproverOrSupervisor(actorEmployeeId, actorCanApproveAny, request);
 
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending overtime requests can be approved or rejected.");
@@ -209,12 +215,10 @@ public class OvertimeService {
         return request;
     }
 
-    /**
-     * Allows the action only for an Admin or the employee's assigned supervisor. Supervisors have
-     * no dedicated role, so this cannot be expressed as a permission key.
-     */
-    private void requireActiveSupervisorOrAdmin(int actorEmployeeId, boolean actorIsAdmin, OvertimeRequest request) {
-        if (actorIsAdmin) {
+    // supervisors have no role of their own, so their access is checked per request
+    private void requireApproverOrSupervisor(int actorEmployeeId, boolean actorCanApproveAny,
+                                             OvertimeRequest request) {
+        if (actorCanApproveAny) {
             return;
         }
 

@@ -19,11 +19,9 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
- * Checks permissions for the caller's active role. The role is loaded from the database on every
- * request and is never taken from the client.
- *
- * <p>Known limitation: accounts with more than one role are always checked against their first
- * role, because the client cannot yet tell the backend which role it is acting as.
+ * Checks permissions for the caller's active role: the role selected in the client, accepted only
+ * if the account holds it, or the account's default role when none is sent. Roles and their
+ * permissions are loaded from the database on every request.
  */
 @Service
 public class PermissionService {
@@ -178,7 +176,17 @@ public class PermissionService {
             throw new UnauthorizedException("Active role is required.");
         }
 
-        return account.getActiveRole();
+        Role requested = currentUserProvider.getRequestedRole();
+
+        if (requested == null) {
+            return account.getActiveRole();
+        }
+
+        if (!account.hasRole(requested)) {
+            throw new UnauthorizedException("Your account does not have the " + requested.name() + " role.");
+        }
+
+        return requested;
     }
 
     private void validatePermissionKey(String permissionKey) {

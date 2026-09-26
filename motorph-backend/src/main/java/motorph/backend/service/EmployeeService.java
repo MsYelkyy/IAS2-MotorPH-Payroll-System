@@ -31,9 +31,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * Handles employee lookups, creation, updates, and deactivation.
- */
 @Service
 public class EmployeeService {
 
@@ -68,9 +65,6 @@ public class EmployeeService {
         this.userAccessLogService = userAccessLogService;
     }
 
-    /**
-     * Returns an active employee by ID.
-     */
     public Employee getEmployeeById(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -83,9 +77,6 @@ public class EmployeeService {
         return employee;
     }
 
-    /**
-     * Returns an employee by ID, including inactive employees.
-     */
     public Employee getEmployeeByIdAny(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -116,16 +107,10 @@ public class EmployeeService {
         return employeeRepository.findAllActive();
     }
 
-    /**
-     * Returns all employees, including inactive ones.
-     */
     public List<Employee> getAllEmployees() {
         return employeeRepository.findAllWithInactive();
     }
 
-    /**
-     * Returns all active departments.
-     */
     public List<Department> getAllDepartments() {
         return departmentRepository.findAllActive();
     }
@@ -146,9 +131,7 @@ public class EmployeeService {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * Returns the profile of an active employee.
-     */
+    //Only active employees are returned.
     public EmployeeProfileDTO getEmployeeProfile(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -161,9 +144,7 @@ public class EmployeeService {
         return toProfileDTO(result);
     }
 
-    /**
-     * Returns an employee's profile, including inactive employees.
-     */
+    //Includes inactive employees.
     public EmployeeProfileDTO getEmployeeProfileAdmin(int employeeId) {
         validateEmployeeId(employeeId);
 
@@ -176,9 +157,7 @@ public class EmployeeService {
         return toProfileDTO(result);
     }
 
-    /**
-     * Returns the employee's government details, or {@code null} if none are recorded.
-     */
+    //Returns null if no government details are saved.
     public GovernmentDetails getGovernmentDetails(int employeeId) {
         validateEmployeeId(employeeId);
         return governmentDetailsRepository.findByEmployeeId(employeeId);
@@ -221,10 +200,7 @@ public class EmployeeService {
         );
     }
 
-    /**
-     * Creates an employee together with their initial salary, government IDs, benefits, and login
-     * account.
-     */
+    // Also creates government details and a login account.
     public EmployeeCreateResponse createEmployeeWithSalaryAndBenefits(EmployeeCreateRequest request,
                                                                      int actorUserAccountId) {
         Employee employee = buildEmployeeForCreate(request);
@@ -263,9 +239,6 @@ public class EmployeeService {
         return new EmployeeCreateResponse(getEmployeeProfileAdmin(employeeId), provisioning.credentialsPreview());
     }
 
-    /**
-     * Updates an employee's profile, government IDs, and benefits.
-     */
     public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request, int actorUserAccountId) {
         validateEmployeeId(employeeId);
 
@@ -297,29 +270,86 @@ public class EmployeeService {
 
         List<String> changedSections = new ArrayList<>();
 
-        if (profileChanged(existing, updated)) {
+        boolean personalChanged = personalInfoChanged(existing, updated);
+        boolean employmentChanged = employmentInfoChanged(existing, updated);
+
+        if (personalChanged || employmentChanged) {
             employeeRepository.update(updated);
-            changedSections.add("profile");
+        }
+        if (personalChanged) {
+            changedSections.add("personal");
+        }
+        if (employmentChanged) {
+            changedSections.add("employment");
         }
 
         if (governmentDetailsChanged(employeeId, request)) {
             updateGovernmentDetails(employeeId, request.sssNumber(), request.philhealthNumber(),
                     request.tinNumber(), request.pagibigNumber());
-            changedSections.add("government IDs");
+            changedSections.add("government");
         }
 
-        if (benefitsChanged(employeeId, request)) {
+        boolean salaryChanged = salaryChanged(employeeId, request.basicSalary());
+        boolean benefitsChanged = benefitsChanged(employeeId, request);
+
+        if (salaryChanged) {
+            applySalaryChange(employeeId, request.basicSalary(), request.hourlyRate());
+        }
+        if (benefitsChanged) {
             updateBenefits(employeeId, request.riceSubsidy(), request.phoneAllowance(), request.clothingAllowance());
-            changedSections.add("benefits");
+        }
+        if (salaryChanged || benefitsChanged) {
+            changedSections.add("compensation");
         }
 
-        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_UPDATED,
-                describeUpdate(employeeId, changedSections));
+        if (!changedSections.isEmpty()) {
+            userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_UPDATED,
+                    describeUpdate(employeeId, changedSections));
+        }
 
         return getEmployeeProfileAdmin(employeeId);
     }
 
-    private boolean profileChanged(Employee before, Employee after) {
+    private boolean salaryChanged(int employeeId, Double basicSalary) {
+        if (basicSalary == null) {
+            return false;
+        }
+
+        SalaryHistory current = salaryHistoryRepository.findCurrentByEmployeeId(employeeId, LocalDate.now());
+        return current == null || current.getBasicSalary() == null || !sameAmount(current.getBasicSalary(), basicSalary);
+    }
+
+    /**
+     * Salary changes start today; earlier periods keep the old rate.
+     * Another change today updates the same record.
+     */
+    private void applySalaryChange(int employeeId, double basicSalary, Double hourlyRate) {
+        if (basicSalary <= 0) {
+            throw new ValidationException("Basic salary must be greater than zero.");
+        }
+        if (hourlyRate == null || hourlyRate <= 0) {
+            throw new ValidationException("Hourly rate must be greater than zero.");
+        }
+
+        LocalDate today = LocalDate.now();
+        SalaryHistory current = salaryHistoryRepository.findCurrentByEmployeeId(employeeId, today);
+        SalaryType salaryType = current != null ? current.getSalaryType() : SalaryType.MONTHLY;
+
+        if (current != null && today.equals(current.getStartDate())) {
+            salaryHistoryRepository.update(new SalaryHistory(current.getSalaryHistoryId(), employeeId, salaryType,
+                    basicSalary, hourlyRate, today, current.getEndDate()));
+            return;
+        }
+
+        if (current != null) {
+            salaryHistoryRepository.update(new SalaryHistory(current.getSalaryHistoryId(), employeeId, salaryType,
+                    current.getBasicSalary(), current.getHourlyRate(), current.getStartDate(), today.minusDays(1)));
+        }
+
+        salaryHistoryRepository.save(new SalaryHistory(null, employeeId, salaryType, basicSalary, hourlyRate, today, null));
+    }
+
+    private boolean personalInfoChanged(Employee before, Employee after) {
         return !Objects.equals(before.getFirstName(), after.getFirstName())
                 || !Objects.equals(before.getLastName(), after.getLastName())
                 || !Objects.equals(before.getBirthDate(), after.getBirthDate())
@@ -327,8 +357,11 @@ public class EmployeeService {
                 || !sameText(before.getAddress(), after.getAddress())
                 || !sameText(before.getCivilStatus(), after.getCivilStatus())
                 || !sameText(before.getPhoneNumber(), after.getPhoneNumber())
-                || !sameText(before.getPersonalEmail(), after.getPersonalEmail())
-                || before.getEmploymentStatus() != after.getEmploymentStatus()
+                || !sameText(before.getPersonalEmail(), after.getPersonalEmail());
+    }
+
+    private boolean employmentInfoChanged(Employee before, Employee after) {
+        return before.getEmploymentStatus() != after.getEmploymentStatus()
                 || before.getPositionId() != after.getPositionId()
                 || before.getDepartmentId() != after.getDepartmentId()
                 || !Objects.equals(before.getHireDate(), after.getHireDate())
@@ -339,14 +372,14 @@ public class EmployeeService {
         GovernmentDetails existing = governmentDetailsRepository.findByEmployeeId(employeeId);
 
         if (existing == null) {
-            return !sameText(null, request.sssNumber()) || !sameText(null, request.philhealthNumber())
-                    || !sameText(null, request.tinNumber()) || !sameText(null, request.pagibigNumber());
+            return !sameDigits(null, request.sssNumber()) || !sameDigits(null, request.philhealthNumber())
+                    || !sameDigits(null, request.tinNumber()) || !sameDigits(null, request.pagibigNumber());
         }
 
-        return !sameText(existing.getSssNumber(), request.sssNumber())
-                || !sameText(existing.getPhilhealthNumber(), request.philhealthNumber())
-                || !sameText(existing.getTinNumber(), request.tinNumber())
-                || !sameText(existing.getPagibigNumber(), request.pagibigNumber());
+        return !sameDigits(existing.getSssNumber(), request.sssNumber())
+                || !sameDigits(existing.getPhilhealthNumber(), request.philhealthNumber())
+                || !sameDigits(existing.getTinNumber(), request.tinNumber())
+                || !sameDigits(existing.getPagibigNumber(), request.pagibigNumber());
     }
 
     private boolean benefitsChanged(int employeeId, EmployeeUpdateRequest request) {
@@ -366,10 +399,17 @@ public class EmployeeService {
         return 0.0;
     }
 
-    // Blank and null are treated as equal so an untouched empty field does not count as a change
+    // Treat blank and null as the same to avoid false changes.
     private boolean sameText(String a, String b) {
         String left = a == null ? "" : a.trim();
         String right = b == null ? "" : b.trim();
+        return left.equals(right);
+    }
+
+    // Ignore dashes added by the employee form when comparing IDs.
+    private boolean sameDigits(String a, String b) {
+        String left = a == null ? "" : a.replaceAll("\\D", "");
+        String right = b == null ? "" : b.replaceAll("\\D", "");
         return left.equals(right);
     }
 
@@ -377,28 +417,30 @@ public class EmployeeService {
         return Math.abs(Math.max(a, 0) - Math.max(b, 0)) < 0.005;
     }
 
-    /**
-     * Builds the audit message naming only the sections that changed
-     */
     private String describeUpdate(int employeeId, List<String> changedSections) {
-        if (changedSections.isEmpty()) {
-            return "Saved employee ID " + employeeId + " with no changes";
+        List<String> infoTabs = new ArrayList<>(changedSections);
+        boolean compensation = infoTabs.remove("compensation");
+
+        List<String> parts = new ArrayList<>();
+        if (!infoTabs.isEmpty()) {
+            parts.add(joinWords(infoTabs) + " information");
+        }
+        if (compensation) {
+            parts.add("compensation");
         }
 
-        int count = changedSections.size();
-        String sections = switch (count) {
-            case 1 -> changedSections.get(0);
-            case 2 -> changedSections.get(0) + " and " + changedSections.get(1);
-            default -> String.join(", ", changedSections.subList(0, count - 1))
-                    + ", and " + changedSections.get(count - 1);
-        };
-
-        return "Updated " + sections + " of employee ID " + employeeId;
+        return "Updated " + joinWords(parts) + " of employee ID " + employeeId;
     }
 
-    /**
-     * Updates the employee's government IDs, creating the record if it does not exist yet.
-     */
+    private String joinWords(List<String> words) {
+        int count = words.size();
+        return switch (count) {
+            case 1 -> words.get(0);
+            case 2 -> words.get(0) + " and " + words.get(1);
+            default -> String.join(", ", words.subList(0, count - 1)) + ", and " + words.get(count - 1);
+        };
+    }
+
     private void updateGovernmentDetails(int employeeId, String sssNumber, String philhealthNumber,
                                          String tinNumber, String pagibigNumber) {
         GovernmentDetails existing = governmentDetailsRepository.findByEmployeeId(employeeId);
@@ -418,10 +460,7 @@ public class EmployeeService {
         upsertBenefit(employeeId, BENEFIT_CLOTHING, clothingAllowance);
     }
 
-    /**
-     * Sets a benefit amount. Updates the current record, ends it when the amount is cleared, or
-     * adds a new record if there is none.
-     */
+    // Clearing the amount ends the current benefit record.
     private void upsertBenefit(int employeeId, int benefitTypeId, double amount) {
         EmployeeBenefit current = null;
         for (EmployeeBenefit benefit : employeeBenefitRepository.findByEmployeeId(employeeId)) {
@@ -432,6 +471,9 @@ public class EmployeeService {
         }
 
         if (current != null) {
+            if (sameAmount(current.getAmount(), amount)) {
+                return;
+            }
             if (amount <= 0) {
                 employeeBenefitRepository.update(new EmployeeBenefit(
                         current.getEmployeeBenefitId(), employeeId, benefitTypeId,
@@ -447,10 +489,7 @@ public class EmployeeService {
         }
     }
 
-    /**
-     * Deactivates an employee and disables their user account. 
-     * Employees cannot deactivate their own record.
-     */
+    // Also disables the login account. Employees cannot deactivate themselves.
     public void deactivateEmployee(int employeeId, int actingEmployeeId, int actorUserAccountId) {
         validateEmployeeId(employeeId);
 
