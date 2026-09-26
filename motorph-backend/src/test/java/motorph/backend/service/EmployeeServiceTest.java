@@ -16,6 +16,8 @@ import motorph.backend.repository.SalaryHistoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -158,6 +160,70 @@ class EmployeeServiceTest {
         verify(employeeBenefitRepository, never()).update(any(EmployeeBenefit.class));
         verify(salaryHistoryRepository, never()).save(any(SalaryHistory.class));
         verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "false, 10, 20, 10",
+            "false, 20, 10, 9",
+            "false, -1, 10, 9",
+            "false, 10, -1, 10",
+            "false, -1, -1, -1",
+            "true, 10, 20, 10",
+            "true, -1, 10, 9",
+            "true, 10, -1, 10"
+    })
+    void salaryChangeKeepsEndDateAndStopsBeforeNextSalary(boolean startsToday, int currentEndDays,
+                                                         int nextStartDays, int expectedEndDays) {
+        LocalDate today = LocalDate.now();
+        LocalDate currentEnd = currentEndDays < 0 ? null : today.plusDays(currentEndDays);
+        SalaryHistory current = new SalaryHistory(21, EMPLOYEE_ID, SalaryType.MONTHLY,
+                BASIC_SALARY, HOURLY_RATE, startsToday ? today : HIRE_DATE, currentEnd);
+        when(salaryHistoryRepository.findCurrentByEmployeeId(eq(EMPLOYEE_ID), any(LocalDate.class)))
+                .thenReturn(current);
+        List<SalaryHistory> histories = nextStartDays < 0 ? List.of(current) : List.of(
+                new SalaryHistory(23, EMPLOYEE_ID, SalaryType.MONTHLY, 65000.0, 386.90,
+                        today.plusDays(nextStartDays + 30), null),
+                current,
+                new SalaryHistory(22, EMPLOYEE_ID, SalaryType.MONTHLY, 60000.0, 357.14,
+                        today.plusDays(nextStartDays), today.plusDays(nextStartDays + 29)));
+        when(salaryHistoryRepository.findByEmployeeId(EMPLOYEE_ID)).thenReturn(histories);
+
+        update(new Form().basicSalary(55000.0));
+
+        ArgumentCaptor<SalaryHistory> changed = ArgumentCaptor.forClass(SalaryHistory.class);
+        if (startsToday) {
+            verify(salaryHistoryRepository).update(changed.capture());
+            verify(salaryHistoryRepository, never()).save(any(SalaryHistory.class));
+        } else {
+            verify(salaryHistoryRepository).save(changed.capture());
+            ArgumentCaptor<SalaryHistory> closed = ArgumentCaptor.forClass(SalaryHistory.class);
+            verify(salaryHistoryRepository).update(closed.capture());
+            assertThat(closed.getValue().getSalaryHistoryId()).isEqualTo(21);
+            assertThat(closed.getValue().getEndDate()).isEqualTo(today.minusDays(1));
+        }
+        assertThat(changed.getValue().getBasicSalary()).isEqualTo(55000.0);
+        assertThat(changed.getValue().getStartDate()).isEqualTo(today);
+        assertThat(changed.getValue().getEndDate())
+                .isEqualTo(expectedEndDays < 0 ? null : today.plusDays(expectedEndDays));
+    }
+
+    @Test
+    void salaryWithoutCurrentRecordStopsBeforeScheduledSalary() {
+        LocalDate today = LocalDate.now();
+        when(salaryHistoryRepository.findCurrentByEmployeeId(eq(EMPLOYEE_ID), any(LocalDate.class)))
+                .thenReturn(null);
+        when(salaryHistoryRepository.findByEmployeeId(EMPLOYEE_ID)).thenReturn(List.of(
+                new SalaryHistory(22, EMPLOYEE_ID, SalaryType.MONTHLY, 60000.0, 357.14,
+                        today.plusDays(1), null)));
+
+        update(new Form().basicSalary(55000.0));
+
+        ArgumentCaptor<SalaryHistory> started = ArgumentCaptor.forClass(SalaryHistory.class);
+        verify(salaryHistoryRepository).save(started.capture());
+        verify(salaryHistoryRepository, never()).update(any(SalaryHistory.class));
+        assertThat(started.getValue().getStartDate()).isEqualTo(today);
+        assertThat(started.getValue().getEndDate()).isEqualTo(today);
     }
 
     private void update(Form form) {

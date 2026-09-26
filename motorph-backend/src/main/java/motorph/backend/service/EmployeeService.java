@@ -334,10 +334,11 @@ public class EmployeeService {
         LocalDate today = LocalDate.now();
         SalaryHistory current = salaryHistoryRepository.findCurrentByEmployeeId(employeeId, today);
         SalaryType salaryType = current != null ? current.getSalaryType() : SalaryType.MONTHLY;
+        LocalDate endDate = salaryChangeEndDate(employeeId, current, today);
 
         if (current != null && today.equals(current.getStartDate())) {
             salaryHistoryRepository.update(new SalaryHistory(current.getSalaryHistoryId(), employeeId, salaryType,
-                    basicSalary, hourlyRate, today, current.getEndDate()));
+                    basicSalary, hourlyRate, today, endDate));
             return;
         }
 
@@ -346,7 +347,24 @@ public class EmployeeService {
                     current.getBasicSalary(), current.getHourlyRate(), current.getStartDate(), today.minusDays(1)));
         }
 
-        salaryHistoryRepository.save(new SalaryHistory(null, employeeId, salaryType, basicSalary, hourlyRate, today, null));
+        salaryHistoryRepository.save(new SalaryHistory(null, employeeId, salaryType, basicSalary, hourlyRate, today, endDate));
+    }
+
+    private LocalDate salaryChangeEndDate(int employeeId, SalaryHistory current, LocalDate today) {
+        LocalDate endDate = current != null ? current.getEndDate() : null;
+        LocalDate nextStart = salaryHistoryRepository.findByEmployeeId(employeeId).stream()
+                .map(SalaryHistory::getStartDate)
+                .filter(start -> start.isAfter(today))
+                .min(LocalDate::compareTo)
+                .orElse(null);
+
+        if (nextStart != null) {
+            LocalDate latestEnd = nextStart.minusDays(1);
+            if (endDate == null || latestEnd.isBefore(endDate)) {
+                return latestEnd;
+            }
+        }
+        return endDate;
     }
 
     private boolean personalInfoChanged(Employee before, Employee after) {
