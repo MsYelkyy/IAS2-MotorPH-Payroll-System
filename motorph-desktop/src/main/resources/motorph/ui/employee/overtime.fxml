@@ -26,7 +26,8 @@
       maxWidth="Infinity"
       maxHeight="Infinity">
 
-    <VBox spacing="0" maxWidth="Infinity" styleClass="content-card, leave-card, leave-form-card">
+    <VBox spacing="0" maxWidth="Infinity" minHeight="-Infinity"
+          styleClass="content-card, leave-card, leave-form-card">
         <Label text="New Overtime Request" styleClass="leave-card-title"/>
 
         <Region prefHeight="6"/>
