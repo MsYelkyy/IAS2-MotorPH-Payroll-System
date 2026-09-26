@@ -43,6 +43,7 @@ import motorph.backend.repository.SssRateRepository;
 import motorph.backend.repository.WithholdingTaxBracketRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -140,6 +141,7 @@ public class PayrollService {
      * Computes and saves payroll for one employee in a payrun. Fails if a result already exists for
      * that employee and payrun.
      */
+    @Transactional
     public PayrollResult runPayrollForEmployee(int employeeId, int payrunId) {
         validate(employeeId, EMPLOYEE_ID_LABEL);
         validate(payrunId, PAYRUN_ID_LABEL);
@@ -734,6 +736,8 @@ public class PayrollService {
      * Generates payroll for the payrun, processing only employees whose attendance
      * is READY and who do not already have a result. Returns the number generated.
      */
+    // 4.2 fix: one failed employee rolls back the whole batch, including the audit entry
+    @Transactional
     public int generatePayrollForReadyEmployees(int payrunId, int actorUserAccountId) {
         validate(payrunId, PAYRUN_ID_LABEL);
         Payrun payrun = getPayrunOrThrow(payrunId);

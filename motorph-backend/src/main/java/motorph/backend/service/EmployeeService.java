@@ -23,6 +23,7 @@ import motorph.backend.repository.PositionRepository;
 import motorph.backend.repository.SalaryHistoryRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -201,6 +202,7 @@ public class EmployeeService {
     }
 
     // Also creates government details and a login account.
+    @Transactional
     public EmployeeCreateResponse createEmployeeWithSalaryAndBenefits(EmployeeCreateRequest request,
                                                                      int actorUserAccountId) {
         Employee employee = buildEmployeeForCreate(request);
@@ -239,6 +241,8 @@ public class EmployeeService {
         return new EmployeeCreateResponse(getEmployeeProfileAdmin(employeeId), provisioning.credentialsPreview());
     }
 
+    // 4.3 fix: a failed salary insert must not leave the old salary closed or other sections saved
+    @Transactional
     public EmployeeProfileDTO updateEmployee(int employeeId, EmployeeUpdateRequest request, int actorUserAccountId) {
         validateEmployeeId(employeeId);
 

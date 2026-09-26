@@ -6,6 +6,7 @@ import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -144,7 +145,9 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
     /**
      * Saves a new account and assigns its roles in a single transaction.
      */
+    // 4.2 fix: joins the caller's transaction (e.g. employee creation) instead of committing on its own
     @Override
+    @Transactional
     public void save(UserAccount userAccount) {
         validateUserAccount(userAccount);
 
@@ -164,28 +167,24 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-        try (Connection conn = dataSource.getConnection()) {
-            conn.setAutoCommit(false);
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-            try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-                stmt.setInt(1, userAccount.getEmployeeId());
-                stmt.setString(2, normalizeRequired(userAccount.getCompanyEmail(), "Company email is required."));
-                stmt.setString(3, normalizeOptional(userAccount.getUsername()));
-                stmt.setString(4, normalizeRequired(userAccount.getPasswordHash(), "Password hash is required."));
-                stmt.setString(5, normalizeRequired(userAccount.getPasswordSalt(), "Password salt is required."));
-                stmt.setBoolean(6, userAccount.isLocked());
-                stmt.setBoolean(7, userAccount.isActive());
-                setNullableTimestamp(stmt, 8, userAccount.getLastLoginAt());
-                stmt.setBoolean(9, userAccount.mustChangePassword());
-                setNullableTimestamp(stmt, 10, userAccount.getTemporaryPasswordExpiresAt());
+            stmt.setInt(1, userAccount.getEmployeeId());
+            stmt.setString(2, normalizeRequired(userAccount.getCompanyEmail(), "Company email is required."));
+            stmt.setString(3, normalizeOptional(userAccount.getUsername()));
+            stmt.setString(4, normalizeRequired(userAccount.getPasswordHash(), "Password hash is required."));
+            stmt.setString(5, normalizeRequired(userAccount.getPasswordSalt(), "Password salt is required."));
+            stmt.setBoolean(6, userAccount.isLocked());
+            stmt.setBoolean(7, userAccount.isActive());
+            setNullableTimestamp(stmt, 8, userAccount.getLastLoginAt());
+            stmt.setBoolean(9, userAccount.mustChangePassword());
+            setNullableTimestamp(stmt, 10, userAccount.getTemporaryPasswordExpiresAt());
 
-                stmt.executeUpdate();
+            stmt.executeUpdate();
 
-                int userAccountId = getGeneratedId(stmt);
-                assignRoles(conn, userAccountId, userAccount.getRoles());
-            }
-
-            conn.commit();
+            int userAccountId = getGeneratedId(stmt);
+            assignRoles(conn, userAccountId, userAccount.getRoles());
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to save user account.", e);

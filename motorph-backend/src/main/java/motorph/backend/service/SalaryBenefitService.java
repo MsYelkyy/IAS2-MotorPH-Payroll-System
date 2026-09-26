@@ -9,6 +9,7 @@ import motorph.backend.repository.EmployeeBenefitRepository;
 import motorph.backend.repository.SalaryHistoryRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -45,6 +46,7 @@ public class SalaryBenefitService {
     /**
      * Adds a salary record and closes any currently open one so the periods do not overlap.
      */
+    @Transactional
     public void addSalaryRecord(int employeeId, SalaryRecordRequest request, int actorUserAccountId) {
         validateId(employeeId, "Employee ID");
         if (request.startDate() == null) throw new ValidationException("Start date is required.");
