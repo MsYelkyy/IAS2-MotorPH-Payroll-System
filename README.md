@@ -163,7 +163,7 @@ The desktop automatically communicates with:
 http://localhost:8080
 ```
 
-You should now be able to log in and use MotorPH normally.
+Log in using your company email and password, then complete OTP verification to access MotorPH.
 
 ---
 
