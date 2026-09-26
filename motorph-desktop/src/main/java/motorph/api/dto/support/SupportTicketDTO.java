@@ -10,8 +10,7 @@ import motorph.domain.value.SupportTicketStatus;
 import java.time.LocalDateTime;
 
 /**
- * Wire copy of the backend's SupportTicket domain model, mirroring the old
- * motorph.domain.model.SupportTicket getter names.
+ * Client-side copy of the backend's {@code SupportTicket}.
  */
 public class SupportTicketDTO {
 

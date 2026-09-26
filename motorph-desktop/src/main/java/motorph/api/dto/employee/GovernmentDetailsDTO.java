@@ -4,8 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Wire copy of the backend's GovernmentDetails domain model, mirroring the
- * desktop's original motorph.domain.model.GovernmentDetails getter names.
+ * Client-side copy of the backend's {@code GovernmentDetails}.
  */
 public class GovernmentDetailsDTO {
 

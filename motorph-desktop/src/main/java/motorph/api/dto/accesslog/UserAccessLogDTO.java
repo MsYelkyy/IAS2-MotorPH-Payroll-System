@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 /**
- * Wire copy of the backend's UserAccessLog domain model, mirroring the old
- * motorph.domain.model.UserAccessLog getter names.
+ * Client-side copy of the backend's {@code UserAccessLog}, as returned by the access log endpoints.
  */
 public class UserAccessLogDTO {
 

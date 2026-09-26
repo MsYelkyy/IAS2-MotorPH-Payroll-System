@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Wire copy of the backend's Department domain model (read-only reference
- * data), mirroring the desktop's original motorph.domain.model.Department
- * getter names so call sites need no changes.
+ * Client-side copy of the backend's {@code Department} reference data.
  */
 public class DepartmentDTO {
 
