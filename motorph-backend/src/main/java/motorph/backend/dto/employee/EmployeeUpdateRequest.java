@@ -6,8 +6,8 @@ import motorph.backend.domain.value.EmploymentStatus;
 import motorph.backend.domain.value.Gender;
 
 /**
- * Request body for {@code PUT /api/v1/employees/{employeeId}}. Salary is not part of this request;
- * it is changed through the salary history endpoints.
+ * Request body for {@code PUT /api/v1/employees/{employeeId}}. A changed {@code basicSalary} starts
+ * a new salary record effective today; leaving it {@code null} keeps the current salary.
  */
 public record EmployeeUpdateRequest(
         String firstName,
@@ -29,6 +29,8 @@ public record EmployeeUpdateRequest(
         String pagibigNumber,
         double riceSubsidy,
         double phoneAllowance,
-        double clothingAllowance
+        double clothingAllowance,
+        Double basicSalary,
+        Double hourlyRate
 ) {
 }

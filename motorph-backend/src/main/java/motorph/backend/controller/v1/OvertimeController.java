@@ -3,7 +3,6 @@ package motorph.backend.controller.v1;
 import motorph.backend.domain.Attendance;
 import motorph.backend.domain.OvertimeRequest;
 import motorph.backend.domain.value.PermissionKey;
-import motorph.backend.domain.value.Role;
 import motorph.backend.dto.overtime.OvertimeSubmitRequest;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
@@ -25,9 +24,8 @@ import java.util.List;
 /**
  * Overtime request endpoints. Submitting and cancelling always act on the caller's own record.
  *
- * <p>Approval has no permission-key check because supervisors are regular Employee accounts.
- * Instead, the service only lets an Admin or the employee's assigned supervisor approve or reject a
- * request.
+ * <p>Approval is open to holders of {@code APPROVE_OVERTIME} and to the employee's assigned
+ * supervisor, who is a regular Employee account; the service enforces both.
  */
 @RestController
 @RequestMapping("/api/v1/overtime-requests")
@@ -78,17 +76,17 @@ public class OvertimeController {
     @PostMapping("/{overtimeRequestId}/approve")
     public void approveOvertimeRequest(@PathVariable int overtimeRequestId) {
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
-        boolean isAdmin = permissionService.getActiveRole() == Role.ADMIN;
+        boolean canApproveAny = permissionService.hasPermission(PermissionKey.APPROVE_OVERTIME);
         overtimeService.approveOvertimeRequest(
-                principal.employeeId(), principal.userAccountId(), isAdmin, overtimeRequestId, null);
+                principal.employeeId(), principal.userAccountId(), canApproveAny, overtimeRequestId, null);
     }
 
     @PostMapping("/{overtimeRequestId}/reject")
     public void rejectOvertimeRequest(@PathVariable int overtimeRequestId) {
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
-        boolean isAdmin = permissionService.getActiveRole() == Role.ADMIN;
+        boolean canApproveAny = permissionService.hasPermission(PermissionKey.APPROVE_OVERTIME);
         overtimeService.rejectOvertimeRequest(
-                principal.employeeId(), principal.userAccountId(), isAdmin, overtimeRequestId, null);
+                principal.employeeId(), principal.userAccountId(), canApproveAny, overtimeRequestId, null);
     }
 
     @PostMapping("/{overtimeRequestId}/cancel")

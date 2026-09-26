@@ -40,6 +40,17 @@ import java.util.List;
 @RequestMapping("/api/v1")
 public class EmployeeController {
 
+    // read-only lookups that payroll and report screens need to pick employees and departments
+    private static final PermissionKey[] DIRECTORY_READERS = {
+            PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE,
+            PermissionKey.VIEW_PAYROLL, PermissionKey.VIEW_REPORTS, PermissionKey.GENERATE_REPORTS
+    };
+
+    // profile and government IDs shown on payroll screens and payslips
+    private static final PermissionKey[] PAYROLL_DETAIL_READERS = {
+            PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE, PermissionKey.VIEW_PAYROLL
+    };
+
     private final EmployeeService employeeService;
     private final PermissionService permissionService;
     private final CurrentUserProvider currentUserProvider;
@@ -60,7 +71,7 @@ public class EmployeeController {
      */
     @GetMapping("/employees")
     public List<EmployeeSummaryDTO> listEmployees() {
-        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        permissionService.requireAnyPermission(DIRECTORY_READERS);
         return employeeService.getAllEmployeeSummaries();
     }
 
@@ -71,7 +82,7 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{employeeId}")
     public EmployeeProfileDTO getEmployee(@PathVariable int employeeId) {
-        if (permissionService.hasAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE)) {
+        if (permissionService.hasAnyPermission(PAYROLL_DETAIL_READERS)) {
             return employeeService.getEmployeeProfileAdmin(employeeId);
         }
 
@@ -120,19 +131,19 @@ public class EmployeeController {
 
     @GetMapping("/employees/{employeeId}/government-details")
     public GovernmentDetails getGovernmentDetails(@PathVariable int employeeId) {
-        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        permissionService.requireAnyPermission(PAYROLL_DETAIL_READERS);
         return employeeService.getGovernmentDetails(employeeId);
     }
 
     @GetMapping("/departments")
     public List<Department> listDepartments() {
-        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        permissionService.requireAnyPermission(DIRECTORY_READERS);
         return employeeService.getAllDepartments();
     }
 
     @GetMapping("/positions")
     public List<Position> listPositions(@RequestParam(required = false) Integer departmentId) {
-        permissionService.requireAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE);
+        permissionService.requireAnyPermission(DIRECTORY_READERS);
 
         return departmentId != null
                 ? employeeService.getPositionsByDepartment(departmentId)

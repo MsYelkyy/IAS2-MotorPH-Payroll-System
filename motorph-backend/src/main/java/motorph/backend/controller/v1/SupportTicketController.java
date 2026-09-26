@@ -1,11 +1,10 @@
 package motorph.backend.controller.v1;
 
 import motorph.backend.domain.SupportTicket;
-import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.RoutingTeam;
 import motorph.backend.domain.value.SupportTicketCategory;
+import motorph.backend.dto.support.SupportTicketRowDTO;
 import motorph.backend.dto.support.TicketSubmitRequest;
-import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
@@ -21,9 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Support ticket endpoints. Employees submit and view their own tickets. Listing tickets across
- * employees requires the IT, HR, Admin, or Finance role, since there is no ticket permission key.
- * Resolve and cancel rules are enforced in the service.
+ * Support ticket endpoints. Employees submit and view their own tickets; the team and cancel rules
+ * for everything else are enforced in {@link SupportTicketService}.
  */
 @RestController
 @RequestMapping("/api/v1/support-tickets")
@@ -57,21 +55,19 @@ public class SupportTicketController {
     }
 
     @GetMapping
-    public List<SupportTicket> getAllTickets() {
-        requireTicketManagerRole();
-        return supportTicketService.getAllTickets();
+    public List<SupportTicketRowDTO> getAllTickets() {
+        return supportTicketService.getAllTickets(permissionService.getActiveRole());
     }
 
     @GetMapping("/routing-team/{routingTeam}")
-    public List<SupportTicket> getTicketsByRoutingTeam(@PathVariable String routingTeam) {
-        requireTicketManagerRole();
-        return supportTicketService.getTicketsByRoutingTeam(RoutingTeam.fromValue(routingTeam));
+    public List<SupportTicketRowDTO> getTicketsByRoutingTeam(@PathVariable String routingTeam) {
+        return supportTicketService.getTicketsByRoutingTeam(
+                RoutingTeam.fromValue(routingTeam), permissionService.getActiveRole());
     }
 
     @GetMapping("/open-count")
     public int getOpenTicketCount() {
-        requireTicketManagerRole();
-        return supportTicketService.getOpenTicketCount();
+        return supportTicketService.getOpenTicketCount(permissionService.getActiveRole());
     }
 
     @PostMapping("/{ticketId}/resolve")
@@ -82,16 +78,7 @@ public class SupportTicketController {
 
     @PostMapping("/{ticketId}/cancel")
     public void cancelTicket(@PathVariable int ticketId) {
-        supportTicketService.cancelTicket(ticketId, callerEmployeeId(), permissionService.getActiveRole());
-    }
-
-    private void requireTicketManagerRole() {
-        Role role = permissionService.getActiveRole();
-        boolean allowed = role == Role.IT || role == Role.HR || role == Role.ADMIN || role == Role.FINANCE;
-
-        if (!allowed) {
-            throw new UnauthorizedException("You do not have permission to perform this action.");
-        }
+        supportTicketService.cancelTicket(ticketId, permissionService.getActiveRole());
     }
 
     private int callerEmployeeId() {

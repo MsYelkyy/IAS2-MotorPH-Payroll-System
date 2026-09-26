@@ -10,12 +10,14 @@ import motorph.domain.value.SupportTicketStatus;
 import java.time.LocalDateTime;
 
 /**
- * Client-side copy of the backend's {@code SupportTicket}.
+ * Client-side copy of the backend's {@code SupportTicket}. {@code employeeName} is only filled in on
+ * the team and admin ticket lists.
  */
 public class SupportTicketDTO {
 
     private final Integer ticketId;
     private final int employeeId;
+    private final String employeeName;
     private final SupportTicketCategory category;
     private final RoutingTeam routingTeam;
     private final String subject;
@@ -29,6 +31,7 @@ public class SupportTicketDTO {
     @JsonCreator
     public SupportTicketDTO(@JsonProperty("ticketId") Integer ticketId,
                             @JsonProperty("employeeId") int employeeId,
+                            @JsonProperty("employeeName") String employeeName,
                             @JsonProperty("category") SupportTicketCategory category,
                             @JsonProperty("routingTeam") RoutingTeam routingTeam,
                             @JsonProperty("subject") String subject,
@@ -40,6 +43,7 @@ public class SupportTicketDTO {
                             @JsonProperty("updatedAt") LocalDateTime updatedAt) {
         this.ticketId = ticketId;
         this.employeeId = employeeId;
+        this.employeeName = employeeName;
         this.category = category;
         this.routingTeam = routingTeam;
         this.subject = subject;
@@ -57,6 +61,10 @@ public class SupportTicketDTO {
 
     public int getEmployeeId() {
         return employeeId;
+    }
+
+    public String getEmployeeName() {
+        return employeeName;
     }
 
     public SupportTicketCategory getCategory() {
