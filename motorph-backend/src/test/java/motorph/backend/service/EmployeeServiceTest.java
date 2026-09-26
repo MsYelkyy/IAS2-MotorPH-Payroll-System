@@ -8,6 +8,7 @@ import motorph.backend.domain.value.EmploymentStatus;
 import motorph.backend.domain.value.Gender;
 import motorph.backend.domain.value.SalaryType;
 import motorph.backend.dto.employee.EmployeeUpdateRequest;
+import motorph.backend.exception.DataAccessException;
 import motorph.backend.repository.EmployeeBenefitRepository;
 import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.GovernmentDetailsRepository;
@@ -26,14 +27,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -224,6 +228,19 @@ class EmployeeServiceTest {
         verify(salaryHistoryRepository, never()).update(any(SalaryHistory.class));
         assertThat(started.getValue().getStartDate()).isEqualTo(today);
         assertThat(started.getValue().getEndDate()).isEqualTo(today);
+    }
+
+    @Test
+    @DisplayName("A failed salary insert propagates so the update rolls back, and nothing is logged")
+    void failedSalaryInsertPropagatesWithoutAuditEntry() {
+        doThrow(new DataAccessException("insert failed", new SQLException()))
+                .when(salaryHistoryRepository).save(any(SalaryHistory.class));
+
+        Form form = new Form().gender(Gender.FEMALE).basicSalary(55000.0);
+
+        assertThatThrownBy(() -> update(form)).isInstanceOf(DataAccessException.class);
+
+        verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString());
     }
 
     private void update(Form form) {
