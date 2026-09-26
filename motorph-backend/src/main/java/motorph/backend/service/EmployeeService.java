@@ -25,8 +25,10 @@ import motorph.backend.repository.SalaryHistoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -292,16 +294,106 @@ public class EmployeeService {
         );
 
         validateEmployee(updated);
-        employeeRepository.update(updated);
 
-        updateGovernmentDetails(employeeId, request.sssNumber(), request.philhealthNumber(),
-                request.tinNumber(), request.pagibigNumber());
-        updateBenefits(employeeId, request.riceSubsidy(), request.phoneAllowance(), request.clothingAllowance());
+        List<String> changedSections = new ArrayList<>();
+
+        if (profileChanged(existing, updated)) {
+            employeeRepository.update(updated);
+            changedSections.add("profile");
+        }
+
+        if (governmentDetailsChanged(employeeId, request)) {
+            updateGovernmentDetails(employeeId, request.sssNumber(), request.philhealthNumber(),
+                    request.tinNumber(), request.pagibigNumber());
+            changedSections.add("government IDs");
+        }
+
+        if (benefitsChanged(employeeId, request)) {
+            updateBenefits(employeeId, request.riceSubsidy(), request.phoneAllowance(), request.clothingAllowance());
+            changedSections.add("benefits");
+        }
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_UPDATED,
-                "Updated profile, government IDs, and benefits of employee ID " + employeeId);
+                describeUpdate(employeeId, changedSections));
 
         return getEmployeeProfileAdmin(employeeId);
+    }
+
+    private boolean profileChanged(Employee before, Employee after) {
+        return !Objects.equals(before.getFirstName(), after.getFirstName())
+                || !Objects.equals(before.getLastName(), after.getLastName())
+                || !Objects.equals(before.getBirthDate(), after.getBirthDate())
+                || before.getGender() != after.getGender()
+                || !sameText(before.getAddress(), after.getAddress())
+                || !sameText(before.getCivilStatus(), after.getCivilStatus())
+                || !sameText(before.getPhoneNumber(), after.getPhoneNumber())
+                || !sameText(before.getPersonalEmail(), after.getPersonalEmail())
+                || before.getEmploymentStatus() != after.getEmploymentStatus()
+                || before.getPositionId() != after.getPositionId()
+                || before.getDepartmentId() != after.getDepartmentId()
+                || !Objects.equals(before.getHireDate(), after.getHireDate())
+                || !Objects.equals(before.getSupervisorId(), after.getSupervisorId());
+    }
+
+    private boolean governmentDetailsChanged(int employeeId, EmployeeUpdateRequest request) {
+        GovernmentDetails existing = governmentDetailsRepository.findByEmployeeId(employeeId);
+
+        if (existing == null) {
+            return !sameText(null, request.sssNumber()) || !sameText(null, request.philhealthNumber())
+                    || !sameText(null, request.tinNumber()) || !sameText(null, request.pagibigNumber());
+        }
+
+        return !sameText(existing.getSssNumber(), request.sssNumber())
+                || !sameText(existing.getPhilhealthNumber(), request.philhealthNumber())
+                || !sameText(existing.getTinNumber(), request.tinNumber())
+                || !sameText(existing.getPagibigNumber(), request.pagibigNumber());
+    }
+
+    private boolean benefitsChanged(int employeeId, EmployeeUpdateRequest request) {
+        List<EmployeeBenefit> benefits = employeeBenefitRepository.findByEmployeeId(employeeId);
+
+        return !sameAmount(currentBenefitAmount(benefits, BENEFIT_RICE_SUBSIDY), request.riceSubsidy())
+                || !sameAmount(currentBenefitAmount(benefits, BENEFIT_PHONE_ALLOWANCE), request.phoneAllowance())
+                || !sameAmount(currentBenefitAmount(benefits, BENEFIT_CLOTHING), request.clothingAllowance());
+    }
+
+    private double currentBenefitAmount(List<EmployeeBenefit> benefits, int benefitTypeId) {
+        for (EmployeeBenefit benefit : benefits) {
+            if (benefit.getBenefitTypeId() == benefitTypeId && benefit.isCurrent()) {
+                return benefit.getAmount();
+            }
+        }
+        return 0.0;
+    }
+
+    // Blank and null are treated as equal so an untouched empty field does not count as a change
+    private boolean sameText(String a, String b) {
+        String left = a == null ? "" : a.trim();
+        String right = b == null ? "" : b.trim();
+        return left.equals(right);
+    }
+
+    private boolean sameAmount(double a, double b) {
+        return Math.abs(Math.max(a, 0) - Math.max(b, 0)) < 0.005;
+    }
+
+    /**
+     * Builds the audit message naming only the sections that changed
+     */
+    private String describeUpdate(int employeeId, List<String> changedSections) {
+        if (changedSections.isEmpty()) {
+            return "Saved employee ID " + employeeId + " with no changes";
+        }
+
+        int count = changedSections.size();
+        String sections = switch (count) {
+            case 1 -> changedSections.get(0);
+            case 2 -> changedSections.get(0) + " and " + changedSections.get(1);
+            default -> String.join(", ", changedSections.subList(0, count - 1))
+                    + ", and " + changedSections.get(count - 1);
+        };
+
+        return "Updated " + sections + " of employee ID " + employeeId;
     }
 
     /**
@@ -356,8 +448,8 @@ public class EmployeeService {
     }
 
     /**
-     * Deactivates an employee and disables their user account. Employees cannot deactivate their
-     * own record.
+     * Deactivates an employee and disables their user account. 
+     * Employees cannot deactivate their own record.
      */
     public void deactivateEmployee(int employeeId, int actingEmployeeId, int actorUserAccountId) {
         validateEmployeeId(employeeId);
