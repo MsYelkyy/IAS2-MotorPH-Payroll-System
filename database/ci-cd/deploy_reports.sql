@@ -1,5 +1,6 @@
 -- MotorPH report setup for MySQL 8
--- Loads the test database, adds BASIC_PAY earnings, and creates both report views.
+-- Loads the test database, adds BASIC_PAY earnings, creates both report views,
+-- and adds the audit-log protection triggers.
 -- Use only with a test database. Running this again replaces existing data.
 --
 -- Run from database/ci-cd/ so the file paths work:
@@ -24,6 +25,9 @@ SOURCE ../sql_scripts/employee_payslip_report_view.sql;
 
 -- Step 4: Create the monthly payroll summary view.
 SOURCE ../sql_scripts/payroll_summary_monthly_view.sql;
+
+-- Step 5: Block UPDATE and DELETE on user_access_logs.
+SOURCE ../sql_scripts/audit_log_protection.sql;
 
 -- Show the row counts to check that both report views contain data.
 SELECT 'DEPLOY COMPLETE'                         AS status,

@@ -43,12 +43,13 @@ services:
       # Keep database data when containers are removed.
       - mysql-data:/var/lib/mysql
 
-      # Load the database, report views, and backend account on first setup.
+      # Load the database, report views, audit-log protection, and backend account on first setup.
       # These files run in order when the database volume is empty.
       - ./database/payrollsystem_db.sql:/docker-entrypoint-initdb.d/01-schema-and-data.sql:ro
       - ./database/sql_scripts/employee_payslip_report_view.sql:/docker-entrypoint-initdb.d/02-employee-payslip-report-view.sql:ro
       - ./database/sql_scripts/payroll_summary_monthly_view.sql:/docker-entrypoint-initdb.d/03-payroll-summary-monthly-view.sql:ro
-      - ./docker/mysql/init/06-create-backend-user.sh:/docker-entrypoint-initdb.d/04-create-backend-user.sh:ro
+      - ./database/sql_scripts/audit_log_protection.sql:/docker-entrypoint-initdb.d/04-audit-log-protection.sql:ro
+      - ./docker/mysql/init/06-create-backend-user.sh:/docker-entrypoint-initdb.d/05-create-backend-user.sh:ro
 
     healthcheck:
       # $$ reads the password from inside the container.
