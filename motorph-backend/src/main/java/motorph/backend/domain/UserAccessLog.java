@@ -31,9 +31,14 @@ public class UserAccessLog {
         this.details = clean(details);
         this.ipAddress = clean(ipAddress);
         this.deviceInfo = clean(deviceInfo);
-        this.loggedAt = Objects.requireNonNull(loggedAt, "Logged date and time is required.");
+        this.loggedAt = logId == null
+                ? null
+                : Objects.requireNonNull(loggedAt, "Logged date and time is required.");
     }
 
+    /**
+     * Creates a new log entry. The database sets logged_at when the row is saved.
+     */
     public UserAccessLog(
             Integer userAccountId,
             String action,
@@ -48,7 +53,7 @@ public class UserAccessLog {
                 details,
                 ipAddress,
                 deviceInfo,
-                LocalDateTime.now()
+                null
         );
     }
 

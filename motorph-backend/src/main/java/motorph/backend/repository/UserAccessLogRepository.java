@@ -10,7 +10,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,10 +48,9 @@ public class UserAccessLogRepository {
                     action,
                     details,
                     ip_address,
-                    device_info,
-                    logged_at
+                    device_info
                 )
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = dataSource.getConnection();
@@ -63,7 +61,6 @@ public class UserAccessLogRepository {
             stmt.setString(3, log.getDetails());
             stmt.setString(4, log.getIpAddress());
             stmt.setString(5, log.getDeviceInfo());
-            stmt.setTimestamp(6, Timestamp.valueOf(log.getLoggedAt()));
 
             stmt.executeUpdate();
 

@@ -1177,7 +1177,7 @@ CREATE TABLE `user_access_logs` (
   `details` varchar(255) DEFAULT NULL,
   `ip_address` varchar(45) DEFAULT NULL,
   `device_info` varchar(255) DEFAULT NULL,
-  `logged_at` datetime NOT NULL,
+  `logged_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
   PRIMARY KEY (`log_id`),
   KEY `fk_logs_user_idx` (`user_account_id`),
   CONSTRAINT `fk_user_access_logs_user_account` FOREIGN KEY (`user_account_id`) REFERENCES `user_account` (`user_account_id`)
