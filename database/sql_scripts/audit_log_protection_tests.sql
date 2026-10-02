@@ -1,6 +1,6 @@
 -- Tests for audit_log_protection.sql (ALP-### tests).
 -- Checks that user_access_logs allows INSERT and SELECT but blocks UPDATE and DELETE,
--- and that logged_at always comes from the database.
+-- that logged_at always comes from the database, and that IP, device, and target are stored.
 -- The test rows are rolled back, so no data is left behind.
 -- Grant and time zone tests need the Docker setup. In CI they show SKIP.
 -- Run as root.
@@ -58,6 +58,7 @@ BEGIN
     SET @alp_db_now = NOW(3);
     SET @alp_default_logged_at = NULL;
     SET @alp_fake_logged_at = NULL;
+    SET @alp_client_row = NULL;
 
     START TRANSACTION;
 
@@ -75,6 +76,13 @@ BEGIN
 
     SELECT logged_at INTO @alp_fake_logged_at
     FROM user_access_logs WHERE log_id = @alp_fake_id;
+
+    INSERT INTO user_access_logs (user_account_id, action, details, ip_address, device_info, target_type, target_id)
+    VALUES (NULL, 'ALP_TEST', 'client info', '192.168.1.25', 'MotorPH-Desktop/test', 'EMPLOYEE', '5');
+    SET @alp_client_id = LAST_INSERT_ID();
+
+    SELECT CONCAT_WS('|', ip_address, device_info, target_type, target_id) INTO @alp_client_row
+    FROM user_access_logs WHERE log_id = @alp_client_id;
 
     SELECT COUNT(*) INTO @alp_select_rows
     FROM user_access_logs WHERE log_id = @alp_probe_id;
@@ -133,7 +141,7 @@ SELECT 'ALP-008', 'Negative', 'Row still exists after the DELETE attempt',
 INSERT INTO test_results (test_id, category, scenario, expected, actual, result)
 SELECT 'ALP-009', 'Cleanup', 'Test rows were rolled back',
        '0', COUNT(*), CASE WHEN COUNT(*) = 0 THEN 'PASS' ELSE 'FAIL' END
-FROM user_access_logs WHERE log_id IN (@alp_probe_id, @alp_fake_id);
+FROM user_access_logs WHERE log_id IN (@alp_probe_id, @alp_fake_id, @alp_client_id);
 
 -- ALP-010 to ALP-012: backend account grants (SKIP when there is no backend account)
 SET @alp_app_accounts := (
@@ -224,6 +232,36 @@ SELECT 'ALP-017', 'Setup', 'Database time zone is +08:00',
        '+08:00', @@global.time_zone,
        CASE WHEN @alp_app_accounts = 0 THEN 'SKIP'
             WHEN @@global.time_zone = '+08:00' THEN 'PASS' ELSE 'FAIL' END;
+
+-- ALP-018 to ALP-020: IP, device, and target are stored (Control 5.3)
+INSERT INTO test_results (test_id, category, scenario, expected, actual, result)
+SELECT 'ALP-018', 'Setup', 'target_type VARCHAR(50) and target_id VARCHAR(64) exist',
+       'varchar(50) varchar(64)',
+       CONCAT(MAX(CASE WHEN COLUMN_NAME = 'target_type' THEN COLUMN_TYPE END), ' ',
+              MAX(CASE WHEN COLUMN_NAME = 'target_id' THEN COLUMN_TYPE END)),
+       CASE WHEN MAX(CASE WHEN COLUMN_NAME = 'target_type' THEN COLUMN_TYPE END) = 'varchar(50)'
+             AND MAX(CASE WHEN COLUMN_NAME = 'target_id' THEN COLUMN_TYPE END) = 'varchar(64)'
+            THEN 'PASS' ELSE 'FAIL' END
+FROM information_schema.COLUMNS
+WHERE TABLE_SCHEMA = 'payrollsystem_db'
+  AND TABLE_NAME = 'user_access_logs'
+  AND COLUMN_NAME IN ('target_type', 'target_id');
+
+INSERT INTO test_results (test_id, category, scenario, expected, actual, result)
+SELECT 'ALP-019', 'Setup', 'Index on (target_type, target_id) exists',
+       'target_type,target_id', COALESCE(GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX), 'none'),
+       CASE WHEN GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX) = 'target_type,target_id'
+            THEN 'PASS' ELSE 'FAIL' END
+FROM information_schema.STATISTICS
+WHERE TABLE_SCHEMA = 'payrollsystem_db'
+  AND TABLE_NAME = 'user_access_logs'
+  AND INDEX_NAME = 'idx_user_access_logs_target';
+
+INSERT INTO test_results (test_id, category, scenario, expected, actual, result)
+SELECT 'ALP-020', 'Positive', 'IP, device, and target are saved on INSERT',
+       '192.168.1.25|MotorPH-Desktop/test|EMPLOYEE|5', COALESCE(@alp_client_row, 'NULL'),
+       CASE WHEN @alp_client_row = '192.168.1.25|MotorPH-Desktop/test|EMPLOYEE|5'
+            THEN 'PASS' ELSE 'FAIL' END;
 
 -- Results
 SELECT test_id, category, scenario, expected, actual, result

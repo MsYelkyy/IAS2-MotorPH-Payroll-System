@@ -78,7 +78,8 @@ public class SalaryBenefitService {
         ));
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_ADDED,
-                "Added salary record for employee ID " + employeeId + " effective " + request.startDate());
+                "Added salary record for employee ID " + employeeId + " effective " + request.startDate(),
+                UserAccessLogService.TARGET_EMPLOYEE, employeeId);
     }
 
     /**
@@ -104,7 +105,8 @@ public class SalaryBenefitService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SALARY_RECORD_UPDATED,
                 "Changed dates of salary record ID " + salaryHistoryId + " for employee ID "
-                        + existing.getEmployeeId() + " to " + startDate + " - " + (endDate == null ? "open" : endDate));
+                        + existing.getEmployeeId() + " to " + startDate + " - " + (endDate == null ? "open" : endDate),
+                UserAccessLogService.TARGET_SALARY_RECORD, salaryHistoryId);
     }
 
     public List<EmployeeBenefit> getAllBenefits(int employeeId) {
@@ -130,7 +132,8 @@ public class SalaryBenefitService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_BENEFIT_ENDED,
                 "Ended benefit ID " + employeeBenefitId + " for employee ID " + existing.getEmployeeId()
-                        + " effective " + endDate);
+                        + " effective " + endDate,
+                UserAccessLogService.TARGET_EMPLOYEE_BENEFIT, employeeBenefitId);
     }
 
     private void validateId(int id, String label) {

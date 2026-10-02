@@ -53,7 +53,7 @@ class UserAccountServiceTest {
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
         verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
-                "Changed own password.");
+                "Changed own password.", UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     @Test
@@ -77,7 +77,7 @@ class UserAccountServiceTest {
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
         verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
-                "Replaced temporary password.");
+                "Replaced temporary password.", UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     @Test
@@ -133,7 +133,8 @@ class UserAccountServiceTest {
 
         verify(userAccountRepository).updateRoles(ACCOUNT_ID, List.of(Role.EMPLOYEE, Role.HR));
         verify(userAccessLogService).logEvent(ACTOR_ID, UserAccessLogService.ACTION_USER_ROLES_UPDATED,
-                "Changed roles of employee ID 101 from [EMPLOYEE] to [EMPLOYEE, HR]");
+                "Changed roles of employee ID 101 from [EMPLOYEE] to [EMPLOYEE, HR]",
+                UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     private UserAccount accountWithPassword(String rawPassword) {

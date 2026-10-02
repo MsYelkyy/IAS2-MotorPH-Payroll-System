@@ -163,7 +163,8 @@ public class ReportController {
      */
     private ResponseEntity<byte[]> pdfResponse(byte[] pdf, String filename, String auditDetails) {
         userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
-                UserAccessLogService.ACTION_REPORT_EXPORTED, auditDetails);
+                UserAccessLogService.ACTION_REPORT_EXPORTED, auditDetails,
+                UserAccessLogService.TARGET_REPORT, filename);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")

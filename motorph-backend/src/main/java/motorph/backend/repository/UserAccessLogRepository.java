@@ -27,7 +27,9 @@ public class UserAccessLogRepository {
                    details,
                    ip_address,
                    device_info,
-                   logged_at
+                   logged_at,
+                   target_type,
+                   target_id
             FROM user_access_logs
             """;
 
@@ -48,9 +50,11 @@ public class UserAccessLogRepository {
                     action,
                     details,
                     ip_address,
-                    device_info
+                    device_info,
+                    target_type,
+                    target_id
                 )
-                VALUES (?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = dataSource.getConnection();
@@ -61,6 +65,8 @@ public class UserAccessLogRepository {
             stmt.setString(3, log.getDetails());
             stmt.setString(4, log.getIpAddress());
             stmt.setString(5, log.getDeviceInfo());
+            stmt.setString(6, log.getTargetType());
+            stmt.setString(7, log.getTargetId());
 
             stmt.executeUpdate();
 
@@ -150,7 +156,9 @@ public class UserAccessLogRepository {
                 rs.getString("details"),
                 rs.getString("ip_address"),
                 rs.getString("device_info"),
-                rs.getTimestamp("logged_at").toLocalDateTime()
+                rs.getTimestamp("logged_at").toLocalDateTime(),
+                rs.getString("target_type"),
+                rs.getString("target_id")
         );
     }
 

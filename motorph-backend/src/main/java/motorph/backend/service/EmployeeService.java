@@ -236,7 +236,8 @@ public class EmployeeService {
                 employeeId, employee.getFirstName(), employee.getLastName(), employee.getPersonalEmail());
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_CREATED,
-                "Created employee ID " + employeeId + " (" + employee.getFullName() + ")");
+                "Created employee ID " + employeeId + " (" + employee.getFullName() + ")",
+                UserAccessLogService.TARGET_EMPLOYEE, employeeId);
 
         return new EmployeeCreateResponse(getEmployeeProfileAdmin(employeeId), provisioning.credentialsPreview());
     }
@@ -308,7 +309,7 @@ public class EmployeeService {
 
         if (!changedSections.isEmpty()) {
             userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_UPDATED,
-                    describeUpdate(employeeId, changedSections));
+                    describeUpdate(employeeId, changedSections), UserAccessLogService.TARGET_EMPLOYEE, employeeId);
         }
 
         return getEmployeeProfileAdmin(employeeId);
@@ -523,7 +524,8 @@ public class EmployeeService {
         userAccountService.deactivateAccountByEmployeeId(employeeId);
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_EMPLOYEE_DEACTIVATED,
-                "Deactivated employee ID " + employeeId + " and disabled their user account");
+                "Deactivated employee ID " + employeeId + " and disabled their user account",
+                UserAccessLogService.TARGET_EMPLOYEE, employeeId);
     }
 
     private Employee buildEmployeeForCreate(EmployeeCreateRequest request) {

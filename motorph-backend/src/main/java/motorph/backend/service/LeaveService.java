@@ -186,7 +186,8 @@ public class LeaveService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_APPROVED,
                 "Approved leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId()
-                        + " (" + request.getStartDate() + " to " + request.getEndDate() + ")");
+                        + " (" + request.getStartDate() + " to " + request.getEndDate() + ")",
+                UserAccessLogService.TARGET_LEAVE_REQUEST, leaveRequestId);
     }
 
     public void rejectLeaveRequest(int actorEmployeeId, int actorUserAccountId, int leaveRequestId) {
@@ -208,7 +209,8 @@ public class LeaveService {
         );
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_REJECTED,
-                "Rejected leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId());
+                "Rejected leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId(),
+                UserAccessLogService.TARGET_LEAVE_REQUEST, leaveRequestId);
     }
 
     /**

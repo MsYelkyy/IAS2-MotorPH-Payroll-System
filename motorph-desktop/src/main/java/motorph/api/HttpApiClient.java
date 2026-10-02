@@ -20,11 +20,12 @@ import java.util.List;
 /**
  * Sends JSON requests to the backend using Java's default HTTP client.
  * Checks server certificates for HTTPS connections.
- * Adds the Bearer token and the user's selected role to each request.
+ * Adds the Bearer token, the user's selected role, and a User-Agent to each request.
  */
 public final class HttpApiClient {
 
     private static final String ACTIVE_ROLE_HEADER = "X-Active-Role";
+    static final String USER_AGENT = buildUserAgent();
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -153,6 +154,7 @@ public final class HttpApiClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
+                .header("User-Agent", USER_AGENT)
                 .timeout(Duration.ofSeconds(30));
 
         String accessToken = tokenHolder.getAccessToken();
@@ -168,6 +170,16 @@ public final class HttpApiClient {
         }
 
         return builder;
+    }
+
+    // Example: MotorPH-Desktop/1.0-SNAPSHOT (Windows 11 10.0; amd64; Java 21.0.5)
+    private static String buildUserAgent() {
+        String version = HttpApiClient.class.getPackage().getImplementationVersion();
+
+        return "MotorPH-Desktop/" + (version == null ? "dev" : version)
+                + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version")
+                + "; " + System.getProperty("os.arch")
+                + "; Java " + System.getProperty("java.version") + ")";
     }
 
     private HttpRequest.BodyPublisher jsonBody(Object body) {
