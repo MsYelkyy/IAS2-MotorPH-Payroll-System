@@ -19,7 +19,7 @@
            xmlns="http://javafx.com/javafx/21"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.auth.LoginController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/modules/auth/login.css, @../../../css/core/utilities.css">
+           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/core/feedback.css, @../../../css/modules/auth/login.css, @../../../css/core/utilities.css">
 
     <!-- Auth page -->
     <BorderPane styleClass="login-fullpage">

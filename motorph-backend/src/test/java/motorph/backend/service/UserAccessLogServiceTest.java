@@ -7,6 +7,8 @@ import motorph.backend.security.RequestClientInfo;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -148,6 +150,44 @@ class UserAccessLogServiceTest {
         assertThatThrownBy(() -> service.logEvent(ACTOR_ID, "REPORT_EXPORTED", "x",
                 UserAccessLogService.TARGET_REPORT, longId))
                 .isInstanceOf(ValidationException.class);
+    }
+
+    // Control 5.4
+
+    @Test
+    void supportTicketTargetRecordsTheTicketId() {
+        service.logEvent(ACTOR_ID, "SUPPORT_TICKET_RESOLVED", "Resolved support ticket ID 7",
+                UserAccessLogService.TARGET_SUPPORT_TICKET, 7);
+
+        assertSaved("SUPPORT_TICKET_RESOLVED", "SUPPORT_TICKET", "7");
+    }
+
+    @Test
+    void supportTicketTargetWithoutIdIsAllowed() {
+        service.logEvent(ACTOR_ID, "SUPPORT_TICKET_SUBMITTED", "Submitted a support ticket",
+                UserAccessLogService.TARGET_SUPPORT_TICKET, null);
+
+        assertSaved("SUPPORT_TICKET_SUBMITTED", "SUPPORT_TICKET", null);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ACCESS_DENIED", "OTP_FAILED", "ACCESS_LOG_VIEWED"})
+    void eventsWithoutATargetRecordIpAndDevice(String action) {
+        service.logEvent(ACTOR_ID, action, "Some details.");
+
+        assertSaved(action, null, null);
+    }
+
+    @Test
+    void controlFiveFourActionNamesAreStable() {
+        assertThat(UserAccessLogService.ACTION_SUPPORT_TICKET_SUBMITTED).isEqualTo("SUPPORT_TICKET_SUBMITTED");
+        assertThat(UserAccessLogService.ACTION_SUPPORT_TICKET_RESOLVED).isEqualTo("SUPPORT_TICKET_RESOLVED");
+        assertThat(UserAccessLogService.ACTION_SUPPORT_TICKET_CANCELLED).isEqualTo("SUPPORT_TICKET_CANCELLED");
+        assertThat(UserAccessLogService.ACTION_PROFILE_PHOTO_UPDATED).isEqualTo("PROFILE_PHOTO_UPDATED");
+        assertThat(UserAccessLogService.ACTION_ACCESS_DENIED).isEqualTo("ACCESS_DENIED");
+        assertThat(UserAccessLogService.ACTION_OTP_FAILED).isEqualTo("OTP_FAILED");
+        assertThat(UserAccessLogService.ACTION_ACCESS_LOG_VIEWED).isEqualTo("ACCESS_LOG_VIEWED");
+        assertThat(UserAccessLogService.TARGET_SUPPORT_TICKET).isEqualTo("SUPPORT_TICKET");
     }
 
     private void assertSaved(String action, String targetType, String targetId) {

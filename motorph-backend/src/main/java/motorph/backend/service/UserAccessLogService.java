@@ -46,6 +46,13 @@ public class UserAccessLogService {
     public static final String ACTION_PAYROLL_GENERATED = "PAYROLL_GENERATED";
     public static final String ACTION_PAYSLIP_EXPORTED = "PAYSLIP_EXPORTED";
     public static final String ACTION_REPORT_EXPORTED = "REPORT_EXPORTED";
+    public static final String ACTION_SUPPORT_TICKET_SUBMITTED = "SUPPORT_TICKET_SUBMITTED";
+    public static final String ACTION_SUPPORT_TICKET_RESOLVED = "SUPPORT_TICKET_RESOLVED";
+    public static final String ACTION_SUPPORT_TICKET_CANCELLED = "SUPPORT_TICKET_CANCELLED";
+    public static final String ACTION_PROFILE_PHOTO_UPDATED = "PROFILE_PHOTO_UPDATED";
+    public static final String ACTION_ACCESS_DENIED = "ACCESS_DENIED";
+    public static final String ACTION_OTP_FAILED = "OTP_FAILED";
+    public static final String ACTION_ACCESS_LOG_VIEWED = "ACCESS_LOG_VIEWED";
 
     public static final String TARGET_EMPLOYEE = "EMPLOYEE";
     public static final String TARGET_USER_ACCOUNT = "USER_ACCOUNT";
@@ -59,6 +66,7 @@ public class UserAccessLogService {
     public static final String TARGET_BACKUP_FILE = "BACKUP_FILE";
     public static final String TARGET_GOVERNMENT_RATE = "GOVERNMENT_RATE";
     public static final String TARGET_TAX_BRACKET = "TAX_BRACKET";
+    public static final String TARGET_SUPPORT_TICKET = "SUPPORT_TICKET";
     /** Target ID format: {@code <employeeId>:<payrunId>}. */
     public static final String TARGET_PAYSLIP = "PAYSLIP";
     /** Target ID is the report file name. */
@@ -68,7 +76,7 @@ public class UserAccessLogService {
             TARGET_EMPLOYEE, TARGET_USER_ACCOUNT, TARGET_LEAVE_REQUEST, TARGET_OVERTIME_REQUEST,
             TARGET_PAYRUN, TARGET_SALARY_RECORD, TARGET_EMPLOYEE_BENEFIT, TARGET_ROLE,
             TARGET_PASSWORD_RESET_REQUEST, TARGET_BACKUP_FILE, TARGET_GOVERNMENT_RATE,
-            TARGET_TAX_BRACKET, TARGET_PAYSLIP, TARGET_REPORT);
+            TARGET_TAX_BRACKET, TARGET_SUPPORT_TICKET, TARGET_PAYSLIP, TARGET_REPORT);
 
     private static final int MAX_DETAILS_LENGTH = 255;
     private static final int MAX_TARGET_ID_LENGTH = 64;

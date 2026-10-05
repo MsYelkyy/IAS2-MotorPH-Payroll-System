@@ -1,6 +1,7 @@
 package motorph.backend.service;
 
 import motorph.backend.exception.AuthenticationException;
+import motorph.backend.exception.OtpVerificationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.security.PasswordHasher;
 import motorph.backend.domain.UserAccount;
@@ -89,7 +90,13 @@ public class AuthenticationService {
         }
 
         validateAccountForLogin(account);
-        twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
+
+        try {
+            twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
+        } catch (OtpVerificationException e) {
+            logOtpFailed(account, e.getReason());
+            throw e;
+        }
 
         userAccountRepository.updateLastLogin(userAccountId);
         logSuccess(account);
@@ -168,5 +175,18 @@ public class AuthenticationService {
 
     private void logFailed(String companyEmail, String details) {
         userAccessLogService.logLoginFailed(companyEmail, details);
+    }
+
+    /**
+     * Records a failed OTP verification without storing the submitted code.
+     */
+    private void logOtpFailed(UserAccount account, OtpVerificationException.Reason reason) {
+        String details = switch (reason) {
+            case INVALID_CODE -> "OTP verification failed: incorrect code.";
+            case EXPIRED_OR_UNAVAILABLE -> "OTP verification failed: code expired or unavailable.";
+            case ATTEMPT_LIMIT_REACHED -> "OTP verification failed: attempt limit reached.";
+        };
+
+        userAccessLogService.logEvent(account.getUserAccountId(), UserAccessLogService.ACTION_OTP_FAILED, details);
     }
 }

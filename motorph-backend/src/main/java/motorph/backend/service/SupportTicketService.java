@@ -30,17 +30,24 @@ public class SupportTicketService {
 
     private final SupportTicketRepository supportTicketRepository;
     private final EmployeeRepository employeeRepository;
+    private final UserAccessLogService userAccessLogService;
 
     public SupportTicketService(SupportTicketRepository supportTicketRepository,
-                                EmployeeRepository employeeRepository) {
+                                EmployeeRepository employeeRepository,
+                                UserAccessLogService userAccessLogService) {
         this.supportTicketRepository = supportTicketRepository;
         this.employeeRepository = employeeRepository;
+        this.userAccessLogService = userAccessLogService;
     }
 
+    /**
+     * Submits a support ticket and records it in the audit log.
+     */
     public void submitTicket(int employeeId,
                              SupportTicketCategory category,
                              String subject,
-                             String description) {
+                             String description,
+                             int actorUserAccountId) {
 
         validateEmployeeId(employeeId);
         validateCategory(category);
@@ -58,6 +65,10 @@ public class SupportTicketService {
         );
 
         supportTicketRepository.save(ticket);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_SUBMITTED,
+                "Submitted a " + category.name() + " support ticket routed to " + routingTeam.name(),
+                UserAccessLogService.TARGET_SUPPORT_TICKET, null);
     }
 
     public SupportTicket getTicketById(int ticketId) {
@@ -128,9 +139,13 @@ public class SupportTicketService {
         }
 
         supportTicketRepository.markResolved(ticketId, resolvedByUserAccountId);
+
+        userAccessLogService.logEvent(resolvedByUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_RESOLVED,
+                "Resolved support ticket ID " + ticketId,
+                UserAccessLogService.TARGET_SUPPORT_TICKET, ticketId);
     }
 
-    public void cancelTicket(int ticketId, Role actorRole) {
+    public void cancelTicket(int ticketId, Role actorRole, int actorUserAccountId) {
         validateTicketId(ticketId);
 
         if (actorRole != Role.ADMIN) {
@@ -144,6 +159,10 @@ public class SupportTicketService {
         }
 
         supportTicketRepository.markCancelled(ticketId);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_CANCELLED,
+                "Cancelled support ticket ID " + ticketId,
+                UserAccessLogService.TARGET_SUPPORT_TICKET, ticketId);
     }
 
     private RoutingTeam requireHandlingTeam(Role role) {
