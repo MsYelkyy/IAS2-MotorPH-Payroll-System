@@ -9,7 +9,10 @@ import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.TooManyRequestsException;
 import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.exception.ValidationException;
+import motorph.backend.security.CurrentUserProvider;
+import motorph.backend.service.UserAccessLogService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.HandlerMapping;
 
 /**
  * Translates exceptions into the {@link ErrorResponse} format. Clients only ever see the stable
@@ -29,13 +33,23 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    private final UserAccessLogService userAccessLogService;
+    private final CurrentUserProvider currentUserProvider;
+
+    public GlobalExceptionHandler(UserAccessLogService userAccessLogService,
+                                  CurrentUserProvider currentUserProvider) {
+        this.userAccessLogService = userAccessLogService;
+        this.currentUserProvider = currentUserProvider;
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e) {
         return respond(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_FAILED", e.getMessage());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException e) {
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException e, HttpServletRequest request) {
+        logAccessDenied(request);
         return respond(HttpStatus.FORBIDDEN, "FORBIDDEN", e.getMessage());
     }
 
@@ -100,6 +114,33 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUnexpected(Exception e) {
         log.error("Unhandled exception", e);
         return respond(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "An internal error occurred.");
+    }
+
+    /**
+     * Logs access denied events for authenticated users.
+     * Only the request method and route are recorded.
+     * Logging errors do not affect the 403 response.
+     */
+    private void logAccessDenied(HttpServletRequest request) {
+        try {
+            int actorUserAccountId = currentUserProvider.getCurrentUserAccountId();
+
+            userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_ACCESS_DENIED,
+                    "Access denied: " + request.getMethod() + " " + routeOf(request));
+        } catch (UnauthorizedException noAuthenticatedUser) {
+            // No authenticated actor, so there is nobody to attribute the denial to.
+        } catch (RuntimeException auditFailure) {
+            log.error("Failed to write ACCESS_DENIED audit entry", auditFailure);
+        }
+    }
+
+    /**
+     * Returns the route template without including IDs or other path values.
+     */
+    private String routeOf(HttpServletRequest request) {
+        Object pattern = request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+
+        return pattern instanceof String route ? route : "(unmatched route)";
     }
 
     private ResponseEntity<ErrorResponse> respond(HttpStatus status, String code, String message) {

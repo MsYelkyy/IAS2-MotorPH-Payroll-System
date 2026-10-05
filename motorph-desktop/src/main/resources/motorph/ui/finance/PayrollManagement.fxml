@@ -67,20 +67,21 @@
                                         <Label fx:id="landingIncompleteEmployeesCard" text="0" styleClass="metric-value"/>
                                     </VBox>
                                 </HBox>
-                                <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
-                                           styleClass="payroll-table">
+                                <TableView fx:id="pendingTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430">
                                     <columns>
-                                        <TableColumn fx:id="pendingPayDateColumn" text="Payroll Date" prefWidth="140" minWidth="120"/>
-                                        <TableColumn fx:id="pendingPeriodColumn" text="Pay Period" prefWidth="220" minWidth="180"/>
-                                        <TableColumn fx:id="pendingEmployeesColumn" text="Employees" prefWidth="100" minWidth="90"/>
-                                        <TableColumn fx:id="pendingReadyColumn" text="Ready" prefWidth="100" minWidth="90"/>
-                                        <TableColumn fx:id="pendingIncompleteColumn" text="Incomplete" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="pendingStatusColumn" text="Status" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="pendingActionColumn" text="Actions" prefWidth="180" minWidth="160"/>
+                                        <TableColumn fx:id="pendingPayDateColumn" text="PAYROLL DATE" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="pendingPeriodColumn" text="PAY PERIOD" prefWidth="220" minWidth="180"/>
+                                        <TableColumn fx:id="pendingEmployeesColumn" text="EMPLOYEES" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="pendingReadyColumn" text="READY" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="pendingIncompleteColumn" text="INCOMPLETE" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="pendingStatusColumn" text="STATUS" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="pendingActionColumn" text="ACTIONS" prefWidth="180" minWidth="160"/>
                                     </columns>
                                     <placeholder>
-                                        <Label text="No pending payroll dates available." styleClass="muted-text"/>
-                                    </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No pending payroll dates available" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
                                 </TableView>
                             </VBox>
                         </content>
@@ -106,21 +107,22 @@
                                         <Label fx:id="landingTotalNetPayCard" text="PHP 0.00" styleClass="metric-value"/>
                                     </VBox>
                                 </HBox>
-                                <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
-                                           styleClass="payroll-table">
+                                <TableView fx:id="completedTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430">
                                     <columns>
-                                        <TableColumn fx:id="completedPayDateColumn" text="Payroll Date" prefWidth="130" minWidth="110"/>
-                                        <TableColumn fx:id="completedPeriodColumn" text="Pay Period" prefWidth="200" minWidth="160"/>
-                                        <TableColumn fx:id="completedPaidColumn" text="Employees Paid" prefWidth="120" minWidth="100"/>
-                                        <TableColumn fx:id="completedGrossColumn" text="Total Gross Pay" prefWidth="130" minWidth="110"/>
-                                        <TableColumn fx:id="completedDeductionsColumn" text="Total Deductions" prefWidth="130" minWidth="110"/>
-                                        <TableColumn fx:id="completedNetColumn" text="Total Net Pay" prefWidth="130" minWidth="110"/>
-                                        <TableColumn fx:id="completedStatusColumn" text="Status" prefWidth="100" minWidth="90"/>
-                                        <TableColumn fx:id="completedActionColumn" text="Actions" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="completedPayDateColumn" text="PAYROLL DATE" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedPeriodColumn" text="PAY PERIOD" prefWidth="200" minWidth="160"/>
+                                        <TableColumn fx:id="completedPaidColumn" text="EMPLOYEES PAID" prefWidth="120" minWidth="100"/>
+                                        <TableColumn fx:id="completedGrossColumn" text="TOTAL GROSS PAY" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedDeductionsColumn" text="TOTAL DEDUCTIONS" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedNetColumn" text="TOTAL NET PAY" prefWidth="130" minWidth="110"/>
+                                        <TableColumn fx:id="completedStatusColumn" text="STATUS" prefWidth="100" minWidth="90"/>
+                                        <TableColumn fx:id="completedActionColumn" text="ACTIONS" prefWidth="100" minWidth="90"/>
                                     </columns>
                                     <placeholder>
-                                        <Label text="No completed payroll dates available." styleClass="muted-text"/>
-                                    </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No completed payroll dates available" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
                                 </TableView>
                             </VBox>
                         </content>
@@ -157,20 +159,21 @@
                        styleClass="muted-text"/>
             </VBox>
 
-            <TableView fx:id="readinessTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470"
-                       styleClass="payroll-table">
+            <TableView fx:id="readinessTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470">
                 <columns>
-                    <TableColumn fx:id="readyEmpIdColumn" text="Employee ID" prefWidth="100" minWidth="90"/>
-                    <TableColumn fx:id="readyNameColumn" text="Employee Name" prefWidth="200" minWidth="160"/>
-                    <TableColumn fx:id="readyDeptColumn" text="Department" prefWidth="160" minWidth="120"/>
-                    <TableColumn fx:id="readyPositionColumn" text="Position" prefWidth="160" minWidth="120"/>
-                    <TableColumn fx:id="readyDaysColumn" text="Days Worked" prefWidth="110" minWidth="90"/>
-                    <TableColumn fx:id="readyHoursColumn" text="Total Hours" prefWidth="110" minWidth="90"/>
-                    <TableColumn fx:id="readyAttendanceColumn" text="Attendance Status" prefWidth="140" minWidth="120"/>
-                    <TableColumn fx:id="readyActionColumn" text="Actions" prefWidth="130" minWidth="110"/>
+                    <TableColumn fx:id="readyEmpIdColumn" text="EMPLOYEE ID" prefWidth="100" minWidth="90"/>
+                    <TableColumn fx:id="readyNameColumn" text="EMPLOYEE NAME" prefWidth="200" minWidth="160"/>
+                    <TableColumn fx:id="readyDeptColumn" text="DEPARTMENT" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="readyPositionColumn" text="POSITION" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="readyDaysColumn" text="DAYS WORKED" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="readyHoursColumn" text="TOTAL HOURS" prefWidth="110" minWidth="90"/>
+                    <TableColumn fx:id="readyAttendanceColumn" text="ATTENDANCE STATUS" prefWidth="140" minWidth="120"/>
+                    <TableColumn fx:id="readyActionColumn" text="ACTIONS" prefWidth="130" minWidth="110"/>
                 </columns>
                 <placeholder>
-                    <Label text="No employees found for this payroll date." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No employees found for this payroll date" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>
@@ -209,19 +212,20 @@
                         onAction="#clearResultFilters" styleClass="secondary-button"/>
             </HBox>
 
-            <TableView fx:id="resultTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470"
-                       styleClass="payroll-table">
+            <TableView fx:id="resultTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="470">
                 <columns>
-                    <TableColumn fx:id="resultEmployeeIdColumn" text="Employee ID" prefWidth="100" minWidth="80"/>
-                    <TableColumn fx:id="resultEmployeeColumn" text="Employee Name" prefWidth="200" minWidth="160"/>
-                    <TableColumn fx:id="resultGrossPayColumn" text="Gross Pay" prefWidth="130" minWidth="100"/>
-                    <TableColumn fx:id="resultDeductionsColumn" text="Deductions" prefWidth="130" minWidth="100"/>
-                    <TableColumn fx:id="resultNetPayColumn" text="Net Pay" prefWidth="130" minWidth="100"/>
-                    <TableColumn fx:id="resultStatusColumn" text="Status" prefWidth="90" minWidth="80"/>
-                    <TableColumn fx:id="resultActionColumn" text="Actions" prefWidth="220" minWidth="190"/>
+                    <TableColumn fx:id="resultEmployeeIdColumn" text="EMPLOYEE ID" prefWidth="100" minWidth="80"/>
+                    <TableColumn fx:id="resultEmployeeColumn" text="EMPLOYEE NAME" prefWidth="200" minWidth="160"/>
+                    <TableColumn fx:id="resultGrossPayColumn" text="GROSS PAY" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultDeductionsColumn" text="DEDUCTIONS" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultNetPayColumn" text="NET PAY" prefWidth="130" minWidth="100"/>
+                    <TableColumn fx:id="resultStatusColumn" text="STATUS" prefWidth="90" minWidth="80"/>
+                    <TableColumn fx:id="resultActionColumn" text="ACTIONS" prefWidth="220" minWidth="190"/>
                 </columns>
                 <placeholder>
-                    <Label text="No payroll results found." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No payroll results found" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>

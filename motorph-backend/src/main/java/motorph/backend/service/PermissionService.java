@@ -135,7 +135,8 @@ public class PermissionService {
                 UserAccessLogService.ACTION_ROLE_PERMISSIONS_UPDATED,
                 "Updated permissions of role " + role.name()
                         + ". Added: " + (added.isEmpty() ? "none" : String.join(", ", added))
-                        + ". Removed: " + (removed.isEmpty() ? "none" : String.join(", ", removed)));
+                        + ". Removed: " + (removed.isEmpty() ? "none" : String.join(", ", removed)),
+                UserAccessLogService.TARGET_ROLE, role.name());
     }
 
     public boolean hasPermission(PermissionKey permissionKey) {

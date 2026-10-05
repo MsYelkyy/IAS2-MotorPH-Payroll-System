@@ -7,7 +7,6 @@ import javafx.scene.Scene;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /** Provides helpers for navigating between top-level FXML scenes. */
 public final class NavigationUtil {
 
@@ -58,7 +57,6 @@ public final class NavigationUtil {
 
             Parent root = FXMLLoader.load(resource);
             scene.setRoot(root);
-            ThemeManager.getInstance().applyCurrentTo(root);
 
         } catch (Exception e) {
             logger.log(Level.SEVERE, "Navigation failed: " + fxmlPath, e);

@@ -32,11 +32,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
- * Every endpoint added in Phase 5 has to refuse a caller whose active role
- * lacks the permission, and refuse it before doing any work. These drive the
- * controllers directly with a PermissionService that denies everything, so a
- * gate that is missing or placed after the service call shows up as a
- * failure rather than as a quietly successful request.
+ * Verifies that protected endpoints reject users without the required permission.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -90,7 +86,8 @@ class Phase5PermissionGateTest {
     @DisplayName("Access log endpoints refuse a caller without VIEW_ACCESS_LOGS")
     void accessLogEndpointsAreGated() {
         UserAccessLogService userAccessLogService = mock(UserAccessLogService.class);
-        AccessLogController controller = new AccessLogController(userAccessLogService, denyAll());
+        AccessLogController controller =
+                new AccessLogController(userAccessLogService, denyAll(), currentUserProvider);
 
         assertAllDenied(userAccessLogService, Map.of(
                 "GET /access-logs", controller::getAllLogs,

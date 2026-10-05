@@ -31,18 +31,21 @@ public class ProfilePhotoService {
     private static final String FILE_PREFIX = "employee-";
 
     private final EmployeeRepository employeeRepository;
+    private final UserAccessLogService userAccessLogService;
     private final Path photoDirectory;
 
     public ProfilePhotoService(EmployeeRepository employeeRepository,
+                               UserAccessLogService userAccessLogService,
                                @Value("${motorph.photo.directory:profile-photos}") String photoDirectory) {
         this.employeeRepository = employeeRepository;
+        this.userAccessLogService = userAccessLogService;
         this.photoDirectory = Paths.get(photoDirectory).toAbsolutePath().normalize();
     }
 
     /**
-     * Stores the employee's uploaded photo, replacing any existing one.
+     * Stores the employee's profile photo and records the update in the audit log.
      */
-    public void storePhoto(int employeeId, byte[] content, String extension) {
+    public void storePhoto(int employeeId, byte[] content, String extension, int actorUserAccountId) {
         requireActiveEmployee(employeeId);
 
         if (content == null || content.length == 0) {
@@ -69,6 +72,10 @@ public class ProfilePhotoService {
         }
 
         employeeRepository.updatePhotoPath(employeeId, filename);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PROFILE_PHOTO_UPDATED,
+                "Updated profile photo of employee ID " + employeeId,
+                UserAccessLogService.TARGET_EMPLOYEE, employeeId);
     }
 
     public byte[] readPhoto(int employeeId) {

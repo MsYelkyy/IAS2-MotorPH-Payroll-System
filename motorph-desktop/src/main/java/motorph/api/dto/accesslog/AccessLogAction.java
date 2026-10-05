@@ -34,6 +34,13 @@ public final class AccessLogAction {
     public static final String PAYROLL_GENERATED = "PAYROLL_GENERATED";
     public static final String PAYSLIP_EXPORTED = "PAYSLIP_EXPORTED";
     public static final String REPORT_EXPORTED = "REPORT_EXPORTED";
+    public static final String SUPPORT_TICKET_SUBMITTED = "SUPPORT_TICKET_SUBMITTED";
+    public static final String SUPPORT_TICKET_RESOLVED = "SUPPORT_TICKET_RESOLVED";
+    public static final String SUPPORT_TICKET_CANCELLED = "SUPPORT_TICKET_CANCELLED";
+    public static final String PROFILE_PHOTO_UPDATED = "PROFILE_PHOTO_UPDATED";
+    public static final String ACCESS_DENIED = "ACCESS_DENIED";
+    public static final String OTP_FAILED = "OTP_FAILED";
+    public static final String ACCESS_LOG_VIEWED = "ACCESS_LOG_VIEWED";
 
     private AccessLogAction() {
     }

@@ -1,135 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.Hyperlink?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
-
-<StackPane fx:id="rootPane"
-           styleClass="root-canvas"
-           xmlns="http://javafx.com/javafx/21"
-           xmlns:fx="http://javafx.com/fxml/1"
+<StackPane fx:id="rootPane" styleClass="root-canvas, auth-page"
+           xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="motorph.ui.auth.LoginController"
-           stylesheets="@../../../css/core/base.css, @../../../css/core/tokens.css, @../../../css/themes/dark.css, @../../../css/themes/light.css, @../../../css/modules/auth/login.css, @../../../css/core/utilities.css">
-
-    <!-- Auth page -->
-    <BorderPane styleClass="login-fullpage">
-        <center>
-            <HBox>
-
-                <!-- LEFT: Hero brand panel -->
-                <StackPane styleClass="login-brand-panel" alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
-                    <VBox spacing="48" styleClass="hero-content">
-                        <VBox spacing="2">
-                            <HBox spacing="0" alignment="CENTER_LEFT">
-                                <Label text="Motor" styleClass="hero-brand-motor"/>
-                                <Label text="PH"    styleClass="hero-brand-ph"/>
-                            </HBox>
-                            <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="brand-system-label"/>
-                        </VBox>
-                        <VBox spacing="10">
-                            <Label text="The Workforce"   styleClass="hero-statement"/>
-                            <Label text="Payroll Platform." styleClass="hero-statement-accent"/>
-                            <Label text="Attendance tracking, payroll processing, leave management, and employee self-service — all in one secure platform built for MotorPH."
-                                   wrapText="true" styleClass="hero-subheading"/>
-                        </VBox>
-                    </VBox>
-                </StackPane>
-
-                <!-- RIGHT: Auth form panel -->
-                <VBox styleClass="login-form-panel" HBox.hgrow="NEVER" alignment="CENTER">
-
-                    <!-- Panel header / brand -->
-                    <HBox alignment="CENTER_LEFT" spacing="12" maxWidth="400" styleClass="form-panel-header">
-                        <HBox spacing="0" alignment="CENTER_LEFT">
-                            <Label text="Motor" styleClass="form-brand-motor"/>
-                            <Label text="PH"    styleClass="form-brand-ph"/>
-                        </HBox>
-                    </HBox>
-
-                    <!-- Auth card stack: login / otp / forgot-password -->
-                    <StackPane VBox.vgrow="ALWAYS" alignment="CENTER" maxWidth="400">
-
-                        <!-- LOGIN CARD -->
-                        <VBox fx:id="loginCard" spacing="18" styleClass="form-card">
-                            <VBox spacing="4">
-                                <Label text="Welcome Back"                                      styleClass="form-heading"/>
-                                <Label text="Sign in to continue to your employee workspace."
-                                       wrapText="true"                                          styleClass="form-subheading"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Company Email" styleClass="field-label"/>
-                                <TextField fx:id="companyEmailField" promptText="employee@motorph.com" styleClass="input-field"/>
-                            </VBox>
-                            <VBox spacing="7">
-                                <Label text="Password" styleClass="field-label"/>
-                                <StackPane>
-                                    <PasswordField fx:id="passwordField"     promptText="Enter your password" styleClass="input-field"/>
-                                    <TextField     fx:id="passwordTextField" promptText="Enter your password" styleClass="input-field" visible="false" managed="false"/>
-                                    <Button fx:id="passwordToggleBtn" text="Show" onAction="#togglePassword"
-                                            styleClass="password-toggle" StackPane.alignment="CENTER_RIGHT"/>
-                                </StackPane>
-                            </VBox>
-                            <HBox alignment="CENTER_LEFT" spacing="10">
-                                <CheckBox text="Remember me" styleClass="remember-check"/>
-                                <Region HBox.hgrow="ALWAYS"/>
-                                <Hyperlink text="Forgot Password" onAction="#handleForgotPassword" styleClass="quiet-link"/>
-                            </HBox>
-                            <Button text="Sign In" onAction="#handleLogin" maxWidth="Infinity" styleClass="signin-button"/>
-                            <HBox alignment="CENTER_LEFT" spacing="8" styleClass="security-badge">
-                                <Label text="🛡" styleClass="security-icon"/>
-                                <Label text="Protected by Two-Factor Authentication" styleClass="form-security-note"/>
-                            </HBox>
-                            <Label fx:id="loginMessageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
-                        </VBox>
-
-                        <!-- OTP CARD (sub-controller: OtpController) -->
-                        <fx:include fx:id="otpCard" source="otp.fxml" visible="false" managed="false"/>
-
-                        <!-- FORGOT PASSWORD (sub-controller: ForgotPasswordController) -->
-                        <fx:include fx:id="forgotCard" source="forgot-password.fxml" visible="false" managed="false"/>
-
-                        <!-- FORCE CHANGE PASSWORD (sub-controller: ForceChangePasswordController) -->
-                        <fx:include fx:id="forceChangeCard"
-                                    source="force-change-password.fxml"
-                                    visible="false"
-                                    managed="false"/>
-
-                    </StackPane>
-
-                    <!-- Footer bar -->
-                    <HBox alignment="CENTER_LEFT" spacing="10" maxWidth="400" styleClass="form-footer-bar">
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <HBox fx:id="globalControlsHostLogin" alignment="CENTER_RIGHT" spacing="6"/>
-                    </HBox>
-
+           stylesheets="@../../../css/core/feedback.css, @../../../css/modules/auth/login.css">
+    <GridPane>
+        <columnConstraints>
+            <ColumnConstraints percentWidth="40"/>
+            <ColumnConstraints percentWidth="60"/>
+        </columnConstraints>
+        <rowConstraints>
+            <RowConstraints percentHeight="100" vgrow="ALWAYS"/>
+        </rowConstraints>
+        <VBox styleClass="auth-brand-panel" GridPane.columnIndex="0">
+            <VBox spacing="3">
+                <Label text="MotorPH" styleClass="auth-brand-name"/>
+                <Label text="PAYROLL MANAGEMENT SYSTEM" styleClass="auth-brand-caption"/>
+            </VBox>
+            <Region VBox.vgrow="ALWAYS"/>
+            <VBox spacing="7" styleClass="auth-hero-content">
+                <Label text="EMPLOYEE WORKSPACE" styleClass="auth-eyebrow"/>
+                <VBox spacing="3">
+                    <Label text="The&#10;workforce" styleClass="auth-hero"/>
+                    <Label text="payroll&#10;platform." styleClass="auth-hero, auth-hero-dark"/>
                 </VBox>
-            </HBox>
-        </center>
-    </BorderPane>
-
-    <!-- Sliding options side panel -->
-    <VBox fx:id="sidePanel" visible="false" managed="false"
-          styleClass="side-panel" StackPane.alignment="TOP_RIGHT">
-        <VBox styleClass="side-panel-content">
-            <HBox alignment="CENTER_RIGHT" spacing="8">
-                <Label text="Options" styleClass="side-panel-title"/>
-                <Button text="✕" onAction="#toggleSidePanel" styleClass="side-panel-close"/>
-            </HBox>
-            <Separator/>
-            <Button text="Profile"          styleClass="side-panel-item"/>
-            <Button text="Notifications"    styleClass="side-panel-item"/>
-            <Button text="Help"             styleClass="side-panel-item"/>
+            </VBox>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Label text="v1.0.2" styleClass="auth-version"/>
         </VBox>
-    </VBox>
-
+        <ScrollPane fitToWidth="true" fitToHeight="true" hbarPolicy="NEVER"
+                    styleClass="auth-scroll" GridPane.columnIndex="1">
+            <StackPane styleClass="auth-form-panel">
+                <StackPane maxWidth="480" maxHeight="-Infinity" alignment="CENTER">
+                    <VBox fx:id="loginCard" spacing="22" styleClass="form-card">
+                        <Label text="SECURE SIGN IN" styleClass="form-eyebrow"/>
+                        <VBox spacing="12">
+                            <Label text="Welcome back" styleClass="form-heading"/>
+                            <Label text="Sign in to continue to your employee workspace."
+                                   wrapText="true" styleClass="form-subheading"/>
+                        </VBox>
+                        <VBox spacing="9">
+                            <Label text="Company email" styleClass="field-label"/>
+                            <TextField fx:id="companyEmailField" promptText="employee@motorph.com" styleClass="input-field"/>
+                        </VBox>
+                        <VBox spacing="9">
+                            <Label text="Password" styleClass="field-label"/>
+                            <StackPane styleClass="password-input">
+                                <PasswordField fx:id="passwordField" promptText="Enter your password" styleClass="input-field"/>
+                                <TextField fx:id="passwordTextField" promptText="Enter your password" styleClass="input-field"
+                                           visible="false" managed="false"/>
+                                <Button fx:id="passwordToggleBtn" text="Show" onAction="#togglePassword"
+                                        styleClass="password-toggle" StackPane.alignment="CENTER_RIGHT"/>
+                            </StackPane>
+                        </VBox>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <CheckBox text="Remember me" styleClass="remember-check"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Hyperlink text="Forgot password" onAction="#handleForgotPassword" styleClass="quiet-link"/>
+                        </HBox>
+                        <Button text="Sign in" onAction="#handleLogin" maxWidth="Infinity" styleClass="signin-button"/>
+                        <HBox alignment="CENTER_LEFT" spacing="10" styleClass="security-badge">
+                            <Label text="&#10003;" styleClass="security-icon"/>
+                            <Label text="Protected by two-factor authentication" wrapText="true"
+                                   styleClass="form-security-note" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+                        <Label fx:id="loginMessageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
+                    </VBox>
+                    <fx:include fx:id="otpCard" source="otp.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="forgotCard" source="forgot-password.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="forceChangeCard" source="force-change-password.fxml" visible="false" managed="false"/>
+                </StackPane>
+            </StackPane>
+        </ScrollPane>
+    </GridPane>
 </StackPane>

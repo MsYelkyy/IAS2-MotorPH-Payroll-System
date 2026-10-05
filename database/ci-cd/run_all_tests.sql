@@ -12,10 +12,12 @@
 --     b. Payroll Summary validation tests    (DBM-###)
 --     c. Edge-case tests                     (ECT-###)
 --     d. Performance evidence                (data volume, view sizes, indexes)
+--     e. Audit-log protection tests          (ALP-###)
 --
 -- Read-only
 --   These tests only read the payroll data -- they never change it. Each suite
 --   uses a TEMPORARY results table that is dropped when the session ends.
+--   Suite (e) inserts one test log row and rolls it back.
 --
 -- Run this after deploy_reports.sql
 --   The tests read the views and seeded data that deploy_reports.sql creates, so
@@ -56,6 +58,11 @@ SOURCE ../sql_scripts/report_edge_case_tests.sql;
 SELECT '========== (d) PERFORMANCE EVIDENCE ==========' AS suite;
 -- -----------------------------------------------------------------------------
 SOURCE ../sql_scripts/report_performance_test.sql;
+
+-- -----------------------------------------------------------------------------
+SELECT '========== (e) AUDIT-LOG PROTECTION TESTS ==========' AS suite;
+-- -----------------------------------------------------------------------------
+SOURCE ../sql_scripts/audit_log_protection_tests.sql;
 
 -- -----------------------------------------------------------------------------
 SELECT '========== ALL TEST SCRIPTS EXECUTED ==========' AS suite;

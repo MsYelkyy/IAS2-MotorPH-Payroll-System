@@ -4,14 +4,17 @@ import motorph.backend.dto.accesslog.AccessLogCountsDTO;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.domain.UserAccessLog;
 import motorph.backend.repository.UserAccessLogRepository;
+import motorph.backend.security.RequestClientInfo;
 
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Writes and reads audit log entries. Callers always pass the actor ID taken from the access token,
- * never a value supplied by the client.
+ * never a value supplied by the client. The IP address and device come from the current request,
+ * never from the caller.
  */
 @Service
 public class UserAccessLogService {
@@ -43,37 +46,59 @@ public class UserAccessLogService {
     public static final String ACTION_PAYROLL_GENERATED = "PAYROLL_GENERATED";
     public static final String ACTION_PAYSLIP_EXPORTED = "PAYSLIP_EXPORTED";
     public static final String ACTION_REPORT_EXPORTED = "REPORT_EXPORTED";
+    public static final String ACTION_SUPPORT_TICKET_SUBMITTED = "SUPPORT_TICKET_SUBMITTED";
+    public static final String ACTION_SUPPORT_TICKET_RESOLVED = "SUPPORT_TICKET_RESOLVED";
+    public static final String ACTION_SUPPORT_TICKET_CANCELLED = "SUPPORT_TICKET_CANCELLED";
+    public static final String ACTION_PROFILE_PHOTO_UPDATED = "PROFILE_PHOTO_UPDATED";
+    public static final String ACTION_ACCESS_DENIED = "ACCESS_DENIED";
+    public static final String ACTION_OTP_FAILED = "OTP_FAILED";
+    public static final String ACTION_ACCESS_LOG_VIEWED = "ACCESS_LOG_VIEWED";
+
+    public static final String TARGET_EMPLOYEE = "EMPLOYEE";
+    public static final String TARGET_USER_ACCOUNT = "USER_ACCOUNT";
+    public static final String TARGET_LEAVE_REQUEST = "LEAVE_REQUEST";
+    public static final String TARGET_OVERTIME_REQUEST = "OVERTIME_REQUEST";
+    public static final String TARGET_PAYRUN = "PAYRUN";
+    public static final String TARGET_SALARY_RECORD = "SALARY_RECORD";
+    public static final String TARGET_EMPLOYEE_BENEFIT = "EMPLOYEE_BENEFIT";
+    public static final String TARGET_ROLE = "ROLE";
+    public static final String TARGET_PASSWORD_RESET_REQUEST = "PASSWORD_RESET_REQUEST";
+    public static final String TARGET_BACKUP_FILE = "BACKUP_FILE";
+    public static final String TARGET_GOVERNMENT_RATE = "GOVERNMENT_RATE";
+    public static final String TARGET_TAX_BRACKET = "TAX_BRACKET";
+    public static final String TARGET_SUPPORT_TICKET = "SUPPORT_TICKET";
+    /** Target ID format: {@code <employeeId>:<payrunId>}. */
+    public static final String TARGET_PAYSLIP = "PAYSLIP";
+    /** Target ID is the report file name. */
+    public static final String TARGET_REPORT = "REPORT";
+
+    private static final Set<String> TARGET_TYPES = Set.of(
+            TARGET_EMPLOYEE, TARGET_USER_ACCOUNT, TARGET_LEAVE_REQUEST, TARGET_OVERTIME_REQUEST,
+            TARGET_PAYRUN, TARGET_SALARY_RECORD, TARGET_EMPLOYEE_BENEFIT, TARGET_ROLE,
+            TARGET_PASSWORD_RESET_REQUEST, TARGET_BACKUP_FILE, TARGET_GOVERNMENT_RATE,
+            TARGET_TAX_BRACKET, TARGET_SUPPORT_TICKET, TARGET_PAYSLIP, TARGET_REPORT);
 
     private static final int MAX_DETAILS_LENGTH = 255;
+    private static final int MAX_TARGET_ID_LENGTH = 64;
 
     private final UserAccessLogRepository repository;
+    private final RequestClientInfo requestClientInfo;
 
-    public UserAccessLogService(UserAccessLogRepository repository) {
+    public UserAccessLogService(UserAccessLogRepository repository, RequestClientInfo requestClientInfo) {
         this.repository = repository;
+        this.requestClientInfo = requestClientInfo;
     }
 
     public void logLoginSuccess(Integer userAccountId, String details) {
         validateUserAccountId(userAccountId);
 
-        repository.save(new UserAccessLog(
-                userAccountId,
-                ACTION_LOGIN_SUCCESS,
-                clean(details),
-                "",
-                ""
-        ));
+        save(userAccountId, ACTION_LOGIN_SUCCESS, clean(details), null, null);
     }
 
     public void logLoginFailed(String companyEmail, String details) {
         validateRequired(companyEmail, "Company email is required.");
 
-        repository.save(new UserAccessLog(
-                null,
-                ACTION_LOGIN_FAILED,
-                buildFailedLoginDetails(companyEmail, details),
-                "",
-                ""
-        ));
+        save(null, ACTION_LOGIN_FAILED, buildFailedLoginDetails(companyEmail, details), null, null);
     }
 
     /**
@@ -81,28 +106,24 @@ public class UserAccessLogService {
      * truncated rather than failing the write.
      */
     public void logEvent(int actorUserAccountId, String action, String details) {
+        logEvent(actorUserAccountId, action, details, null, null);
+    }
+
+    /**
+     * Logs an action performed by an authenticated user on a specific record. The target type must
+     * be one of the TARGET_ constants. The target ID may be null when the record has no ID yet.
+     */
+    public void logEvent(int actorUserAccountId, String action, String details, String targetType, Object targetId) {
         validateUserAccountId(actorUserAccountId);
         validateRequired(action, "Action is required.");
 
-        repository.save(new UserAccessLog(
-                actorUserAccountId,
-                action.trim(),
-                truncate(clean(details)),
-                "",
-                ""
-        ));
+        save(actorUserAccountId, action.trim(), truncate(clean(details)), targetType, targetId);
     }
 
     public void logLogout(int userAccountId) {
         validateUserAccountId(userAccountId);
 
-        repository.save(new UserAccessLog(
-                userAccountId,
-                ACTION_LOGOUT,
-                "User logged out.",
-                "",
-                ""
-        ));
+        save(userAccountId, ACTION_LOGOUT, "User logged out.", null, null);
     }
 
     /**
@@ -115,13 +136,8 @@ public class UserAccessLogService {
             throw new ValidationException("Target employee ID is required.");
         }
 
-        repository.save(new UserAccessLog(
-                actorUserAccountId,
-                ACTION_PASSWORD_RESET,
-                "Reset password for employee ID " + targetEmployeeId,
-                "",
-                ""
-        ));
+        save(actorUserAccountId, ACTION_PASSWORD_RESET, "Reset password for employee ID " + targetEmployeeId,
+                TARGET_EMPLOYEE, targetEmployeeId);
     }
 
     /**
@@ -140,37 +156,21 @@ public class UserAccessLogService {
                 + " to "
                 + clean(newStatus);
 
-        repository.save(new UserAccessLog(
-                actorUserAccountId,
-                ACTION_ACCOUNT_STATUS_CHANGED,
-                details,
-                "",
-                ""
-        ));
+        save(actorUserAccountId, ACTION_ACCOUNT_STATUS_CHANGED, details, TARGET_EMPLOYEE, targetEmployeeId);
     }
 
     public void logDatabaseBackupCreated(int actorUserAccountId, String filename) {
         validateUserAccountId(actorUserAccountId);
 
-        repository.save(new UserAccessLog(
-                actorUserAccountId,
-                ACTION_DATABASE_BACKUP_CREATED,
-                "Created backup: " + clean(filename),
-                "",
-                ""
-        ));
+        save(actorUserAccountId, ACTION_DATABASE_BACKUP_CREATED, "Created backup: " + clean(filename),
+                TARGET_BACKUP_FILE, clean(filename));
     }
 
     public void logDatabaseRestore(int actorUserAccountId, String filename) {
         validateUserAccountId(actorUserAccountId);
 
-        repository.save(new UserAccessLog(
-                actorUserAccountId,
-                ACTION_DATABASE_RESTORE,
-                "Restored from backup: " + clean(filename),
-                "",
-                ""
-        ));
+        save(actorUserAccountId, ACTION_DATABASE_RESTORE, "Restored from backup: " + clean(filename),
+                TARGET_BACKUP_FILE, clean(filename));
     }
 
     /**
@@ -198,19 +198,35 @@ public class UserAccessLogService {
         );
     }
 
-    /**
-     * Logs a custom action. Used for auditing changes to government rates.
-     */
-    public void logAction(Integer userAccountId, String action, String details, String ipAddress, String deviceInfo) {
-        validateRequired(action, "Action is required.");
+    private void save(Integer userAccountId, String action, String details, String targetType, Object targetId) {
+        validateTarget(targetType, targetId);
 
         repository.save(new UserAccessLog(
                 userAccountId,
-                action.trim(),
-                clean(details),
-                clean(ipAddress),
-                clean(deviceInfo)
+                action,
+                details,
+                requestClientInfo.getIpAddress(),
+                requestClientInfo.getDeviceInfo(),
+                targetType,
+                targetId == null ? null : String.valueOf(targetId)
         ));
+    }
+
+    private void validateTarget(String targetType, Object targetId) {
+        if (targetType == null) {
+            if (targetId != null) {
+                throw new ValidationException("Target type is required when a target ID is given.");
+            }
+            return;
+        }
+
+        if (!TARGET_TYPES.contains(targetType)) {
+            throw new ValidationException("Unknown audit target type: " + targetType);
+        }
+
+        if (targetId != null && String.valueOf(targetId).length() > MAX_TARGET_ID_LENGTH) {
+            throw new ValidationException("Audit target ID is too long.");
+        }
     }
 
     private void validateUserAccountId(Integer userAccountId) {

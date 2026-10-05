@@ -2,21 +2,19 @@ package motorph.ui.finance;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
-import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
+import motorph.ui.support.SupportTicketController;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -43,7 +41,6 @@ public class FinanceMainController {
     // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
-    @FXML private HBox  globalControlsHost;
 
     // Dashboard sub-view
     @FXML private VBox                       dashboardView;
@@ -63,30 +60,23 @@ public class FinanceMainController {
 
     // Support Tickets sub-view (shared support ticket pattern)
     @FXML private VBox                         supportTicketsView;
-    @FXML private FinanceSupportTicketController supportTicketsViewController;
-
-    // Footer
-    @FXML private Label appMessageLabel;
+    @FXML private SupportTicketController supportTicketsViewController;
 
     @FXML
     private void initialize() {
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
-        buildGlobalControls();
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
         wireDashboard();
         showDashboard();
         loadSidebarData();
         configureSwitchRoleButton();
-
-        UiMessageUtil.setSuccess(appMessageLabel, "Finance workspace is ready.");
     }
 
     // Navigation handlers
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
-        setHeader("Payroll Reporting Dashboard", "REPORTING AND ANALYTICS");
+        setHeader("Payroll Reporting Dashboard");
         showView(dashboardView);
         if (dashboardViewController != null) dashboardViewController.refresh();
     }
@@ -94,7 +84,7 @@ public class FinanceMainController {
     @FXML
     private void showPayroll() {
         setNavSelected(payrollNavButton);
-        setHeader("Payroll Management", "Create, generate, and review payruns");
+        setHeader("Payroll Management");
         showView(payrollView);
         if (payrollViewController != null) payrollViewController.refresh();
     }
@@ -102,7 +92,7 @@ public class FinanceMainController {
     @FXML
     private void showViewPayslip() {
         setNavSelected(viewPayslipNavButton);
-        setHeader("View Payslip", "SEARCH, PREVIEW, EXPORT, AND PRINT");
+        setHeader("View Payslip");
         showView(viewPayslipView);
         if (viewPayslipViewController != null) viewPayslipViewController.refresh();
     }
@@ -110,7 +100,7 @@ public class FinanceMainController {
     @FXML
     private void showReports() {
         setNavSelected(reportsNavButton);
-        setHeader("Reports", "Generate and preview organization reports");
+        setHeader("Reports");
         showView(reportsView);
         if (reportsViewController != null) reportsViewController.refresh();
     }
@@ -118,7 +108,7 @@ public class FinanceMainController {
     @FXML
     private void showSupportTickets() {
         setNavSelected(supportTicketsNavButton);
-        setHeader("Support Tickets", "Review and respond to payroll support requests");
+        setHeader("Support Tickets");
         showView(supportTicketsView);
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
@@ -138,9 +128,9 @@ public class FinanceMainController {
     @FXML
     private void handleSwitchRole() {
         try {
-            RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
+            RoleSwitchHelper.switchToNext(rootPane.getScene(), pageTitleLabel);
         } catch (Exception e) {
-            UiMessageUtil.setError(appMessageLabel, "Could not switch role: " + UiMessageUtil.toUserMessage(e));
+            UiMessageUtil.setError(pageTitleLabel, "Could not switch role: " + UiMessageUtil.toUserMessage(e));
         }
     }
 
@@ -156,8 +146,8 @@ public class FinanceMainController {
                 dashboardNavButton, payrollNavButton, viewPayslipNavButton, reportsNavButton, supportTicketsNavButton);
     }
 
-    private void setHeader(String title, String subtitle) {
-        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
+    private void setHeader(String title) {
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, "FINANCE WORKSPACE");
     }
 
     private void showView(Node view) {
@@ -183,11 +173,9 @@ public class FinanceMainController {
 
     private void configureSwitchRoleButton() {
         boolean show = CurrentUserSession.hasMultipleRoles();
+        if (show) switchRoleButton.setText("Switch to " + RoleSwitchHelper.nextRoleLabel());
         switchRoleButton.setVisible(show);
         switchRoleButton.setManaged(show);
     }
 
-    private void buildGlobalControls() {
-        GlobalControlsHelper.build(globalControlsHost, rootPane, null);
-    }
 }

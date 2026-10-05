@@ -9,22 +9,17 @@ import motorph.api.AuthApiClient;
 import motorph.api.dto.auth.LoginResponse;
 import motorph.ui.factory.EmployeeUIServiceFactory;
 import motorph.ui.session.CurrentUserSession;
-import motorph.ui.util.AnimationUtil;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
 import java.time.LocalDateTime;
 
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -35,9 +30,6 @@ public class LoginController {
 
     private AuthApiClient authApiClient;
     private boolean passwordVisible = false;
-
-    private ComboBox<String> languageCombo;
-    private ComboBox<String> themeCombo;
 
     @FXML private StackPane rootPane;
     @FXML private VBox loginCard;
@@ -52,21 +44,14 @@ public class LoginController {
     @FXML private TextField passwordTextField;
     @FXML private Button passwordToggleBtn;
     @FXML private Label loginMessageLabel;
-    @FXML private HBox globalControlsHostLogin;
-    @FXML private VBox sidePanel;
-    @FXML private VBox floatingNetPayCard;
-    @FXML private VBox floatingAttendanceCard;
-    @FXML private VBox floatingLeaveCard;
-    @FXML private VBox floatingPaydayCard;
-    @FXML private VBox floatingPayslipCard;
 
     // initializes login page dependencies and controls
     @FXML
     private void initialize() {
         authApiClient = ApiClientFactory.getInstance().getAuthApiClient();
 
-        buildGlobalControls();
         wireSubControllers();
+        loginMessageLabel.managedProperty().bind(loginMessageLabel.textProperty().isNotEmpty());
 
         companyEmailField.textProperty().addListener((obs, oldValue, newValue) ->
                 UiMessageUtil.clearMessage(loginMessageLabel));
@@ -82,12 +67,7 @@ public class LoginController {
         passwordField.setOnAction(event -> handleLogin());
         passwordTextField.setOnAction(event -> handleLogin());
 
-        initSidePanel();
-
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
-
         showLoginCard();
-        startLoginAnimations();
     }
 
     // navigates to the highest role workspace after successful login
@@ -226,21 +206,6 @@ public class LoginController {
         passwordToggleBtn.setText("Show");
     }
 
-    // toggles the side panel
-    @FXML
-    private void toggleSidePanel() {
-        if (sidePanel == null) {
-            return;
-        }
-
-        if (sidePanel.isVisible()) {
-            AnimationUtil.slideOutToRight(sidePanel, 280, null);
-            return;
-        }
-
-        AnimationUtil.slideInFromRight(sidePanel, 280);
-    }
-
     // feeds the backend's dev-only OTP preview into the app's existing
     // EmailPreviewService, which Main.java's global listener renders via
     // EmailPreviewDialog - unchanged from how this always worked pre-migration
@@ -257,23 +222,6 @@ public class LoginController {
         );
 
         EmployeeUIServiceFactory.getInstance().getEmailPreviewService().savePreview(preview);
-    }
-
-    // validates login input fields
-    private boolean isLoginInputValid(String email, String password) {
-        boolean valid = true;
-
-        if (!UiValidationUtil.isMotorphEmail(email)) {
-            UiValidationUtil.markInvalid(companyEmailField);
-            valid = false;
-        }
-
-        if (password.isEmpty()) {
-            UiValidationUtil.markInvalid(passwordField);
-            valid = false;
-        }
-
-        return valid;
     }
 
     // shows the selected auth card
@@ -316,44 +264,6 @@ public class LoginController {
         }
     }
 
-    // builds global language and theme controls
-    private void buildGlobalControls() {
-        if (globalControlsHostLogin == null) {
-            return;
-        }
-
-        languageCombo = new ComboBox<>();
-        languageCombo.getStyleClass().add("global-combo");
-        languageCombo.setMinWidth(150);
-        languageCombo.setPrefWidth(150);
-        languageCombo.setMaxWidth(150);
-        languageCombo.getItems().setAll("English", "Filipino");
-        languageCombo.setValue(ThemeManager.getInstance().getCurrentLanguage());
-        languageCombo.setOnAction(e -> ThemeManager.getInstance().setLanguage(languageCombo.getValue(), rootPane));
-
-        themeCombo = new ComboBox<>();
-        themeCombo.getStyleClass().add("global-combo");
-        themeCombo.setMinWidth(150);
-        themeCombo.setPrefWidth(150);
-        themeCombo.setMaxWidth(150);
-        themeCombo.getItems().setAll("System", "Light", "Dark");
-        themeCombo.setValue(ThemeManager.getInstance().getCurrentTheme());
-        themeCombo.setOnAction(e -> ThemeManager.getInstance().setTheme(themeCombo.getValue(), rootPane));
-
-        Button moreBtn = new Button("⋮");
-        moreBtn.getStyleClass().add("more-button");
-        moreBtn.setOnAction(e -> toggleSidePanel());
-
-        globalControlsHostLogin.setPickOnBounds(false);
-        globalControlsHostLogin.getChildren().setAll(languageCombo, themeCombo, moreBtn);
-
-        for (Node node : globalControlsHostLogin.getParent().getChildrenUnmodifiable()) {
-            if (node != globalControlsHostLogin && node instanceof javafx.scene.layout.Region region) {
-                region.setPickOnBounds(false);
-            }
-        }
-    }
-
     // connects included controllers to this controller
     private void wireSubControllers() {
         if (otpCardController != null) {
@@ -369,29 +279,4 @@ public class LoginController {
         }
     }
 
-    // hides the side panel on startup
-    private void initSidePanel() {
-        if (sidePanel != null) {
-            sidePanel.setVisible(false);
-            sidePanel.setManaged(false);
-        }
-    }
-
-    // starts login animations
-    private void startLoginAnimations() {
-        AnimationUtil.fadeIn(loginCard, 220, 0);
-        AnimationUtil.scaleIn(loginCard, 240, 0);
-
-        AnimationUtil.floatNode(floatingNetPayCard, -8, 4.8, 0.1);
-        AnimationUtil.floatNode(floatingAttendanceCard, 9, 5.6, 0.6);
-        AnimationUtil.floatNode(floatingLeaveCard, -7, 5.2, 1.0);
-        AnimationUtil.floatNode(floatingPaydayCard, 6, 6.0, 0.4);
-        AnimationUtil.floatNode(floatingPayslipCard, -6, 5.8, 0.8);
-
-        AnimationUtil.fadeIn(floatingNetPayCard, 420, 100);
-        AnimationUtil.fadeIn(floatingAttendanceCard, 420, 100);
-        AnimationUtil.fadeIn(floatingLeaveCard, 420, 100);
-        AnimationUtil.fadeIn(floatingPaydayCard, 420, 100);
-        AnimationUtil.fadeIn(floatingPayslipCard, 420, 100);
-    }
 }

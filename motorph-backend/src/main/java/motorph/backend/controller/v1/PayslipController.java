@@ -66,7 +66,8 @@ public class PayslipController {
 
         userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
                 UserAccessLogService.ACTION_PAYSLIP_EXPORTED,
-                "Exported payslip of employee ID " + employeeId + " for payrun ID " + payrunId);
+                "Exported payslip of employee ID " + employeeId + " for payrun ID " + payrunId,
+                UserAccessLogService.TARGET_PAYSLIP, employeeId + ":" + payrunId);
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,

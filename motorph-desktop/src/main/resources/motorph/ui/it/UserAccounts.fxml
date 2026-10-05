@@ -37,18 +37,19 @@
 
         <!-- Account list -->
         <VBox styleClass="content-card" spacing="0" HBox.hgrow="ALWAYS">
-            <TableView fx:id="accountTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                       styleClass="payroll-table, accounts-table">
+            <TableView fx:id="accountTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <columns>
                     <TableColumn fx:id="accountIdColumn" text="ID" prefWidth="70" minWidth="60"/>
-                    <TableColumn fx:id="employeeIdColumn" text="Emp ID" prefWidth="90" minWidth="70"/>
-                    <TableColumn fx:id="emailColumn" text="Company Email" prefWidth="260" minWidth="190"/>
-                    <TableColumn fx:id="rolesColumn" text="Roles" prefWidth="180" minWidth="130"/>
-                    <TableColumn fx:id="statusColumn" text="Status" prefWidth="120" minWidth="100"/>
-                    <TableColumn fx:id="actionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="employeeIdColumn" text="EMP ID" prefWidth="90" minWidth="70"/>
+                    <TableColumn fx:id="emailColumn" text="COMPANY EMAIL" prefWidth="260" minWidth="190"/>
+                    <TableColumn fx:id="rolesColumn" text="ROLES" prefWidth="180" minWidth="130"/>
+                    <TableColumn fx:id="statusColumn" text="STATUS" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="actionColumn" text="ACTIONS" prefWidth="120" minWidth="100"/>
                 </columns>
                 <placeholder>
-                    <Label text="No user accounts found." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No user accounts found" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>

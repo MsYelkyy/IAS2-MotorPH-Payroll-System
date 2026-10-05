@@ -175,7 +175,8 @@ public class PasswordResetService {
         passwordResetRequestRepository.markCancelled(request.getResetRequestId(), cancellerEmployeeId);
 
         userAccessLogService.logEvent(cancellerUserAccountId, UserAccessLogService.ACTION_PASSWORD_RESET_CANCELLED,
-                "Cancelled password reset request ID " + resetRequestId);
+                "Cancelled password reset request ID " + resetRequestId,
+                UserAccessLogService.TARGET_PASSWORD_RESET_REQUEST, resetRequestId);
     }
 
     private PasswordResetRequestRowDTO toRow(PasswordResetRequest request,

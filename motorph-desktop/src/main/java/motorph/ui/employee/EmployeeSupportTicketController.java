@@ -6,6 +6,7 @@ import motorph.api.ApiClientFactory;
 import motorph.api.SupportTicketApiClient;
 import motorph.api.dto.support.SupportTicketDTO;
 import motorph.api.dto.support.TicketSubmitRequest;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import java.util.logging.Level;
@@ -207,6 +209,21 @@ public class EmployeeSupportTicketController {
         colCategory.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getCategory().name()));
 
+        colCategory.setCellFactory(col -> new TableCell<>() {
+            @Override
+            protected void updateItem(String category, boolean empty) {
+                super.updateItem(category, empty);
+                if (empty || category == null) {
+                    setGraphic(null);
+                    return;
+                }
+                Label badge = new Label(category);
+                badge.getStyleClass().addAll("status-badge", "status-completed");
+                setGraphic(badge);
+                setText(null);
+            }
+        });
+
         colTitle.setCellValueFactory(data ->
                 new SimpleStringProperty(data.getValue().getSubject()));
 
@@ -217,17 +234,21 @@ public class EmployeeSupportTicketController {
             @Override
             protected void updateItem(String status, boolean empty) {
                 super.updateItem(status, empty);
-                getStyleClass().removeAll(
-                        "ticket-status-open", "ticket-status-resolved", "ticket-status-cancelled");
                 if (empty || status == null || getIndex() < 0
                         || getIndex() >= getTableView().getItems().size()) {
+                    setGraphic(null);
                     setText(null);
-                } else {
-                    setText(status);
-                    SupportTicketStatus ticketStatus =
-                            getTableView().getItems().get(getIndex()).getStatus();
-                    getStyleClass().add("ticket-status-" + ticketStatus.name().toLowerCase());
+                    return;
                 }
+                SupportTicketStatus ticketStatus = getTableView().getItems().get(getIndex()).getStatus();
+                Label badge = new Label(status.toUpperCase(Locale.ROOT));
+                badge.getStyleClass().addAll("status-badge", switch (ticketStatus) {
+                    case OPEN      -> "status-ready";
+                    case RESOLVED  -> "status-completed";
+                    case CANCELLED -> "status-none";
+                });
+                setGraphic(badge);
+                setText(null);
             }
         });
 
@@ -264,9 +285,8 @@ public class EmployeeSupportTicketController {
 
         ticketTable.getItems().setAll(allTickets.subList(from, to));
         pageLabel.setText("Page " + currentPage + " of " + totalPages);
-        recordInfoLabel.setText(total == 0
-                ? "No tickets found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " tickets");
+        EmptyState.apply(ticketTable, total > 0, "tickets", "Submit a ticket and it will appear here.");
+        recordInfoLabel.setText(EmptyState.recordInfo(from, to, total, total, "tickets"));
         prevButton.setDisable(currentPage <= 1);
         nextButton.setDisable(currentPage >= totalPages);
     }

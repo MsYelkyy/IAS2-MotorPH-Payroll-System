@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.shape.SVGPath?>
+<!-- Native JavaFX vector icon. -->
+<Pane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      minWidth="16" prefWidth="16" maxWidth="16" minHeight="16" prefHeight="16" maxHeight="16" mouseTransparent="true">
+    <SVGPath content="M8 5.33333C11.3137 5.33333 14 4.4379 14 3.33333C14 2.22876 11.3137 1.33333 8 1.33333C4.68629 1.33333 2 2.22876 2 3.33333C2 4.4379 4.68629 5.33333 8 5.33333Z" fill="TRANSPARENT" stroke="#C8CBD3" strokeWidth="1.2" strokeLineCap="ROUND" strokeLineJoin="ROUND" styleClass="nav-icon-path"/>
+    <SVGPath content="M14 8C14 9.10457 11.3137 10 8 10C4.68629 10 2 9.10457 2 8M2 3.33333V12.6667C2 13.7712 4.68629 14.6667 8 14.6667C11.3137 14.6667 14 13.7712 14 12.6667V3.33333" fill="TRANSPARENT" stroke="#C8CBD3" strokeWidth="1.2" strokeLineCap="ROUND" strokeLineJoin="ROUND" styleClass="nav-icon-path"/>
+</Pane>

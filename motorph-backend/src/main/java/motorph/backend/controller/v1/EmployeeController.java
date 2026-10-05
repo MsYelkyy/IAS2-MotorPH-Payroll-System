@@ -40,13 +40,11 @@ import java.util.List;
 @RequestMapping("/api/v1")
 public class EmployeeController {
 
-    // read-only lookups that payroll and report screens need to pick employees and departments
     private static final PermissionKey[] DIRECTORY_READERS = {
             PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE,
             PermissionKey.VIEW_PAYROLL, PermissionKey.VIEW_REPORTS, PermissionKey.GENERATE_REPORTS
     };
 
-    // profile and government IDs shown on payroll screens and payslips
     private static final PermissionKey[] PAYROLL_DETAIL_READERS = {
             PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE, PermissionKey.VIEW_PAYROLL
     };
@@ -106,13 +104,12 @@ public class EmployeeController {
     }
 
     /**
-     * Uploads the caller's profile photo as raw image bytes. The extension is checked against an
-     * allowlist because it becomes part of the stored filename.
+     * Uploads and stores the user's profile photo.
      */
     @PostMapping(value = "/employees/me/photo", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public void uploadOwnPhoto(@RequestParam String extension, @RequestBody byte[] content) {
-        int employeeId = currentUserProvider.getCurrentPrincipal().employeeId();
-        profilePhotoService.storePhoto(employeeId, content, extension);
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+        profilePhotoService.storePhoto(principal.employeeId(), content, extension, principal.userAccountId());
     }
 
     /**

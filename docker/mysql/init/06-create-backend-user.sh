@@ -12,6 +12,10 @@
 #       CREATE USER 'motorph_backend'@'<scoped host>' IDENTIFIED BY '<password>';
 #       GRANT SELECT, INSERT, UPDATE, DELETE ON payrollsystem_db.* TO ...;
 #
+#   Exception: user_access_logs gets INSERT and SELECT only, so the backend
+#   cannot change or delete audit logs. UPDATE and DELETE are granted per
+#   table for every other table.
+#
 #   No GRANT OPTION, no DDL rights, no access to other schemas, host-scoped
 #   rather than '%'. This script reproduces exactly that grant set inside the
 #   container, so the Dockerized environment matches the documented one and
@@ -20,8 +24,8 @@
 #
 # When it runs
 #   Only on first initialization of the mysql-data volume, after the schema,
-#   the auth-table migration, the seed and the report-view scripts (files are
-#   processed in filename order).
+#   the report-view and the audit-log protection scripts (files are processed
+#   in filename order). It must run after the schema so the table list exists.
 #
 # Notes
 #   * The password is read from the environment; it is never written into the
@@ -51,18 +55,36 @@ else
 
     echo "[motorph-init] Creating '${motorph_db_user}'@'${motorph_db_client_host}' on ${motorph_db_name}"
 
+    # Every table except user_access_logs gets UPDATE and DELETE.
+    motorph_tables="$(MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql --protocol=socket -u root -h localhost -N -B -e         "SELECT TABLE_NAME FROM information_schema.TABLES
+         WHERE TABLE_SCHEMA = '${motorph_db_name}'
+           AND TABLE_TYPE = 'BASE TABLE'
+           AND TABLE_NAME <> 'user_access_logs'
+         ORDER BY TABLE_NAME")"
+
+    if [ -z "$motorph_tables" ]; then
+        echo "[motorph-init] No tables found in ${motorph_db_name}. UPDATE/DELETE grants were NOT added." >&2
+    fi
+
+    motorph_update_delete_grants=""
+    for motorph_table in $motorph_tables; do
+        motorph_update_delete_grants="${motorph_update_delete_grants}GRANT UPDATE, DELETE ON \`${motorph_db_name}\`.\`${motorph_table}\` TO '${motorph_db_user}'@'${motorph_db_client_host}';
+"
+    done
+
     # MYSQL_PWD keeps the root password off the command line / process list.
     # The statements come in over stdin, so the account password is not logged.
     MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql --protocol=socket -u root -h localhost <<-MOTORPH_SQL
 	CREATE USER IF NOT EXISTS '${motorph_db_user}'@'${motorph_db_client_host}'
 	    IDENTIFIED BY '${motorph_db_password_escaped}';
 
-	GRANT SELECT, INSERT, UPDATE, DELETE
+	GRANT SELECT, INSERT
 	    ON \`${motorph_db_name}\`.*
 	    TO '${motorph_db_user}'@'${motorph_db_client_host}';
 
+	${motorph_update_delete_grants}
 	FLUSH PRIVILEGES;
 	MOTORPH_SQL
 
-    echo "[motorph-init] Backend database account ready (SELECT, INSERT, UPDATE, DELETE only)."
+    echo "[motorph-init] Backend database account ready (SELECT, INSERT; UPDATE, DELETE on all tables except user_access_logs)."
 fi

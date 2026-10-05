@@ -41,11 +41,13 @@ public class SupportTicketController {
 
     @PostMapping
     public void submitTicket(@RequestBody TicketSubmitRequest request) {
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         supportTicketService.submitTicket(
-                callerEmployeeId(),
+                principal.employeeId(),
                 SupportTicketCategory.fromValue(request.category()),
                 request.subject(),
-                request.description()
+                request.description(),
+                principal.userAccountId()
         );
     }
 
@@ -78,7 +80,8 @@ public class SupportTicketController {
 
     @PostMapping("/{ticketId}/cancel")
     public void cancelTicket(@PathVariable int ticketId) {
-        supportTicketService.cancelTicket(ticketId, permissionService.getActiveRole());
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+        supportTicketService.cancelTicket(ticketId, permissionService.getActiveRole(), principal.userAccountId());
     }
 
     private int callerEmployeeId() {

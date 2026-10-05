@@ -195,7 +195,8 @@ public class UserAccountService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_USER_ROLES_UPDATED,
                 "Changed roles of employee ID " + account.getEmployeeId()
-                        + " from " + account.getRoles() + " to " + roles);
+                        + " from " + account.getRoles() + " to " + roles,
+                UserAccessLogService.TARGET_USER_ACCOUNT, userAccountId);
     }
 
     /**
@@ -219,7 +220,7 @@ public class UserAccountService {
         writePassword(userAccountId, newPassword);
 
         userAccessLogService.logEvent(userAccountId, UserAccessLogService.ACTION_PASSWORD_CHANGED,
-                "Changed own password.");
+                "Changed own password.", UserAccessLogService.TARGET_USER_ACCOUNT, userAccountId);
     }
 
     /**
@@ -244,7 +245,7 @@ public class UserAccountService {
         writePassword(userAccountId, newPassword);
 
         userAccessLogService.logEvent(userAccountId, UserAccessLogService.ACTION_PASSWORD_CHANGED,
-                "Replaced temporary password.");
+                "Replaced temporary password.", UserAccessLogService.TARGET_USER_ACCOUNT, userAccountId);
     }
 
     private void writePassword(int userAccountId, String newPassword) {

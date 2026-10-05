@@ -1,243 +1,124 @@
-/* ══════════════════════════════════════════════════
-   MODULES — AUTH / LOGIN
-   All selectors that are exclusive to the two-panel
-   login page and its fx:included auth cards.
-
-   Load order in login.fxml:
-     base.css → tokens.css → dark.css → light.css
-       → login.css → utilities.css
-
-   What belongs here:
-     Login layout, brand panel, form panel, auth cards.
-   What does NOT belong here:
-     Shared form controls  → dark.css
-     Theme overrides       → themes/light.css
-   ══════════════════════════════════════════════════ */
-
-
-/* ── Full-page wrapper ───────────────────────────── */
-.login-fullpage {
-    -fx-background-color: #111114;
-}
-
-
-/* ── Brand panel (left) ──────────────────────────── */
-.login-brand-panel {
-    -fx-min-width: 380;
-    -fx-background-color:
-        radial-gradient(center 8% 8%, radius 60%, rgba(200,15,15,0.22), transparent),
-        linear-gradient(to bottom right, #1A1A1E, #111114 55%, #0E0E12);
-    -fx-border-color: transparent rgba(255,40,40,0.18) transparent transparent;
-    -fx-border-width: 0 1 0 0;
-}
-
-.hero-content {
-    -fx-padding: 48;
-}
-
-/* Decorative depth circles */
-.deco-circle-1 { -fx-fill: rgba(59,130,246,0.08);   -fx-translate-x:  110; -fx-translate-y:  150; }
-.deco-circle-2 { -fx-fill: rgba(34,197,94,0.05);    -fx-translate-x:  -80; -fx-translate-y:   30; }
-.deco-circle-3 { -fx-fill: rgba(255,255,255,0.035); -fx-translate-x: -130; -fx-translate-y: -140; }
-
-/* Frosted glass content layer */
-.brand-content-layer {
-    -fx-background-color: rgba(0,0,0,0.30);
-    -fx-background-radius: 24;
-    -fx-padding: 44 36 44 36;
-    -fx-max-width: 310;
-}
-
-/* Logo mark */
-.logo-ring-glow   { -fx-fill: rgba(11,37,69,0.20); }
-.logo-ring-outer,
-.form-logo-ring   { -fx-fill: transparent; -fx-stroke: #0B2545; -fx-stroke-width: 2.5; }
-.logo-ring-inner,
-.form-logo-inner  { -fx-fill: #171a1f; }
-.logo-letter,
-.form-logo-letter { -fx-font-weight: 900; -fx-text-fill: #FBBF24; }
-.logo-letter      { -fx-font-size: 44px; -fx-translate-y: -6; }
-.logo-peso-icon   { -fx-font-size: 15px; -fx-font-weight: 900; -fx-text-fill: #FBBF24; -fx-translate-y: 20; -fx-translate-x: -4; }
-.form-logo-letter { -fx-font-size: 18px; }
-
-/* Brand name typography */
-.brand-name-white,
-.brand-name-green {
-    -fx-font-size: 48px;
-    -fx-font-weight: 900;
-    -fx-wrap-text: true;
-}
-.brand-name-white { -fx-text-fill: #C8CDD6; }
-.brand-name-green { -fx-text-fill: #CC1E1E; }
-
-.brand-system-label {
-    -fx-font-size: 8px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(200,200,212,0.30);
-    -fx-padding: 0 0 0 2;
-}
-
-.brand-tagline {
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #ffffff;
-    -fx-alignment: CENTER;
-}
-
-.brand-copy-small {
+/* One blue-and-white appearance for login, OTP and password recovery. */
+.auth-page {
+    -fx-font-family: "Segoe UI";
     -fx-font-size: 13px;
-    -fx-line-spacing: 4;
-    -fx-text-fill: rgba(200,200,212,0.55);
-    -fx-text-alignment: CENTER;
+    -fx-background-color: #F4F7FA;
+    -fx-text-fill: #191C22;
+    -fx-accent: #2F6FAE;
+    -fx-focus-color: #2F6FAE;
+    -fx-faint-focus-color: transparent;
 }
-
-.brand-divider-line {
-    -fx-pref-height: 1;
-    -fx-max-height: 1;
-    -fx-background-color: rgba(255,255,255,0.16);
-    -fx-pref-width: 74;
-    -fx-max-width: 74;
+.auth-brand-panel { -fx-background-color: #2F6FAE; -fx-padding: 76 64 76 82; }
+.auth-brand-name { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #141A22; }
+.auth-brand-caption { -fx-font-size: 8px; -fx-font-weight: bold; -fx-text-fill: white; }
+.auth-eyebrow { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: white; }
+.auth-hero-content { -fx-padding: 0 0 98 0; }
+.auth-hero {
+    -fx-font-size: 76px;
+    -fx-font-weight: bold;
+    -fx-line-spacing: -12px;
+    -fx-text-fill: white;
 }
+.auth-hero-dark { -fx-text-fill: #141A22; }
+.auth-version { -fx-font-size: 12px; -fx-text-fill: #A9C6E3; }
 
-.brand-build-tag,
-.form-footer-text {
-    -fx-font-size: 10px;
-    -fx-font-weight: 700;
-    -fx-text-fill: rgba(160,160,175,0.55);
-    -fx-padding: 0 0 20 0;
+.auth-scroll,
+.auth-scroll > .viewport {
+    -fx-background-color: #F4F7FA;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
 }
-
-/* Hero statement (brand panel heading) */
-.hero-brand-motor { -fx-font-size: 52px; -fx-font-weight: 900; -fx-text-fill: #C8CDD6; }
-.hero-brand-ph    { -fx-font-size: 52px; -fx-font-weight: 900; -fx-text-fill: #CC1E1E; }
-.hero-statement         { -fx-font-size: 46px; -fx-font-weight: 900; -fx-text-fill: #E8E8EC; }
-.hero-statement-accent  { -fx-font-size: 46px; -fx-font-weight: 900; -fx-text-fill: #CC1E1E; }
-.hero-heading     { -fx-font-size: 15px; -fx-font-weight: 800; -fx-text-fill: rgba(200,200,212,0.62); }
-.hero-subheading  { -fx-font-size: 13px; -fx-text-fill: rgba(200,200,212,0.50); }
-.hero-logo-peso   { -fx-font-size: 34px; -fx-font-weight: 900; -fx-text-fill: rgba(251,191,36,0.90); }
-
-/* Hero stats row */
-.hero-stats-row {
-    -fx-padding: 24 0;
-    -fx-border-color: rgba(255,255,255,0.14) transparent rgba(255,255,255,0.14) transparent;
-    -fx-border-width: 1 0 1 0;
-}
-.hero-stat        { -fx-padding: 0 32 0 0; }
-.hero-stat-value  { -fx-font-size: 36px; -fx-font-weight: 900; -fx-text-fill: #ffffff; }
-.hero-stat-label  { -fx-font-size: 11px; -fx-font-weight: 700; -fx-text-fill: rgba(255,255,255,0.45); }
-.hero-stat-divider {
-    -fx-background-color: rgba(255,255,255,0.16);
-    -fx-min-width: 1; -fx-max-width: 1; -fx-pref-width: 1;
-    -fx-min-height: 48; -fx-max-height: 48;
-    -fx-translate-y: 10;
-}
-
-/* Feature cards on brand panel */
-.feature-list { -fx-max-width: 315; }
-
-.feature-card {
-    -fx-padding: 12 14;
-    -fx-min-height: 58;
-    -fx-background-color: rgba(13,17,23,0.70);
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255,255,255,0.18);
-    -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.16), 12, 0.12, 0, 5);
-}
-.feature-card:hover {
-    -fx-background-color: rgba(30,38,47,0.86);
-    -fx-border-color: rgba(255,80,80,0.36);
-}
-.feature-title { -fx-font-size: 13px; -fx-font-weight: 900; -fx-text-fill: rgba(255,255,255,0.86); }
-.feature-copy  { -fx-font-size: 12px; -fx-text-fill: rgba(255,255,255,0.52); }
-
-/* Floating widgets */
-.floating-widget {
-    -fx-padding: 14 16;
-    -fx-min-width: 150;
-    -fx-background-color: linear-gradient(to bottom right, rgba(22,27,34,0.50), rgba(13,17,23,0.30));
-    -fx-background-radius: 18;
-    -fx-border-color: rgba(255,255,255,0.16);
-    -fx-border-radius: 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.20), 18, 0.18, 0, 8);
-}
-.floating-label { -fx-font-size: 10px; -fx-font-weight: 900; -fx-text-fill: rgba(255,255,255,0.76); }
-.floating-value { -fx-font-size: 18px; -fx-font-weight: 900; -fx-text-fill: rgba(255,255,255,0.88); }
-.widget-netpay     { -fx-translate-x:  -48; -fx-translate-y:   94; }
-.widget-attendance { -fx-translate-x:  -34; -fx-translate-y:  -20; }
-.widget-leave      { -fx-translate-x:  -64; -fx-translate-y:  -88; }
-.widget-payday     { -fx-translate-x:  180; -fx-translate-y:   34; }
-.widget-payslip    { -fx-translate-x:  160; -fx-translate-y:  -48; }
-
-
-/* ── Form panel (right) ──────────────────────────── */
-.login-form-panel {
-    -fx-background-color:
-        linear-gradient(to left, rgba(14,14,18,0.96), rgba(10,10,14,0.75), rgba(8,8,12,0.22));
-    -fx-padding: 0 20 0 20;
-}
-
-.form-panel-header { -fx-padding: 24 0 16 0; }
-
-.form-brand-motor { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #1A1F36; }
-.form-brand-ph    { -fx-font-size: 20px; -fx-font-weight: 900; -fx-text-fill: #E84343; }
-
-/* Auth card — shared by login, otp, forgot-password, force-change-password */
+.auth-form-panel { -fx-padding: 40 36; }
 .form-card {
-    -fx-background-color: linear-gradient(to bottom, rgba(28,28,32,0.94), rgba(20,20,24,0.96));
-    -fx-background-radius: 16;
-    -fx-border-color: #CC2020 rgba(255,255,255,0.08) rgba(255,255,255,0.08) rgba(255,255,255,0.08);
-    -fx-border-width: 2 1 1 1;
-    -fx-border-radius: 16;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.60), 36, 0.28, 0, 14);
-    -fx-pref-width: 400;
-    -fx-min-width: 400;
-    -fx-max-width: 400;
-    -fx-padding: 40;
-    -fx-wrap-text: true;
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-padding: 44 46 46 46;
+    -fx-max-width: 480;
+    -fx-effect: dropshadow(gaussian, rgba(28,48,72,0.08), 32, 0, 0, 14);
 }
+.form-eyebrow { -fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: #697386; }
+.form-heading { -fx-font-size: 30px; -fx-font-weight: normal; -fx-text-fill: #191C22; -fx-wrap-text: true; }
+.form-subheading { -fx-font-size: 14px; -fx-text-fill: #697386; }
+.field-label { -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #494E57; }
 
-.form-heading    { -fx-font-size: 28px; -fx-font-weight: 900; -fx-text-fill: #F0F0F4; -fx-wrap-text: true; }
-.form-subheading { -fx-font-size: 13px; -fx-text-fill: rgba(190,190,205,0.65); }
-.form-security-note { -fx-text-fill: #FF8080; -fx-font-weight: 800; -fx-font-size: 12px; }
-.form-footer-bar { -fx-padding: 12 0 18 0; }
-
-/* Auth status messages: win over the base .message-label color in dark mode. */
-.form-card .error-message,
-.form-card .error-text,
-.form-card .danger-text {
-    -fx-text-fill: #FF9A9A;
-}
-
-.form-card .warning-text {
-    -fx-text-fill: #FBBF24;
-}
-
-.form-card .success-message {
-    -fx-text-fill: #86EFAC;
-}
-
-.root-canvas.light-mode .form-card .error-message,
-.root-canvas.light-mode .form-card .error-text,
-.root-canvas.light-mode .form-card .danger-text,
-.root-canvas.light-mode .form-card .warning-text {
-    -fx-text-fill: #991b1b;
-}
-
-.root-canvas.light-mode .form-card .success-message {
-    -fx-text-fill: #166534;
-}
-
-/* Security badge */
-.security-badge {
-    -fx-background-color: rgba(180,15,15,0.18);
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(255,60,60,0.30);
-    -fx-border-radius: 10;
+.input-field {
+    -fx-background-color: #FAFAFA;
+    -fx-background-radius: 4;
+    -fx-border-color: #C8D2DF;
+    -fx-border-radius: 4;
     -fx-border-width: 1;
-    -fx-padding: 10 14;
+    -fx-padding: 13 14;
+    -fx-pref-height: 48;
+    -fx-min-height: 48;
+    -fx-font-size: 13px;
+    -fx-text-fill: #191C22;
+    -fx-prompt-text-fill: #8A9099;
+    -fx-highlight-fill: #2F6FAE;
+    -fx-highlight-text-fill: white;
 }
-.security-icon { -fx-font-size: 13px; -fx-text-fill: #FF6060; }
+.input-field:focused {
+    -fx-border-color: #2F6FAE;
+    -fx-effect: dropshadow(gaussian, rgba(48,111,174,0.12), 5, 0, 0, 0);
+}
+.input-field.invalid-field { -fx-border-color: #B91C1C; -fx-background-color: #FFF8F8; }
+.password-input .input-field { -fx-padding: 13 64 13 14; }
 
-/* Remember me checkbox */
-.remember-check { -fx-text-fill: rgba(180,180,200,0.65); -fx-font-size: 12px; }
+.password-toggle,
+.quiet-link,
+.form-back-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #414854;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+.password-toggle { -fx-padding: 12; }
+.quiet-link { -fx-padding: 4 0; -fx-border-color: transparent; }
+.quiet-link:hover, .form-back-button:hover { -fx-text-fill: #2F6FAE; -fx-underline: true; }
+.password-toggle:hover { -fx-text-fill: #2F6FAE; }
+.form-back-button { -fx-padding: 10 12; }
+.password-toggle:focused,
+.quiet-link:focused,
+.form-back-button:focused { -fx-border-color: #2F6FAE; -fx-border-radius: 4; }
+
+.remember-check { -fx-font-size: 12px; -fx-text-fill: #697386; }
+.remember-check > .box {
+    -fx-background-color: white;
+    -fx-border-color: #8A9099;
+    -fx-border-radius: 2;
+    -fx-background-radius: 2;
+    -fx-padding: 2;
+}
+.remember-check:selected > .box { -fx-background-color: #2F6FAE; -fx-border-color: #2F6FAE; }
+.remember-check:selected > .box > .mark { -fx-background-color: white; }
+.remember-check:focused > .box { -fx-border-color: #2F6FAE; }
+
+.signin-button {
+    -fx-background-color: #2F6FAE;
+    -fx-background-insets: 0;
+    -fx-background-radius: 5;
+    -fx-border-width: 0;
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-padding: 12 20;
+    -fx-min-height: 48;
+    -fx-cursor: hand;
+}
+.signin-button:hover { -fx-background-color: #285F97; }
+.signin-button:pressed { -fx-background-color: #214F7F; }
+
+.security-badge { -fx-background-color: #EAF2FA; -fx-border-color: #CDDFEF; -fx-border-width: 1; -fx-padding: 12 14; }
+.form-security-note { -fx-text-fill: #494E57; -fx-font-size: 12px; -fx-font-weight: bold; }
+.security-icon {
+    -fx-text-fill: #494E57;
+    -fx-font-size: 10px;
+    -fx-border-color: #697386;
+    -fx-border-radius: 20;
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-alignment: center;
+}
+.auth-page .message-label { -fx-text-fill: #697386; -fx-font-size: 12px; }
+.auth-page .message-label.error-message { -fx-text-fill: #B91C1C; }
+.auth-page .message-label.success-message { -fx-text-fill: #166534; }

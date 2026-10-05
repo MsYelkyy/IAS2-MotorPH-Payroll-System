@@ -4,6 +4,7 @@ import motorph.application.dto.login.LoginResultDTO;
 import motorph.application.session.UserSession;
 import motorph.domain.value.Role;
 import motorph.api.ApiClientFactory;
+import motorph.api.ApiException;
 import motorph.api.AuthApiClient;
 import motorph.api.dto.auth.MeResponse;
 import motorph.ui.util.UiMessageUtil;
@@ -77,7 +78,13 @@ public class OtpController {
             }
         } catch (Exception e) {
             UiValidationUtil.markInvalid(otpField);
-            UiMessageUtil.setError(otpMessageLabel, UiMessageUtil.toUserMessage(e));
+            String message = e instanceof ApiException apiException
+                    && apiException.getHttpStatus() == 401
+                    && "AUTHENTICATION_FAILED".equals(apiException.getCode())
+                    && "Login challenge is invalid or expired.".equals(apiException.getMessage())
+                    ? "Your verification session has expired. Please log in again."
+                    : UiMessageUtil.toUserMessage(e);
+            UiMessageUtil.setError(otpMessageLabel, message);
         }
     }
 

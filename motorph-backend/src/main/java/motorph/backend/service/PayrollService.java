@@ -542,7 +542,8 @@ public class PayrollService {
         int id = payrunRepository.saveAndReturnId(payrun);
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYRUN_CREATED,
-                "Created payrun ID " + id + " for " + request.getStartDate() + " to " + request.getEndDate());
+                "Created payrun ID " + id + " for " + request.getStartDate() + " to " + request.getEndDate(),
+                UserAccessLogService.TARGET_PAYRUN, id);
 
         return payrunRepository.findById(id);
     }
@@ -754,7 +755,8 @@ public class PayrollService {
         }
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYROLL_GENERATED,
-                "Generated payroll for " + generated + " employee(s) in payrun ID " + payrunId);
+                "Generated payroll for " + generated + " employee(s) in payrun ID " + payrunId,
+                UserAccessLogService.TARGET_PAYRUN, payrunId);
 
         return generated;
     }

@@ -2,7 +2,6 @@ package motorph.ui.admin;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
-import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.finance.PayrollManagementController;
 import motorph.ui.hr.HrEmployeeController;
 import motorph.ui.hr.HrLeaveController;
@@ -14,14 +13,12 @@ import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.session.CurrentUserSession;
+import motorph.ui.support.SupportTicketController;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
-import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -55,7 +52,6 @@ public class AdminMainController {
     // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
-    @FXML private HBox  globalControlsHost;
 
     // Dashboard sub-view
     @FXML private VBox                     dashboardView;
@@ -103,32 +99,24 @@ public class AdminMainController {
 
     // Support Tickets sub-view
     @FXML private VBox                          supportTicketsView;
-    @FXML private AdminSupportTicketController  supportTicketsViewController;
+    @FXML private SupportTicketController  supportTicketsViewController;
 
     // Module placeholder (shown for unbuilt modules)
     @FXML private VBox modulePlaceholder;
-
-    // Footer
-    @FXML private Label appMessageLabel;
 
     @FXML
     private void initialize() {
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
-        buildGlobalControls();
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
         loadSidebarData();
-        wireDashboard();
         showDashboard();
-
-        UiMessageUtil.setSuccess(appMessageLabel, "Admin Control Panel is ready.");
     }
 
     // Navigation handlers
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
-        setHeader("Dashboard", "ADMIN CONTROL PANEL");
+        setHeader("Dashboard");
         showView(ActiveView.DASHBOARD);
         if (dashboardViewController != null) dashboardViewController.refresh();
     }
@@ -136,7 +124,7 @@ public class AdminMainController {
     @FXML
     private void showEmployees() {
         setNavSelected(employeesNavButton);
-        setHeader("Employee Management", "View and manage all employees");
+        setHeader("Employee Management");
         showView(ActiveView.EMPLOYEES);
         if (employeeViewController != null) employeeViewController.refresh();
     }
@@ -144,7 +132,7 @@ public class AdminMainController {
     @FXML
     private void showPayroll() {
         setNavSelected(payrollNavButton);
-        setHeader("Payroll", "Process and review payroll runs");
+        setHeader("Payroll");
         showView(ActiveView.PAYROLL);
         if (payrollViewController != null) payrollViewController.refresh();
     }
@@ -152,7 +140,7 @@ public class AdminMainController {
     @FXML
     private void showSalary() {
         setNavSelected(salaryNavButton);
-        setHeader("Salary & Benefits", "Manage salary history and benefit allocations");
+        setHeader("Salary & Benefits");
         showView(ActiveView.SALARY);
         if (salaryViewController != null) salaryViewController.refresh();
     }
@@ -160,7 +148,7 @@ public class AdminMainController {
     @FXML
     private void showReports() {
         setNavSelected(reportsNavButton);
-        setHeader("Reports", "Generate and export organization reports");
+        setHeader("Reports");
         showView(ActiveView.REPORTS);
         if (reportsViewController != null) reportsViewController.refresh();
     }
@@ -168,7 +156,7 @@ public class AdminMainController {
     @FXML
     private void showLeaveOvertime() {
         setNavSelected(leaveOvertimeNavButton);
-        setHeader("Leave & Overtime", "Review and approve leave requests");
+        setHeader("Leave & Overtime");
         showView(ActiveView.LEAVE);
         if (leaveViewController != null) leaveViewController.refresh();
     }
@@ -176,7 +164,7 @@ public class AdminMainController {
     @FXML
     private void showUserManagement() {
         setNavSelected(userManagementNavButton);
-        setHeader("User Management", "Manage user accounts and access");
+        setHeader("User Management");
         showView(ActiveView.USER_ACCOUNTS);
         if (userAccountViewController != null) userAccountViewController.refresh();
     }
@@ -184,7 +172,7 @@ public class AdminMainController {
     @FXML
     private void showRoleManagement() {
         setNavSelected(roleManagementNavButton);
-        setHeader("Role Management", "Configure role permissions");
+        setHeader("Role Management");
         showView(ActiveView.ROLES);
         if (rolesViewController != null) rolesViewController.refresh();
     }
@@ -192,7 +180,7 @@ public class AdminMainController {
     @FXML
     private void showAccessLogs() {
         setNavSelected(accessLogsNavButton);
-        setHeader("User Access Logs", "Audit system activity and logins");
+        setHeader("User Access Logs");
         showView(ActiveView.ACCESS_LOGS);
         if (accessLogsViewController != null) accessLogsViewController.refresh();
     }
@@ -200,7 +188,7 @@ public class AdminMainController {
     @FXML
     private void showDatabaseTools() {
         setNavSelected(databaseToolsNavButton);
-        setHeader("Database Backup & Recovery", "Create and restore database backups");
+        setHeader("Database Backup & Recovery");
         showView(ActiveView.DATABASE_TOOLS);
         if (databaseToolsViewController != null) databaseToolsViewController.refresh();
     }
@@ -208,7 +196,7 @@ public class AdminMainController {
     @FXML
     private void showSettings() {
         setNavSelected(settingsNavButton);
-        setHeader("Settings", "System configuration and preferences");
+        setHeader("Settings");
         showView(ActiveView.SYSTEM_CONFIG);
         if (systemConfigViewController != null) systemConfigViewController.refresh();
     }
@@ -216,7 +204,7 @@ public class AdminMainController {
     @FXML
     private void showSupportTickets() {
         setNavSelected(supportTicketsNavButton);
-        setHeader("Support Tickets", "View and respond to all employee support requests");
+        setHeader("Support Tickets");
         showView(ActiveView.SUPPORT_TICKETS);
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
@@ -234,16 +222,6 @@ public class AdminMainController {
     }
 
     // Helpers
-    /** Exposes the navigate-to-employees action so the dashboard quick-access tiles can trigger it. */
-    public void navigateToEmployees()      { showEmployees(); }
-    public void navigateToPayroll()        { showPayroll(); }
-    public void navigateToSalary()         { showSalary(); }
-    public void navigateToReports()        { showReports(); }
-    public void navigateToLeaveOvertime()  { showLeaveOvertime(); }
-    public void navigateToUserManagement() { showUserManagement(); }
-    public void navigateToRoleManagement() { showRoleManagement(); }
-    public void navigateToAccessLogs()     { showAccessLogs(); }
-
     private enum ActiveView { DASHBOARD, EMPLOYEES, PAYROLL, SALARY, REPORTS, USER_ACCOUNTS, ROLES, ACCESS_LOGS, LEAVE, SYSTEM_CONFIG, DATABASE_TOOLS, SUPPORT_TICKETS, PLACEHOLDER }
 
     private void showView(ActiveView active) {
@@ -269,12 +247,6 @@ public class AdminMainController {
         }
     }
 
-    private void wireDashboard() {
-        if (dashboardViewController != null) {
-            dashboardViewController.setMainController(this);
-        }
-    }
-
     private void setNavSelected(Button selected) {
         NavigationHelper.setNavSelected(selected,
                 dashboardNavButton, employeesNavButton, payrollNavButton, salaryNavButton, reportsNavButton,
@@ -282,8 +254,8 @@ public class AdminMainController {
                 accessLogsNavButton, supportTicketsNavButton, databaseToolsNavButton, settingsNavButton);
     }
 
-    private void setHeader(String title, String subtitle) {
-        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
+    private void setHeader(String title) {
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, "ADMIN CONTROL PANEL");
     }
 
     private void loadSidebarData() {
@@ -296,13 +268,10 @@ public class AdminMainController {
         boolean show = CurrentUserSession.hasMultipleRoles();
 
         if (switchRoleButton != null) {
+            if (show) switchRoleButton.setText("Switch to " + RoleSwitchHelper.nextRoleLabel());
             switchRoleButton.setVisible(show);
             switchRoleButton.setManaged(show);
         }
     }
 
-    // builds and inserts language/theme combos into the topbar host
-    private void buildGlobalControls() {
-        GlobalControlsHelper.build(globalControlsHost, rootPane, null);
-    }
 }

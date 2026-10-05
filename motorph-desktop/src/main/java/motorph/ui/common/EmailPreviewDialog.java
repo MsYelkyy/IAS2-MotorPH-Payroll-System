@@ -20,24 +20,21 @@ import javafx.stage.Window;
 import motorph.application.dto.auth.EmailPreviewDTO;
 import motorph.application.dto.auth.EmailPreviewType;
 
-import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
-/** Renders a modal in-app preview for system-generated emails. */
+/** Renders a modal, demo-only preview of a system-generated email (no real email is sent). */
 public final class EmailPreviewDialog {
-
-    private static final DateTimeFormatter SENT_AT_FORMAT =
-            DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
 
     private EmailPreviewDialog() {
     }
 
-    public static void show(Window owner, EmailPreviewDTO preview, boolean lightMode) {
+    public static void show(Window owner, EmailPreviewDTO preview) {
         if (preview == null) {
             return;
         }
 
         Dialog<Void> dialog = new Dialog<>();
-        dialog.setTitle("Email Sent");
+        dialog.setTitle("Demo email");
         dialog.initModality(Modality.WINDOW_MODAL);
         if (owner != null) {
             dialog.initOwner(owner);
@@ -45,13 +42,11 @@ public final class EmailPreviewDialog {
 
         DialogPane pane = dialog.getDialogPane();
         pane.getStyleClass().add("email-preview-dialog-pane");
-        if (lightMode) {
-            pane.getStyleClass().add("light-mode");
-        }
         pane.getButtonTypes().add(ButtonType.CLOSE);
         pane.getStylesheets().add(stylesheet());
         pane.setContent(buildContent(dialog, preview));
 
+        // the window's own close button needs a CLOSE type; the visible one is ours
         Node closeNode = pane.lookupButton(ButtonType.CLOSE);
         if (closeNode != null) {
             closeNode.setVisible(false);
@@ -59,7 +54,7 @@ public final class EmailPreviewDialog {
         }
 
         dialog.setOnShown(event -> {
-            Button closeButton = (Button) pane.lookup(".email-preview-footer-close");
+            Button closeButton = (Button) pane.lookup(".email-preview-close");
             if (closeButton != null) {
                 closeButton.requestFocus();
             }
@@ -71,73 +66,48 @@ public final class EmailPreviewDialog {
     private static VBox buildContent(Dialog<Void> dialog, EmailPreviewDTO preview) {
         VBox root = new VBox();
         root.getStyleClass().add("email-preview-root");
-
-        VBox paperWrap = new VBox(buildPaper(preview));
-        paperWrap.getStyleClass().add("email-preview-paper-wrap");
-
-        root.getChildren().add(buildHeader(dialog, preview));
-        root.getChildren().add(paperWrap);
-        root.getChildren().add(buildFooter(dialog, preview));
-
+        root.getChildren().addAll(buildHeader(preview), buildBody(preview), buildFooter(dialog));
         return root;
     }
 
-    private static HBox buildHeader(Dialog<Void> dialog, EmailPreviewDTO preview) {
-        HBox header = new HBox(12);
-        header.setAlignment(Pos.CENTER_LEFT);
+    private static VBox buildHeader(EmailPreviewDTO preview) {
+        VBox header = new VBox();
         header.getStyleClass().add("email-preview-header");
 
-        VBox titleBlock = new VBox(2);
-        Label brand = new Label("MotorPH");
-        brand.getStyleClass().add("email-preview-brand");
-        Label title = new Label("Email Sent");
+        Label tag = new Label("FOR DEMO ONLY");
+        tag.getStyleClass().add("email-preview-tag");
+
+        Label title = new Label(typeLabel(preview.getType()));
         title.getStyleClass().add("email-preview-title");
-        Label subtitle = new Label(typeLabel(preview.getType()));
-        subtitle.getStyleClass().add("email-preview-subtitle");
-        titleBlock.getChildren().addAll(brand, title, subtitle);
 
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
-        Button close = new Button("X");
-        close.getStyleClass().add("email-preview-close-x");
-        close.setOnAction(event -> dialog.close());
-
-        header.getChildren().addAll(titleBlock, spacer, close);
+        header.getChildren().addAll(tag, title);
         return header;
     }
 
-    private static VBox buildPaper(EmailPreviewDTO preview) {
-        VBox paper = new VBox(14);
-        paper.getStyleClass().add("email-preview-paper");
+    private static VBox buildBody(EmailPreviewDTO preview) {
+        VBox body = new VBox();
+        body.getStyleClass().add("email-preview-body");
 
-        paper.getChildren().add(metaRow("From", preview.getFrom()));
-        paper.getChildren().add(metaRow("To", preview.getTo()));
-        paper.getChildren().add(metaRow("Subject", preview.getSubject()));
-        paper.getChildren().add(metaRow("Sent", SENT_AT_FORMAT.format(preview.getSentAt())));
-
-        Region divider = new Region();
-        divider.getStyleClass().add("email-preview-divider");
-        paper.getChildren().add(divider);
+        body.getChildren().add(metaRow("TO", preview.getTo()));
+        body.getChildren().add(metaRow("SUBJECT", preview.getSubject()));
 
         if (preview.hasHighlight()) {
-            paper.getChildren().add(highlightRow(preview));
+            body.getChildren().add(highlightRow(preview));
         }
 
-        TextArea body = new TextArea(preview.getBody());
-        body.setEditable(false);
-        body.setWrapText(true);
-        body.getStyleClass().add("email-preview-body");
-        VBox.setVgrow(body, Priority.ALWAYS);
-        paper.getChildren().add(body);
+        TextArea text = new TextArea(preview.getBody());
+        text.setEditable(false);
+        text.setWrapText(true);
+        text.getStyleClass().add("email-preview-text");
+        body.getChildren().add(text);
 
-        return paper;
+        return body;
     }
 
     private static HBox metaRow(String labelText, String valueText) {
-        HBox row = new HBox(12);
+        HBox row = new HBox();
         row.setAlignment(Pos.CENTER_LEFT);
-        row.getStyleClass().add("email-preview-meta-row");
+        row.getStyleClass().add("email-preview-meta");
 
         Label label = new Label(labelText);
         label.getStyleClass().add("email-preview-meta-label");
@@ -151,38 +121,52 @@ public final class EmailPreviewDialog {
         return row;
     }
 
-    private static VBox highlightRow(EmailPreviewDTO preview) {
-        VBox wrap = new VBox(7);
-        wrap.getStyleClass().add("email-preview-highlight");
+    // the OTP / temporary password, large and selectable, with a copy button
+    private static HBox highlightRow(EmailPreviewDTO preview) {
+        HBox box = new HBox();
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.getStyleClass().add("email-preview-highlight");
 
-        Label label = new Label(preview.getHighlightLabel() + ":");
+        Label label = new Label(preview.getHighlightLabel().toUpperCase(Locale.ROOT));
         label.getStyleClass().add("email-preview-highlight-label");
 
         TextField value = new TextField(preview.getHighlightValue());
         value.setEditable(false);
         value.getStyleClass().add("email-preview-highlight-value");
 
-        wrap.getChildren().addAll(label, value);
-        return wrap;
+        VBox text = new VBox(label, value);
+        text.getStyleClass().add("email-preview-highlight-text");
+        HBox.setHgrow(text, Priority.ALWAYS);
+
+        Button copy = new Button("Copy");
+        copy.getStyleClass().add("email-preview-copy");
+        copy.setMinWidth(Region.USE_PREF_SIZE);
+        copy.setOnAction(event -> {
+            copyToClipboard(preview.getHighlightValue());
+            copy.setText("Copied");
+        });
+
+        box.getChildren().addAll(text, copy);
+        return box;
     }
 
-    private static HBox buildFooter(Dialog<Void> dialog, EmailPreviewDTO preview) {
-        HBox footer = new HBox(10);
-        footer.setAlignment(Pos.CENTER_RIGHT);
+    private static HBox buildFooter(Dialog<Void> dialog) {
+        HBox footer = new HBox();
+        footer.setAlignment(Pos.CENTER_LEFT);
         footer.getStyleClass().add("email-preview-footer");
 
-        if (preview.hasHighlight()) {
-            Button copy = new Button("Copy " + preview.getHighlightLabel());
-            copy.getStyleClass().add("email-preview-primary-button");
-            copy.setOnAction(event -> copyToClipboard(preview.getHighlightValue()));
-            footer.getChildren().add(copy);
-        }
+        Label note = new Label("For demo only. No real email was sent.");
+        note.setWrapText(true);
+        note.getStyleClass().add("email-preview-note");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
 
         Button close = new Button("Close");
-        close.getStyleClass().addAll("email-preview-secondary-button", "email-preview-footer-close");
+        close.getStyleClass().add("email-preview-close");
         close.setOnAction(event -> dialog.close());
-        footer.getChildren().add(close);
 
+        footer.getChildren().addAll(note, spacer, close);
         return footer;
     }
 

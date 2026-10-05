@@ -148,7 +148,8 @@ public class OvertimeService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_APPROVED,
                 "Approved overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
-                        + " on " + request.getOvertimeDate());
+                        + " on " + request.getOvertimeDate(),
+                UserAccessLogService.TARGET_OVERTIME_REQUEST, overtimeRequestId);
     }
 
     public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorCanApproveAny,
@@ -166,7 +167,8 @@ public class OvertimeService {
 
         userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_REJECTED,
                 "Rejected overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
-                        + " on " + request.getOvertimeDate());
+                        + " on " + request.getOvertimeDate(),
+                UserAccessLogService.TARGET_OVERTIME_REQUEST, overtimeRequestId);
     }
 
     /**

@@ -163,7 +163,7 @@ class EmployeeServiceTest {
         verify(governmentDetailsRepository, never()).update(any(GovernmentDetails.class));
         verify(employeeBenefitRepository, never()).update(any(EmployeeBenefit.class));
         verify(salaryHistoryRepository, never()).save(any(SalaryHistory.class));
-        verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString());
+        verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString(), any(), any());
     }
 
     @ParameterizedTest
@@ -240,7 +240,7 @@ class EmployeeServiceTest {
 
         assertThatThrownBy(() -> update(form)).isInstanceOf(DataAccessException.class);
 
-        verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString());
+        verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString(), any(), any());
     }
 
     private void update(Form form) {
@@ -248,7 +248,8 @@ class EmployeeServiceTest {
     }
 
     private void assertLogged(String details) {
-        verify(userAccessLogService).logEvent(ACTOR_ID, UserAccessLogService.ACTION_EMPLOYEE_UPDATED, details);
+        verify(userAccessLogService).logEvent(ACTOR_ID, UserAccessLogService.ACTION_EMPLOYEE_UPDATED, details,
+                UserAccessLogService.TARGET_EMPLOYEE, EMPLOYEE_ID);
     }
 
     /** The edit form as submitted, starting from the stored values. */

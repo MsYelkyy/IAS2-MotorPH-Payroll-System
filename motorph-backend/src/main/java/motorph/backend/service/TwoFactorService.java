@@ -1,6 +1,6 @@
 package motorph.backend.service;
 
-import motorph.backend.exception.BusinessRuleException;
+import motorph.backend.exception.OtpVerificationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.security.PasswordHasher;
 import motorph.backend.domain.TwoFactorCode;
@@ -80,21 +80,25 @@ public class TwoFactorService {
         );
 
         if (code == null) {
-            throw new BusinessRuleException("OTP is invalid or expired.");
+            throw new OtpVerificationException(
+                    OtpVerificationException.Reason.EXPIRED_OR_UNAVAILABLE, "OTP is invalid or expired.");
         }
 
         if (code.getAttemptCount() >= MAX_ATTEMPTS) {
-            throw new BusinessRuleException("OTP attempt limit reached.");
+            throw new OtpVerificationException(
+                    OtpVerificationException.Reason.ATTEMPT_LIMIT_REACHED, "OTP attempt limit reached.");
         }
 
         if (!matches(rawOtp, code.getOtpCodeHash())) {
             twoFactorCodeRepository.incrementAttemptCount(code.getTwoFactorCodeId());
 
             if (code.getAttemptCount() + 1 >= MAX_ATTEMPTS) {
-                throw new BusinessRuleException("OTP attempt limit reached.");
+                throw new OtpVerificationException(
+                        OtpVerificationException.Reason.ATTEMPT_LIMIT_REACHED, "OTP attempt limit reached.");
             }
 
-            throw new BusinessRuleException("Invalid OTP code.");
+            throw new OtpVerificationException(
+                    OtpVerificationException.Reason.INVALID_CODE, "Invalid OTP code.");
         }
 
         twoFactorCodeRepository.markAsUsed(code.getTwoFactorCodeId());
