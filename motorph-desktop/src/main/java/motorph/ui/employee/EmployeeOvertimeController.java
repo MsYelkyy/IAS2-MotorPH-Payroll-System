@@ -6,6 +6,7 @@ import motorph.api.OvertimeApiClient;
 import motorph.api.dto.attendance.AttendanceDTO;
 import motorph.api.dto.overtime.OvertimeRequestDTO;
 import motorph.api.dto.overtime.OvertimeSubmitRequest;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -323,13 +324,8 @@ public class EmployeeOvertimeController {
 
         overtimeHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         pageLabel.setText("Page " + currentPage + " of " + totalPages);
-        recordInfoLabel.setText(total == 0
-                ? "0 requests"
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
-        for (var control : List.of(prevButton, pageLabel, nextButton)) {
-            control.setVisible(total > 0);
-            control.setManaged(total > 0);
-        }
+        EmptyState.apply(overtimeHistoryTable, !allHistoryRows.isEmpty(), "overtime requests", "Submitted overtime requests will appear here.");
+        recordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allHistoryRows.size(), "requests"));
         prevButton.setDisable(currentPage <= 1);
         nextButton.setDisable(currentPage >= totalPages);
     }

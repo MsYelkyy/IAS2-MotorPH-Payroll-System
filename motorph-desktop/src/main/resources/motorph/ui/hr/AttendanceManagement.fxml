@@ -10,6 +10,9 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.Region?>
 
 <VBox xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
@@ -35,14 +38,12 @@
                                           prefWidth="240" styleClass="input-field"/>
                             </HBox>
 
-                            <!-- Red content container -->
-                            <VBox styleClass="content-card, payroll-tab-card" spacing="16"
+                            <VBox styleClass="content-card, payroll-tab-card, table-card" spacing="16"
                                   VBox.vgrow="ALWAYS">
 
                                 <VBox spacing="2">
                                     <Label text="Attendance Logs" styleClass="section-title"/>
-                                    <Label text="Employee attendance records" styleClass="muted-text"/>
-                                </VBox>
+                                                                    </VBox>
 
                                 <HBox spacing="12">
                                     <VBox styleClass="metric-card, payroll-summary-card" spacing="4" HBox.hgrow="ALWAYS">
@@ -59,21 +60,31 @@
                                     </VBox>
                                 </HBox>
 
-                                <TableView fx:id="logTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430"
-                                           styleClass="payroll-table">
+                                <TableView fx:id="logTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="430">
                                     <columns>
-                                        <TableColumn fx:id="logWorkDateColumn" text="Work Date" prefWidth="140" minWidth="120"/>
-                                        <TableColumn fx:id="logEmployeeColumn" text="Employee" prefWidth="210" minWidth="160"/>
-                                        <TableColumn fx:id="logDepartmentColumn" text="Department" prefWidth="150" minWidth="110"/>
-                                        <TableColumn fx:id="logTimeInColumn" text="Time In" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="logTimeOutColumn" text="Time Out" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="logHoursColumn" text="Hours" prefWidth="100" minWidth="80"/>
-                                        <TableColumn fx:id="logStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                                        <TableColumn fx:id="logWorkDateColumn" text="WORK DATE" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="logEmployeeColumn" text="EMPLOYEE" prefWidth="210" minWidth="160"/>
+                                        <TableColumn fx:id="logDepartmentColumn" text="DEPARTMENT" prefWidth="150" minWidth="110"/>
+                                        <TableColumn fx:id="logTimeInColumn" text="TIME IN" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="logTimeOutColumn" text="TIME OUT" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="logHoursColumn" text="HOURS" prefWidth="100" minWidth="80"/>
+                                        <TableColumn fx:id="logStatusColumn" text="STATUS" prefWidth="120" minWidth="100"/>
                                     </columns>
                                     <placeholder>
-                                        <Label text="No attendance logs match the current filters." styleClass="muted-text"/>
-                                    </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No attendance logs match the current filters" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
                                 </TableView>
+                                <HBox styleClass="table-pager">
+                                    <VBox.margin><Insets left="-19" right="-19"/></VBox.margin>
+                                    <Label fx:id="logPageLabel" text="Page 1 of 1" styleClass="pager-text"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Label fx:id="logRecordInfoLabel" text="" styleClass="pager-text"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="logPrevButton" text="Previous" styleClass="pager-button"/>
+                                    <Button fx:id="logNextButton" text="Next" styleClass="pager-button"/>
+                                </HBox>
                             </VBox>
                         </VBox>
                     </content>
@@ -92,30 +103,38 @@
                                           prefWidth="240" styleClass="input-field"/>
                             </HBox>
 
-                            <!-- Red content container -->
-                            <VBox styleClass="content-card, payroll-tab-card" spacing="16"
+                            <VBox styleClass="content-card, payroll-tab-card, table-card" spacing="16"
                                   VBox.vgrow="ALWAYS">
 
                                 <VBox spacing="2">
                                     <Label text="All Records" styleClass="section-title"/>
-                                    <Label text="All employee attendance records" styleClass="muted-text"/>
-                                </VBox>
+                                                                    </VBox>
 
-                                <TableView fx:id="allRecordsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="520"
-                                           styleClass="payroll-table">
+                                <TableView fx:id="allRecordsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity" prefHeight="520">
                                     <columns>
-                                        <TableColumn fx:id="allWorkDateColumn" text="Work Date" prefWidth="140" minWidth="120"/>
-                                        <TableColumn fx:id="allEmployeeColumn" text="Employee" prefWidth="210" minWidth="160"/>
-                                        <TableColumn fx:id="allDepartmentColumn" text="Department" prefWidth="150" minWidth="110"/>
-                                        <TableColumn fx:id="allTimeInColumn" text="Time In" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="allTimeOutColumn" text="Time Out" prefWidth="110" minWidth="90"/>
-                                        <TableColumn fx:id="allHoursColumn" text="Hours" prefWidth="100" minWidth="80"/>
-                                        <TableColumn fx:id="allStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
+                                        <TableColumn fx:id="allWorkDateColumn" text="WORK DATE" prefWidth="140" minWidth="120"/>
+                                        <TableColumn fx:id="allEmployeeColumn" text="EMPLOYEE" prefWidth="210" minWidth="160"/>
+                                        <TableColumn fx:id="allDepartmentColumn" text="DEPARTMENT" prefWidth="150" minWidth="110"/>
+                                        <TableColumn fx:id="allTimeInColumn" text="TIME IN" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="allTimeOutColumn" text="TIME OUT" prefWidth="110" minWidth="90"/>
+                                        <TableColumn fx:id="allHoursColumn" text="HOURS" prefWidth="100" minWidth="80"/>
+                                        <TableColumn fx:id="allStatusColumn" text="STATUS" prefWidth="120" minWidth="100"/>
                                     </columns>
                                     <placeholder>
-                                        <Label text="No attendance records match the current filters." styleClass="muted-text"/>
-                                    </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No attendance records match the current filters" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
                                 </TableView>
+                                <HBox styleClass="table-pager">
+                                    <VBox.margin><Insets left="-19" right="-19"/></VBox.margin>
+                                    <Label fx:id="allPageLabel" text="Page 1 of 1" styleClass="pager-text"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Label fx:id="allRecordInfoLabel" text="" styleClass="pager-text"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="allPrevButton" text="Previous" styleClass="pager-button"/>
+                                    <Button fx:id="allNextButton" text="Next" styleClass="pager-button"/>
+                                </HBox>
                             </VBox>
                         </VBox>
                     </content>

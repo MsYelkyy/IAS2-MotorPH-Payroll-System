@@ -10,6 +10,7 @@ import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.api.dto.leave.LeaveCreditRowDTO;
 import motorph.api.dto.leave.LeaveRequestDTO;
 import motorph.api.dto.leave.LeaveSubmitRequest;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -501,13 +502,8 @@ public class EmployeeLeaveController {
 
         leaveHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         leavePageLabel.setText("Page " + currentLeavePage + " of " + totalPages);
-        leaveRecordInfoLabel.setText(total == 0
-                ? "0 requests"
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
-        for (var control : List.of(leavePrevButton, leavePageLabel, leaveNextButton)) {
-            control.setVisible(total > 0);
-            control.setManaged(total > 0);
-        }
+        EmptyState.apply(leaveHistoryTable, !allHistoryRows.isEmpty(), "leave requests", "Submitted leave requests will appear here.");
+        leaveRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allHistoryRows.size(), "requests"));
         leavePrevButton.setDisable(currentLeavePage <= 1);
         leaveNextButton.setDisable(currentLeavePage >= totalPages);
     }

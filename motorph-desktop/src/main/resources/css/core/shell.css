@@ -1,0 +1,40 @@
+.root-canvas.workspace-shell {
+    -fx-background-color: #F5F7FB;
+    -fx-accent: #2F6FAE;
+    -fx-focus-color: #2F6FAE;
+    -fx-faint-focus-color: transparent;
+}
+.root-canvas.workspace-shell .app-shell,
+.root-canvas.workspace-shell .app-main,
+.root-canvas.workspace-shell .workspace-scroll,
+.root-canvas.workspace-shell .workspace-scroll > .viewport {
+    -fx-background-color: #F5F7FB;
+    -fx-background-insets: 0;
+}
+.root-canvas.workspace-shell .topbar {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #DFE5EB transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 17 24 18 24;
+}
+.root-canvas.workspace-shell .topbar-titles { -fx-spacing: 7; }
+.root-canvas.workspace-shell .topbar-note { -fx-text-fill: #6B7280; -fx-font-size: 11px; }
+.root-canvas.workspace-shell .page-subtitle {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #6B7280;
+    -fx-min-height: 13;
+    -fx-pref-height: 13;
+    -fx-max-height: 13;
+}
+.root-canvas.workspace-shell .page-title {
+    -fx-font-size: 24px;
+    -fx-font-weight: normal;
+    -fx-text-fill: #17191F;
+    -fx-min-height: 32;
+    -fx-pref-height: 32;
+    -fx-max-height: 32;
+}
+.root-canvas.workspace-shell .content-area { -fx-padding: 16; }
+.root-canvas.workspace-shell .workspace-scroll .scroll-bar { -fx-background-color: transparent; }
+.root-canvas.workspace-shell .workspace-scroll .thumb { -fx-background-color: #C8CBD3; -fx-background-radius: 6; }

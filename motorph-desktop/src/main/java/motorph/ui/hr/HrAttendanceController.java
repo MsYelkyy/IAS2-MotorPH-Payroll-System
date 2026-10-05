@@ -7,6 +7,7 @@ import motorph.api.AttendanceApiClient;
 import motorph.api.EmployeeApiClient;
 import motorph.api.dto.attendance.AttendanceDTO;
 import motorph.api.dto.employee.EmployeeProfileDTO;
+import motorph.ui.common.TablePager;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -14,8 +15,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
-import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
@@ -38,6 +39,7 @@ public class HrAttendanceController {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("MMM d, yyyy");
     private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("h:mm a");
     private static final int HISTORY_DAYS = 90;
+    private static final int PAGE_SIZE = 11;
     private static final String ALL_DEPARTMENTS = "All Departments";
 
     private AttendanceApiClient attendanceApiClient;
@@ -47,6 +49,8 @@ public class HrAttendanceController {
     private final ObservableList<AttendanceLogRowDTO> allItems = FXCollections.observableArrayList();
     private FilteredList<AttendanceLogRowDTO> filteredLogs;
     private FilteredList<AttendanceLogRowDTO> filteredAllRecords;
+    private TablePager<AttendanceLogRowDTO> logPager;
+    private TablePager<AttendanceLogRowDTO> allPager;
 
     @FXML private StackPane toastRoot;
 
@@ -66,6 +70,10 @@ public class HrAttendanceController {
     @FXML private TableColumn<AttendanceLogRowDTO, LocalTime> logTimeOutColumn;
     @FXML private TableColumn<AttendanceLogRowDTO, Number> logHoursColumn;
     @FXML private TableColumn<AttendanceLogRowDTO, String> logStatusColumn;
+    @FXML private Label logPageLabel;
+    @FXML private Label logRecordInfoLabel;
+    @FXML private Button logPrevButton;
+    @FXML private Button logNextButton;
 
     // all records tab
     @FXML private TextField allRecordsSearchField;
@@ -78,6 +86,10 @@ public class HrAttendanceController {
     @FXML private TableColumn<AttendanceLogRowDTO, LocalTime> allTimeOutColumn;
     @FXML private TableColumn<AttendanceLogRowDTO, Number> allHoursColumn;
     @FXML private TableColumn<AttendanceLogRowDTO, String> allStatusColumn;
+    @FXML private Label allPageLabel;
+    @FXML private Label allRecordInfoLabel;
+    @FXML private Button allPrevButton;
+    @FXML private Button allNextButton;
 
     // sets up services, tables, filters, and loads the attendance logs
     @FXML
@@ -89,6 +101,12 @@ public class HrAttendanceController {
                 logDepartmentColumn, logTimeInColumn, logTimeOutColumn, logHoursColumn, logStatusColumn);
         filteredAllRecords = setupRecordTable(allItems, allRecordsTable, allWorkDateColumn, allEmployeeColumn,
                 allDepartmentColumn, allTimeInColumn, allTimeOutColumn, allHoursColumn, allStatusColumn);
+        logPager = new TablePager<>(logTable, logPageLabel, logRecordInfoLabel, logPrevButton, logNextButton,
+                "attendance records", "Time in and time out records will appear here.", PAGE_SIZE);
+        logPager.bind(filteredLogs, logItems);
+        allPager = new TablePager<>(allRecordsTable, allPageLabel, allRecordInfoLabel, allPrevButton, allNextButton,
+                "attendance records", "Time in and time out records will appear here.", PAGE_SIZE);
+        allPager.bind(filteredAllRecords, allItems);
         setupFilters();
         load();
     }
@@ -174,7 +192,7 @@ public class HrAttendanceController {
 
     // ── Tables ────────────────────────────────────────────────────────
 
-    // configures a read-only attendance record table and returns its filtered list
+    // configures a read-only attendance record table and returns its filtered list (paged by a TablePager)
     private FilteredList<AttendanceLogRowDTO> setupRecordTable(
             ObservableList<AttendanceLogRowDTO> source,
             TableView<AttendanceLogRowDTO> table,
@@ -201,11 +219,7 @@ public class HrAttendanceController {
         statusColumn.setCellValueFactory(d -> new SimpleStringProperty(statusLabel(d.getValue().getStatus())));
         statusColumn.setCellFactory(c -> statusBadgeCell());
 
-        FilteredList<AttendanceLogRowDTO> filtered = new FilteredList<>(source, row -> true);
-        SortedList<AttendanceLogRowDTO> sorted = new SortedList<>(filtered);
-        sorted.comparatorProperty().bind(table.comparatorProperty());
-        table.setItems(sorted);
-        return filtered;
+        return new FilteredList<>(source, row -> true);
     }
 
     // ── Filters ───────────────────────────────────────────────────────
@@ -232,7 +246,8 @@ public class HrAttendanceController {
         options.add(ALL_DEPARTMENTS);
         rows.stream()
                 .map(AttendanceLogRowDTO::getDepartment)
-                .filter(dept -> dept != null && !dept.isBlank() && !options.contains(dept))
+                .filter(dept -> dept != null && !dept.isBlank())
+                .distinct()
                 .sorted()
                 .forEach(options::add);
 
@@ -252,6 +267,8 @@ public class HrAttendanceController {
     private void applyFilters() {
         applyFilter(filteredLogs, searchField, departmentFilterCombo);
         applyFilter(filteredAllRecords, allRecordsSearchField, allRecordsDepartmentCombo);
+        logPager.firstPage();
+        allPager.firstPage();
     }
 
     // applies one search and department filter to a filtered list

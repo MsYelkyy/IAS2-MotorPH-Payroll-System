@@ -1,355 +1,97 @@
-/* Support ticket module */
+.support-ticket-root { -fx-min-width: 0; }
 
-
-.support-ticket-root {
-    -fx-min-width: 0;
+.ticket-filters {
+    -fx-spacing: 12;
+    -fx-background-color: #F7F9FB;
+    -fx-background-radius: 6 6 0 0;
+    -fx-border-color: transparent transparent #E4E8ED transparent;
+    -fx-padding: 14 19 16 19;
 }
+.ticket-field-label { -fx-text-fill: #6B7280; -fx-font-size: 9px; -fx-font-weight: bold; }
+.ticket-filter-input { -fx-min-height: 35; -fx-pref-height: 35; }
+.combo-box.ticket-filter-input { -fx-padding: 0; }
 
-/* Form card sizing */
-.support-ticket-root .leave-card,
-.support-ticket-root .leave-form-card {
-    -fx-min-width: 0;
-}
-
-/* Ticket list title */
-.ticket-card-title {
-    -fx-font-size: 16px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FF6666;
-}
-
-/* Status text */
-.ticket-status-open {
-    -fx-text-fill: #FF6B6B;
-    -fx-font-weight: 900;
-}
-
-.ticket-status-resolved {
-    -fx-text-fill: #86EFAC;
-    -fx-font-weight: 900;
-}
-
-.ticket-status-cancelled {
-    -fx-text-fill: #9CA3AF;
-    -fx-font-weight: 900;
-}
-
-/* Info hint row */
-.ticket-info-row {
-    -fx-padding: 10 0 0 0;
-    -fx-border-color: rgba(255,255,255,0.08) transparent transparent transparent;
-    -fx-border-width: 1 0 0 0;
-}
-
-.ticket-info-icon {
-    -fx-font-size: 14px;
-    -fx-text-fill: rgba(255,210,210,0.65);
-}
-
-.ticket-info-text {
-    -fx-font-size: 12px;
-    -fx-text-fill: rgba(255,210,210,0.65);
-    -fx-wrap-text: true;
-}
-
-/* Light mode overrides */
-.root-canvas.light-mode .ticket-card-title {
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .ticket-status-open {
-    -fx-text-fill: #DC2626;
-}
-
-.root-canvas.light-mode .ticket-status-resolved {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .ticket-status-cancelled {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .ticket-info-row {
-    -fx-border-color: rgba(17,24,39,0.10) transparent transparent transparent;
-}
-
-.root-canvas.light-mode .ticket-info-icon {
-    -fx-text-fill: #6B7280;
-}
-
-.root-canvas.light-mode .ticket-info-text {
-    -fx-text-fill: #6B7280;
-}
-
-
-/* IT support ticket module */
-
-/* Summary metric cards.
-   The base theme sets .metric-card { -fx-min-height: 0 }, which lets the three-line
-   summary cards collapse and overlap the card below on shells that don't load a
-   module stylesheet with a taller override (HR, Admin). Loaded after the theme, this
-   restores the same fixed height the IT screen uses so the cards render identically. */
-.metric-card {
-    -fx-min-height: 116;
-}
-
-/* Status badge colour variants used by the ticket table and detail dialog.
-   shared-components.css only defines the base .status-badge shape; these colours
-   otherwise live in it-common.css, which HR and Admin shells don't load. Kept here so
-   every ticket screen colours OPEN/RESOLVED/CANCELLED badges the same way. */
-.status-badge-success {
-    -fx-background-color: rgba(34,197,94,0.16);
-    -fx-text-fill: #16A34A;
-}
-
-.status-badge-danger {
-    -fx-background-color: rgba(239,68,68,0.16);
-    -fx-text-fill: #EF4444;
-}
-
-.status-badge-neutral {
-    -fx-background-color: rgba(156,163,175,0.14);
-    -fx-text-fill: #9CA3AF;
-}
-
-/* Status tab buttons */
 .ticket-tab-button {
-    -fx-background-color: rgba(255,255,255,0.06);
-    -fx-background-radius: 6;
-    -fx-border-radius: 6;
-    -fx-border-color: rgba(255,255,255,0.10);
-    -fx-border-width: 1;
-    -fx-text-fill: rgba(200,200,210,0.70);
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3;
+    -fx-border-color: #DFE5EB;
+    -fx-border-radius: 3;
+    -fx-text-fill: #5E6570;
     -fx-font-size: 12px;
-    -fx-font-weight: 700;
-    -fx-padding: 7 16;
+    -fx-graphic-text-gap: 8;
+    -fx-min-height: 33;
+    -fx-padding: 0 14;
     -fx-cursor: hand;
 }
-
-.ticket-tab-button:hover {
-    -fx-background-color: rgba(255,255,255,0.10);
-    -fx-text-fill: rgba(230,230,240,0.90);
-}
-
-.ticket-tab-selected {
-    -fx-background-color: #CC2020;
-    -fx-border-color: transparent;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: 900;
-}
-
+.ticket-tab-button:hover { -fx-background-color: #F5F7FB; }
+.ticket-tab-selected,
 .ticket-tab-selected:hover {
-    -fx-background-color: #B81A1A;
+    -fx-background-color: #2F6FAE;
+    -fx-border-color: #2F6FAE;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
 }
-
-/* Category badge */
-.it-ticket-cat-badge {
-    -fx-padding: 2 8;
-    -fx-background-color: rgba(255,255,255,0.08);
-    -fx-background-radius: 4;
-    -fx-text-fill: rgba(200,210,240,0.85);
-    -fx-font-size: 10px;
-    -fx-font-weight: 900;
+.ticket-tab-count {
+    -fx-background-color: #E4E8ED;
+    -fx-background-radius: 9;
+    -fx-text-fill: #6B7280;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-min-width: 18;
+    -fx-min-height: 18;
+    -fx-alignment: CENTER;
 }
+.ticket-tab-selected .ticket-tab-count { -fx-background-color: rgba(255,255,255,0.25); -fx-text-fill: white; }
 
-/* View button */
-.it-ticket-view-button {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(255,255,255,0.14);
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
-    -fx-text-fill: rgba(200,200,210,0.75);
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-    -fx-padding: 1 10;
-    -fx-cursor: hand;
+.ticket-form       { -fx-spacing: 14; -fx-padding: 17 19 19 19; }
+.ticket-list       { -fx-padding: 17 19 0 19; }
+.ticket-list-head  { -fx-spacing: 7; -fx-padding: 0 0 10 0; }
+.ticket-list-title { -fx-text-fill: #17191F; -fx-font-size: 14px; -fx-font-weight: bold; }
+.ticket-list-note  { -fx-text-fill: #6B7280; -fx-font-size: 10px; }
+
+.ticket-overlay { -fx-background-color: rgba(23,25,31,0.45); }
+.ticket-dialog-card {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #DFE5EB;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.18), 24, 0, 0, 6);
 }
-
-.it-ticket-view-button:hover {
-    -fx-background-color: rgba(204,32,32,0.16);
-    -fx-text-fill: #FF6060;
-    -fx-border-color: rgba(204,32,32,0.30);
-}
-
-/* Ticket details dialog */
-.it-ticket-dialog-card {
-    -fx-background-color: #1A1D27;
-    -fx-background-radius: 12;
-    -fx-border-radius: 12;
-    -fx-border-color: rgba(255,60,60,0.22);
-    -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.65), 36, 0.20, 0, 8);
-}
-
-.it-ticket-dialog-header {
+.ticket-dialog-header {
     -fx-padding: 18 20 14 20;
-    -fx-border-color: transparent transparent rgba(255,255,255,0.07) transparent;
-    -fx-border-width: 0 0 1 0;
+    -fx-border-color: transparent transparent #E4E8ED transparent;
 }
-
-.it-ticket-dialog-id {
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #FF6060;
-}
-
-.it-ticket-dialog-close {
-    -fx-background-color: transparent;
-    -fx-border-color: rgba(255,255,255,0.12);
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
-    -fx-text-fill: rgba(200,200,210,0.65);
+.ticket-dialog-id { -fx-text-fill: #17191F; -fx-font-size: 18px; -fx-font-weight: bold; }
+.ticket-dialog-close {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-background-radius: 3;
+    -fx-border-color: #DFE5EB;
+    -fx-border-radius: 3;
+    -fx-text-fill: #6B7280;
     -fx-font-size: 12px;
     -fx-padding: 3 9;
     -fx-cursor: hand;
 }
-
-.it-ticket-dialog-close:hover {
-    -fx-background-color: rgba(239,68,68,0.16);
-    -fx-text-fill: #EF4444;
-    -fx-border-color: rgba(239,68,68,0.28);
-}
-
-.it-ticket-dialog-body {
-    -fx-padding: 16 20 10 20;
-}
-
-/* Dialog info sections */
-.it-ticket-info-section {
-    -fx-background-color: rgba(255,255,255,0.03);
-    -fx-background-radius: 8;
-    -fx-border-radius: 8;
-    -fx-border-color: rgba(255,255,255,0.07);
-    -fx-border-width: 1;
-    -fx-padding: 12;
-    -fx-spacing: 8;
-}
-
-.it-ticket-info-section-title {
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(200,200,220,0.50);
-    -fx-padding: 0 0 4 0;
-}
-
-.it-ticket-info-key {
-    -fx-font-size: 12px;
-    -fx-font-weight: 700;
-    -fx-text-fill: rgba(180,190,220,0.60);
-    -fx-min-width: 100;
-}
-
-.it-ticket-info-val {
-    -fx-font-size: 12px;
-    -fx-text-fill: rgba(235,240,252,0.90);
-}
-
-/* Dialog text sections */
-.it-ticket-dialog-section {
-    -fx-spacing: 6;
-}
-
-.it-ticket-dialog-section-label {
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: rgba(200,200,220,0.50);
-}
-
-.it-ticket-dialog-section-value {
-    -fx-font-size: 13px;
-    -fx-text-fill: rgba(235,240,252,0.90);
-}
-
-/* Dialog actions */
-.it-ticket-dialog-actions {
-    -fx-padding: 14 20;
-    -fx-border-color: rgba(255,255,255,0.07) transparent transparent transparent;
-    -fx-border-width: 1 0 0 0;
+.ticket-dialog-close:hover { -fx-background-color: #F5F7FB; -fx-text-fill: #17191F; }
+.ticket-dialog-body    { -fx-padding: 16 20 10 20; }
+.ticket-dialog-section { -fx-spacing: 6; }
+.ticket-dialog-section-label { -fx-text-fill: #6B7280; -fx-font-size: 10px; -fx-font-weight: bold; }
+.ticket-dialog-section-value { -fx-text-fill: #17191F; -fx-font-size: 13px; }
+.ticket-dialog-actions {
     -fx-spacing: 10;
+    -fx-padding: 14 20;
+    -fx-border-color: #E4E8ED transparent transparent transparent;
 }
-
-/* Light mode overrides */
-.root-canvas.light-mode .ticket-tab-button {
-    -fx-background-color: rgba(17,24,39,0.06);
-    -fx-border-color: rgba(17,24,39,0.12);
-    -fx-text-fill: rgba(30,40,60,0.65);
+.ticket-info-section {
+    -fx-background-color: #F7F9FB;
+    -fx-background-radius: 6;
+    -fx-border-color: #E4E8ED;
+    -fx-border-radius: 6;
+    -fx-spacing: 8;
+    -fx-padding: 12;
 }
-
-.root-canvas.light-mode .ticket-tab-button:hover {
-    -fx-background-color: rgba(17,24,39,0.10);
-    -fx-text-fill: rgba(17,24,39,0.88);
-}
-
-.root-canvas.light-mode .ticket-tab-selected {
-    -fx-background-color: #B91C1C;
-    -fx-text-fill: #FFFFFF;
-}
-
-.root-canvas.light-mode .it-ticket-cat-badge {
-    -fx-background-color: rgba(17,24,39,0.08);
-    -fx-text-fill: rgba(30,40,80,0.80);
-}
-
-.root-canvas.light-mode .it-ticket-view-button {
-    -fx-border-color: rgba(17,24,39,0.16);
-    -fx-text-fill: rgba(30,40,60,0.65);
-}
-
-.root-canvas.light-mode .it-ticket-view-button:hover {
-    -fx-background-color: rgba(185,28,28,0.10);
-    -fx-text-fill: #B91C1C;
-    -fx-border-color: rgba(185,28,28,0.22);
-}
-
-.root-canvas.light-mode .it-ticket-dialog-card {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: rgba(17,24,39,0.10);
-}
-
-.root-canvas.light-mode .it-ticket-dialog-header {
-    -fx-border-color: transparent transparent rgba(17,24,39,0.08) transparent;
-}
-
-.root-canvas.light-mode .it-ticket-dialog-id {
-    -fx-text-fill: #B91C1C;
-}
-
-.root-canvas.light-mode .it-ticket-dialog-close {
-    -fx-border-color: rgba(17,24,39,0.14);
-    -fx-text-fill: rgba(30,40,60,0.55);
-}
-
-.root-canvas.light-mode .it-ticket-dialog-close:hover {
-    -fx-background-color: rgba(239,68,68,0.08);
-    -fx-text-fill: #DC2626;
-    -fx-border-color: rgba(239,68,68,0.20);
-}
-
-.root-canvas.light-mode .it-ticket-info-section {
-    -fx-background-color: rgba(17,24,39,0.03);
-    -fx-border-color: rgba(17,24,39,0.08);
-}
-
-.root-canvas.light-mode .it-ticket-info-section-title {
-    -fx-text-fill: rgba(17,24,39,0.45);
-}
-
-.root-canvas.light-mode .it-ticket-info-key {
-    -fx-text-fill: rgba(17,24,39,0.55);
-}
-
-.root-canvas.light-mode .it-ticket-info-val {
-    -fx-text-fill: #1A1F36;
-}
-
-.root-canvas.light-mode .it-ticket-dialog-section-label {
-    -fx-text-fill: rgba(17,24,39,0.45);
-}
-
-.root-canvas.light-mode .it-ticket-dialog-section-value {
-    -fx-text-fill: #1A1F36;
-}
-
-.root-canvas.light-mode .it-ticket-dialog-actions {
-    -fx-border-color: rgba(17,24,39,0.08) transparent transparent transparent;
-}
+.ticket-info-section-title { -fx-text-fill: #6B7280; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 0 0 4 0; }
+.ticket-info-key { -fx-text-fill: #6B7280; -fx-font-size: 12px; -fx-min-width: 100; }
+.ticket-info-val { -fx-text-fill: #17191F; -fx-font-size: 12px; }

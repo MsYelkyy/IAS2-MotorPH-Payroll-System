@@ -1,0 +1,114 @@
+.sidebar {
+    -fx-font-family: "Inter";
+    -fx-pref-width: 230;
+    -fx-min-width: 230;
+    -fx-max-width: 230;
+    -fx-background-color: #182B4C;
+    -fx-border-color: transparent #121625 transparent transparent;
+    -fx-border-width: 0 1.238 0 0;
+    -fx-padding: 27 14 16 14;
+}
+
+/* Fixed row heights (from the Figma frame) so spacing does not depend on font metrics. */
+.sidebar-brand        { -fx-spacing: 5; -fx-padding: 0 10 7 10; }
+.sidebar-brand-name   { -fx-text-fill: white;   -fx-font-size: 25px; -fx-font-weight: bold;
+                        -fx-min-height: 32; -fx-pref-height: 32; -fx-max-height: 32; }
+.sidebar-brand-system { -fx-text-fill: #C8CBD3; -fx-font-size: 7px;  -fx-font-weight: bold;
+                        -fx-min-height: 10; -fx-pref-height: 10; -fx-max-height: 10; }
+
+.sidebar-scroll,
+.sidebar-scroll > .viewport,
+.sidebar-nav {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
+.sidebar-nav { -fx-spacing: 3; }
+.sidebar-scroll .scroll-bar { -fx-background-color: transparent; -fx-pref-width: 6; }
+.sidebar-scroll .scroll-bar .thumb { -fx-background-color: #444A61; -fx-background-radius: 3; }
+.sidebar-scroll .scroll-bar .increment-button,
+.sidebar-scroll .scroll-bar .decrement-button { -fx-padding: 0; -fx-pref-height: 0; -fx-max-height: 0; }
+.sidebar-scroll .scroll-bar .increment-arrow,
+.sidebar-scroll .scroll-bar .decrement-arrow { -fx-shape: " "; -fx-padding: 0; }
+
+.sidebar-section {
+    -fx-text-fill: #777E91;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 18 14 9 14;
+    -fx-min-height: 39;
+    -fx-pref-height: 39;
+    -fx-max-height: 39;
+}
+
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 2;
+    -fx-border-color: transparent;
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 2;
+    -fx-text-fill: #C8CBD3;
+    -fx-font-size: 12px;
+    -fx-font-weight: normal;
+    -fx-alignment: CENTER_LEFT;
+    -fx-graphic-text-gap: 10;
+    -fx-padding: 0 8 0 12;
+    -fx-min-height: 40;
+    -fx-pref-height: 40;
+    -fx-max-height: 40;
+    -fx-cursor: hand;
+}
+.nav-button .nav-icon-path { -fx-stroke: #C8CBD3; }
+
+.nav-button:hover {
+    -fx-background-color: #2B314A;
+    -fx-text-fill: white;
+}
+.nav-button:hover .nav-icon-path,
+.selected-nav .nav-icon-path { -fx-stroke: white; }
+
+.selected-nav,
+.selected-nav:hover {
+    -fx-background-color: #2F6FAE;
+    -fx-border-color: transparent transparent transparent #6FA6D8;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.sidebar-footer { -fx-spacing: 8; -fx-padding: 12 0 0 0; }
+
+.sidebar-card {
+    -fx-background-color: #2F6FAE;
+    -fx-background-radius: 2;
+    -fx-border-color: #6FA6D8;
+    -fx-border-width: 1;
+    -fx-border-radius: 2;
+    -fx-spacing: 8;
+    -fx-padding: 15 14;
+}
+.sidebar-card-kicker { -fx-text-fill: white;   -fx-font-size: 9px;  -fx-font-weight: bold;
+                       -fx-min-height: 12; -fx-pref-height: 12; -fx-max-height: 12; }
+.sidebar-card-title  { -fx-text-fill: white;   -fx-font-size: 13px; -fx-font-weight: bold;
+                       -fx-min-height: 17; -fx-pref-height: 17; -fx-max-height: 17; }
+.sidebar-card-copy   { -fx-text-fill: #D5D7DD; -fx-font-size: 10px;
+                       -fx-min-height: 13; -fx-pref-height: 13; -fx-max-height: 13; }
+
+.sidebar-action {
+    -fx-background-color: #2B314A;
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    -fx-border-color: #444A61;
+    -fx-border-width: 1;
+    -fx-border-radius: 4;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-min-height: 36;
+    -fx-pref-height: 36;
+    -fx-cursor: hand;
+}
+.sidebar-action:hover { -fx-background-color: #3A4058; }
+
+.sidebar-logout { -fx-background-color: transparent; -fx-border-color: #D5D7DD; }
+.sidebar-logout:hover { -fx-background-color: #2B314A; }

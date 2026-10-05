@@ -4,7 +4,6 @@ import motorph.api.AccessLogApiClient;
 import motorph.api.EmployeeApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.LeaveApiClient;
-import motorph.api.PayrunApiClient;
 import motorph.api.UserAccountApiClient;
 import motorph.api.dto.accesslog.AccessLogAction;
 import motorph.api.dto.accesslog.AccessLogCountsDTO;
@@ -12,56 +11,37 @@ import motorph.api.dto.accesslog.UserAccessLogDTO;
 import motorph.api.dto.employee.EmployeeSummaryDTO;
 import motorph.api.dto.leave.LeaveSummaryDTO;
 import motorph.api.dto.user.AccountCountsDTO;
-import motorph.api.dto.payroll.PayrollSummaryDTO;
-import motorph.api.dto.payroll.PayrunDTO;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
-import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Populates the Admin dashboard with system-wide metrics and quick-access tiles. */
+/** Populates the Admin dashboard with people and account metrics and the recent activity feed. */
 public class AdminDashboardController {
 
     private static final Logger logger = Logger.getLogger(AdminDashboardController.class.getName());
 
-    private static final DateTimeFormatter DATE_FMT =
-            DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private static final DateTimeFormatter DT_FMT =
             DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm a");
-    private static final NumberFormat CURRENCY =
-            NumberFormat.getCurrencyInstance(Locale.of("en", "PH"));
 
     private EmployeeApiClient    employeeApiClient;
     private LeaveApiClient       leaveApiClient;
-    private PayrunApiClient      payrunApiClient;
     private UserAccountApiClient userAccountApiClient;
     private AccessLogApiClient   accessLogApiClient;
-
-    // Parent shell for dashboard navigation
-    private AdminMainController mainController;
 
     // HR area
     @FXML private Label totalActiveEmployeesLabel;
     @FXML private Label totalAllEmployeesLabel;
     @FXML private Label onLeaveTodayLabel;
     @FXML private Label pendingLeaveLabel;
-
-    // Finance / Payroll area
-    @FXML private Label latestPayrunPeriodLabel;
-    @FXML private Label latestPayrunNetPayLabel;
-    @FXML private Label latestPayrunGrossPayLabel;
-    @FXML private Label latestPayrunHeadcountLabel;
 
     // IT / Security area
     @FXML private Label activeAccountsLabel;
@@ -71,8 +51,8 @@ public class AdminDashboardController {
     @FXML private Label failedLoginsLabel;
 
     // Recent activity table
-    private static final double ACTION_COLUMN_WIDTH = 240;
-    private static final double TIME_COLUMN_WIDTH = 170;
+    private static final double ACTION_COLUMN_WIDTH = 196;
+    private static final double TIME_COLUMN_WIDTH = 180;
 
     @FXML private VBox activityRows;
 
@@ -80,7 +60,6 @@ public class AdminDashboardController {
     private void initialize() {
         employeeApiClient    = ApiClientFactory.getInstance().getEmployeeApiClient();
         leaveApiClient       = ApiClientFactory.getInstance().getLeaveApiClient();
-        payrunApiClient      = ApiClientFactory.getInstance().getPayrunApiClient();
         userAccountApiClient = ApiClientFactory.getInstance().getUserAccountApiClient();
         accessLogApiClient   = ApiClientFactory.getInstance().getAccessLogApiClient();
     }
@@ -88,24 +67,10 @@ public class AdminDashboardController {
     /** Called by AdminMainController whenever the dashboard tab is shown. */
     public void refresh() {
         refreshEmployeeMetrics();
-        refreshPayrollSummary();
         refreshAccountMetrics();
         refreshLoginActivity();
         refreshActivityFeed();
     }
-
-    /** Wired by AdminMainController so quick-access tiles can navigate. */
-    public void setMainController(AdminMainController mainController) {
-        this.mainController = mainController;
-    }
-
-    // Quick-access tile handlers
-    @FXML private void onTileEmployees()      { if (mainController != null) mainController.navigateToEmployees(); }
-    @FXML private void onTilePayroll()        { if (mainController != null) mainController.navigateToPayroll(); }
-    @FXML private void onTileReports()        { if (mainController != null) mainController.navigateToReports(); }
-    @FXML private void onTileLeaveOvertime()  { if (mainController != null) mainController.navigateToLeaveOvertime(); }
-    @FXML private void onTileUserMgmt()       { if (mainController != null) mainController.navigateToUserManagement(); }
-    @FXML private void onTileRoleMgmt()       { if (mainController != null) mainController.navigateToRoleManagement(); }
 
     // Metric refresh
     private void refreshEmployeeMetrics() {
@@ -128,40 +93,6 @@ public class AdminDashboardController {
         } catch (Exception e) {
             setText(onLeaveTodayLabel, "—");
             setText(pendingLeaveLabel, "—");
-        }
-    }
-
-    private void refreshPayrollSummary() {
-        try {
-            List<PayrunDTO> payruns = payrunApiClient.getAllPayruns();
-
-            if (payruns.isEmpty()) {
-                setText(latestPayrunPeriodLabel,    "No payrun yet");
-                setText(latestPayrunNetPayLabel,    "—");
-                setText(latestPayrunGrossPayLabel,  "—");
-                setText(latestPayrunHeadcountLabel, "—");
-                return;
-            }
-
-            PayrunDTO latest = payruns.get(0);
-            String period = DATE_FMT.format(latest.getStartDate())
-                    + " – " + DATE_FMT.format(latest.getEndDate());
-            setText(latestPayrunPeriodLabel, period);
-
-            List<PayrollSummaryDTO> results = payrunApiClient.getPayrollSummaries(latest.getPayrunId());
-
-            double totalGross = results.stream().mapToDouble(PayrollSummaryDTO::getGrossPay).sum();
-            double totalNet   = results.stream().mapToDouble(PayrollSummaryDTO::getNetPay).sum();
-
-            setText(latestPayrunGrossPayLabel,  CURRENCY.format(totalGross));
-            setText(latestPayrunNetPayLabel,    CURRENCY.format(totalNet));
-            setText(latestPayrunHeadcountLabel, results.size() + " employees");
-
-        } catch (Exception e) {
-            setText(latestPayrunPeriodLabel,    "—");
-            setText(latestPayrunNetPayLabel,    "—");
-            setText(latestPayrunGrossPayLabel,  "—");
-            setText(latestPayrunHeadcountLabel, "—");
         }
     }
 
@@ -206,12 +137,10 @@ public class AdminDashboardController {
 
     private HBox buildActivityRow(UserAccessLogDTO log) {
         HBox row = new HBox();
-        row.getStyleClass().addAll("table-data-row", "admin-activity-row");
-        row.setAlignment(Pos.CENTER_LEFT);
+        row.getStyleClass().add("admin-activity-row");
 
         String actionText = log.getAction() != null ? log.getAction() : "N/A";
-        Label action = fixedCell(formatActivityAction(actionText), ACTION_COLUMN_WIDTH);
-        action.getStyleClass().add("admin-activity-status");
+        Label action = fixedCell(formatActivityAction(actionText), ACTION_COLUMN_WIDTH, "admin-activity-action");
         if (AccessLogAction.LOGIN_SUCCESS.equals(actionText)) {
             action.getStyleClass().add("admin-activity-success");
         } else if (AccessLogAction.LOGIN_FAILED.equals(actionText)) {
@@ -219,24 +148,23 @@ public class AdminDashboardController {
         }
 
         Label details = new Label(log.getDetails() != null ? log.getDetails() : "—");
-        details.getStyleClass().addAll("table-cell", "data-line");
+        details.getStyleClass().add("admin-activity-details");
         details.setMinWidth(0);
         details.setMaxWidth(Double.MAX_VALUE);
         details.setTooltip(new Tooltip(details.getText()));
         HBox.setHgrow(details, Priority.ALWAYS);
 
         String dateText = log.getLoggedAt() != null ? DT_FMT.format(log.getLoggedAt()) : "—";
-        Label date = fixedCell(dateText, TIME_COLUMN_WIDTH);
-        date.getStyleClass().add("admin-activity-time");
+        Label date = fixedCell(dateText, TIME_COLUMN_WIDTH, "admin-activity-time");
 
         row.getChildren().addAll(action, details, date);
         return row;
     }
 
     // Fixed-width cell; widths must match the header labels in Dashboard.fxml
-    private Label fixedCell(String text, double width) {
+    private Label fixedCell(String text, double width, String styleClass) {
         Label label = new Label(text);
-        label.getStyleClass().addAll("table-cell", "data-line");
+        label.getStyleClass().add(styleClass);
         label.setMinWidth(width);
         label.setPrefWidth(width);
         label.setMaxWidth(width);

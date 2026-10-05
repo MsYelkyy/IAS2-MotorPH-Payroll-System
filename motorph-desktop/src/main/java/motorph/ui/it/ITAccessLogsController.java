@@ -4,6 +4,7 @@ import motorph.api.AccessLogApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.dto.accesslog.AccessLogAction;
 import motorph.api.dto.accesslog.UserAccessLogDTO;
+import motorph.ui.common.EmptyState;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -137,7 +138,6 @@ public class ITAccessLogsController {
 
     private void configureTable() {
         logsTable.setItems(pagedLogs);
-        logsTable.setPlaceholder(new Label("No access log entries found."));
         logsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         userIdColumn.setCellValueFactory(data -> {
@@ -233,9 +233,8 @@ public class ITAccessLogsController {
 
         pagedLogs.setAll(filteredLogs.subList(from, to));
         logsPageLabel.setText("Page " + currentPage + " of " + totalPages);
-        logsRecordInfoLabel.setText(total == 0
-                ? "No entries found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " entries");
+        EmptyState.apply(logsTable, !allLogs.isEmpty(), "log entries", "User activity will appear here.");
+        logsRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allLogs.size(), "entries"));
         logsPrevButton.setDisable(currentPage <= 1);
         logsNextButton.setDisable(currentPage >= totalPages);
     }

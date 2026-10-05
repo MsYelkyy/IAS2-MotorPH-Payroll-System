@@ -3,7 +3,6 @@ package motorph.app;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -38,11 +37,7 @@ public class Main extends Application {
         EmployeeUIServiceFactory.getInstance()
                 .getEmailPreviewService()
                 .addListener(preview -> Platform.runLater(() ->
-                        EmailPreviewDialog.show(stage, preview, isLightMode(scene.getRoot()))));
-    }
-
-    private boolean isLightMode(Node root) {
-        return root != null && root.getStyleClass().contains("light-mode");
+                        EmailPreviewDialog.show(stage, preview)));
     }
 
     public static void main(String[] args) {

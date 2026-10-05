@@ -5,6 +5,7 @@ import motorph.domain.value.SupportTicketStatus;
 import motorph.api.ApiClientFactory;
 import motorph.api.SupportTicketApiClient;
 import motorph.api.dto.support.SupportTicketDTO;
+import motorph.ui.common.EmptyState;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -18,6 +19,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -161,6 +163,11 @@ public abstract class BaseSupportTicketController {
 
     private Button tabButton(String label, boolean selected) {
         Button btn = new Button(label);
+        Label count = new Label("0");
+        count.getStyleClass().add("ticket-tab-count");
+        btn.setGraphic(count);
+        btn.setContentDisplay(ContentDisplay.RIGHT);
+        btn.setMinWidth(Region.USE_PREF_SIZE);
         btn.getStyleClass().add("ticket-tab-button");
         if (selected) btn.getStyleClass().add("ticket-tab-selected");
         btn.setOnAction(e -> selectTab(label, btn));
@@ -188,7 +195,6 @@ public abstract class BaseSupportTicketController {
     // Table setup
     private void configureTable() {
         ticketsTable.setItems(pagedRows);
-        ticketsTable.setPlaceholder(new Label("No support tickets found."));
         ticketsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         ticketIdColumn.setCellValueFactory(data ->
@@ -279,9 +285,8 @@ public abstract class BaseSupportTicketController {
 
         pagedRows.setAll(filteredRows.subList(from, to));
         ticketsPageLabel.setText("Page " + currentPage + " of " + totalPages);
-        ticketsRecordInfoLabel.setText(total == 0
-                ? "No tickets found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " tickets");
+        EmptyState.apply(ticketsTable, !allRows.isEmpty(), "tickets", "New support requests will appear here.");
+        ticketsRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allRows.size(), "tickets"));
         ticketsPrevButton.setDisable(currentPage <= 1);
         ticketsNextButton.setDisable(currentPage >= totalPages);
     }
@@ -308,10 +313,14 @@ public abstract class BaseSupportTicketController {
         long resolved  = allRows.stream().filter(r -> r.getStatus() == SupportTicketStatus.RESOLVED).count();
         long cancelled = allRows.stream().filter(r -> r.getStatus() == SupportTicketStatus.CANCELLED).count();
 
-        allTab.setText(STATUS_ALL       + " (" + allRows.size() + ")");
-        openTab.setText(STATUS_OPEN     + " (" + open + ")");
-        resolvedTab.setText(STATUS_RESOLVED  + " (" + resolved + ")");
-        cancelledTab.setText(STATUS_CANCELLED + " (" + cancelled + ")");
+        setTabCount(allTab, allRows.size());
+        setTabCount(openTab, open);
+        setTabCount(resolvedTab, resolved);
+        setTabCount(cancelledTab, cancelled);
+    }
+
+    private void setTabCount(Button tab, long count) {
+        ((Label) tab.getGraphic()).setText(String.valueOf(count));
     }
 
     // Ticket details popup
@@ -324,7 +333,7 @@ public abstract class BaseSupportTicketController {
 
     private StackPane buildOverlay(SupportTicketRowDTO row) {
         StackPane overlay = new StackPane();
-        overlay.setStyle("-fx-background-color: rgba(0,0,0,0.55);");
+        overlay.getStyleClass().add("ticket-overlay");
         overlay.setAlignment(Pos.CENTER);
         overlay.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
 
@@ -343,7 +352,7 @@ public abstract class BaseSupportTicketController {
 
     private VBox buildDetailCard(SupportTicketRowDTO row, StackPane overlay) {
         VBox card = new VBox(0);
-        card.getStyleClass().add("it-ticket-dialog-card");
+        card.getStyleClass().add("ticket-dialog-card");
         card.setMaxWidth(660);
         card.setMinWidth(520);
         // hug the content's height so the centered card has no empty space below it
@@ -351,11 +360,11 @@ public abstract class BaseSupportTicketController {
 
         // header row
         HBox header = new HBox(10);
-        header.getStyleClass().add("it-ticket-dialog-header");
+        header.getStyleClass().add("ticket-dialog-header");
         header.setAlignment(Pos.CENTER_LEFT);
 
         Label idLabel = new Label("#" + String.format("%04d", row.getTicketId()));
-        idLabel.getStyleClass().add("it-ticket-dialog-id");
+        idLabel.getStyleClass().add("ticket-dialog-id");
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -364,14 +373,14 @@ public abstract class BaseSupportTicketController {
         statusBadge.getStyleClass().addAll("status-badge", statusBadgeClass(row.getStatus()));
 
         Button closeBtn = new Button("✕");
-        closeBtn.getStyleClass().add("it-ticket-dialog-close");
+        closeBtn.getStyleClass().add("ticket-dialog-close");
         closeBtn.setOnAction(e -> closeOverlay(overlay));
 
         header.getChildren().addAll(idLabel, spacer, statusBadge, closeBtn);
 
         // body — wraps its content naturally; the popup has no scrollbar of its own
         VBox body = new VBox(16);
-        body.getStyleClass().add("it-ticket-dialog-body");
+        body.getStyleClass().add("ticket-dialog-body");
 
         // two-column info row
         HBox infoRow = new HBox(12);
@@ -395,21 +404,21 @@ public abstract class BaseSupportTicketController {
 
         // subject section
         VBox subjectSection = new VBox(6);
-        subjectSection.getStyleClass().add("it-ticket-dialog-section");
+        subjectSection.getStyleClass().add("ticket-dialog-section");
         Label subjectLabel = new Label("Title / Subject");
-        subjectLabel.getStyleClass().add("it-ticket-dialog-section-label");
+        subjectLabel.getStyleClass().add("ticket-dialog-section-label");
         Label subjectValue = new Label(nullSafe(row.getSubject()));
-        subjectValue.getStyleClass().add("it-ticket-dialog-section-value");
+        subjectValue.getStyleClass().add("ticket-dialog-section-value");
         subjectValue.setWrapText(true);
         subjectSection.getChildren().addAll(subjectLabel, subjectValue);
 
         // description section
         VBox descSection = new VBox(6);
-        descSection.getStyleClass().add("it-ticket-dialog-section");
+        descSection.getStyleClass().add("ticket-dialog-section");
         Label descLabel = new Label("Description");
-        descLabel.getStyleClass().add("it-ticket-dialog-section-label");
+        descLabel.getStyleClass().add("ticket-dialog-section-label");
         Label descValue = new Label(nullSafe(row.getDescription()));
-        descValue.getStyleClass().add("it-ticket-dialog-section-value");
+        descValue.getStyleClass().add("ticket-dialog-section-value");
         descValue.setWrapText(true);
         descSection.getChildren().addAll(descLabel, descValue);
 
@@ -424,10 +433,10 @@ public abstract class BaseSupportTicketController {
 
     private VBox buildInfoSection(String title, String[][] fields) {
         VBox section = new VBox(8);
-        section.getStyleClass().add("it-ticket-info-section");
+        section.getStyleClass().add("ticket-info-section");
 
         Label titleLabel = new Label(title);
-        titleLabel.getStyleClass().add("it-ticket-info-section-title");
+        titleLabel.getStyleClass().add("ticket-info-section-title");
         section.getChildren().add(titleLabel);
 
         for (String[] field : fields) {
@@ -435,10 +444,10 @@ public abstract class BaseSupportTicketController {
             row.setAlignment(Pos.TOP_LEFT);
 
             Label key = new Label(field[0] + ":");
-            key.getStyleClass().add("it-ticket-info-key");
+            key.getStyleClass().add("ticket-info-key");
 
             Label val = new Label(field[1]);
-            val.getStyleClass().add("it-ticket-info-val");
+            val.getStyleClass().add("ticket-info-val");
             val.setWrapText(true);
 
             row.getChildren().addAll(key, val);
@@ -450,7 +459,7 @@ public abstract class BaseSupportTicketController {
 
     private HBox buildActionsBar(SupportTicketRowDTO row, StackPane overlay) {
         HBox bar = new HBox(10);
-        bar.getStyleClass().add("it-ticket-dialog-actions");
+        bar.getStyleClass().add("ticket-dialog-actions");
         bar.setAlignment(Pos.CENTER_LEFT);
 
         if (row.getStatus() == SupportTicketStatus.OPEN) {
@@ -554,9 +563,9 @@ public abstract class BaseSupportTicketController {
     private String statusBadgeClass(SupportTicketStatus status) {
         if (status == null) return "";
         return switch (status) {
-            case OPEN      -> "status-badge-danger";
-            case RESOLVED  -> "status-badge-success";
-            case CANCELLED -> "status-badge-neutral";
+            case OPEN      -> "status-ready";
+            case RESOLVED  -> "status-completed";
+            case CANCELLED -> "status-none";
         };
     }
 
@@ -583,7 +592,7 @@ public abstract class BaseSupportTicketController {
                 return;
             }
             Label badge = new Label(cat);
-            badge.getStyleClass().add("it-ticket-cat-badge");
+            badge.getStyleClass().addAll("status-badge", "status-completed");
             setGraphic(badge);
             setText(null);
         }
@@ -605,10 +614,10 @@ public abstract class BaseSupportTicketController {
     }
 
     private final class ViewButtonCell extends TableCell<SupportTicketRowDTO, SupportTicketRowDTO> {
-        private final Button btn = new Button("›");
+        private final Button btn = new Button("View");
 
         private ViewButtonCell() {
-            btn.getStyleClass().add("it-ticket-view-button");
+            btn.getStyleClass().add("table-action-button");
             btn.setOnAction(e -> {
                 SupportTicketRowDTO row = getItem();
                 if (row != null) showTicketDetails(row);

@@ -1,0 +1,63 @@
+.dashboard { -fx-padding: 15 0 0 0; }
+
+.kpi-tile {
+    -fx-alignment: CENTER_LEFT;
+    -fx-spacing: 3;
+    -fx-padding: 0 16;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.12), 6, 0, 0, 2);
+    -fx-min-height: 96;
+}
+.kpi-blue   { -fx-background-color: #0052CD; }
+.kpi-orange { -fx-background-color: #FE991E; }
+.kpi-red    { -fx-background-color: #FF562F; }
+.kpi-cyan   { -fx-background-color: #03BAFB; }
+.kpi-teal   { -fx-background-color: #52AB9B; }
+.kpi-kicker  { -fx-text-fill: white; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 0 0 5 0; }
+.kpi-value   { -fx-text-fill: white; -fx-font-size: 26px; -fx-font-weight: bold; }
+.kpi-caption { -fx-text-fill: white; -fx-font-size: 10px; }
+
+.dash-card {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #E3E8ED;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.07), 8, 0, 0, 2);
+    -fx-spacing: 8;
+    -fx-padding: 18;
+}
+.dash-head     { -fx-spacing: 5; }
+.dash-kicker   { -fx-text-fill: #6B7280; -fx-font-size: 10px; -fx-font-weight: bold; }
+.dash-title    { -fx-text-fill: #17191F; -fx-font-size: 15px; }
+.dash-headline { -fx-text-fill: #17191F; -fx-font-size: 16px; }
+.dash-note     { -fx-text-fill: #6B7280; -fx-font-size: 11px; }
+.dash-pill {
+    -fx-background-color: #EAF2FA;
+    -fx-background-radius: 2;
+    -fx-text-fill: #3D424B;
+    -fx-font-size: 9px;
+    -fx-font-weight: bold;
+    -fx-padding: 7 10;
+}
+.dash-row {
+    -fx-alignment: CENTER_LEFT;
+    -fx-min-height: 30;
+    -fx-border-color: transparent transparent #ECECE8 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.dash-value { -fx-text-fill: #17191F; -fx-font-size: 11px; -fx-font-weight: bold; }
+.dash-bottom { -fx-spacing: 8; -fx-padding: 17 18 18 18; -fx-min-height: 160; -fx-pref-height: 160; }
+.dash-bottom .dash-kicker { -fx-padding: 0 0 5 0; }
+
+.leave-summary-list { -fx-padding: 6 0 0 0; }
+.leave-summary-row {
+    -fx-alignment: CENTER_LEFT;
+    -fx-min-height: 38;
+    -fx-pref-height: 38;
+    -fx-border-color: transparent transparent #ECECE8 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.leave-summary-row-last { -fx-border-color: transparent; }
+.leave-summary-name  { -fx-text-fill: #4D5055; -fx-font-size: 12px; }
+.leave-summary-value { -fx-text-fill: #17191F; -fx-font-size: 12px; -fx-font-weight: bold; }

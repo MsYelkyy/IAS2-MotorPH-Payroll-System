@@ -4,6 +4,7 @@ import motorph.api.ApiClientFactory;
 import motorph.api.ApiException;
 import motorph.api.PayslipApiClient;
 import motorph.api.dto.payroll.PayslipSummaryDTO;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiFormatter;
 
@@ -92,9 +93,8 @@ public class EmployeePayslipController {
         payrollTable.getItems().setAll(allRows.subList(from, to));
 
         pageLabel.setText("Page " + currentPage + " of " + totalPages);
-        recordInfoLabel.setText(total == 0
-                ? "No payroll records found."
-                : "ⓘ Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        EmptyState.apply(payrollTable, total > 0, "payroll records", "Your payslips will appear here once payroll is processed.");
+        recordInfoLabel.setText(EmptyState.recordInfo(from, to, total, total, "records"));
 
         btnPrev.setDisable(currentPage <= 1);
         btnNext.setDisable(currentPage >= totalPages);

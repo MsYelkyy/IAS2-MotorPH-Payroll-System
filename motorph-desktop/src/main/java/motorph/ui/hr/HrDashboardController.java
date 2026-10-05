@@ -246,6 +246,10 @@ public class HrDashboardController {
 
             daysByType.forEach((typeName, days) ->
                     leaveSummaryList.getChildren().add(buildLeaveSummaryRow(typeName, days)));
+            if (!leaveSummaryList.getChildren().isEmpty()) {
+                leaveSummaryList.getChildren().get(leaveSummaryList.getChildren().size() - 1)
+                        .getStyleClass().add("leave-summary-row-last");
+            }
 
         } catch (Exception e) {
             // leave summary stays empty on service error

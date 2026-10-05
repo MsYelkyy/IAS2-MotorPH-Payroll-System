@@ -3,6 +3,7 @@ package motorph.ui.employee;
 import motorph.api.ApiClientFactory;
 import motorph.api.AttendanceApiClient;
 import motorph.api.dto.attendance.AttendanceDTO;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -161,9 +162,8 @@ public class EmployeeAttendanceController {
 
         attendanceTable.getItems().setAll(allAttendanceRows.subList(from, to));
         attendancePageLabel.setText("Page " + currentAttendancePage + " of " + totalPages);
-        attendanceRecordInfoLabel.setText(total == 0
-                ? "No attendance records found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        EmptyState.apply(attendanceTable, total > 0, "attendance records", "Your time in and time out records will appear here.");
+        attendanceRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, total, "records"));
         attendancePrevButton.setDisable(currentAttendancePage <= 1);
         attendanceNextButton.setDisable(currentAttendancePage >= totalPages);
     }

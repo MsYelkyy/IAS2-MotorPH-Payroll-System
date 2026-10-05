@@ -6,10 +6,16 @@ import javafx.animation.SequentialTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,18 +30,43 @@ public final class UiMessageUtil {
 
     private static final Logger logger = Logger.getLogger(UiMessageUtil.class.getName());
 
+    private static final double TOAST_WIDTH = 380;
+    private static final double TOAST_TOP = 28;
+    private static final double TOAST_MIN_HEIGHT = 74;
+    private static final double TOAST_GAP = 12;
+
+    // the four toast looks: coloured edge + icon, a fixed title, and the message as the body
+    private enum ToastType {
+        SUCCESS("Success", "\u2713"),
+        INFO("Info", "i"),
+        WARNING("Warning", "!"),
+        ERROR("Error", "\u2715");
+
+        private final String title;
+        private final String glyph;
+
+        ToastType(String title, String glyph) {
+            this.title = title;
+            this.glyph = glyph;
+        }
+
+        private String styleClass() {
+            return "toast-" + name().toLowerCase(Locale.ROOT);
+        }
+    }
+
     // utility class — no instances
     private UiMessageUtil() {
     }
 
     // shows an error notification, anchored on the given label's window
     public static void setError(Label label, String message) {
-        notify(label, message, "toast-label-error");
+        notify(label, message, ToastType.ERROR);
     }
 
     // shows a success notification, anchored on the given label's window
     public static void setSuccess(Label label, String message) {
-        notify(label, message, "toast-label");
+        notify(label, message, ToastType.SUCCESS);
     }
 
     /**
@@ -62,16 +93,21 @@ public final class UiMessageUtil {
 
     /** Shows an error toast anchored on any node in the target window. */
     public static void showError(Node anchor, String message) {
-        notify(anchor, message, "toast-label-error");
+        notify(anchor, message, ToastType.ERROR);
     }
 
     /** Shows a success toast anchored on any node in the target window. */
     public static void showSuccess(Node anchor, String message) {
-        notify(anchor, message, "toast-label");
+        notify(anchor, message, ToastType.SUCCESS);
+    }
+
+    /** Shows an informational toast anchored on any node in the target window. */
+    public static void showInfo(Node anchor, String message) {
+        notify(anchor, message, ToastType.INFO);
     }
 
     // resolves the node's window overlay and shows the toast there
-    private static void notify(Node anchor, String message, String styleClass) {
+    private static void notify(Node anchor, String message, ToastType type) {
         StackPane root = resolveToastRoot(anchor);
 
         if (root == null) {
@@ -81,7 +117,7 @@ public final class UiMessageUtil {
             return;
         }
 
-        showToast(root, message, Pos.TOP_RIGHT, styleClass);
+        showToast(root, message, Pos.TOP_RIGHT, type);
     }
 
     // walks up to the outermost StackPane so every toast lands in the same corner
@@ -109,29 +145,29 @@ public final class UiMessageUtil {
 
     /**
      * Shows a transient success toast. The toast is injected into the window's
-     * overlay, fades in, holds for 2.5 s, then fades out and removes itself — it
-     * never participates in layout flow.
+     * overlay, fades in, holds, then fades out and removes itself (or closes on
+     * its X) — it never participates in layout flow.
      */
     public static void showToast(StackPane root, String message) {
-        showToast(root, message, Pos.TOP_RIGHT, "toast-label");
+        showToast(root, message, Pos.TOP_RIGHT, ToastType.SUCCESS);
     }
 
     // shows a success toast pinned to the top-right of the window
     public static void showSuccessToastTop(StackPane root, String message) {
-        showToast(root, message, Pos.TOP_RIGHT, "toast-label");
+        showToast(root, message, Pos.TOP_RIGHT, ToastType.SUCCESS);
     }
 
     // shows an error toast pinned to the top-right of the window
     public static void showErrorToastTop(StackPane root, String message) {
-        showToast(root, message, Pos.TOP_RIGHT, "toast-label-error");
+        showToast(root, message, Pos.TOP_RIGHT, ToastType.ERROR);
     }
 
     /**
-     * Shows a transient red error toast. Used for validation failures
+     * Shows a transient warning toast. Used for validation failures
      * (e.g. missing required fields).
      */
     public static void showErrorToast(StackPane root, String message) {
-        showToast(root, message, Pos.TOP_RIGHT, "toast-label-danger");
+        showToast(root, message, Pos.TOP_RIGHT, ToastType.WARNING);
     }
 
     // logs the failure and shows a user-friendly error toast
@@ -141,29 +177,49 @@ public final class UiMessageUtil {
     }
 
     // injects a transient toast that fades in, holds, then removes itself
-    private static void showToast(StackPane root, String message, Pos alignment, String styleClass) {
+    private static void showToast(StackPane root, String message, Pos alignment, ToastType type) {
         if (root == null) return;
 
         // a view-level toast host still resolves to the window overlay, so toasts
         // from nested screens stack in the same corner as everything else
         StackPane host = root.getScene() != null ? resolveToastRoot(root) : root;
 
-        Label toast = new Label(message);
-        toast.getStyleClass().add(styleClass);
-        toast.setWrapText(true);
-        toast.setMouseTransparent(true);
+        Label icon = new Label(type.glyph);
+        icon.getStyleClass().add("toast-icon");
+
+        Label title = new Label(type.title);
+        title.getStyleClass().add("toast-title");
+
+        Label text = new Label(message);
+        text.getStyleClass().add("toast-message");
+        text.setWrapText(true);
+
+        VBox body = new VBox(title, text);
+        body.getStyleClass().add("toast-body");
+        HBox.setHgrow(body, Priority.ALWAYS);
+
+        Button close = new Button("\u2715");
+        close.getStyleClass().add("toast-close");
+        close.setMinWidth(Region.USE_PREF_SIZE);
+
+        HBox toast = new HBox(icon, body, close);
+        toast.getStyleClass().addAll("toast", type.styleClass());
+        toast.setAlignment(Pos.CENTER_LEFT);
+        toast.setPrefWidth(TOAST_WIDTH);
+        toast.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         StackPane.setAlignment(toast, alignment);
         // offset by the toasts already on screen so a burst of messages stacks
         // downwards instead of printing on top of itself
-        StackPane.setMargin(toast, new Insets(28 + (visibleToasts(host) * 54), 24, 28, 24));
+        StackPane.setMargin(toast, new Insets(nextTopOffset(host), 24, 28, 24));
 
+        close.setOnAction(e -> host.getChildren().remove(toast));
         host.getChildren().add(toast);
 
         FadeTransition fadeIn = new FadeTransition(Duration.millis(200), toast);
         fadeIn.setFromValue(0);
         fadeIn.setToValue(1);
 
-        PauseTransition hold = new PauseTransition(Duration.millis(2500));
+        PauseTransition hold = new PauseTransition(Duration.millis(3500));
 
         FadeTransition fadeOut = new FadeTransition(Duration.millis(300), toast);
         fadeOut.setFromValue(1);
@@ -173,17 +229,17 @@ public final class UiMessageUtil {
         new SequentialTransition(fadeIn, hold, fadeOut).play();
     }
 
-    // counts the toasts currently living in the host overlay
-    private static int visibleToasts(StackPane host) {
-        int count = 0;
+    // top margin for the next toast: stacked below the toasts already in the overlay
+    private static double nextTopOffset(StackPane host) {
+        double offset = TOAST_TOP;
 
         for (Node child : host.getChildren()) {
-            if (child.getStyleClass().stream().anyMatch(style -> style.startsWith("toast-label"))) {
-                count++;
+            if (child.getStyleClass().contains("toast")) {
+                offset += Math.max(child.getLayoutBounds().getHeight(), TOAST_MIN_HEIGHT) + TOAST_GAP;
             }
         }
 
-        return count;
+        return offset;
     }
 
     // converts an exception to a user-friendly message

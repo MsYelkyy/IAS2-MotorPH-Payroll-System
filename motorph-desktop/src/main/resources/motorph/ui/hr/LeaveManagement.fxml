@@ -43,20 +43,21 @@
     <StackPane fx:id="toastRoot" VBox.vgrow="ALWAYS">
 
         <VBox fx:id="listPanel" styleClass="content-card" spacing="12">
-            <TableView fx:id="leaveTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                       styleClass="payroll-table">
+            <TableView fx:id="leaveTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <columns>
                     <TableColumn fx:id="leaveIdColumn" text="ID" prefWidth="70" minWidth="60"/>
-                    <TableColumn fx:id="leaveEmployeeColumn" text="Employee" prefWidth="220" minWidth="170"/>
-                    <TableColumn fx:id="leaveTypeColumn" text="Leave Type" prefWidth="170" minWidth="130"/>
-                    <TableColumn fx:id="leavePeriodColumn" text="Period" prefWidth="220" minWidth="170"/>
-                    <TableColumn fx:id="leaveHoursColumn" text="Hrs" prefWidth="80" minWidth="70"/>
-                    <TableColumn fx:id="leaveStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
-                    <TableColumn fx:id="leaveSubmittedColumn" text="Submitted" prefWidth="150" minWidth="120"/>
-                    <TableColumn fx:id="leaveActionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="leaveEmployeeColumn" text="EMPLOYEE" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="leaveTypeColumn" text="LEAVE TYPE" prefWidth="170" minWidth="130"/>
+                    <TableColumn fx:id="leavePeriodColumn" text="PERIOD" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="leaveHoursColumn" text="HRS" prefWidth="80" minWidth="70"/>
+                    <TableColumn fx:id="leaveStatusColumn" text="STATUS" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="leaveSubmittedColumn" text="SUBMITTED" prefWidth="150" minWidth="120"/>
+                    <TableColumn fx:id="leaveActionColumn" text="ACTIONS" prefWidth="120" minWidth="100"/>
                 </columns>
                 <placeholder>
-                    <Label text="No leave requests match the current filters." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No leave requests match the current filters" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>
@@ -118,36 +119,38 @@
               styleClass="content-card" spacing="12">
             <Label fx:id="creditsHeaderLabel" styleClass="section-title"/>
 
-            <TableView fx:id="creditTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                       styleClass="payroll-table">
+            <TableView fx:id="creditTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <columns>
-                    <TableColumn fx:id="creditTypeColumn" text="Leave Type" prefWidth="220" minWidth="170"/>
-                    <TableColumn fx:id="creditTotalColumn" text="Total" prefWidth="140" minWidth="110"/>
-                    <TableColumn fx:id="creditUsedColumn" text="Used" prefWidth="140" minWidth="110"/>
-                    <TableColumn fx:id="creditRemainingColumn" text="Remaining" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="creditTypeColumn" text="LEAVE TYPE" prefWidth="220" minWidth="170"/>
+                    <TableColumn fx:id="creditTotalColumn" text="TOTAL" prefWidth="140" minWidth="110"/>
+                    <TableColumn fx:id="creditUsedColumn" text="USED" prefWidth="140" minWidth="110"/>
+                    <TableColumn fx:id="creditRemainingColumn" text="REMAINING" prefWidth="160" minWidth="120"/>
                 </columns>
                 <placeholder>
-                    <Label text="No leave credit records found for this employee." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No leave credit records found for this employee" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>
 
         <VBox fx:id="overtimeListPanel" visible="false" managed="false"
               styleClass="content-card" spacing="12">
-            <TableView fx:id="overtimeTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                       styleClass="payroll-table">
+            <TableView fx:id="overtimeTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
                 <columns>
                     <TableColumn fx:id="otIdColumn" text="ID" prefWidth="70" minWidth="60"/>
-                    <TableColumn fx:id="otEmployeeColumn" text="Employee" prefWidth="200" minWidth="150"/>
-                    <TableColumn fx:id="otDepartmentColumn" text="Department" prefWidth="160" minWidth="120"/>
-                    <TableColumn fx:id="otDateColumn" text="Date" prefWidth="120" minWidth="100"/>
-                    <TableColumn fx:id="otTypeColumn" text="Overtime Type" prefWidth="160" minWidth="120"/>
-                    <TableColumn fx:id="otHoursColumn" text="Hrs" prefWidth="80" minWidth="70"/>
-                    <TableColumn fx:id="otStatusColumn" text="Status" prefWidth="120" minWidth="100"/>
-                    <TableColumn fx:id="otActionColumn" text="Actions" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="otEmployeeColumn" text="EMPLOYEE" prefWidth="200" minWidth="150"/>
+                    <TableColumn fx:id="otDepartmentColumn" text="DEPARTMENT" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="otDateColumn" text="DATE" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="otTypeColumn" text="OVERTIME TYPE" prefWidth="160" minWidth="120"/>
+                    <TableColumn fx:id="otHoursColumn" text="HRS" prefWidth="80" minWidth="70"/>
+                    <TableColumn fx:id="otStatusColumn" text="STATUS" prefWidth="120" minWidth="100"/>
+                    <TableColumn fx:id="otActionColumn" text="ACTIONS" prefWidth="120" minWidth="100"/>
                 </columns>
                 <placeholder>
-                    <Label text="No overtime requests match the current filters." styleClass="muted-text"/>
+                    <VBox styleClass="table-empty">
+                        <Label text="No overtime requests match the current filters" styleClass="table-empty-title"/>
+                    </VBox>
                 </placeholder>
             </TableView>
         </VBox>

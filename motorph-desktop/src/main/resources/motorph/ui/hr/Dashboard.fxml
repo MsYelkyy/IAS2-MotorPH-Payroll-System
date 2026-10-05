@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
@@ -10,142 +9,144 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="14"
-      fillWidth="true"
-      maxWidth="Infinity"
-      minWidth="0"
-      styleClass="hr-dashboard"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.hr.HrDashboardController">
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      spacing="14" fillWidth="true" maxWidth="Infinity" minWidth="0"
+      styleClass="dashboard" fx:controller="motorph.ui.hr.HrDashboardController">
 
-    <HBox spacing="18" maxWidth="Infinity" minWidth="0">
-
-        <!-- Metric column -->
-        <VBox spacing="14" prefWidth="210" minWidth="180" maxWidth="250" HBox.hgrow="NEVER">
-            <VBox spacing="6" styleClass="metric-card">
-                <Label text="TOTAL EMPLOYEES" styleClass="metric-label"/>
-                <Label fx:id="totalEmployeesLabel" text="—" styleClass="metric-value"/>
-                <Label text="All employee records" styleClass="muted-text"/>
-            </VBox>
-            <VBox spacing="6" styleClass="metric-card">
-                <Label text="ACTIVE EMPLOYEES" styleClass="metric-label"/>
-                <Label fx:id="activeEmployeesLabel" text="—" styleClass="metric-value, attendance-value"/>
-                <Label text="Currently employed" styleClass="muted-text"/>
-            </VBox>
-            <VBox spacing="6" styleClass="metric-card">
-                <Label text="PRESENT TODAY" styleClass="metric-label"/>
-                <Label fx:id="presentTodayLabel" text="—" styleClass="metric-value, attendance-value"/>
-                <Label text="Present or late today" styleClass="muted-text"/>
-            </VBox>
-            <VBox spacing="6" styleClass="metric-card">
-                <Label text="ON LEAVE TODAY" styleClass="metric-label"/>
-                <Label fx:id="onLeaveTodayLabel" text="—" styleClass="metric-value"/>
-                <Label text="Approved leave today" styleClass="muted-text"/>
-            </VBox>
-            <VBox spacing="6" styleClass="metric-card">
-                <Label text="PENDING REQUESTS" styleClass="metric-label"/>
-                <Label fx:id="pendingLeaveLabel" text="—" styleClass="metric-value"/>
-                <Label text="Leave" styleClass="muted-text"/>
-            </VBox>
-        </VBox>
-
-        <!-- Chart / data column -->
-        <VBox spacing="14" minWidth="680" maxWidth="Infinity" HBox.hgrow="ALWAYS">
-
-            <GridPane hgap="14" maxWidth="Infinity">
-                <columnConstraints>
-                    <ColumnConstraints percentWidth="50" minWidth="320" hgrow="ALWAYS"/>
-                    <ColumnConstraints percentWidth="50" minWidth="320" hgrow="ALWAYS"/>
-                </columnConstraints>
-
-                <VBox spacing="10" minWidth="320" maxWidth="Infinity"
-                      styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
-                    <Label text="ATTENDANCE TREND" styleClass="section-title"/>
-                    <LineChart fx:id="attendanceTrendChart" animated="false" legendVisible="false"
-                               createSymbols="true" minWidth="0" maxWidth="Infinity"
-                               styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
-                    </LineChart>
-                </VBox>
-                <VBox spacing="10" minWidth="320" maxWidth="Infinity"
-                      styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-                    <Label text="DEPARTMENT DISTRIBUTION" styleClass="section-title"/>
-                    <BarChart fx:id="departmentDistributionChart" animated="false" legendVisible="false"
-                              minWidth="0" maxWidth="Infinity"
-                              styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
-                    </BarChart>
-                </VBox>
-            </GridPane>
-
-            <GridPane hgap="14" maxWidth="Infinity">
-                <columnConstraints>
-                    <ColumnConstraints percentWidth="62" minWidth="420" hgrow="ALWAYS"/>
-                    <ColumnConstraints percentWidth="38" minWidth="300" hgrow="ALWAYS"/>
-                </columnConstraints>
-
-                <VBox spacing="10" minWidth="420" maxWidth="Infinity"
-                      styleClass="chart-card" GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
-                    <Label text="ATTENDANCE SUMMARY" styleClass="section-title"/>
-                    <BarChart fx:id="attendanceSummaryChart" animated="false" legendVisible="true"
-                              minWidth="0" maxWidth="Infinity"
-                              styleClass="portal-chart" VBox.vgrow="ALWAYS">
-                        <xAxis><CategoryAxis tickLabelFill="#A5A8B0"/></xAxis>
-                        <yAxis><NumberAxis   tickLabelFill="#A5A8B0"/></yAxis>
-                    </BarChart>
-                </VBox>
-                <VBox spacing="12" minWidth="300" maxWidth="Infinity"
-                      styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-                    <Label text="LEAVE SUMMARY" styleClass="section-title"/>
-                    <VBox fx:id="leaveSummaryList" spacing="9" styleClass="leave-summary-list" VBox.vgrow="ALWAYS"/>
-                </VBox>
-            </GridPane>
-
-        </VBox>
-    </HBox>
-
-    <GridPane hgap="14" maxWidth="Infinity" styleClass="dashboard-bottom-row">
+    <GridPane hgap="14" vgap="14" maxWidth="Infinity">
         <columnConstraints>
-            <ColumnConstraints percentWidth="33" minWidth="300" hgrow="ALWAYS"/>
-            <ColumnConstraints percentWidth="33" minWidth="320" hgrow="ALWAYS"/>
-            <ColumnConstraints percentWidth="34" minWidth="320" hgrow="ALWAYS"/>
+            <ColumnConstraints minWidth="171" prefWidth="171" maxWidth="171"/>
+            <ColumnConstraints minWidth="0" hgrow="ALWAYS"/>
         </columnConstraints>
+        <rowConstraints>
+            <RowConstraints minHeight="366" prefHeight="366"/>
+            <RowConstraints minHeight="323" prefHeight="323"/>
+        </rowConstraints>
 
-        <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, upcoming-holiday-card"
-              minWidth="300" maxWidth="Infinity"
-              GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
-            <Label text="UPCOMING HOLIDAY" styleClass="metric-label"/>
-            <VBox spacing="6" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
-                <Label text="June 12, 2026" maxWidth="Infinity" styleClass="bottom-value"/>
-                <Label text="Independence Day" wrapText="true" styleClass="muted-text"/>
+        <!-- Tiles: one column spanning both chart rows, equal height -->
+        <VBox spacing="14" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.rowSpan="2">
+            <VBox styleClass="kpi-tile, kpi-blue" VBox.vgrow="ALWAYS">
+                <Label text="TOTAL EMPLOYEES" styleClass="kpi-kicker"/>
+                <Label fx:id="totalEmployeesLabel" text="—" styleClass="kpi-value"/>
+                <Label text="All employee records" styleClass="kpi-caption"/>
+            </VBox>
+            <VBox styleClass="kpi-tile, kpi-orange" VBox.vgrow="ALWAYS">
+                <Label text="ACTIVE EMPLOYEES" styleClass="kpi-kicker"/>
+                <Label fx:id="activeEmployeesLabel" text="—" styleClass="kpi-value"/>
+                <Label text="Currently employed" styleClass="kpi-caption"/>
+            </VBox>
+            <VBox styleClass="kpi-tile, kpi-red" VBox.vgrow="ALWAYS">
+                <Label text="PRESENT TODAY" styleClass="kpi-kicker"/>
+                <Label fx:id="presentTodayLabel" text="—" styleClass="kpi-value"/>
+                <Label text="Present or late today" styleClass="kpi-caption"/>
+            </VBox>
+            <VBox styleClass="kpi-tile, kpi-cyan" VBox.vgrow="ALWAYS">
+                <Label text="ON LEAVE TODAY" styleClass="kpi-kicker"/>
+                <Label fx:id="onLeaveTodayLabel" text="—" styleClass="kpi-value"/>
+                <Label text="Approved leave today" styleClass="kpi-caption"/>
+            </VBox>
+            <VBox styleClass="kpi-tile, kpi-teal" VBox.vgrow="ALWAYS">
+                <Label text="PENDING REQUESTS" styleClass="kpi-kicker"/>
+                <Label fx:id="pendingLeaveLabel" text="—" styleClass="kpi-value"/>
+                <Label text="Leave" styleClass="kpi-caption"/>
             </VBox>
         </VBox>
-        <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, recent-report-card"
-              minWidth="320" maxWidth="Infinity"
-              GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-            <Label text="RECENT HR REPORT" styleClass="metric-label"/>
-            <VBox spacing="8" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
-                <Label text="No report available yet" styleClass="bottom-value"/>
-                <Label text="HR reports will be available here once enabled." wrapText="true" styleClass="muted-text"/>
-                <Region VBox.vgrow="ALWAYS"/>
-                <Button text="View Report" disable="true" maxWidth="Infinity" styleClass="small-pill-button"/>
+        <GridPane hgap="14" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="0">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="51" minWidth="0" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="49" minWidth="0" hgrow="ALWAYS"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="0" vgrow="ALWAYS"/>
+            </rowConstraints>
+            <VBox styleClass="dash-card" minWidth="0" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="0">
+                <HBox alignment="CENTER_LEFT">
+                    <VBox styleClass="dash-head" HBox.hgrow="ALWAYS">
+                        <Label text="MONTHLY ATTENDANCE" styleClass="dash-kicker"/>
+                        <Label text="Attendance trend" styleClass="dash-title"/>
+                    </VBox>
+                    <Label text="LAST 12 MONTHS" styleClass="dash-pill"/>
+                </HBox>
+                <LineChart fx:id="attendanceTrendChart" animated="false" legendVisible="false" createSymbols="true"
+                           minWidth="0" minHeight="0" prefHeight="0" maxWidth="Infinity" styleClass="dash-chart" VBox.vgrow="ALWAYS"
+                           horizontalZeroLineVisible="false" verticalZeroLineVisible="false">
+                    <xAxis><CategoryAxis/></xAxis>
+                    <yAxis><NumberAxis/></yAxis>
+                </LineChart>
             </VBox>
-        </VBox>
-        <VBox spacing="12" styleClass="bottom-card, dashboard-bottom-card, announcements-card"
-              minWidth="320" maxWidth="Infinity"
-              GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
-            <Label text="ANNOUNCEMENTS" styleClass="metric-label"/>
-            <VBox spacing="8" styleClass="bottom-card-content" VBox.vgrow="ALWAYS">
-                <Label text="Company Town Hall Meeting" styleClass="bottom-value"/>
-                <Label text="All employees are encouraged to attend. More details will be sent via email."
-                       wrapText="true" styleClass="muted-text"/>
+            <VBox styleClass="dash-card" minWidth="0" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="1">
+                <VBox styleClass="dash-head">
+                    <Label text="WORKFORCE" styleClass="dash-kicker"/>
+                    <Label text="Department distribution" styleClass="dash-title"/>
+                </VBox>
+                <BarChart fx:id="departmentDistributionChart" animated="false" legendVisible="false"
+                          minWidth="0" minHeight="0" prefHeight="0" maxWidth="Infinity" styleClass="dash-chart" VBox.vgrow="ALWAYS"
+                          horizontalZeroLineVisible="false" verticalZeroLineVisible="false">
+                    <xAxis><CategoryAxis/></xAxis>
+                    <yAxis><NumberAxis/></yAxis>
+                </BarChart>
             </VBox>
-        </VBox>
+        </GridPane>
+
+        <GridPane hgap="14" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="64" minWidth="0" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="36" minWidth="0" hgrow="ALWAYS"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints minHeight="0" vgrow="ALWAYS"/>
+            </rowConstraints>
+            <VBox styleClass="dash-card" minWidth="0" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="0">
+                <HBox alignment="CENTER_LEFT">
+                    <VBox styleClass="dash-head" HBox.hgrow="ALWAYS">
+                        <Label text="DAILY ATTENDANCE" styleClass="dash-kicker"/>
+                        <Label text="Attendance summary" styleClass="dash-title"/>
+                    </VBox>
+                    <Label text="Last 15 days" styleClass="dash-note"/>
+                </HBox>
+                <BarChart fx:id="attendanceSummaryChart" animated="false" legendVisible="true"
+                          minWidth="0" minHeight="0" prefHeight="0" maxWidth="Infinity" styleClass="dash-chart" VBox.vgrow="ALWAYS"
+                          horizontalZeroLineVisible="false" verticalZeroLineVisible="false">
+                    <xAxis><CategoryAxis/></xAxis>
+                    <yAxis><NumberAxis/></yAxis>
+                </BarChart>
+            </VBox>
+            <VBox styleClass="dash-card" minWidth="0" maxWidth="Infinity" maxHeight="Infinity" GridPane.columnIndex="1">
+                <VBox styleClass="dash-head">
+                    <Label text="LEAVE USAGE" styleClass="dash-kicker"/>
+                    <Label text="Leave summary" styleClass="dash-title"/>
+                </VBox>
+                <VBox fx:id="leaveSummaryList" styleClass="leave-summary-list" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </GridPane>
     </GridPane>
 
+    <!-- Row 3 -->
+    <GridPane hgap="14" maxWidth="Infinity">
+        <columnConstraints>
+            <ColumnConstraints percentWidth="29" minWidth="0" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="31" minWidth="0" hgrow="ALWAYS"/>
+            <ColumnConstraints percentWidth="40" minWidth="0" hgrow="ALWAYS"/>
+        </columnConstraints>
+        <VBox styleClass="dash-card, dash-bottom" minWidth="0" maxWidth="Infinity" GridPane.columnIndex="0">
+            <Label text="UPCOMING HOLIDAY" styleClass="dash-kicker"/>
+            <Label text="June 12, 2026" maxWidth="Infinity" styleClass="dash-headline"/>
+            <Label text="Independence Day" wrapText="true" styleClass="dash-note"/>
+        </VBox>
+        <VBox styleClass="dash-card, dash-bottom" minWidth="0" maxWidth="Infinity" GridPane.columnIndex="1">
+            <Label text="RECENT HR REPORT" styleClass="dash-kicker"/>
+            <Label text="No report available yet" maxWidth="Infinity" styleClass="dash-headline"/>
+            <Label text="HR reports will be available here once enabled." wrapText="true" styleClass="dash-note"/>
+            <Region VBox.vgrow="ALWAYS"/>
+            <Button text="View Report" disable="true" maxWidth="Infinity" styleClass="outline-button"/>
+        </VBox>
+        <VBox styleClass="dash-card, dash-bottom" minWidth="0" maxWidth="Infinity" GridPane.columnIndex="2">
+            <Label text="ANNOUNCEMENTS" styleClass="dash-kicker"/>
+            <Label text="Company Town Hall Meeting" maxWidth="Infinity" styleClass="dash-headline"/>
+            <Label text="All employees are encouraged to attend. More details will be sent via email." wrapText="true" styleClass="dash-note"/>
+        </VBox>
+    </GridPane>
 </VBox>
