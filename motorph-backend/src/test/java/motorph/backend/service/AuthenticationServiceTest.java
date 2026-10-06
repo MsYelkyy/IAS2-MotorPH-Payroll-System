@@ -1,43 +1,35 @@
 package motorph.backend.service;
 
+import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
 import motorph.backend.exception.AuthenticationException;
-import motorph.backend.exception.OtpVerificationException;
-import motorph.backend.exception.ValidationException;
-import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
+import motorph.backend.security.PasswordHasher;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.EnumSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 /**
- * Verifies that failed OTP attempts are recorded without storing sensitive information.
+ * The password check decides the next step and never completes a login by itself, and a locked
+ * account is audited once however far the login got.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -45,95 +37,107 @@ class AuthenticationServiceTest {
 
     private static final int ACCOUNT_ID = 12;
     private static final String EMAIL = "juan.cruz@motorph.com";
-    private static final String SUBMITTED_OTP = "654321";
+    private static final String PASSWORD = "CorrectPassw0rd";
 
     @Mock private UserAccountRepository userAccountRepository;
-    @Mock private EmployeeRepository employeeRepository;
-    @Mock private TwoFactorService twoFactorService;
-    @Mock private OtpDeliveryService otpDeliveryService;
+    @Mock private TotpCredentialRepository totpCredentialRepository;
     @Mock private UserAccessLogService userAccessLogService;
 
     @InjectMocks private AuthenticationService authenticationService;
 
+    private String salt;
+    private String hash;
+
     @BeforeEach
     void setUp() {
-        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(false));
-    }
-
-    @ParameterizedTest(name = "{0} is audited as OTP_FAILED")
-    @CsvSource({
-            "INVALID_CODE,            OTP verification failed: incorrect code.",
-            "EXPIRED_OR_UNAVAILABLE,  OTP verification failed: code expired or unavailable.",
-            "ATTEMPT_LIMIT_REACHED,   OTP verification failed: attempt limit reached."
-    })
-    void failedOtpIsAudited(OtpVerificationException.Reason reason, String expectedDetails) {
-        OtpVerificationException failure = new OtpVerificationException(reason, "Message for the client.");
-        doThrow(failure).when(twoFactorService).verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP);
-
-        assertThatThrownBy(() -> authenticationService.verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP))
-                .isSameAs(failure);
-
-        verify(userAccessLogService).logEvent(ACCOUNT_ID, "OTP_FAILED", expectedDetails);
-        verify(userAccessLogService, never()).logLoginSuccess(anyInt(), anyString());
-        verify(userAccountRepository, never()).updateLastLogin(anyInt());
-    }
-
-    @ParameterizedTest(name = "{0}: the audit details contain no secret")
-    @EnumSource(OtpVerificationException.Reason.class)
-    void auditDetailsNeverContainSecrets(OtpVerificationException.Reason reason) {
-        doThrow(new OtpVerificationException(reason, "Message for the client."))
-                .when(twoFactorService).verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP);
-
-        assertThatThrownBy(() -> authenticationService.verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP))
-                .isInstanceOf(OtpVerificationException.class);
-
-        ArgumentCaptor<String> details = ArgumentCaptor.forClass(String.class);
-        verify(userAccessLogService).logEvent(eq(ACCOUNT_ID), eq("OTP_FAILED"), details.capture());
-
-        assertThat(details.getValue())
-                .doesNotContain(SUBMITTED_OTP)
-                .doesNotContain(EMAIL);
+        salt = PasswordHasher.generateSalt();
+        hash = PasswordHasher.hash(PASSWORD, salt);
     }
 
     @Test
-    @DisplayName("A correct OTP is audited only as LOGIN_SUCCESS, never as a failure")
-    void successfulOtpIsNotAuditedAsFailure() {
-        UserAccount account = authenticationService.verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP);
+    @DisplayName("A correct password without an enrolled authenticator asks for enrolment")
+    void passwordOkWithoutTotpRequiresSetup() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+        when(totpCredentialRepository.findByUserAccountId(ACCOUNT_ID)).thenReturn(null);
 
-        assertThat(account.getUserAccountId()).isEqualTo(ACCOUNT_ID);
-        verify(userAccessLogService).logLoginSuccess(ACCOUNT_ID, "Login successful.");
-        verifyNoMoreInteractions(userAccessLogService);
+        LoginAttemptOutcome outcome = authenticationService.authenticate(EMAIL, PASSWORD);
+
+        assertThat(outcome.getType()).isEqualTo(LoginAttemptOutcome.Type.TOTP_SETUP_REQUIRED);
+        assertThat(outcome.getUserAccountId()).isEqualTo(ACCOUNT_ID);
     }
 
     @Test
-    @DisplayName("A malformed OTP is rejected as a validation error and is not an OTP attempt")
-    void malformedOtpIsNotAuditedAsOtpFailure() {
-        doThrow(new ValidationException("OTP code must be 6 digits."))
-                .when(twoFactorService).verifyLoginOtp(ACCOUNT_ID, "12");
+    @DisplayName("A correct password with an enabled authenticator asks for the code")
+    void passwordOkWithTotpRequiresCode() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+        when(totpCredentialRepository.findByUserAccountId(ACCOUNT_ID)).thenReturn(
+                new TotpCredential(ACCOUNT_ID, new byte[36], new byte[12], true, LocalDateTime.now(), 5L));
 
-        assertThatThrownBy(() -> authenticationService.verifyLoginOtp(ACCOUNT_ID, "12"))
-                .isInstanceOf(ValidationException.class);
-
-        verifyNoInteractions(userAccessLogService);
+        assertThat(authenticationService.authenticate(EMAIL, PASSWORD).getType())
+                .isEqualTo(LoginAttemptOutcome.Type.TOTP_REQUIRED);
     }
 
     @Test
-    @DisplayName("A locked account is audited once as LOGIN_FAILED and never reaches the OTP check")
+    @DisplayName("A credential that is not enabled does not count as enrolled")
+    void disabledCredentialRequiresSetup() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+        when(totpCredentialRepository.findByUserAccountId(ACCOUNT_ID)).thenReturn(
+                new TotpCredential(ACCOUNT_ID, new byte[36], new byte[12], false, null, null));
+
+        assertThat(authenticationService.authenticate(EMAIL, PASSWORD).getType())
+                .isEqualTo(LoginAttemptOutcome.Type.TOTP_SETUP_REQUIRED);
+    }
+
+    @Test
+    @DisplayName("A temporary password is sent to the forced change before any authenticator step")
+    void temporaryPasswordComesFirst() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, true));
+
+        assertThat(authenticationService.authenticate(EMAIL, PASSWORD).getType())
+                .isEqualTo(LoginAttemptOutcome.Type.TEMPORARY_PASSWORD_CHANGE_REQUIRED);
+    }
+
+    @Test
+    @DisplayName("A wrong password is audited as LOGIN_FAILED and gives the generic message")
+    void wrongPasswordIsAudited() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassw0rd"))
+                .isInstanceOf(AuthenticationException.class)
+                .hasMessage("Invalid email or password.");
+
+        verify(userAccessLogService).logLoginFailed(EMAIL, "Login failed because password did not match.");
+    }
+
+    @Test
+    @DisplayName("A locked account is audited once as LOGIN_FAILED and never reaches the authenticator step")
     void lockedAccountIsNotAuditedTwice() {
-        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(true));
+        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(true, false));
 
-        assertThatThrownBy(() -> authenticationService.verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP))
+        assertThatThrownBy(() -> authenticationService.requireLoginEligible(ACCOUNT_ID))
                 .isInstanceOf(AuthenticationException.class)
                 .hasMessage("Account is locked.");
 
         verify(userAccessLogService).logLoginFailed(EMAIL, "Login failed because account is locked.");
         verifyNoMoreInteractions(userAccessLogService);
-        verifyNoInteractions(twoFactorService);
     }
 
-    private UserAccount account(boolean locked) {
+    @Test
+    @DisplayName("Completing a login records the time and audits LOGIN_SUCCESS")
+    void completeLoginIsAudited() {
+        UserAccount account = account(false, false);
+
+        authenticationService.completeLogin(account);
+
+        verify(userAccountRepository).updateLastLogin(ACCOUNT_ID);
+        verify(userAccessLogService).logLoginSuccess(ACCOUNT_ID, "Login successful.");
+        verifyNoMoreInteractions(userAccessLogService);
+    }
+
+    private UserAccount account(boolean locked, boolean mustChangePassword) {
         return new UserAccount(
-                ACCOUNT_ID, 101, EMAIL, EMAIL, "hash", "salt",
-                List.of(Role.EMPLOYEE), locked, true, null, false, null);
+                ACCOUNT_ID, 101, EMAIL, EMAIL, hash, salt,
+                List.of(Role.EMPLOYEE), locked, true, null,
+                mustChangePassword, mustChangePassword ? LocalDateTime.now().plusHours(1) : null);
     }
 }

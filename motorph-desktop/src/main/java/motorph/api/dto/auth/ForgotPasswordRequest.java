@@ -1,6 +1,6 @@
 package motorph.api.dto.auth;
 
-/** Unauthenticated request to have IT issue a temporary password. */
+/** Unauthenticated request to start an authenticator-based password recovery. */
 public record ForgotPasswordRequest(
         String companyEmail
 ) {

@@ -24,8 +24,15 @@ motorph:
   backup:
     # database dumps live on the backend host, not next to the desktop client
     directory: ${MOTORPH_BACKUP_DIR:backups}
+  totp:
+    # Base64 of exactly 32 random bytes; encrypts the authenticator secrets (AES-256-GCM).
+    # No default on purpose: the backend refuses to start without it.
+    encryption-key: ${MOTORPH_TOTP_ENCRYPTION_KEY:}
   auth:
     otp-challenge-expiry-minutes: 10
+    totp-setup-expiry-minutes: 10
+    totp-code-expiry-minutes: 5
+    password-reset-token-expiry-minutes: 10
     login-rate-limit:
       max-attempts: 10
       window-minutes: 1

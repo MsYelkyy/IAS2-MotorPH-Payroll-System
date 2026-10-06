@@ -4,17 +4,23 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import motorph.backend.domain.UserAccount;
+import motorph.backend.domain.value.ChallengePurpose;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.auth.ChangePasswordRequest;
 import motorph.backend.dto.auth.CompleteTemporaryPasswordRequest;
 import motorph.backend.dto.auth.ForgotPasswordRequest;
+import motorph.backend.dto.auth.ForgotPasswordResponse;
 import motorph.backend.dto.auth.LoginRequest;
 import motorph.backend.dto.auth.LoginResponse;
 import motorph.backend.dto.auth.LogoutRequest;
 import motorph.backend.dto.auth.MeResponse;
+import motorph.backend.dto.auth.PasswordRecoveryVerifyResponse;
 import motorph.backend.dto.auth.RefreshRequest;
+import motorph.backend.dto.auth.ResetPasswordRequest;
 import motorph.backend.dto.auth.TokenResponse;
-import motorph.backend.dto.auth.VerifyOtpRequest;
+import motorph.backend.dto.auth.TotpCodeRequest;
+import motorph.backend.dto.auth.TotpSetupResponse;
+import motorph.backend.dto.auth.TotpSetupStartRequest;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.AuthenticatedPrincipal;
@@ -25,8 +31,10 @@ import motorph.backend.security.TokenIssuanceService;
 import motorph.backend.service.AuthenticationService;
 import motorph.backend.service.LoginAttemptOutcome;
 import motorph.backend.service.LoginChallengeService;
-import motorph.backend.service.PasswordResetService;
+import motorph.backend.service.PasswordRecoveryService;
 import motorph.backend.service.PermissionService;
+import motorph.backend.service.TotpCodeService;
+import motorph.backend.service.TotpService;
 import motorph.backend.service.UserAccountService;
 import motorph.backend.service.UserAccessLogService;
 
@@ -36,13 +44,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Authentication endpoints: login with OTP verification, token refresh, logout, and password
- * changes. Login returns only an opaque challenge ID until the OTP is verified. Roles are never
- * stored in tokens; they are loaded from the database on each request.
+ * Authentication endpoints: login with authenticator-app (TOTP) verification, Forgot Password with
+ * TOTP, token refresh, logout, and password changes. A correct password returns only an opaque
+ * challenge ID; tokens are issued after the authenticator code is accepted. Roles are never stored in
+ * tokens; they are loaded from the database on each request.
  */
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -56,7 +66,8 @@ public class AuthController {
     private final UserAccessLogService userAccessLogService;
     private final LoginRateLimiter loginRateLimiter;
     private final CurrentUserProvider currentUserProvider;
-    private final PasswordResetService passwordResetService;
+    private final TotpService totpService;
+    private final PasswordRecoveryService passwordRecoveryService;
     private final UserAccountService userAccountService;
     private final PermissionService permissionService;
 
@@ -68,7 +79,8 @@ public class AuthController {
                           UserAccessLogService userAccessLogService,
                           LoginRateLimiter loginRateLimiter,
                           CurrentUserProvider currentUserProvider,
-                          PasswordResetService passwordResetService,
+                          TotpService totpService,
+                          PasswordRecoveryService passwordRecoveryService,
                           UserAccountService userAccountService,
                           PermissionService permissionService) {
         this.authenticationService = authenticationService;
@@ -79,7 +91,8 @@ public class AuthController {
         this.userAccessLogService = userAccessLogService;
         this.loginRateLimiter = loginRateLimiter;
         this.currentUserProvider = currentUserProvider;
-        this.passwordResetService = passwordResetService;
+        this.totpService = totpService;
+        this.passwordRecoveryService = passwordRecoveryService;
         this.userAccountService = userAccountService;
         this.permissionService = permissionService;
     }
@@ -91,36 +104,109 @@ public class AuthController {
         LoginAttemptOutcome outcome = authenticationService.authenticate(request.companyEmail(), request.password());
         String maskedEmail = maskEmail(outcome.getCompanyEmail());
 
-        if (outcome.getType() == LoginAttemptOutcome.Type.TEMPORARY_PASSWORD_CHANGE_REQUIRED) {
-            // Reuse the login challenge so the client can finish the forced password change
-            // without ever receiving the user account ID.
-            String changeChallengeId = loginChallengeService.issue(outcome.getUserAccountId());
-            return new LoginResponse(changeChallengeId, maskedEmail, true, outcome.getMessage(), null);
-        }
-
-        String challengeId = loginChallengeService.issue(outcome.getUserAccountId());
-        return new LoginResponse(challengeId, maskedEmail, false, outcome.getMessage(), outcome.getOtpPreview());
-    }
-
-    @PostMapping("/verify-otp")
-    public TokenResponse verifyOtp(@RequestBody VerifyOtpRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
-
-        int userAccountId = loginChallengeService.resolveAndConsume(request.challengeId());
-        UserAccount account = authenticationService.verifyLoginOtp(userAccountId, request.otp());
-
-        return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
+        /** Reuse the challenge so the client can finish the next step 
+         * without ever receiving the user account ID. No token is issued here.
+        */
+        return switch (outcome.getType()) {
+            case TEMPORARY_PASSWORD_CHANGE_REQUIRED -> new LoginResponse(
+                    LoginResponse.TEMPORARY_PASSWORD_CHANGE_REQUIRED,
+                    loginChallengeService.issue(outcome.getUserAccountId(), ChallengePurpose.TEMPORARY_PASSWORD),
+                    maskedEmail, outcome.getMessage());
+            case TOTP_SETUP_REQUIRED -> new LoginResponse(
+                    LoginResponse.TOTP_SETUP_REQUIRED,
+                    loginChallengeService.issue(outcome.getUserAccountId(), ChallengePurpose.TOTP_SETUP),
+                    maskedEmail, outcome.getMessage());
+            case TOTP_REQUIRED -> new LoginResponse(
+                    LoginResponse.TOTP_REQUIRED,
+                    loginChallengeService.issue(outcome.getUserAccountId(), ChallengePurpose.TOTP_LOGIN),
+                    maskedEmail, outcome.getMessage());
+        };
     }
 
     /**
-     * Records a password reset request. The response is the same whether or not the email belongs
-     * to an eligible account, so this endpoint cannot be used to find out which company emails
-     * exist.
+     * Generates the authenticator secret for a first-time enrolment and returns the QR code. Nothing
+     * is enabled until the confirmation below succeeds.
+     */
+    @PostMapping("/totp/setup/start")
+    public TotpSetupResponse startTotpSetup(@RequestBody TotpSetupStartRequest request, HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+
+        TotpService.EnrollmentDetails details = totpService.startEnrollment(request.challengeId());
+
+        return new TotpSetupResponse(
+                Base64.getEncoder().encodeToString(details.qrCodePng()),
+                details.manualEntryKey(),
+                TotpCodeService.ISSUER,
+                details.accountLabel(),
+                TotpCodeService.DIGITS,
+                TotpCodeService.PERIOD_SECONDS,
+                loginChallengeService.lifetimeOf(ChallengePurpose.TOTP_SETUP).toSeconds()
+        );
+    }
+
+    /**
+     * Confirms enrolment with one valid code, enables TOTP, and completes the login.
+     */
+    @PostMapping("/totp/setup/confirm")
+    public TokenResponse confirmTotpSetup(@RequestBody TotpCodeRequest request, HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+
+        UserAccount account = totpService.confirmEnrollment(request.challengeId(), request.code());
+
+        return completeLogin(account);
+    }
+
+    /**
+     * Verifies the authenticator code for a login and, only then, issues the token pair.
+     */
+    @PostMapping("/totp/verify")
+    public TokenResponse verifyTotp(@RequestBody TotpCodeRequest request, HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+
+        UserAccount account = totpService.verifyLogin(request.challengeId(), request.code());
+
+        return completeLogin(account);
+    }
+
+    /**
+     * Starts a password recovery. The response is the same whether or not the email belongs to an
+     * account, so this endpoint cannot be used to find out which company emails exist. A user
+     * without an authenticator cannot recover this way and must ask an administrator.
      */
     @PostMapping("/forgot-password")
-    public void forgotPassword(@RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+    public ForgotPasswordResponse forgotPassword(@RequestBody ForgotPasswordRequest request,
+                                                 HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
-        passwordResetService.requestPasswordReset(request.companyEmail());
+
+        PasswordRecoveryService.RecoveryStart start = passwordRecoveryService.start(request.companyEmail());
+
+        return new ForgotPasswordResponse(start.challengeId(), start.expiresInSeconds(),
+                "If the account can be recovered, enter the code from your authenticator app. "
+                        + "If you cannot access your authenticator app, contact an administrator.");
+    }
+
+    /**
+     * Verifies the authenticator code for a recovery and returns the single-use reset token.
+     */
+    @PostMapping("/forgot-password/verify")
+    public PasswordRecoveryVerifyResponse verifyPasswordRecovery(@RequestBody TotpCodeRequest request,
+                                                                 HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+
+        PasswordRecoveryService.RecoveryToken token =
+                passwordRecoveryService.verifyCode(request.challengeId(), request.code());
+
+        return new PasswordRecoveryVerifyResponse(token.resetToken(), token.expiresInSeconds());
+    }
+
+    /**
+     * Sets the new password with the reset token and signs the user out of every session.
+     */
+    @PostMapping("/forgot-password/reset")
+    public void resetPassword(@RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
+        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.resetToken()));
+
+        passwordRecoveryService.resetPassword(request.resetToken(), request.newPassword(), request.confirmPassword());
     }
 
     /**
@@ -132,7 +218,8 @@ public class AuthController {
                                           HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
-        int userAccountId = loginChallengeService.resolveAndConsume(request.challengeId());
+        int userAccountId = loginChallengeService.resolveAndConsume(
+                request.challengeId(), ChallengePurpose.TEMPORARY_PASSWORD);
 
         userAccountService.completeTemporaryPasswordChange(
                 userAccountId, request.newPassword(), request.confirmPassword());
@@ -209,6 +296,16 @@ public class AuthController {
         } catch (JwtException | IllegalArgumentException e) {
             // Already invalid or expired; nothing to revoke.
         }
+    }
+
+    /**
+     * This method is for token-issuance boundary.
+     * It is called only after successful TOTP enrolment confirmation or TOTP login verification
+     */
+    private TokenResponse completeLogin(UserAccount account) {
+        authenticationService.completeLogin(account);
+
+        return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
     }
 
     private String clientKey(HttpServletRequest request, String secondaryKey) {

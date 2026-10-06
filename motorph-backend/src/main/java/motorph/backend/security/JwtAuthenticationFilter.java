@@ -19,8 +19,8 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Authenticates requests that carry a Bearer access token. The signature, expiry, and revocation
- * status are checked on every request, which is what lets logout take effect immediately.
+ * Checks Bearer access tokens on authenticated requests.
+ * The token is verified for validity, expiration, and revocation.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -64,6 +64,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             int userAccountId = Integer.parseInt(claims.getSubject());
+
+            // A password reset signs the user out everywhere, which individual token IDs cannot express.
+            if (tokenRevocationRepository.isIssuedBeforeSessionRevocation(userAccountId, claims.getIssuedAt().toInstant())) {
+                return;
+            }
+
             int employeeId = claims.get("employeeId", Integer.class);
             Instant expiresAt = claims.getExpiration().toInstant();
 

@@ -31,8 +31,8 @@ public enum ConfigCategory {
                          "Tax Rate", "Excess Over", "Eff. Start", "Eff. End", "Status"}
     ),
     OTP_INFO(
-            "OTP Configuration",
-            "Current OTP expiry settings (read-only)",
+            "Authenticator (TOTP) Settings",
+            "Current authenticator code settings (read-only)",
             new String[]{}
     );
 

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:id="setupRoot" spacing="14" styleClass="form-card"
+      xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="motorph.ui.auth.TotpSetupController">
+    <Label text="SECURE YOUR ACCOUNT" styleClass="form-eyebrow"/>
+    <VBox spacing="12">
+        <Label text="Set up authenticator" minHeight="-Infinity" styleClass="form-heading"/>
+        <Label text="Scan the QR code with Google Authenticator or Microsoft Authenticator."
+               wrapText="true" minHeight="-Infinity" styleClass="form-subheading"/>
+    </VBox>
+    <VBox alignment="CENTER" spacing="10">
+        <StackPane styleClass="qr-box">
+            <ImageView fx:id="qrImage" fitWidth="176" fitHeight="176" preserveRatio="true" smooth="false"/>
+            <Label fx:id="qrPlaceholder" text="Preparing your QR code..." styleClass="form-subheading"/>
+        </StackPane>
+        <VBox fx:id="manualKeyBox" alignment="CENTER" spacing="4" visible="false" managed="false">
+            <Label text="Can't scan? Enter this key in the app instead:" minHeight="-Infinity" styleClass="form-subheading"/>
+            <Label fx:id="manualKeyLabel" styleClass="manual-key"/>
+        </VBox>
+    </VBox>
+    <VBox spacing="9">
+        <Label text="Then enter the 6-digit code shown in the app" styleClass="field-label"/>
+        <TextField fx:id="codeField" promptText="000000" styleClass="input-field, code-input"/>
+        <VBox spacing="6">
+            <ProgressBar fx:id="countdownBar" progress="1" maxWidth="Infinity" styleClass="countdown-bar"/>
+            <Label fx:id="countdownLabel" text="Codes refresh every 30 seconds." styleClass="countdown-label"/>
+        </VBox>
+    </VBox>
+    <Label fx:id="messageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
+    <Button fx:id="confirmButton" text="Verify and continue" onAction="#handleConfirm" maxWidth="Infinity"
+            styleClass="signin-button"/>
+    <Button text="Cancel" onAction="#handleCancel" maxWidth="Infinity" styleClass="form-back-button"/>
+</VBox>

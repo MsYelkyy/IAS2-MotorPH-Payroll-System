@@ -5,8 +5,7 @@ import java.time.Instant;
 /**
  * Holds the desktop's active session: an access + refresh token pair. This
  * replaces what UserSession used to be responsible for on the security side -
- * UserSession now only caches role/name for display (see LoginController /
- * OtpController). No MySQL credentials ever pass through this class.
+ * UserSession now only caches role/name for display (see LoginController). No MySQL credentials ever pass through this class.
  */
 public final class AuthTokenHolder {
 

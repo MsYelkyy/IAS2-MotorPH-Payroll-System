@@ -4,7 +4,7 @@ import motorph.api.ApiClientFactory;
 import motorph.api.SystemConfigApiClient;
 import motorph.api.dto.systemconfig.PhilHealthRateDTO;
 import motorph.api.dto.systemconfig.SssRateDTO;
-import motorph.api.dto.systemconfig.OtpPolicyDTO;
+import motorph.api.dto.systemconfig.TotpPolicyDTO;
 import motorph.api.dto.systemconfig.PagIbigRateDTO;
 import motorph.api.dto.systemconfig.WithholdingTaxBracketDTO;
 
@@ -32,7 +32,7 @@ import java.util.function.Function;
 
 /**
  * Handles the Admin System Configuration screen.
- * Includes statutory rate tables, edit forms, and OTP settings.
+ * Includes statutory rate tables, edit forms, and authenticator (TOTP) settings.
  */
 public class AdminSystemConfigController {
 
@@ -73,7 +73,7 @@ public class AdminSystemConfigController {
     @FXML private Label formTitleLabel;
     @FXML private Label formErrorLabel;
 
-    // OTP panel labels
+    // authenticator (TOTP) panel labels
     @FXML private Label otpLengthLabel;
     @FXML private Label otpExpiryLabel;
     @FXML private Label otpAttemptsLabel;
@@ -112,7 +112,7 @@ public class AdminSystemConfigController {
             // Form → Table
             showRateTable(selectedCategory);
         } else if (rateTablePanel.isVisible() || otpInfoPanel.isVisible()) {
-            // Table / OTP → Category list
+            // Table / authenticator settings → Category list
             showCategoryList();
         } else {
             showCategoryList();
@@ -185,17 +185,17 @@ public class AdminSystemConfigController {
         }
     }
 
-    // Panel 4: OTP info
+    // Panel 4: authenticator (TOTP) policy
     private void showOtpPanel() {
         try {
-            OtpPolicyDTO policy = configApiClient.getOtpPolicy();
-            otpLengthLabel.setText(String.valueOf(policy.otpLength()));
-            otpExpiryLabel.setText(policy.expiryMinutes() + " minutes");
-            otpAttemptsLabel.setText(String.valueOf(policy.maxAttempts()));
+            TotpPolicyDTO policy = configApiClient.getTotpPolicy();
+            otpLengthLabel.setText("Code length: " + policy.codeLength() + " digits");
+            otpExpiryLabel.setText("Code refresh: every " + policy.periodSeconds() + " seconds");
+            otpAttemptsLabel.setText("Max attempts: " + policy.maxAttempts());
         } catch (Exception e) {
-            otpLengthLabel.setText("—");
-            otpExpiryLabel.setText("—");
-            otpAttemptsLabel.setText("—");
+            otpLengthLabel.setText("Code length: —");
+            otpExpiryLabel.setText("Code refresh: —");
+            otpAttemptsLabel.setText("Max attempts: —");
         }
 
         toolbarTitleLabel.setText(ConfigCategory.OTP_INFO.displayName());

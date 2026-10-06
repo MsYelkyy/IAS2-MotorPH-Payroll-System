@@ -51,6 +51,8 @@ services:
       - ./database/sql_scripts/employee_payslip_report_view.sql:/docker-entrypoint-initdb.d/02-employee-payslip-report-view.sql:ro
       - ./database/sql_scripts/payroll_summary_monthly_view.sql:/docker-entrypoint-initdb.d/03-payroll-summary-monthly-view.sql:ro
       - ./database/sql_scripts/audit_log_protection.sql:/docker-entrypoint-initdb.d/04-audit-log-protection.sql:ro
+      # Must load before the backend account is created so that account is granted rights on the TOTP tables.
+      - ./database/sql_scripts/totp_authentication.sql:/docker-entrypoint-initdb.d/04-totp-authentication.sql:ro
       - ./docker/mysql/init/06-create-backend-user.sh:/docker-entrypoint-initdb.d/05-create-backend-user.sh:ro
 
     healthcheck:
@@ -90,6 +92,9 @@ services:
       MOTORPH_JWT_SECRET: ${MOTORPH_JWT_SECRET:?MOTORPH_JWT_SECRET is missing - see .env.example}
       MOTORPH_JWT_ACCESS_EXPIRY_MINUTES: ${MOTORPH_JWT_ACCESS_EXPIRY_MINUTES:-15}
       MOTORPH_JWT_REFRESH_EXPIRY_MINUTES: ${MOTORPH_JWT_REFRESH_EXPIRY_MINUTES:-1440}
+
+      # Base64 of 32 random bytes. Encrypts the authenticator (TOTP) secrets stored in the database.
+      MOTORPH_TOTP_ENCRYPTION_KEY: ${MOTORPH_TOTP_ENCRYPTION_KEY:?MOTORPH_TOTP_ENCRYPTION_KEY is missing - see .env.example}
 
       MOTORPH_PROFILE: ${MOTORPH_PROFILE:-default}
 

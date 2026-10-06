@@ -78,7 +78,8 @@ class Phase5PermissionGateTest {
                 "POST /user-accounts/{id}/enable", () -> controller.enableAccount(1),
                 "POST /user-accounts/{id}/disable", () -> controller.disableAccount(1),
                 "PUT /user-accounts/{id}/roles",
-                () -> controller.updateRoles(1, new UserRolesUpdateRequest(List.of("ADMIN")))
+                () -> controller.updateRoles(1, new UserRolesUpdateRequest(List.of("ADMIN"))),
+                "POST /user-accounts/{id}/reset-totp", () -> controller.resetTotp(1)
         ));
     }
 

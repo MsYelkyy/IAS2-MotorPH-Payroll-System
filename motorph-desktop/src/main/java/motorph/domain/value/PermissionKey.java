@@ -38,6 +38,7 @@ public enum PermissionKey {
 
     VIEW_ACCESS_LOGS,
     MANAGE_2FA,
+    RESET_USER_TOTP,
     MANAGE_PASSWORD_RESET,
 
     VIEW_DATABASE_TOOLS,

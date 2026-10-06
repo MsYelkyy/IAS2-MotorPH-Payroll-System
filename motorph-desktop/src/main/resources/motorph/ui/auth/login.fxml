@@ -35,7 +35,6 @@
             <StackPane styleClass="auth-form-panel">
                 <StackPane maxWidth="480" maxHeight="-Infinity" alignment="CENTER">
                     <VBox fx:id="loginCard" spacing="22" styleClass="form-card">
-                        <Label text="SECURE SIGN IN" styleClass="form-eyebrow"/>
                         <VBox spacing="12">
                             <Label text="Welcome back" styleClass="form-heading"/>
                             <Label text="Sign in to continue to your employee workspace."
@@ -68,8 +67,11 @@
                         </HBox>
                         <Label fx:id="loginMessageLabel" wrapText="true" maxWidth="Infinity" styleClass="message-label"/>
                     </VBox>
-                    <fx:include fx:id="otpCard" source="otp.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="totpCard" source="totp-verify.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="totpSetupCard" source="totp-setup.fxml" visible="false" managed="false"/>
                     <fx:include fx:id="forgotCard" source="forgot-password.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="recoveryCard" source="totp-verify.fxml" visible="false" managed="false"/>
+                    <fx:include fx:id="resetPasswordCard" source="force-change-password.fxml" visible="false" managed="false"/>
                     <fx:include fx:id="forceChangeCard" source="force-change-password.fxml" visible="false" managed="false"/>
                 </StackPane>
             </StackPane>

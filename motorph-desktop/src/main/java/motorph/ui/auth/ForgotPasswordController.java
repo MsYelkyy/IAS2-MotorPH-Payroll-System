@@ -2,6 +2,7 @@ package motorph.ui.auth;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.AuthApiClient;
+import motorph.api.dto.auth.ForgotPasswordResponse;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
 
@@ -10,7 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 
-/** Submits a password reset request to IT for approval. */
+/** Starts a Forgot Password recovery: the email step, before the authenticator code is asked for. */
 public class ForgotPasswordController {
 
     private AuthApiClient authApiClient;
@@ -54,18 +55,18 @@ public class ForgotPasswordController {
             return;
         }
 
+        ForgotPasswordResponse response;
+
         try {
-            authApiClient.forgotPassword(email);
+            response = authApiClient.forgotPassword(email);
         } catch (Exception e) {
-            // only reachable for transport/rate-limit failures: the endpoint
-            // deliberately succeeds whether or not the address has an account
             UiMessageUtil.setError(forgotEmailMessageLabel, UiMessageUtil.toUserMessage(e));
             return;
         }
 
+        // the next screen looks the same for every address, so it reveals nothing about the account
         if (loginController != null) {
-            loginController.onPasswordResetComplete(
-                    "Request submitted. IT will email you a temporary password.");
+            loginController.onRecoveryStarted(response.challengeId());
         }
     }
 

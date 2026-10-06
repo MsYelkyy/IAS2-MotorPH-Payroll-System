@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 /**
- * Issues access and refresh tokens and handles refresh and revocation. Revocation is also checked
- * on refresh, so a revoked refresh token cannot be used to obtain new access tokens.
+ * Creates access and refresh tokens and manages token refresh and revocation.
+ * Revoked refresh tokens cannot be used to create new access tokens.
  */
 @Service
 public class TokenIssuanceService {
@@ -56,6 +56,11 @@ public class TokenIssuanceService {
         }
 
         int userAccountId = Integer.parseInt(claims.getSubject());
+
+        if (tokenRevocationRepository.isIssuedBeforeSessionRevocation(userAccountId, claims.getIssuedAt().toInstant())) {
+            throw new AuthenticationException("Refresh token has been revoked.");
+        }
+
         int employeeId = claims.get("employeeId", Integer.class);
 
         JwtTokenProvider.IssuedToken newAccess = jwtTokenProvider.generateAccessToken(userAccountId, employeeId);

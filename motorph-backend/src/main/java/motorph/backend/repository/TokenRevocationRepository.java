@@ -10,11 +10,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 /**
- * Tracks revoked token IDs ({@code jti}). Checked on every authenticated request so a revoked token
- * stops working immediately rather than at its natural expiry.
+ * Stores revoked token IDs so they can no longer be used.
+ * Revoked tokens are checked on every authenticated request.
  */
 @Repository
 public class TokenRevocationRepository {
@@ -60,6 +61,61 @@ public class TokenRevocationRepository {
         } catch (SQLException e) {
             throw new DataAccessException("Failed to check token revocation status.", e);
         }
+    }
+
+    /**
+     * Signs the user out everywhere: every token issued at or before {@code revokedAt} stops
+     * working. Used after a password reset, when the individual token IDs are not known.
+     */
+    public void revokeAllSessions(int userAccountId, LocalDateTime revokedAt) {
+        String sql = "UPDATE user_account SET sessions_revoked_at = ? WHERE user_account_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setTimestamp(1, Timestamp.valueOf(revokedAt));
+            stmt.setInt(2, userAccountId);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to revoke the user's sessions.", e);
+        }
+    }
+
+    /**
+     * Whether a token issued at {@code issuedAt} predates the user's last "sign out everywhere".
+     * Token times have one-second precision, so a token issued in the same second counts as
+     * revoked.
+     */
+    public boolean isIssuedBeforeSessionRevocation(int userAccountId, Instant issuedAt) {
+        String sql = "SELECT sessions_revoked_at FROM user_account WHERE user_account_id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, userAccountId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (!rs.next()) {
+                    return false;
+                }
+
+                Timestamp revokedAt = rs.getTimestamp("sessions_revoked_at");
+
+                return revokedAt != null && predatesRevocation(issuedAt, revokedAt.toInstant());
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to check the user's session revocation.", e);
+        }
+    }
+
+    /**
+     * The revocation rule: a token issued at or before the revocation moment no longer works. Token
+     * times have one-second precision, so one issued in the same second counts as revoked.
+     */
+    public static boolean predatesRevocation(Instant issuedAt, Instant revokedAt) {
+        return !issuedAt.isAfter(revokedAt);
     }
 
     /**

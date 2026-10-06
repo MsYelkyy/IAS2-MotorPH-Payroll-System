@@ -1,7 +1,7 @@
 package motorph.backend.exception;
 
 /**
- * Represents a failed OTP verification attempt.
+ * Represents a rejected authenticator (TOTP) code: wrong, out of date, or too many attempts.
  */
 public class OtpVerificationException extends BusinessRuleException {
 

@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Writes and reads audit log entries. Callers always pass the actor ID taken from the access token,
- * never a value supplied by the client. The IP address and device come from the current request,
- * never from the caller.
+ * Handles reading and writing audit log entries.
+ * The actor ID comes from the authenticated access token, while the IP address
+ * and device information are taken from the current request.
  */
 @Service
 public class UserAccessLogService {
@@ -52,6 +52,12 @@ public class UserAccessLogService {
     public static final String ACTION_PROFILE_PHOTO_UPDATED = "PROFILE_PHOTO_UPDATED";
     public static final String ACTION_ACCESS_DENIED = "ACCESS_DENIED";
     public static final String ACTION_OTP_FAILED = "OTP_FAILED";
+    public static final String ACTION_TOTP_ENROLLMENT_STARTED = "TOTP_ENROLLMENT_STARTED";
+    public static final String ACTION_TOTP_ENROLLMENT_COMPLETED = "TOTP_ENROLLMENT_COMPLETED";
+    public static final String ACTION_TOTP_VERIFICATION_SUCCEEDED = "TOTP_VERIFICATION_SUCCEEDED";
+    public static final String ACTION_TOTP_VERIFICATION_FAILED = "TOTP_VERIFICATION_FAILED";
+    public static final String ACTION_TOTP_RESET_BY_ADMIN = "TOTP_RESET_BY_ADMIN";
+    public static final String ACTION_PASSWORD_RESET_COMPLETED = "PASSWORD_RESET_COMPLETED";
     public static final String ACTION_ACCESS_LOG_VIEWED = "ACCESS_LOG_VIEWED";
 
     public static final String TARGET_EMPLOYEE = "EMPLOYEE";
@@ -69,7 +75,7 @@ public class UserAccessLogService {
     public static final String TARGET_SUPPORT_TICKET = "SUPPORT_TICKET";
     /** Target ID format: {@code <employeeId>:<payrunId>}. */
     public static final String TARGET_PAYSLIP = "PAYSLIP";
-    /** Target ID is the report file name. */
+    // Target ID is the report file name.
     public static final String TARGET_REPORT = "REPORT";
 
     private static final Set<String> TARGET_TYPES = Set.of(
