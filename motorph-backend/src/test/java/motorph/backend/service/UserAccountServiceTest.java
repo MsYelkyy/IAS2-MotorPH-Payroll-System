@@ -125,6 +125,19 @@ class UserAccountServiceTest {
     }
 
     @Test
+    @DisplayName("IT unlocks through the authorized service path and resets failures in the repository")
+    void unlockAccountUsesExistingItWorkflow() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(true, false, true))
+                .thenReturn(account(true, false, false));
+
+        userAccountService.unlockAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verify(userAccountRepository).updateLockStatus(ACCOUNT_ID, false);
+        verify(userAccessLogService).logAccountStatusChanged(ACTOR_ID, 101, "LOCKED", "ACTIVE");
+    }
+
+    @Test
     @DisplayName("Changing an account's roles audits the old and new roles against the acting user")
     void updateRolesAuditsRoleChange() {
         when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(true, false, false));

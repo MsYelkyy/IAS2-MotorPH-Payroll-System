@@ -26,6 +26,8 @@ motorph:
     directory: ${MOTORPH_BACKUP_DIR:backups}
   auth:
     otp-challenge-expiry-minutes: 10
+    lockout:
+      max-failed-password-attempts: ${MOTORPH_AUTH_MAX_FAILED_PASSWORD_ATTEMPTS:5}
     login-rate-limit:
       max-attempts: 10
       window-minutes: 1

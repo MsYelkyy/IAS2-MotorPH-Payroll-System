@@ -106,8 +106,9 @@ public class AuthController {
     public TokenResponse verifyOtp(@RequestBody VerifyOtpRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
-        int userAccountId = loginChallengeService.resolveAndConsume(request.challengeId());
+        int userAccountId = loginChallengeService.resolve(request.challengeId());
         UserAccount account = authenticationService.verifyLoginOtp(userAccountId, request.otp());
+        loginChallengeService.consume(request.challengeId());
 
         return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
     }

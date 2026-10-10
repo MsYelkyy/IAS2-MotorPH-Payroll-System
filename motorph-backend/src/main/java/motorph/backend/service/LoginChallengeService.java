@@ -50,6 +50,16 @@ public class LoginChallengeService {
      * only once.
      */
     public int resolveAndConsume(String challengeId) {
+        int userAccountId = resolve(challengeId);
+        consume(challengeId);
+        return userAccountId;
+    }
+
+    /**
+     * Resolves a usable challenge without consuming it, allowing an incorrect OTP to be retried
+     * while the OTP's own expiry and attempt limit remain in force.
+     */
+    public int resolve(String challengeId) {
         if (challengeId == null || challengeId.isBlank()) {
             throw new AuthenticationException("Login challenge is required.");
         }
@@ -60,8 +70,17 @@ public class LoginChallengeService {
             throw new AuthenticationException("Login challenge is invalid or expired.");
         }
 
-        repository.markConsumed(challenge.getChallengeId());
         return challenge.getUserAccountId();
+    }
+
+    /**
+     * Atomically consumes a usable challenge after the protected operation succeeds.
+     */
+    public void consume(String challengeId) {
+        if (challengeId == null || challengeId.isBlank()
+                || !repository.markConsumed(challengeId.trim())) {
+            throw new AuthenticationException("Login challenge is invalid or expired.");
+        }
     }
 
     private String generateOpaqueId() {

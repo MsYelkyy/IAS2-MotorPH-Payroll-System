@@ -37,7 +37,8 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
                    ua.is_active,
                    ua.last_login_at,
                    ua.must_change_password,
-                   ua.temporary_password_expires_at
+                   ua.temporary_password_expires_at,
+                   ua.failed_login_count
             FROM user_account ua
             """;
 
@@ -194,13 +195,19 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
     public void updateLockStatus(int userAccountId, boolean isLocked) {
         validatePositive(userAccountId, "User account ID must be positive.");
 
-        String sql = "UPDATE user_account SET is_locked = ? WHERE user_account_id = ?";
+        String sql = """
+                UPDATE user_account
+                SET is_locked = ?,
+                    failed_login_count = CASE WHEN ? = 0 THEN 0 ELSE failed_login_count END
+                WHERE user_account_id = ?
+                """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setBoolean(1, isLocked);
-            stmt.setInt(2, userAccountId);
+            stmt.setBoolean(2, isLocked);
+            stmt.setInt(3, userAccountId);
 
             int affectedRows = stmt.executeUpdate();
 
@@ -368,6 +375,116 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
         }
     }
 
+    /**
+     * Atomically records an incorrect password against the account and applies a persistent lock when
+     * the configured threshold is reached.
+     */
+    @Transactional
+    public FailedPasswordAttemptResult recordFailedPasswordAttempt(
+            int userAccountId, int maxAttempts) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+        validatePositive(maxAttempts, "Maximum failed password attempts must be positive.");
+
+        String selectSql = """
+                SELECT is_locked, failed_login_count
+                FROM user_account
+                WHERE user_account_id = ?
+                FOR UPDATE
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement select = conn.prepareStatement(selectSql)) {
+            select.setInt(1, userAccountId);
+
+            int failedLoginCount;
+            boolean manualLock;
+            try (ResultSet rs = select.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("User account not found.");
+                }
+                manualLock = rs.getBoolean("is_locked");
+                failedLoginCount = rs.getInt("failed_login_count");
+            }
+
+            if (manualLock) {
+                return FailedPasswordAttemptResult.LOCKED;
+            }
+
+            int nextFailedLoginCount = failedLoginCount + 1;
+            boolean applyLock = nextFailedLoginCount >= maxAttempts;
+            String updateSql = """
+                    UPDATE user_account
+                    SET failed_login_count = ?,
+                        is_locked = CASE WHEN ? = 1 THEN 1 ELSE is_locked END
+                    WHERE user_account_id = ?
+                    """;
+
+            try (PreparedStatement update = conn.prepareStatement(updateSql)) {
+                update.setInt(1, nextFailedLoginCount);
+                update.setBoolean(2, applyLock);
+                update.setInt(3, userAccountId);
+                update.executeUpdate();
+            }
+
+            return applyLock
+                    ? FailedPasswordAttemptResult.LOCK_APPLIED
+                    : FailedPasswordAttemptResult.ATTEMPT_RECORDED;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to record incorrect password attempt.", e);
+        }
+    }
+
+    /**
+     * Clears prior failures after a correct password only while the account remains unlocked.
+     */
+    @Transactional
+    public boolean resetFailedPasswordAttempts(int userAccountId) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        String selectSql = """
+                SELECT is_locked
+                FROM user_account
+                WHERE user_account_id = ?
+                FOR UPDATE
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement select = conn.prepareStatement(selectSql)) {
+            select.setInt(1, userAccountId);
+
+            boolean manualLock;
+            try (ResultSet rs = select.executeQuery()) {
+                if (!rs.next()) {
+                    throw new IllegalArgumentException("User account not found.");
+                }
+                manualLock = rs.getBoolean("is_locked");
+            }
+
+            if (manualLock) {
+                return false;
+            }
+
+            String updateSql = """
+                UPDATE user_account
+                SET failed_login_count = 0
+                WHERE user_account_id = ?
+                """;
+            try (PreparedStatement update = conn.prepareStatement(updateSql)) {
+                update.setInt(1, userAccountId);
+                update.executeUpdate();
+            }
+            return true;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to reset incorrect password attempts.", e);
+        }
+    }
+
+    public enum FailedPasswordAttemptResult {
+        ATTEMPT_RECORDED,
+        LOCK_APPLIED,
+        LOCKED
+    }
+
     private UserAccount mapRow(Connection conn, ResultSet rs) throws SQLException {
         int userAccountId = rs.getInt("user_account_id");
 
@@ -397,7 +514,8 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
                 rs.getBoolean("is_active"),
                 lastLoginAt,
                 rs.getBoolean("must_change_password"),
-                temporaryPasswordExpiresAt
+                temporaryPasswordExpiresAt,
+                rs.getInt("failed_login_count")
         );
     }
 

@@ -60,6 +60,19 @@ class UserAccessLogServiceTest {
     }
 
     @Test
+    void automaticAccountLockTargetsTheAccountWithoutAttributingItAsActor() {
+        service.logAutomaticAccountLock(ACTOR_ID);
+
+        UserAccessLog log = saved();
+        assertThat(log.getUserAccountId()).isNull();
+        assertThat(log.getAction()).isEqualTo(UserAccessLogService.ACTION_ACCOUNT_LOCKED);
+        assertThat(log.getTargetType()).isEqualTo("USER_ACCOUNT");
+        assertThat(log.getTargetId()).isEqualTo(String.valueOf(ACTOR_ID));
+        assertThat(log.getDetails())
+                .isEqualTo("Automatic lock applied after repeated failed passwords.");
+    }
+
+    @Test
     void logoutRecordsIpAndDevice() {
         service.logLogout(ACTOR_ID);
 
