@@ -116,7 +116,8 @@ public class AuthenticationService {
 
         if (account.isLocked()) {
             logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
-            throw new AuthenticationException("Invalid email or password.");
+            throw new AuthenticationException(
+                    "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
         }
 
         if (account.getRoles() == null || account.getRoles().isEmpty()) {
@@ -168,6 +169,8 @@ public class AuthenticationService {
 
             if (result == FailedPasswordAttemptResult.LOCK_APPLIED) {
                 userAccessLogService.logAutomaticAccountLock(account.getUserAccountId());
+                throw new AuthenticationException(
+                        "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
             }
 
             throw new AuthenticationException("Invalid email or password.");

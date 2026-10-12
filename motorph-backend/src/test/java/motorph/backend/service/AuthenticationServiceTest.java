@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -149,13 +150,29 @@ class AuthenticationServiceTest {
                 .thenReturn(ATTEMPT_RECORDED);
 
         assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Invalid email or password.");
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason()).isNull();
+                });
 
         verify(userAccountRepository).recordFailedPasswordAttempt(ACCOUNT_ID, 5);
         verify(userAccessLogService).logLoginFailed(EMAIL, "Login failed because password did not match.");
         verify(userAccessLogService, never()).logAutomaticAccountLock(anyInt());
         verify(userAccountRepository, never()).resetFailedPasswordAttempts(ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("An unknown email keeps the generic authentication response without a lock reason")
+    void unknownEmailDoesNotReturnLockReason() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(null);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason()).isNull();
+                });
+
+        verify(userAccountRepository, never()).recordFailedPasswordAttempt(anyInt(), anyInt());
     }
 
     @Test
@@ -168,22 +185,29 @@ class AuthenticationServiceTest {
                 .thenReturn(LOCK_APPLIED);
 
         assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Invalid email or password.");
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason())
+                            .isEqualTo(AuthenticationException.Reason.ACCOUNT_LOCKED);
+                });
 
         verify(userAccountRepository).recordFailedPasswordAttempt(ACCOUNT_ID, 5);
         verify(userAccessLogService).logAutomaticAccountLock(ACCOUNT_ID);
     }
 
-    @Test
-    @DisplayName("A persistently locked account rejects login without checking the password")
-    void lockedAccountRejectsLoginWithoutCheckingPassword() {
+    @ParameterizedTest(name = "A persistently locked account rejects password: {0}")
+    @ValueSource(strings = {"CorrectHorseBatteryStaple!", "WrongPassword!"})
+    @DisplayName("A persistently locked account returns the lock reason without checking the password")
+    void lockedAccountRejectsLoginWithoutCheckingPassword(String submittedPassword) {
         when(userAccountRepository.findByCompanyEmail(EMAIL))
                 .thenReturn(passwordAccount("CorrectHorseBatteryStaple!", 5, true));
 
-        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "CorrectHorseBatteryStaple!"))
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Invalid email or password.");
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, submittedPassword))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason())
+                            .isEqualTo(AuthenticationException.Reason.ACCOUNT_LOCKED);
+                });
 
         verify(userAccountRepository, never()).recordFailedPasswordAttempt(anyInt(), anyInt());
         verify(userAccountRepository, never()).resetFailedPasswordAttempts(ACCOUNT_ID);
