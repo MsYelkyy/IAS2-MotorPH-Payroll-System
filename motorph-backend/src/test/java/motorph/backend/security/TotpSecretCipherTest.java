@@ -22,6 +22,17 @@ class TotpSecretCipherTest {
     private final TotpSecretCipher cipher = new TotpSecretCipher(KEY);
 
     @Test
+    @DisplayName("Encrypted secrets compare by content and never print their bytes")
+    void encryptedSecretComparesByContentAndHidesBytes() {
+        TotpSecretCipher.EncryptedSecret first = new TotpSecretCipher.EncryptedSecret(new byte[]{1, 2}, new byte[]{3});
+        TotpSecretCipher.EncryptedSecret same = new TotpSecretCipher.EncryptedSecret(new byte[]{1, 2}, new byte[]{3});
+        TotpSecretCipher.EncryptedSecret different = new TotpSecretCipher.EncryptedSecret(new byte[]{1, 9}, new byte[]{3});
+
+        assertThat(first).isEqualTo(same).hasSameHashCodeAs(same).isNotEqualTo(different);
+        assertThat(first.toString()).isEqualTo("EncryptedSecret[ciphertext=***, nonce=***]");
+    }
+
+    @Test
     @DisplayName("The stored form is not the secret, uses a fresh nonce each time, and decrypts back")
     void encryptsWithAFreshNonce() {
         TotpSecretCipher.EncryptedSecret first = cipher.encrypt(SECRET, "ctx");

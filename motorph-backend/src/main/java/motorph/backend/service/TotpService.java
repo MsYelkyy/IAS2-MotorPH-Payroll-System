@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.OptionalLong;
 
 /**
@@ -30,6 +32,24 @@ public class TotpService {
 
     // Everything the client needs to show the enrolment screen. The secret is not stored by the client.
     public record EnrollmentDetails(byte[] qrCodePng, String manualEntryKey, String accountLabel) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof EnrollmentDetails that
+                    && Arrays.equals(qrCodePng, that.qrCodePng)
+                    && Objects.equals(manualEntryKey, that.manualEntryKey)
+                    && Objects.equals(accountLabel, that.accountLabel);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Objects.hash(manualEntryKey, accountLabel) + Arrays.hashCode(qrCodePng);
+        }
+
+        @Override
+        public String toString() {
+            return "EnrollmentDetails[accountLabel=" + accountLabel + ", secret=***]";
+        }
     }
 
     private final LoginChallengeService challengeService;
