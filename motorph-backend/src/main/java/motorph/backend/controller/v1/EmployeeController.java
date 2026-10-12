@@ -1,5 +1,6 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.Department;
 import motorph.backend.domain.GovernmentDetails;
 import motorph.backend.domain.Position;
@@ -11,6 +12,7 @@ import motorph.backend.dto.employee.EmployeeProfileDTO;
 import motorph.backend.dto.employee.EmployeeSummaryDTO;
 import motorph.backend.dto.employee.EmployeeUpdateRequest;
 import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.EmployeeService;
@@ -31,10 +33,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Employee management and self-service endpoints. Permissions are checked on the server for every
  * request; menu restrictions in the client are for display only.
+ * Refactored to include @RequestBody @Valid.
+ * Also enforced filetype and size for profile photo -- also not null.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -48,6 +53,9 @@ public class EmployeeController {
     private static final PermissionKey[] PAYROLL_DETAIL_READERS = {
             PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE, PermissionKey.VIEW_PAYROLL
     };
+
+    private static final Set<String> ALLOWED_PHOTO_EXTENSIONS = Set.of("jpg", "jpeg", "png");
+    private static final int MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
     private final EmployeeService employeeService;
     private final PermissionService permissionService;
@@ -80,6 +88,8 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{employeeId}")
     public EmployeeProfileDTO getEmployee(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
+
         if (permissionService.hasAnyPermission(PAYROLL_DETAIL_READERS)) {
             return employeeService.getEmployeeProfileAdmin(employeeId);
         }
@@ -108,8 +118,9 @@ public class EmployeeController {
      */
     @PostMapping(value = "/employees/me/photo", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public void uploadOwnPhoto(@RequestParam String extension, @RequestBody byte[] content) {
+        validatePhotoUpload(extension, content);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
-        profilePhotoService.storePhoto(principal.employeeId(), content, extension, principal.userAccountId());
+        profilePhotoService.storePhoto(principal.employeeId(), content, extension.toLowerCase().trim(), principal.userAccountId());
     }
 
     /**
@@ -117,6 +128,7 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{employeeId}/photo")
     public ResponseEntity<byte[]> getEmployeePhoto(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         requireOwnOrEmployeeViewer(employeeId);
 
         byte[] photo = profilePhotoService.readPhoto(employeeId);
@@ -128,6 +140,7 @@ public class EmployeeController {
 
     @GetMapping("/employees/{employeeId}/government-details")
     public GovernmentDetails getGovernmentDetails(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requireAnyPermission(PAYROLL_DETAIL_READERS);
         return employeeService.getGovernmentDetails(employeeId);
     }
@@ -142,9 +155,12 @@ public class EmployeeController {
     public List<Position> listPositions(@RequestParam(required = false) Integer departmentId) {
         permissionService.requireAnyPermission(DIRECTORY_READERS);
 
-        return departmentId != null
-                ? employeeService.getPositionsByDepartment(departmentId)
-                : employeeService.getAllPositions();
+        if (departmentId != null) {
+            validatePositiveId(departmentId, "Department ID");
+            return employeeService.getPositionsByDepartment(departmentId);
+        }
+
+        return employeeService.getAllPositions();
     }
 
     /**
@@ -152,13 +168,14 @@ public class EmployeeController {
      * account with a temporary password.
      */
     @PostMapping("/employees")
-    public EmployeeCreateResponse createEmployee(@RequestBody EmployeeCreateRequest request) {
+    public EmployeeCreateResponse createEmployee(@RequestBody @Valid EmployeeCreateRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         return employeeService.createEmployeeWithSalaryAndBenefits(request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PutMapping("/employees/{employeeId}")
-    public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody EmployeeUpdateRequest request) {
+    public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody @Valid EmployeeUpdateRequest request) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         return employeeService.updateEmployee(employeeId, request, currentUserProvider.getCurrentUserAccountId());
     }
@@ -168,10 +185,12 @@ public class EmployeeController {
      */
     @DeleteMapping("/employees/{employeeId}")
     public void deactivateEmployee(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         employeeService.deactivateEmployee(employeeId, principal.employeeId(), principal.userAccountId());
     }
+
     private void requireOwnOrEmployeeViewer(int employeeId) {
         if (permissionService.hasAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE)) {
             return;
@@ -182,5 +201,23 @@ public class EmployeeController {
         }
 
         throw new UnauthorizedException("You do not have permission to view this employee.");
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
+    }
+
+    private void validatePhotoUpload(String extension, byte[] content) {
+        if (extension == null || extension.isBlank() || !ALLOWED_PHOTO_EXTENSIONS.contains(extension.trim().toLowerCase())) {
+            throw new ValidationException("Invalid photo extension. Allowed types: jpg, jpeg, png.");
+        }
+        if (content == null || content.length == 0) {
+            throw new ValidationException("Photo content cannot be empty.");
+        }
+        if (content.length > MAX_PHOTO_SIZE_BYTES) {
+            throw new ValidationException("Photo size exceeds the maximum limit of 5 MB.");
+        }
     }
 }

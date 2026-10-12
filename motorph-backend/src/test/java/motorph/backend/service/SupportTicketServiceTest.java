@@ -1,6 +1,7 @@
 package motorph.backend.service;
 
 import motorph.backend.domain.SupportTicket;
+import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.RoutingTeam;
 import motorph.backend.domain.value.SupportTicketCategory;
@@ -23,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import static org.mockito.Mockito.doNothing;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,6 +59,7 @@ class SupportTicketServiceTest {
     @Mock private SupportTicketRepository supportTicketRepository;
     @Mock private EmployeeRepository employeeRepository;
     @Mock private UserAccessLogService userAccessLogService;
+    @Mock private PermissionService permissionService;
 
     @InjectMocks private SupportTicketService supportTicketService;
 
@@ -88,6 +91,7 @@ class SupportTicketServiceTest {
     @DisplayName("Admin can list every ticket and resolve any team's ticket")
     void adminHandlesEveryTicket() {
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(openTicket(RoutingTeam.HR));
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
 
         supportTicketService.getAllTickets(Role.ADMIN);
         supportTicketService.resolveTicket(TICKET_ID, RESOLVER_ACCOUNT_ID, Role.ADMIN);
@@ -100,6 +104,8 @@ class SupportTicketServiceTest {
     @EnumSource(value = Role.class, names = {"HR", "FINANCE", "IT", "EMPLOYEE"})
     void onlyAdminCanListAllOrCancel(Role role) {
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(openTicket(RoutingTeam.IT));
+        doThrow(new UnauthorizedException("You do not have permission to perform this action."))
+                .when(permissionService).requirePermission(PermissionKey.CANCEL_TICKETS);
 
         assertThatThrownBy(() -> supportTicketService.getAllTickets(role)).isInstanceOf(UnauthorizedException.class);
         assertThatThrownBy(() -> supportTicketService.cancelTicket(TICKET_ID, role, ADMIN_ACCOUNT_ID))
@@ -112,6 +118,7 @@ class SupportTicketServiceTest {
     @DisplayName("Admin can cancel an open ticket")
     void adminCanCancel() {
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(openTicket(RoutingTeam.PAYROLL));
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
 
         supportTicketService.cancelTicket(TICKET_ID, Role.ADMIN, ADMIN_ACCOUNT_ID);
 
@@ -124,12 +131,15 @@ class SupportTicketServiceTest {
         when(supportTicketRepository.findOpenTickets()).thenReturn(List.of(
                 openTicket(RoutingTeam.IT), openTicket(RoutingTeam.IT), openTicket(RoutingTeam.PAYROLL)));
 
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(false);
         assertThat(supportTicketService.getOpenTicketCount(Role.IT)).isEqualTo(2);
         assertThat(supportTicketService.getOpenTicketCount(Role.FINANCE)).isEqualTo(1);
+
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
         assertThat(supportTicketService.getOpenTicketCount(Role.ADMIN)).isEqualTo(3);
     }
 
-    // Audit logging (Control 5.4)
+    // Audit logging tests
 
     @Test
     @DisplayName("Submitting a ticket is audited with its category and routing team, and no target ID")
@@ -216,6 +226,7 @@ class SupportTicketServiceTest {
     @DisplayName("Cancelling a ticket is audited against the ticket, after the update")
     void cancellingIsAudited() {
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(openTicket(RoutingTeam.PAYROLL));
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
 
         supportTicketService.cancelTicket(TICKET_ID, Role.ADMIN, ADMIN_ACCOUNT_ID);
 
@@ -232,10 +243,16 @@ class SupportTicketServiceTest {
     @Test
     @DisplayName("A cancel that is refused or fails is not audited")
     void failedCancelIsNotAudited() {
+        doThrow(new UnauthorizedException("You do not have permission to perform this action."))
+                .when(permissionService).requirePermission(PermissionKey.CANCEL_TICKETS);
+
         assertThatThrownBy(() -> supportTicketService.cancelTicket(TICKET_ID, Role.HR, RESOLVER_ACCOUNT_ID))
                 .isInstanceOf(UnauthorizedException.class);
 
+        doNothing().when(permissionService).requirePermission(PermissionKey.CANCEL_TICKETS);
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(ticket(RoutingTeam.IT, SupportTicketStatus.CANCELLED));
+
         assertThatThrownBy(() -> supportTicketService.cancelTicket(TICKET_ID, Role.ADMIN, ADMIN_ACCOUNT_ID))
                 .isInstanceOf(BusinessRuleException.class);
 
@@ -247,6 +264,7 @@ class SupportTicketServiceTest {
     @DisplayName("Viewing tickets is not audited")
     void readsAreNotAudited() {
         when(supportTicketRepository.findById(TICKET_ID)).thenReturn(openTicket(RoutingTeam.IT));
+        when(permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)).thenReturn(true);
 
         supportTicketService.getTicketById(TICKET_ID);
         supportTicketService.getAllTickets(Role.ADMIN);

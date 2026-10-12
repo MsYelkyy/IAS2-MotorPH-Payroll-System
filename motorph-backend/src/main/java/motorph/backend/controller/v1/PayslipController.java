@@ -4,6 +4,7 @@ import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.payroll.PayslipReportDTO;
 import motorph.backend.dto.payroll.PayslipSummaryDTO;
 import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayslipService;
@@ -54,12 +55,16 @@ public class PayslipController {
 
     @GetMapping("/{employeeId}/{payrunId}")
     public PayslipReportDTO getPayslip(@PathVariable int employeeId, @PathVariable int payrunId) {
+        validatePositiveId(employeeId, "Employee ID");
+        validatePositiveId(payrunId, "Payrun ID");
         requireOwnOrPermitted(employeeId);
         return payslipService.getPayslipReport(employeeId, payrunId);
     }
 
     @GetMapping(value = "/{employeeId}/{payrunId}/pdf", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<byte[]> getPayslipPdf(@PathVariable int employeeId, @PathVariable int payrunId) {
+        validatePositiveId(employeeId, "Employee ID");
+        validatePositiveId(payrunId, "Payrun ID");
         requireOwnOrPermitted(employeeId);
 
         byte[] pdf = payslipService.generatePayslipPdf(employeeId, payrunId);
@@ -72,6 +77,7 @@ public class PayslipController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
                         "inline; filename=\"payslip-" + employeeId + "-" + payrunId + ".pdf\"")
+                .header("X-Content-Type-Options", "nosniff")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
     }
@@ -85,6 +91,12 @@ public class PayslipController {
 
         if (!permissionService.hasPermission(PermissionKey.VIEW_PAYSLIP)) {
             throw new UnauthorizedException("You do not have permission to view this payslip.");
+        }
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
         }
     }
 }

@@ -1,9 +1,11 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.Attendance;
 import motorph.backend.domain.OvertimeRequest;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.overtime.OvertimeSubmitRequest;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.OvertimeService;
@@ -22,7 +24,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Overtime request endpoints. Submitting and cancelling always act on the caller's own record.
+ * Overtime request endpoints with path variable and payload validation.
+ * Submitting and cancelling always act on the caller's own record.
  *
  * <p>Approval is open to holders of {@code APPROVE_OVERTIME} and to the employee's assigned
  * supervisor, who is a regular Employee account; the service enforces both.
@@ -44,14 +47,15 @@ public class OvertimeController {
     }
 
     @PostMapping
-    public void submitOvertimeRequest(@RequestBody OvertimeSubmitRequest request) {
+    public void submitOvertimeRequest(@RequestBody @Valid OvertimeSubmitRequest request) {
+        String cleanReason = sanitizeText(request.reason());
         overtimeService.submitOvertimeRequest(
                 callerEmployeeId(),
                 request.attendanceId(),
                 request.overtimeTypeId(),
                 request.overtimeDate(),
                 request.requestedHours(),
-                request.reason()
+                cleanReason
         );
     }
 
@@ -75,6 +79,7 @@ public class OvertimeController {
 
     @PostMapping("/{overtimeRequestId}/approve")
     public void approveOvertimeRequest(@PathVariable int overtimeRequestId) {
+        validatePositiveId(overtimeRequestId, "Overtime Request ID");
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         boolean canApproveAny = permissionService.hasPermission(PermissionKey.APPROVE_OVERTIME);
         overtimeService.approveOvertimeRequest(
@@ -83,6 +88,7 @@ public class OvertimeController {
 
     @PostMapping("/{overtimeRequestId}/reject")
     public void rejectOvertimeRequest(@PathVariable int overtimeRequestId) {
+        validatePositiveId(overtimeRequestId, "Overtime Request ID");
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         boolean canApproveAny = permissionService.hasPermission(PermissionKey.APPROVE_OVERTIME);
         overtimeService.rejectOvertimeRequest(
@@ -91,10 +97,24 @@ public class OvertimeController {
 
     @PostMapping("/{overtimeRequestId}/cancel")
     public void cancelOvertimeRequest(@PathVariable int overtimeRequestId) {
+        validatePositiveId(overtimeRequestId, "Overtime Request ID");
         overtimeService.cancelOvertimeRequest(callerEmployeeId(), overtimeRequestId, "Cancelled by employee.");
     }
 
     private int callerEmployeeId() {
         return currentUserProvider.getCurrentPrincipal().employeeId();
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
+    }
+
+    private String sanitizeText(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replaceAll("<[^>]*>", "").trim();
     }
 }
