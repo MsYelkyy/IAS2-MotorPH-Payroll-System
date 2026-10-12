@@ -14,13 +14,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 
 import static motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult.ATTEMPT_RECORDED;
@@ -28,6 +32,8 @@ import static motorph.backend.repository.UserAccountRepository.FailedPasswordAtt
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -159,6 +165,42 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    @DisplayName("A correct password on an older hash upgrades the stored hash")
+    void correctPasswordUpgradesAnOlderHash() throws Exception {
+        String legacy = legacyHash(PASSWORD, salt);
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(accountWithHash(legacy));
+
+        authenticationService.authenticate(EMAIL, PASSWORD);
+
+        ArgumentCaptor<String> newHash = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> newSalt = ArgumentCaptor.forClass(String.class);
+        verify(userAccountRepository).updatePasswordHash(eq(ACCOUNT_ID), newHash.capture(), newSalt.capture());
+        assertThat(PasswordHasher.needsRehash(newHash.getValue())).isFalse();
+        assertThat(PasswordHasher.verify(PASSWORD, newSalt.getValue(), newHash.getValue())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A current hash is not rewritten on login")
+    void currentHashIsNotRewritten() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+
+        authenticationService.authenticate(EMAIL, PASSWORD);
+
+        verify(userAccountRepository, never()).updatePasswordHash(anyInt(), anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("A wrong password never upgrades the hash")
+    void wrongPasswordDoesNotUpgradeTheHash() throws Exception {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(accountWithHash(legacyHash(PASSWORD, salt)));
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassw0rd"))
+                .isInstanceOf(AuthenticationException.class);
+
+        verify(userAccountRepository, never()).updatePasswordHash(anyInt(), anyString(), anyString());
+    }
+
+    @Test
     @DisplayName("A credential that is not enabled does not count as enrolled")
     void disabledCredentialRequiresSetup() {
         when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
@@ -220,5 +262,19 @@ class AuthenticationServiceTest {
                 ACCOUNT_ID, 101, EMAIL, EMAIL, hash, salt,
                 List.of(Role.EMPLOYEE), locked, true, null,
                 mustChangePassword, mustChangePassword ? LocalDateTime.now().plusHours(1) : null);
+    }
+
+    private UserAccount accountWithHash(String storedHash) {
+        return new UserAccount(
+                ACCOUNT_ID, 101, EMAIL, EMAIL, storedHash, salt,
+                List.of(Role.EMPLOYEE), false, true, null, false, null);
+    }
+
+    private static String legacyHash(String password, String saltBase64) throws Exception {
+        PBEKeySpec spec = new PBEKeySpec(
+                password.toCharArray(), Base64.getDecoder().decode(saltBase64), 60_000, 128);
+        byte[] bytes = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).getEncoded();
+
+        return Base64.getEncoder().encodeToString(bytes);
     }
 }

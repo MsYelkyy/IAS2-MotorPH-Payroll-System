@@ -23,7 +23,11 @@
         <java-otp.version>0.4.0</java-otp.version>
         <zxing.version>3.5.3</zxing.version>
         <mysql.connector.version>8.3.0</mysql.connector.version>
-        <jasperreports.version>7.0.6</jasperreports.version>
+        <jasperreports.version>7.0.7</jasperreports.version>
+        <jackson-bom.version>2.21.7</jackson-bom.version>
+        <tomcat.version>10.1.61</tomcat.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <log4j2.version>2.25.5</log4j2.version>
     </properties>
 
     <dependencies>

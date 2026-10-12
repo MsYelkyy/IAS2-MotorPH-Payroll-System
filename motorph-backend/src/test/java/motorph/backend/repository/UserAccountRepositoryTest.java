@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -104,6 +105,18 @@ class UserAccountRepositoryTest {
 
         verify(updateStatement).setBoolean(1, false);
         verify(updateStatement).setBoolean(2, false);
+        verify(updateStatement).setInt(3, ACCOUNT_ID);
+    }
+
+    @Test
+    void upgradingAPasswordHashLeavesTemporaryPasswordStateUntouched() throws SQLException {
+        repository.updatePasswordHash(ACCOUNT_ID, "new-hash", "new-salt");
+
+        verify(connection).prepareStatement(argThat(sql ->
+                sql.contains("password_hash") && !sql.contains("must_change_password")
+                        && !sql.contains("temporary_password_expires_at")));
+        verify(updateStatement).setString(1, "new-hash");
+        verify(updateStatement).setString(2, "new-salt");
         verify(updateStatement).setInt(3, ACCOUNT_ID);
     }
 }

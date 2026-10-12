@@ -166,6 +166,19 @@ public class AuthenticationService {
             logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
             throw new AuthenticationException("Invalid email or password.");
         }
+
+        upgradePasswordHashIfNeeded(rawPassword, account);
+    }
+
+    private void upgradePasswordHashIfNeeded(String rawPassword, UserAccount account) {
+        if (!PasswordHasher.needsRehash(account.getPasswordHash())) {
+            return;
+        }
+
+        String salt = PasswordHasher.generateSalt();
+
+        userAccountRepository.updatePasswordHash(
+                account.getUserAccountId(), PasswordHasher.hash(rawPassword, salt), salt);
     }
 
     private void logFailed(String companyEmail, String details) {
