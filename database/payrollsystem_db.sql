@@ -774,6 +774,7 @@ CREATE TABLE `payroll_result` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`payroll_result_id`),
+  UNIQUE KEY `uq_payroll_result_employee_payrun` (`employee_id`,`pay_run_id`),
   KEY `fk_payroll_result_employee_idx` (`employee_id`),
   KEY `fk_payroll_result_payrun_idx` (`pay_run_id`),
   CONSTRAINT `fk_payroll_result_employee` FOREIGN KEY (`employee_id`) REFERENCES `employee` (`employee_id`),
