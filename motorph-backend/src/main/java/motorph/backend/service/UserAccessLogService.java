@@ -21,6 +21,7 @@ public class UserAccessLogService {
 
     public static final String ACTION_LOGIN_SUCCESS = "LOGIN_SUCCESS";
     public static final String ACTION_LOGIN_FAILED = "LOGIN_FAILED";
+    public static final String ACTION_ACCOUNT_LOCKED = "ACCOUNT_LOCKED";
     public static final String ACTION_LOGOUT = "LOGOUT";
     public static final String ACTION_ACCOUNT_STATUS_CHANGED = "ACCOUNT_STATUS_CHANGED";
     public static final String ACTION_PASSWORD_RESET = "PASSWORD_RESET";
@@ -105,6 +106,17 @@ public class UserAccessLogService {
         validateRequired(companyEmail, "Company email is required.");
 
         save(null, ACTION_LOGIN_FAILED, buildFailedLoginDetails(companyEmail, details), null, null);
+    }
+
+    /**
+     * Records an automatic login lock against its target account without attributing the action to
+     * an unauthenticated caller.
+     */
+    public void logAutomaticAccountLock(int targetUserAccountId) {
+        validateUserAccountId(targetUserAccountId);
+
+        save(null, ACTION_ACCOUNT_LOCKED, "Automatic lock applied after repeated failed passwords.",
+                TARGET_USER_ACCOUNT, targetUserAccountId);
     }
 
     /**

@@ -93,7 +93,13 @@ public class LoginChallengeRepository {
      * Returns false if the challenge has already been used.
      */
     public boolean markConsumed(String challengeId) {
-        String sql = "UPDATE login_challenge SET consumed = 1 WHERE challenge_id = ? AND consumed = 0";
+        String sql = """
+                UPDATE login_challenge
+                SET consumed = 1
+                WHERE challenge_id = ?
+                  AND consumed = 0
+                  AND expires_at > NOW()
+                """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

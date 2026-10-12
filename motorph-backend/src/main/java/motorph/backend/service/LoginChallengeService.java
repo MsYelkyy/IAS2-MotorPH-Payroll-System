@@ -99,7 +99,7 @@ public class LoginChallengeService {
      * Marks the challenge used so it cannot be replayed. Fails if another request already used it.
      */
     public void consume(String challengeId) {
-        if (!repository.markConsumed(challengeId)) {
+        if (challengeId == null || challengeId.isBlank() || !repository.markConsumed(challengeId.trim())) {
             throw new AuthenticationException(INVALID_MESSAGE);
         }
     }

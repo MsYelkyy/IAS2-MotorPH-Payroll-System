@@ -434,8 +434,10 @@ class TotpAuthenticationFlowTest {
         users.byId(USER_ID).setLocked(true);
 
         assertThatThrownBy(() -> authController.verifyTotp(new TotpCodeRequest(challengeId, codeNow(secret)), http))
-                .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Account is locked.");
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason()).isEqualTo(AuthenticationException.Reason.ACCOUNT_LOCKED);
+                });
     }
 
     @Test
@@ -834,6 +836,16 @@ class TotpAuthenticationFlowTest {
             UserAccount account = accounts.get(userAccountId);
             account.updatePasswordCredentials(hash, salt);
             account.setMustChangePassword(false);
+        }
+
+        @Override
+        public FailedPasswordAttemptResult recordFailedPasswordAttempt(int userAccountId, int maxFailedAttempts) {
+            return FailedPasswordAttemptResult.ATTEMPT_RECORDED;
+        }
+
+        @Override
+        public boolean resetFailedPasswordAttempts(int userAccountId) {
+            return true;
         }
     }
 

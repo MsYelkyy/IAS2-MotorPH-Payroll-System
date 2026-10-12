@@ -144,7 +144,7 @@ public final class HttpApiClient {
     private ApiException parseError(String body, int statusCode) {
         try {
             ErrorResponse error = objectMapper.readValue(body, ErrorResponse.class);
-            return new ApiException(statusCode, error.code(), error.message());
+            return new ApiException(statusCode, error.code(), error.message(), error.reason());
         } catch (IOException e) {
             return new ApiException(statusCode, "UNKNOWN_ERROR", "Request failed with status " + statusCode + ".");
         }
