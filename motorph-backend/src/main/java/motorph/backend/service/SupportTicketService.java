@@ -22,7 +22,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Handles employee support tickets using centralized RBAC permission checks.
+ * Handles employee support tickets using permission-based access.
+ * Users can work with their team's tickets, while broader access and cancellation
+ * require the appropriate permissions.
  */
 @Service
 public class SupportTicketService {
@@ -44,7 +46,6 @@ public class SupportTicketService {
 
     /**
      * Submits a support ticket and records it in the audit log.
-     * Ignore missing @param tags hahaha
      */
     public void submitTicket(int employeeId,
                              SupportTicketCategory category,
@@ -87,14 +88,14 @@ public class SupportTicketService {
     }
 
     /**
-     * Counts open tickets the caller can handle based on permissions and active team role.
-     * Used VIEW_TICKET token
+     * Counts open tickets the caller can handle: every open ticket with {@code VIEW_ALL_TICKETS},
+     * otherwise their team's.
      */
     public int getOpenTicketCount(Role actorRole) {
         permissionService.requirePermission(PermissionKey.VIEW_TICKETS);
         List<SupportTicket> open = supportTicketRepository.findOpenTickets();
 
-        if (permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)) {
+        if (permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)) {
             return open.size();
         }
 
@@ -114,7 +115,7 @@ public class SupportTicketService {
 
         permissionService.requirePermission(PermissionKey.VIEW_TICKETS);
 
-        if (!permissionService.hasPermission(PermissionKey.CANCEL_TICKETS) 
+        if (!permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)
                 && requireHandlingTeam(actorRole) != routingTeam) {
             throw new UnauthorizedException("You can only view tickets routed to your team.");
         }
@@ -123,12 +124,13 @@ public class SupportTicketService {
     }
 
     public List<SupportTicketRowDTO> getAllTickets(Role actorRole) {
-        permissionService.requirePermission(PermissionKey.CANCEL_TICKETS);
+        permissionService.requirePermission(PermissionKey.VIEW_ALL_TICKETS);
         return toRows(supportTicketRepository.findAll());
     }
 
     /**
-     * Resolves an open ticket after validating the RESOLVE_TICKETS permission key.
+     * Resolves an open ticket. {@code RESOLVE_TICKETS} is required, and without
+     * {@code VIEW_ALL_TICKETS} the ticket must be routed to the caller's team.
      */
     public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
         validateTicketId(ticketId);
@@ -136,7 +138,7 @@ public class SupportTicketService {
 
         SupportTicket ticket = getTicketById(ticketId);
 
-        if (!permissionService.hasPermission(PermissionKey.CANCEL_TICKETS) 
+        if (!permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)
                 && requireHandlingTeam(resolverRole) != ticket.getRoutingTeam()) {
             throw new UnauthorizedException("You can only resolve tickets routed to your team.");
         }
@@ -153,7 +155,7 @@ public class SupportTicketService {
     }
 
     /**
-     * Cancels an open ticket after enforcing the CANCEL_TICKETS permission key.
+     * Cancels an open ticket. Requires {@code CANCEL_TICKETS}.
      */
     public void cancelTicket(int ticketId, Role actorRole, int actorUserAccountId) {
         validateTicketId(ticketId);
@@ -180,7 +182,7 @@ public class SupportTicketService {
             case ADMIN, EMPLOYEE -> null;
         };
 
-        if (team == null && !permissionService.hasPermission(PermissionKey.CANCEL_TICKETS)) {
+        if (team == null) {
             throw new UnauthorizedException("You do not have permission to perform this action.");
         }
 

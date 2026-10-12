@@ -42,11 +42,12 @@ public enum PermissionKey {
 
     VIEW_DATABASE_TOOLS,
     BACKUP_DATABASE,
-    
+
     // --- Control 2 (RBAC) Support Ticket Permissions ---
     VIEW_TICKETS,
     RESOLVE_TICKETS,
-    CANCEL_TICKETS;
+    CANCEL_TICKETS,
+    VIEW_ALL_TICKETS;
 
     public static PermissionKey fromValue(String value) {
         if (value == null || value.trim().isEmpty()) {

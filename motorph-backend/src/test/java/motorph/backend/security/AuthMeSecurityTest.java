@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -78,7 +79,8 @@ class AuthMeSecurityTest {
                 .andExpect(jsonPath("$.activeRole").value("EMPLOYEE"));
 
         verify(tokenRevocationRepository).isRevoked(accessToken.jti());
-        verify(userAccountRepository).findById(USER_ACCOUNT_ID);
+        // Once in the filter, which checks the account is active and unlocked, and once in the controller.
+        verify(userAccountRepository, times(2)).findById(USER_ACCOUNT_ID);
     }
 
     @Test
