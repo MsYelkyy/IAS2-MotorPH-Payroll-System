@@ -228,6 +228,17 @@ class GlobalExceptionHandlerTest {
                 .andExpect(jsonPath("$.message").value("Invalid OTP code."));
     }
 
+    @Test
+    @DisplayName("A threshold lock keeps generic credentials and returns only a machine-readable reason")
+    void automaticAccountLockHasStableReasonWithoutAttemptCounts() throws Exception {
+        mockMvc.perform(fromClient(get("/api/v1/probe/locked-login")))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTHENTICATION_FAILED"))
+                .andExpect(jsonPath("$.message").value("Invalid email or password."))
+                .andExpect(jsonPath("$.reason").value("ACCOUNT_LOCKED"))
+                .andExpect(jsonPath("$.remainingAttempts").doesNotExist());
+    }
+
     private MockHttpServletRequestBuilder fromClient(MockHttpServletRequestBuilder builder) {
         return builder
                 .accept(MediaType.APPLICATION_JSON)
@@ -303,6 +314,12 @@ class GlobalExceptionHandlerTest {
         @GetMapping("/login-failure")
         void loginFailure() {
             throw new AuthenticationException("Invalid email or password.");
+        }
+
+        @GetMapping("/locked-login")
+        void lockedLogin() {
+            throw new AuthenticationException(
+                    "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
         }
 
         @GetMapping("/missing")

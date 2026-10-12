@@ -79,14 +79,20 @@ public class LoginChallengeRepository {
         return null;
     }
 
-    public void markConsumed(String challengeId) {
-        String sql = "UPDATE login_challenge SET consumed = 1 WHERE challenge_id = ?";
+    public boolean markConsumed(String challengeId) {
+        String sql = """
+                UPDATE login_challenge
+                SET consumed = 1
+                WHERE challenge_id = ?
+                  AND consumed = 0
+                  AND expires_at > NOW()
+                """;
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
             stmt.setString(1, challengeId);
-            stmt.executeUpdate();
+            return stmt.executeUpdate() > 0;
 
         } catch (SQLException e) {
             throw new DataAccessException("Failed to mark login challenge as consumed.", e);

@@ -1238,6 +1238,13 @@ INSERT INTO `user_account` VALUES (1,10001,'manuel.garcia@motorph.com','emp10001
 UNLOCK TABLES;
 
 --
+-- Add persistent automatic login-lockout state. This follows the legacy positional
+-- user_account INSERT above so the original row values remain unchanged.
+--
+ALTER TABLE `user_account`
+  ADD COLUMN `failed_login_count` int NOT NULL DEFAULT '0';
+
+--
 -- Table structure for table `user_role`
 --
 

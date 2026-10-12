@@ -27,6 +27,7 @@ public class UserAccount {
     private LocalDateTime lastLoginAt;
     private boolean mustChangePassword;
     private LocalDateTime temporaryPasswordExpiresAt;
+    private int failedLoginCount;
 
     public UserAccount(Integer userAccountId,
                        int employeeId,
@@ -87,6 +88,24 @@ public class UserAccount {
         validateTemporaryPasswordState();
     }
 
+    public UserAccount(Integer userAccountId,
+                       int employeeId,
+                       String companyEmail,
+                       String username,
+                       String passwordHash,
+                       String passwordSalt,
+                       List<Role> roles,
+                       boolean locked,
+                       boolean active,
+                       LocalDateTime lastLoginAt,
+                       boolean mustChangePassword,
+                       LocalDateTime temporaryPasswordExpiresAt,
+                       int failedLoginCount) {
+        this(userAccountId, employeeId, companyEmail, username, passwordHash, passwordSalt, roles,
+                locked, active, lastLoginAt, mustChangePassword, temporaryPasswordExpiresAt);
+        setFailedLoginCount(failedLoginCount);
+    }
+
     public Integer getUserAccountId() {
         return userAccountId;
     }
@@ -137,6 +156,10 @@ public class UserAccount {
 
     public LocalDateTime getTemporaryPasswordExpiresAt() {
         return temporaryPasswordExpiresAt;
+    }
+
+    public int getFailedLoginCount() {
+        return failedLoginCount;
     }
 
     public boolean hasRole(Role role) {
@@ -264,6 +287,13 @@ public class UserAccount {
 
     public void setTemporaryPasswordExpiresAt(LocalDateTime temporaryPasswordExpiresAt) {
         this.temporaryPasswordExpiresAt = temporaryPasswordExpiresAt;
+    }
+
+    public void setFailedLoginCount(int failedLoginCount) {
+        if (failedLoginCount < 0) {
+            throw new IllegalArgumentException("Failed login count cannot be negative.");
+        }
+        this.failedLoginCount = failedLoginCount;
     }
 
     public void updatePasswordCredentials(String passwordHash, String passwordSalt) {

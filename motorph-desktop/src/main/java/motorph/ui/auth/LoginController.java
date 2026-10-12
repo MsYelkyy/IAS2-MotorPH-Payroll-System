@@ -1,5 +1,6 @@
 package motorph.ui.auth;
 
+import motorph.api.ApiException;
 import motorph.application.dto.auth.EmailPreviewDTO;
 import motorph.application.dto.auth.EmailPreviewType;
 import motorph.application.dto.login.LoginResultDTO;
@@ -27,6 +28,9 @@ import java.util.List;
 
 /** Manages employee login page actions and navigation. */
 public class LoginController {
+
+    private static final String ACCOUNT_LOCKED_MESSAGE =
+            "Your account has been locked after multiple failed sign-in attempts. Please contact an administrator.";
 
     private AuthApiClient authApiClient;
     private boolean passwordVisible = false;
@@ -172,8 +176,17 @@ public class LoginController {
         } catch (Exception e) {
             UiValidationUtil.markInvalid(companyEmailField);
             UiValidationUtil.markInvalid(passwordVisible ? passwordTextField : passwordField);
-            UiMessageUtil.setInlineError(loginMessageLabel, UiMessageUtil.toUserMessage(e));
+            UiMessageUtil.setInlineError(loginMessageLabel, loginErrorMessage(e));
         }
+    }
+
+    static String loginErrorMessage(Exception e) {
+        if (e instanceof ApiException apiException
+                && "ACCOUNT_LOCKED".equals(apiException.getReason())) {
+            return ACCOUNT_LOCKED_MESSAGE;
+        }
+
+        return UiMessageUtil.toUserMessage(e);
     }
 
     // opens the forgot password card

@@ -7,7 +7,9 @@ import motorph.backend.security.PasswordHasher;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.UserAccountRepository;
+import motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
@@ -22,6 +24,8 @@ public class AuthenticationService {
     private final TwoFactorService twoFactorService;
     private final OtpDeliveryService otpDeliveryService;
     private final UserAccessLogService userAccessLogService;
+    @Value("${motorph.auth.lockout.max-failed-password-attempts:5}")
+    private int maxFailedPasswordAttempts = 5;
 
     public AuthenticationService(UserAccountRepository userAccountRepository,
                                  EmployeeRepository employeeRepository,
@@ -112,7 +116,8 @@ public class AuthenticationService {
 
         if (account.isLocked()) {
             logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
-            throw new AuthenticationException("Account is locked.");
+            throw new AuthenticationException(
+                    "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
         }
 
         if (account.getRoles() == null || account.getRoles().isEmpty()) {
@@ -158,7 +163,21 @@ public class AuthenticationService {
         );
 
         if (!matched) {
+            FailedPasswordAttemptResult result = userAccountRepository.recordFailedPasswordAttempt(
+                    account.getUserAccountId(), maxFailedPasswordAttempts);
             logFailed(account.getCompanyEmail(), "Login failed because password did not match.");
+
+            if (result == FailedPasswordAttemptResult.LOCK_APPLIED) {
+                userAccessLogService.logAutomaticAccountLock(account.getUserAccountId());
+                throw new AuthenticationException(
+                        "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
+            }
+
+            throw new AuthenticationException("Invalid email or password.");
+        }
+
+        if (!userAccountRepository.resetFailedPasswordAttempts(account.getUserAccountId())) {
+            logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
             throw new AuthenticationException("Invalid email or password.");
         }
     }

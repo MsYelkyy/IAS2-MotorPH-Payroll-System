@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.HandlerMapping;
 
+import java.util.List;
+
 /**
  * Translates exceptions into the {@link ErrorResponse} format. Clients only ever see the stable
  * {@code code} values, never Java exception class names, so the exception hierarchy can change
@@ -44,7 +46,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e) {
-        return respond(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_FAILED", e.getMessage());
+        String reason = e.getReason() == null ? null : e.getReason().name();
+        return respond(HttpStatus.UNAUTHORIZED, "AUTHENTICATION_FAILED", e.getMessage(), reason);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
@@ -145,5 +148,10 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> respond(HttpStatus status, String code, String message) {
         return ResponseEntity.status(status).body(new ErrorResponse(code, message));
+    }
+
+    private ResponseEntity<ErrorResponse> respond(
+            HttpStatus status, String code, String message, String reason) {
+        return ResponseEntity.status(status).body(new ErrorResponse(code, message, List.of(), reason));
     }
 }

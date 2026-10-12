@@ -2,11 +2,13 @@ package motorph.backend.service;
 
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
+import motorph.backend.dto.auth.OtpPreview;
 import motorph.backend.exception.AuthenticationException;
 import motorph.backend.exception.OtpVerificationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.UserAccountRepository;
+import motorph.backend.security.PasswordHasher;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -24,6 +27,8 @@ import org.mockito.quality.Strictness;
 
 import java.util.List;
 
+import static motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult.ATTEMPT_RECORDED;
+import static motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult.LOCK_APPLIED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -106,6 +111,129 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    @DisplayName("Valid company credentials start OTP delivery without recording a completed login")
+    void validCredentialsStartOtpFlow() {
+        String rawPassword = "CorrectHorseBatteryStaple!";
+        String salt = PasswordHasher.generateSalt();
+        UserAccount account = new UserAccount(
+                ACCOUNT_ID, 101, EMAIL, EMAIL,
+                PasswordHasher.hash(rawPassword, salt), salt,
+                List.of(Role.EMPLOYEE), false, true, null, false, null);
+        String rawOtp = "123456";
+        OtpPreview preview = new OtpPreview("no-reply@motorph.com", EMAIL, "Verification", "Message", rawOtp);
+
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account);
+        when(employeeRepository.findPersonalEmailByEmployeeId(101)).thenReturn("juan.personal@example.com");
+        when(twoFactorService.createLoginOtp(ACCOUNT_ID)).thenReturn(rawOtp);
+        when(otpDeliveryService.sendLoginOtp(EMAIL, rawOtp)).thenReturn(preview);
+        when(userAccountRepository.resetFailedPasswordAttempts(ACCOUNT_ID)).thenReturn(true);
+
+        LoginAttemptOutcome outcome = authenticationService.authenticate("  " + EMAIL + "  ", rawPassword);
+
+        assertThat(outcome.getType()).isEqualTo(LoginAttemptOutcome.Type.OTP_SENT);
+        assertThat(outcome.getUserAccountId()).isEqualTo(ACCOUNT_ID);
+        assertThat(outcome.getOtpPreview()).isSameAs(preview);
+        verify(twoFactorService).createLoginOtp(ACCOUNT_ID);
+        verify(otpDeliveryService).sendLoginOtp(EMAIL, rawOtp);
+        verify(userAccountRepository).resetFailedPasswordAttempts(ACCOUNT_ID);
+        verify(userAccountRepository, never()).updateLastLogin(anyInt());
+        verify(userAccessLogService, never()).logLoginSuccess(anyInt(), anyString());
+    }
+
+    @Test
+    @DisplayName("An incorrect password increments the targeted account failure count")
+    void incorrectPasswordIncrementsAccountCount() {
+        String correctPassword = "CorrectHorseBatteryStaple!";
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(passwordAccount(correctPassword, 0, false));
+        when(userAccountRepository.recordFailedPasswordAttempt(ACCOUNT_ID, 5))
+                .thenReturn(ATTEMPT_RECORDED);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason()).isNull();
+                });
+
+        verify(userAccountRepository).recordFailedPasswordAttempt(ACCOUNT_ID, 5);
+        verify(userAccessLogService).logLoginFailed(EMAIL, "Login failed because password did not match.");
+        verify(userAccessLogService, never()).logAutomaticAccountLock(anyInt());
+        verify(userAccountRepository, never()).resetFailedPasswordAttempts(ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("An unknown email keeps the generic authentication response without a lock reason")
+    void unknownEmailDoesNotReturnLockReason() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(null);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason()).isNull();
+                });
+
+        verify(userAccountRepository, never()).recordFailedPasswordAttempt(anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Reaching the configured threshold applies and audits an automatic lock")
+    void thresholdFailureAppliesAutomaticLock() {
+        String correctPassword = "CorrectHorseBatteryStaple!";
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(passwordAccount(correctPassword, 4, false));
+        when(userAccountRepository.recordFailedPasswordAttempt(ACCOUNT_ID, 5))
+                .thenReturn(LOCK_APPLIED);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassword!"))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason())
+                            .isEqualTo(AuthenticationException.Reason.ACCOUNT_LOCKED);
+                });
+
+        verify(userAccountRepository).recordFailedPasswordAttempt(ACCOUNT_ID, 5);
+        verify(userAccessLogService).logAutomaticAccountLock(ACCOUNT_ID);
+    }
+
+    @ParameterizedTest(name = "A persistently locked account rejects password: {0}")
+    @ValueSource(strings = {"CorrectHorseBatteryStaple!", "WrongPassword!"})
+    @DisplayName("A persistently locked account returns the lock reason without checking the password")
+    void lockedAccountRejectsLoginWithoutCheckingPassword(String submittedPassword) {
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(passwordAccount("CorrectHorseBatteryStaple!", 5, true));
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, submittedPassword))
+                .isInstanceOfSatisfying(AuthenticationException.class, failure -> {
+                    assertThat(failure.getMessage()).isEqualTo("Invalid email or password.");
+                    assertThat(failure.getReason())
+                            .isEqualTo(AuthenticationException.Reason.ACCOUNT_LOCKED);
+                });
+
+        verify(userAccountRepository, never()).recordFailedPasswordAttempt(anyInt(), anyInt());
+        verify(userAccountRepository, never()).resetFailedPasswordAttempts(ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("Correct password authentication resets the counter and continues to OTP")
+    void correctPasswordResetsFailuresAndStartsOtpLogin() {
+        String correctPassword = "CorrectHorseBatteryStaple!";
+        String rawOtp = "123456";
+        OtpPreview preview = new OtpPreview("no-reply@motorph.com", EMAIL, "Verification", "Message", rawOtp);
+        when(userAccountRepository.findByCompanyEmail(EMAIL))
+                .thenReturn(passwordAccount(correctPassword, 3, false));
+        when(userAccountRepository.resetFailedPasswordAttempts(ACCOUNT_ID)).thenReturn(true);
+        when(employeeRepository.findPersonalEmailByEmployeeId(101)).thenReturn("juan.personal@example.com");
+        when(twoFactorService.createLoginOtp(ACCOUNT_ID)).thenReturn(rawOtp);
+        when(otpDeliveryService.sendLoginOtp(EMAIL, rawOtp)).thenReturn(preview);
+
+        LoginAttemptOutcome outcome = authenticationService.authenticate(EMAIL, correctPassword);
+
+        assertThat(outcome.getType()).isEqualTo(LoginAttemptOutcome.Type.OTP_SENT);
+        verify(userAccountRepository).resetFailedPasswordAttempts(ACCOUNT_ID);
+        verify(twoFactorService).createLoginOtp(ACCOUNT_ID);
+    }
+
+    @Test
     @DisplayName("A malformed OTP is rejected as a validation error and is not an OTP attempt")
     void malformedOtpIsNotAuditedAsOtpFailure() {
         doThrow(new ValidationException("OTP code must be 6 digits."))
@@ -124,7 +252,7 @@ class AuthenticationServiceTest {
 
         assertThatThrownBy(() -> authenticationService.verifyLoginOtp(ACCOUNT_ID, SUBMITTED_OTP))
                 .isInstanceOf(AuthenticationException.class)
-                .hasMessage("Account is locked.");
+                .hasMessage("Invalid email or password.");
 
         verify(userAccessLogService).logLoginFailed(EMAIL, "Login failed because account is locked.");
         verifyNoMoreInteractions(userAccessLogService);
@@ -135,5 +263,14 @@ class AuthenticationServiceTest {
         return new UserAccount(
                 ACCOUNT_ID, 101, EMAIL, EMAIL, "hash", "salt",
                 List.of(Role.EMPLOYEE), locked, true, null, false, null);
+    }
+
+    private UserAccount passwordAccount(String password, int failedLoginCount, boolean locked) {
+        String salt = PasswordHasher.generateSalt();
+        return new UserAccount(
+                ACCOUNT_ID, 101, EMAIL, EMAIL,
+                PasswordHasher.hash(password, salt), salt,
+                List.of(Role.EMPLOYEE), locked, true, null, false, null,
+                failedLoginCount);
     }
 }
