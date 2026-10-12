@@ -1,69 +1,82 @@
 -- Control 4.1: Prevent duplicate payroll records
+-- This migration does not automatically delete existing records.
 
 USE payrollsystem_db;
 
-START TRANSACTION;
+DROP PROCEDURE IF EXISTS apply_payroll_integrity_constraint;
 
-CREATE TEMPORARY TABLE duplicate_payroll_results (
-    payroll_result_id INT PRIMARY KEY
-);
+DELIMITER $$
 
--- Identify duplicate payroll results.
--- The oldest result is retained.
-INSERT INTO duplicate_payroll_results (payroll_result_id)
-SELECT duplicate_result.payroll_result_id
-FROM payroll_result duplicate_result
-JOIN (
-    SELECT
-        employee_id,
-        pay_run_id,
-        MIN(payroll_result_id) AS retained_result_id
-    FROM payroll_result
-    GROUP BY employee_id, pay_run_id
-    HAVING COUNT(*) > 1
-) duplicate_group
-    ON duplicate_group.employee_id = duplicate_result.employee_id
-    AND duplicate_group.pay_run_id = duplicate_result.pay_run_id
-WHERE duplicate_result.payroll_result_id
-      <> duplicate_group.retained_result_id;
+CREATE PROCEDURE apply_payroll_integrity_constraint()
+BEGIN
+    DECLARE duplicate_group_count INT DEFAULT 0;
+    DECLARE constraint_exists INT DEFAULT 0;
 
--- Remove components belonging to duplicate results.
-DELETE component
-FROM payroll_benefit component
-JOIN duplicate_payroll_results duplicate_result
-    ON duplicate_result.payroll_result_id =
-       component.payroll_result_id;
+    -- Check whether duplicate employee_id and pay_run_id pairs exist.
+    SELECT COUNT(*)
+    INTO duplicate_group_count
+    FROM (
+        SELECT employee_id, pay_run_id
+        FROM payroll_result
+        GROUP BY employee_id, pay_run_id
+        HAVING COUNT(*) > 1
+    ) AS duplicate_groups;
 
-DELETE component
-FROM payroll_deduction component
-JOIN duplicate_payroll_results duplicate_result
-    ON duplicate_result.payroll_result_id =
-       component.payroll_result_id;
+    -- Report duplicates and stop the migration.
+    IF duplicate_group_count > 0 THEN
 
-DELETE component
-FROM payroll_earning component
-JOIN duplicate_payroll_results duplicate_result
-    ON duplicate_result.payroll_result_id =
-       component.payroll_result_id;
+        SELECT
+            employee_id,
+            pay_run_id,
+            COUNT(*) AS duplicate_count,
+            GROUP_CONCAT(
+                payroll_result_id
+                ORDER BY payroll_result_id
+            ) AS payroll_result_ids
+        FROM payroll_result
+        GROUP BY employee_id, pay_run_id
+        HAVING COUNT(*) > 1;
 
-DELETE component
-FROM payroll_overtime component
-JOIN duplicate_payroll_results duplicate_result
-    ON duplicate_result.payroll_result_id =
-       component.payroll_result_id;
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT =
+            'Duplicate payroll records found. Review them manually before applying the UNIQUE constraint.';
 
--- Remove the duplicate payroll results.
-DELETE payroll
-FROM payroll_result payroll
-JOIN duplicate_payroll_results duplicate_result
-    ON duplicate_result.payroll_result_id =
-       payroll.payroll_result_id;
+    ELSE
 
-DROP TEMPORARY TABLE duplicate_payroll_results;
+        -- Check whether the UNIQUE constraint is already installed.
+        SELECT COUNT(*)
+        INTO constraint_exists
+        FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'payroll_result'
+          AND CONSTRAINT_NAME =
+              'uq_payroll_result_employee_payrun'
+          AND CONSTRAINT_TYPE = 'UNIQUE';
 
-COMMIT;
+        -- Add the constraint only when it does not exist.
+        IF constraint_exists = 0 THEN
 
--- Add database-level duplicate prevention.
-ALTER TABLE payroll_result
-ADD CONSTRAINT uq_payroll_result_employee_payrun
-UNIQUE (employee_id, pay_run_id);
+            ALTER TABLE payroll_result
+            ADD CONSTRAINT uq_payroll_result_employee_payrun
+            UNIQUE (employee_id, pay_run_id);
+
+            SELECT
+                'UNIQUE constraint successfully installed.'
+                AS migration_result;
+
+        ELSE
+
+            SELECT
+                'UNIQUE constraint is already installed. No changes were made.'
+                AS migration_result;
+
+        END IF;
+
+    END IF;
+END$$
+
+DELIMITER ;
+
+CALL apply_payroll_integrity_constraint();
+
+DROP PROCEDURE IF EXISTS apply_payroll_integrity_constraint;
