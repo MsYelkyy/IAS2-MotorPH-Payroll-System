@@ -10,6 +10,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 
 /**
@@ -32,6 +33,23 @@ public class TotpSecretCipher {
 
     /** Ciphertext (with the authentication tag appended) and the nonce it was encrypted with. */
     public record EncryptedSecret(byte[] ciphertext, byte[] nonce) {
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof EncryptedSecret that
+                    && Arrays.equals(ciphertext, that.ciphertext)
+                    && Arrays.equals(nonce, that.nonce);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * Arrays.hashCode(ciphertext) + Arrays.hashCode(nonce);
+        }
+
+        @Override
+        public String toString() {
+            return "EncryptedSecret[ciphertext=***, nonce=***]";
+        }
     }
 
     private final SecretKey key;
