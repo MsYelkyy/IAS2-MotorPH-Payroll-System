@@ -15,8 +15,9 @@ import java.time.ZoneId;
 
 /**
  * Creates access and refresh tokens and handles token refresh and revocation.
- * Refresh tokens are rejected if they are revoked or belong to an account
- * that is missing, inactive, or locked.
+ * Refresh tokens are rejected if they are revoked, were issued before the user's sessions were
+ * revoked (for example by a password reset), or belong to an account that is missing, inactive,
+ * or locked.
  */
 @Service
 public class TokenIssuanceService {
@@ -62,6 +63,10 @@ public class TokenIssuanceService {
         }
 
         int userAccountId = Integer.parseInt(claims.getSubject());
+
+        if (tokenRevocationRepository.isIssuedBeforeSessionRevocation(userAccountId, claims.getIssuedAt().toInstant())) {
+            throw new AuthenticationException("Refresh token has been revoked.");
+        }
 
         UserAccount account = userAccountRepository.findById(userAccountId);
 

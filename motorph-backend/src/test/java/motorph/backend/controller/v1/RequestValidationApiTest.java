@@ -2,13 +2,17 @@ package motorph.backend.controller.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import motorph.backend.domain.UserAccount;
+import motorph.backend.domain.value.ChallengePurpose;
 import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.SupportTicketCategory;
 import motorph.backend.dto.auth.ChangePasswordRequest;
 import motorph.backend.dto.auth.LoginRequest;
 import motorph.backend.dto.auth.RefreshRequest;
 import motorph.backend.dto.auth.TokenResponse;
-import motorph.backend.dto.auth.VerifyOtpRequest;
+import motorph.backend.dto.auth.CompleteTemporaryPasswordRequest;
+import motorph.backend.dto.auth.ResetPasswordRequest;
+import motorph.backend.dto.auth.TotpCodeRequest;
+import motorph.backend.dto.auth.TotpSetupStartRequest;
 import motorph.backend.dto.support.TicketSubmitRequest;
 import motorph.backend.dto.user.UserRolesUpdateRequest;
 import motorph.backend.exception.AuthenticationException;
@@ -23,9 +27,10 @@ import motorph.backend.security.TokenIssuanceService;
 import motorph.backend.service.AuthenticationService;
 import motorph.backend.service.LoginAttemptOutcome;
 import motorph.backend.service.LoginChallengeService;
-import motorph.backend.service.PasswordResetService;
+import motorph.backend.service.PasswordRecoveryService;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.SupportTicketService;
+import motorph.backend.service.TotpService;
 import motorph.backend.service.UserAccessLogService;
 import motorph.backend.service.UserAccountService;
 
@@ -50,14 +55,18 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -92,7 +101,12 @@ class RequestValidationApiTest {
 
     private static final String LOGIN = "/api/v1/auth/login";
     private static final String REFRESH = "/api/v1/auth/refresh";
-    private static final String VERIFY_OTP = "/api/v1/auth/verify-otp";
+    private static final String TOTP_VERIFY = "/api/v1/auth/totp/verify";
+    private static final String TOTP_CONFIRM = "/api/v1/auth/totp/setup/confirm";
+    private static final String RECOVERY_VERIFY = "/api/v1/auth/forgot-password/verify";
+    private static final String SETUP_START = "/api/v1/auth/totp/setup/start";
+    private static final String RESET_PASSWORD = "/api/v1/auth/forgot-password/reset";
+    private static final String COMPLETE_TEMPORARY = "/api/v1/auth/complete-temporary-password";
     private static final String CHANGE_PASSWORD = "/api/v1/auth/change-password";
     private static final String TICKETS = "/api/v1/support-tickets";
     private static final String ROLES = "/api/v1/user-accounts/5/roles";
@@ -103,12 +117,14 @@ class RequestValidationApiTest {
     @Autowired private ObjectMapper objectMapper;
     @Autowired private JwtTokenProvider jwtTokenProvider;
     @Autowired private RequestMappingHandlerAdapter handlerAdapter;
+    @Autowired private RequestMappingHandlerMapping handlerMapping;
 
     @MockitoBean private AuthenticationService authenticationService;
     @MockitoBean private LoginChallengeService loginChallengeService;
     @MockitoBean private TokenIssuanceService tokenIssuanceService;
     @MockitoBean private LoginRateLimiter loginRateLimiter;
-    @MockitoBean private PasswordResetService passwordResetService;
+    @MockitoBean private TotpService totpService;
+    @MockitoBean private PasswordRecoveryService passwordRecoveryService;
     @MockitoBean private UserAccountService userAccountService;
     @MockitoBean private SupportTicketService supportTicketService;
     @MockitoBean private PermissionService permissionService;
@@ -133,11 +149,12 @@ class RequestValidationApiTest {
         void login() throws Exception {
             when(authenticationService.authenticate("manuel.garcia@motorph.com", SECRET_PASSWORD))
                     .thenReturn(new LoginAttemptOutcome(
-                            LoginAttemptOutcome.Type.OTP_SENT, 5, "manuel.garcia@motorph.com", "OTP verification required."));
-            when(loginChallengeService.issue(5)).thenReturn("challenge-id");
+                            LoginAttemptOutcome.Type.TOTP_REQUIRED, 5, "manuel.garcia@motorph.com", "Enter the code from your authenticator app."));
+            when(loginChallengeService.issue(5, ChallengePurpose.TOTP_LOGIN)).thenReturn("challenge-id");
 
             mockMvc.perform(json(post(LOGIN), Map.of("companyEmail", "manuel.garcia@motorph.com", "password", SECRET_PASSWORD)))
                     .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.status").value("TOTP_REQUIRED"))
                     .andExpect(jsonPath("$.challengeId").value("challenge-id"));
         }
 
@@ -152,16 +169,75 @@ class RequestValidationApiTest {
         }
 
         @Test
-        @DisplayName("POST /auth/verify-otp reaches the authentication service")
-        void verifyOtp() throws Exception {
-            when(loginChallengeService.resolveAndConsume("k3J9-_xQ2mP0")).thenReturn(USER_ACCOUNT_ID);
-            when(authenticationService.verifyLoginOtp(USER_ACCOUNT_ID, "012345")).thenReturn(activeAccount());
+        @DisplayName("POST /auth/totp/verify issues tokens once the authenticator code is accepted")
+        void verifyTotp() throws Exception {
+            when(totpService.verifyLogin("k3J9-_xQ2mP0", "012345")).thenReturn(activeAccount());
             when(tokenIssuanceService.issueTokenPair(USER_ACCOUNT_ID, EMPLOYEE_ID))
                     .thenReturn(new TokenResponse("access", "refresh", 900));
 
-            mockMvc.perform(json(post(VERIFY_OTP), Map.of("challengeId", "k3J9-_xQ2mP0", "otp", "012345")))
+            mockMvc.perform(json(post(TOTP_VERIFY), Map.of("challengeId", "k3J9-_xQ2mP0", "code", "012345")))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").value("access"));
+
+            verify(authenticationService).completeLogin(any());
+        }
+
+        @Test
+        @DisplayName("POST /auth/totp/setup/confirm completes the first-time setup login")
+        void confirmTotpSetup() throws Exception {
+            when(totpService.confirmEnrollment("k3J9-_xQ2mP0", "012345")).thenReturn(activeAccount());
+            when(tokenIssuanceService.issueTokenPair(USER_ACCOUNT_ID, EMPLOYEE_ID))
+                    .thenReturn(new TokenResponse("access", "refresh", 900));
+
+            mockMvc.perform(json(post(TOTP_CONFIRM), Map.of("challengeId", "k3J9-_xQ2mP0", "code", "012345")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.accessToken").value("access"));
+        }
+
+        @Test
+        @DisplayName("POST /auth/forgot-password/verify returns the single-use reset token")
+        void verifyPasswordRecovery() throws Exception {
+            when(passwordRecoveryService.verifyCode("k3J9-_xQ2mP0", "012345"))
+                    .thenReturn(new PasswordRecoveryService.RecoveryToken("reset-token", 600));
+
+            mockMvc.perform(json(post(RECOVERY_VERIFY), Map.of("challengeId", "k3J9-_xQ2mP0", "code", "012345")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.resetToken").value("reset-token"));
+        }
+
+        @Test
+        @DisplayName("POST /auth/totp/setup/start returns the enrolment details for a valid challenge")
+        void startTotpSetup() throws Exception {
+            when(totpService.startEnrollment("k3J9-_xQ2mP0"))
+                    .thenReturn(new TotpService.EnrollmentDetails(new byte[]{1, 2, 3}, "ABCD EFGH", "motorph:a@motorph.com"));
+            when(loginChallengeService.lifetimeOf(ChallengePurpose.TOTP_SETUP)).thenReturn(Duration.ofMinutes(10));
+
+            mockMvc.perform(json(post(SETUP_START), Map.of("challengeId", "k3J9-_xQ2mP0")))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.manualEntryKey").value("ABCD EFGH"));
+        }
+
+        @Test
+        @DisplayName("POST /auth/forgot-password/reset reaches the recovery service")
+        void resetPassword() throws Exception {
+            mockMvc.perform(json(post(RESET_PASSWORD),
+                            Map.of("resetToken", "k3J9-_xQ2mP0", "newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")))
+                    .andExpect(status().isOk());
+
+            verify(passwordRecoveryService).resetPassword("k3J9-_xQ2mP0", "NewPassw0rd1", "NewPassw0rd1");
+        }
+
+        @Test
+        @DisplayName("POST /auth/complete-temporary-password reaches the account service")
+        void completeTemporaryPassword() throws Exception {
+            when(loginChallengeService.resolveAndConsume("k3J9-_xQ2mP0", ChallengePurpose.TEMPORARY_PASSWORD))
+                    .thenReturn(USER_ACCOUNT_ID);
+
+            mockMvc.perform(json(post(COMPLETE_TEMPORARY),
+                            Map.of("challengeId", "k3J9-_xQ2mP0", "newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")))
+                    .andExpect(status().isOk());
+
+            verify(userAccountService).completeTemporaryPasswordChange(USER_ACCOUNT_ID, "NewPassw0rd1", "NewPassw0rd1");
         }
 
         @Test
@@ -212,10 +288,26 @@ class RequestValidationApiTest {
                 Arguments.of("login: empty object", "POST", LOGIN, false, Map.of()),
                 Arguments.of("refresh: blank token", "POST", REFRESH, false, Map.of("refreshToken", "")),
                 Arguments.of("refresh: token missing", "POST", REFRESH, false, Map.of()),
-                Arguments.of("verify-otp: letters in the code", "POST", VERIFY_OTP, false, Map.of("challengeId", "abc", "otp", "12ab56")),
-                Arguments.of("verify-otp: short code", "POST", VERIFY_OTP, false, Map.of("challengeId", "abc", "otp", "123")),
-                Arguments.of("verify-otp: challenge with illegal characters", "POST", VERIFY_OTP, false, Map.of("challengeId", "../x", "otp", "123456")),
-                Arguments.of("verify-otp: blank challenge", "POST", VERIFY_OTP, false, Map.of("challengeId", "", "otp", "123456")),
+                Arguments.of("totp-verify: letters in the code", "POST", TOTP_VERIFY, false, Map.of("challengeId", "abc", "code", "12ab56")),
+                Arguments.of("totp-verify: short code", "POST", TOTP_VERIFY, false, Map.of("challengeId", "abc", "code", "123")),
+                Arguments.of("totp-verify: challenge with illegal characters", "POST", TOTP_VERIFY, false, Map.of("challengeId", "../x", "code", "123456")),
+                Arguments.of("totp-verify: blank challenge", "POST", TOTP_VERIFY, false, Map.of("challengeId", "", "code", "123456")),
+                Arguments.of("totp-verify: code missing", "POST", TOTP_VERIFY, false, Map.of("challengeId", "abc")),
+                Arguments.of("totp-setup-confirm: letters in the code", "POST", TOTP_CONFIRM, false, Map.of("challengeId", "abc", "code", "12ab56")),
+                Arguments.of("totp-setup-confirm: blank challenge", "POST", TOTP_CONFIRM, false, Map.of("challengeId", "", "code", "123456")),
+                Arguments.of("recovery-verify: letters in the code", "POST", RECOVERY_VERIFY, false, Map.of("challengeId", "abc", "code", "12ab56")),
+                Arguments.of("recovery-verify: challenge with illegal characters", "POST", RECOVERY_VERIFY, false, Map.of("challengeId", "../x", "code", "123456")),
+                Arguments.of("totp-setup-start: blank challenge", "POST", SETUP_START, false, Map.of("challengeId", "")),
+                Arguments.of("totp-setup-start: challenge with illegal characters", "POST", SETUP_START, false, Map.of("challengeId", "../x")),
+                Arguments.of("totp-setup-start: challenge missing", "POST", SETUP_START, false, Map.of()),
+                Arguments.of("reset-password: token with illegal characters", "POST", RESET_PASSWORD, false,
+                        Map.of("resetToken", "../x", "newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")),
+                Arguments.of("reset-password: token missing", "POST", RESET_PASSWORD, false,
+                        Map.of("newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")),
+                Arguments.of("complete-temporary-password: challenge with illegal characters", "POST", COMPLETE_TEMPORARY, false,
+                        Map.of("challengeId", "../x", "newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")),
+                Arguments.of("complete-temporary-password: blank challenge", "POST", COMPLETE_TEMPORARY, false,
+                        Map.of("challengeId", "", "newPassword", "NewPassw0rd1", "confirmPassword", "NewPassw0rd1")),
                 Arguments.of("change-password: blank current password", "POST", CHANGE_PASSWORD, true, Map.of("currentPassword", "", "newPassword", "BrandNewPass1")),
                 Arguments.of("change-password: new password missing", "POST", CHANGE_PASSWORD, true, Map.of("currentPassword", "OldPass123")),
                 Arguments.of("change-password: oversized new password", "POST", CHANGE_PASSWORD, true, Map.of("currentPassword", "OldPass123", "newPassword", "p".repeat(129))),
@@ -246,10 +338,10 @@ class RequestValidationApiTest {
                 .andExpect(jsonPath("$.message").value("The request is invalid."))
                 .andExpect(jsonPath("$.fieldErrors").isNotEmpty());
 
-        assertBodyIsGeneric(result.andReturn(), SECRET_PASSWORD, "not-an-email", "OldPass123", "BrandNewPass1");
+        assertBodyIsGeneric(result.andReturn(), SECRET_PASSWORD, "not-an-email", "OldPass123", "BrandNewPass1", "NewPassw0rd1");
 
         verifyNoInteractions(authenticationService, loginChallengeService, tokenIssuanceService,
-                passwordResetService, userAccountService, supportTicketService);
+                totpService, passwordRecoveryService, userAccountService, supportTicketService);
     }
 
     @Test
@@ -411,7 +503,7 @@ class RequestValidationApiTest {
                 Arguments.of("GET /auth/login", "GET", LOGIN, false, Set.of("POST")),
                 Arguments.of("PUT /auth/login", "PUT", LOGIN, false, Set.of("POST")),
                 Arguments.of("DELETE /auth/refresh", "DELETE", REFRESH, false, Set.of("POST")),
-                Arguments.of("GET /auth/verify-otp", "GET", VERIFY_OTP, false, Set.of("POST")),
+                Arguments.of("GET /auth/totp/verify", "GET", TOTP_VERIFY, false, Set.of("POST")),
                 Arguments.of("PATCH /auth/change-password", "PATCH", CHANGE_PASSWORD, true, Set.of("POST")),
                 Arguments.of("DELETE /support-tickets", "DELETE", TICKETS, true, Set.of("GET", "POST")),
                 Arguments.of("POST /user-accounts/{id}/roles", "POST", ROLES, true, Set.of("PUT"))
@@ -524,8 +616,8 @@ class RequestValidationApiTest {
     void jsonRequestIsAccepted(String contentType) throws Exception {
         when(authenticationService.authenticate("manuel.garcia@motorph.com", SECRET_PASSWORD))
                 .thenReturn(new LoginAttemptOutcome(
-                        LoginAttemptOutcome.Type.OTP_SENT, 5, "manuel.garcia@motorph.com", "OTP verification required."));
-        when(loginChallengeService.issue(5)).thenReturn("challenge-id");
+                        LoginAttemptOutcome.Type.TOTP_REQUIRED, 5, "manuel.garcia@motorph.com", "Enter the code from your authenticator app."));
+        when(loginChallengeService.issue(5, ChallengePurpose.TOTP_LOGIN)).thenReturn("challenge-id");
 
         mockMvc.perform(post(LOGIN).contentType(contentType)
                         .content(objectMapper.writeValueAsString(
@@ -619,7 +711,8 @@ class RequestValidationApiTest {
     @DisplayName("No message converter in the application can read XML into any request DTO, but JSON still can")
     void onlyJsonConvertersReadRequestDtos() {
         List<Class<?>> requestDtos = List.of(LoginRequest.class, RefreshRequest.class, ChangePasswordRequest.class,
-                VerifyOtpRequest.class, TicketSubmitRequest.class, UserRolesUpdateRequest.class);
+                TotpCodeRequest.class, TotpSetupStartRequest.class, ResetPasswordRequest.class,
+                CompleteTemporaryPasswordRequest.class, TicketSubmitRequest.class, UserRolesUpdateRequest.class);
         List<MediaType> xmlTypes = List.of(MediaType.APPLICATION_XML, MediaType.TEXT_XML,
                 MediaType.parseMediaType("application/soap+xml"), MediaType.APPLICATION_XHTML_XML);
 
@@ -636,6 +729,48 @@ class RequestValidationApiTest {
                     .as("a converter that reads %s from JSON", dto.getSimpleName())
                     .anyMatch(converter -> converter.canRead(dto, MediaType.APPLICATION_JSON));
         }
+    }
+
+    // The retired email-OTP login is gone
+
+    @Test
+    @DisplayName("Only the active authenticator-flow authentication endpoints are mapped; there is no email-OTP endpoint")
+    void onlyTheActiveAuthenticationEndpointsAreMapped() {
+        Set<String> authRoutes = handlerMapping.getHandlerMethods().keySet().stream()
+                .flatMap(info -> info.getPathPatternsCondition().getPatternValues().stream())
+                .filter(path -> path.startsWith("/api/v1/auth"))
+                .collect(Collectors.toSet());
+
+        assertThat(authRoutes).containsExactlyInAnyOrder(
+                "/api/v1/auth/login",
+                "/api/v1/auth/totp/setup/start",
+                "/api/v1/auth/totp/setup/confirm",
+                "/api/v1/auth/totp/verify",
+                "/api/v1/auth/forgot-password",
+                "/api/v1/auth/forgot-password/verify",
+                "/api/v1/auth/forgot-password/reset",
+                "/api/v1/auth/complete-temporary-password",
+                "/api/v1/auth/change-password",
+                "/api/v1/auth/refresh",
+                "/api/v1/auth/logout",
+                "/api/v1/auth/me");
+    }
+
+    @Test
+    @DisplayName("The old /auth/verify-otp endpoint is unreachable: 401 without a token, 404 with one")
+    void retiredVerifyOtpEndpointIsUnreachable() throws Exception {
+        String body = "{\"challengeId\":\"k3J9-_xQ2mP0\",\"otp\":\"012345\"}";
+
+        mockMvc.perform(post("/api/v1/auth/verify-otp").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string(""));
+
+        mockMvc.perform(post("/api/v1/auth/verify-otp").header("Authorization", bearer())
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+
+        verifyNoInteractions(authenticationService, totpService, loginChallengeService, tokenIssuanceService);
     }
 
     // Helpers

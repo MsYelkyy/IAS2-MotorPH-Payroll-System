@@ -11,9 +11,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * In-memory, fixed-window rate limiter for the public authentication endpoints, keyed by client IP
- * together with the submitted email or challenge ID. OTP guessing is additionally capped per code
- * by {@code TwoFactorService}.
+ * Limits repeated requests to public authentication endpoints.
+ * Requests are tracked using the client IP and the submitted login or recovery value.
+ * Authenticator codes are also limited to five attempts per challenge.
  */
 @Component
 public class LoginRateLimiter {

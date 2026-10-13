@@ -81,6 +81,16 @@ public class UserAccountController {
         userAccountService.lockAccount(actorUserAccountId(), userAccountId);
     }
 
+    /**
+     * Removes a user's authenticator enrolment so they must enrol again at their next login. Admin
+     * only: the {@code RESET_USER_TOTP} permission is granted to the Admin role alone.
+     */
+    @PostMapping("/{userAccountId}/reset-totp")
+    public void resetTotp(@PathVariable int userAccountId) {
+        permissionService.requirePermission(PermissionKey.RESET_USER_TOTP);
+        userAccountService.resetTotp(actorUserAccountId(), userAccountId);
+    }
+
     @PostMapping("/{userAccountId}/unlock")
     public void unlockAccount(@PathVariable int userAccountId) {
         validatePositiveId(userAccountId, "User Account ID");

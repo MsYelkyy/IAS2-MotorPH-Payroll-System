@@ -20,8 +20,14 @@
     <properties>
         <java.version>21</java.version>
         <jjwt.version>0.12.6</jjwt.version>
+        <java-otp.version>0.4.0</java-otp.version>
+        <zxing.version>3.5.3</zxing.version>
         <mysql.connector.version>8.3.0</mysql.connector.version>
-        <jasperreports.version>7.0.6</jasperreports.version>
+        <jasperreports.version>7.0.7</jasperreports.version>
+        <jackson-bom.version>2.21.7</jackson-bom.version>
+        <tomcat.version>10.1.61</tomcat.version>
+        <commons-lang3.version>3.18.0</commons-lang3.version>
+        <log4j2.version>2.25.5</log4j2.version>
     </properties>
 
     <dependencies>
@@ -63,6 +69,22 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Authenticator-app login: RFC 4226/6238 one-time password generator, Base32 for the shared secret, QR code for enrolment -->
+        <dependency>
+            <groupId>com.eatthepath</groupId>
+            <artifactId>java-otp</artifactId>
+            <version>${java-otp.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
         </dependency>
 
         <dependency>

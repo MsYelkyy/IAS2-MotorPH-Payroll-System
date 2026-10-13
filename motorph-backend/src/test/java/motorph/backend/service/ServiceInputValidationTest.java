@@ -6,8 +6,9 @@ import motorph.backend.exception.AuthenticationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.SupportTicketRepository;
-import motorph.backend.repository.TwoFactorCodeRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
+import motorph.backend.security.TotpSecretCipher;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,7 +47,8 @@ class ServiceInputValidationTest {
     private SupportTicketService supportTicketService;
     private UserAccountService userAccountService;
     private AuthenticationService authenticationService;
-    private TwoFactorService twoFactorService;
+    private TotpService totpService;
+    private LoginChallengeService loginChallengeService;
 
     @BeforeEach
     void setUp() {
@@ -55,13 +58,17 @@ class ServiceInputValidationTest {
 
         supportTicketService = new SupportTicketService(
                 supportTicketRepository, mock(EmployeeRepository.class), userAccessLogService, mock(PermissionService.class));
+        TotpCredentialRepository totpCredentialRepository = mock(TotpCredentialRepository.class);
+
         userAccountService = new UserAccountService(
                 userAccountRepository, mock(EmployeeRepository.class),
-                mock(EmployeeCredentialsDeliveryService.class), userAccessLogService);
+                mock(EmployeeCredentialsDeliveryService.class), userAccessLogService, totpCredentialRepository);
         authenticationService = new AuthenticationService(
-                userAccountRepository, mock(EmployeeRepository.class), mock(TwoFactorService.class),
-                mock(OtpDeliveryService.class), userAccessLogService);
-        twoFactorService = new TwoFactorService(mock(TwoFactorCodeRepository.class));
+                userAccountRepository, totpCredentialRepository, userAccessLogService);
+        loginChallengeService = mock(LoginChallengeService.class);
+        totpService = new TotpService(
+                loginChallengeService, authenticationService, totpCredentialRepository, mock(TotpSecretCipher.class),
+                mock(TotpCodeService.class), mock(TotpQrCodeGenerator.class), userAccessLogService, Clock.systemUTC());
     }
 
     // Support tickets
@@ -171,12 +178,18 @@ class ServiceInputValidationTest {
         verifyNoInteractions(userAccountRepository);
     }
 
-    @ParameterizedTest(name = "otp \"{0}\"")
-    @DisplayName("An OTP that is not six digits is still refused by the service")
+    @ParameterizedTest(name = "code \"{0}\"")
+    @DisplayName("An authenticator code that is not six digits is still refused by the service for login, setup and recovery")
     @NullAndEmptySource
     @ValueSource(strings = {"12345", "1234567", "12345a", "123 456"})
-    void otpFormatIsStillChecked(String otp) {
-        assertThatThrownBy(() -> twoFactorService.verifyLoginOtp(ACCOUNT_ID, otp))
+    void codeFormatIsStillChecked(String code) {
+        assertThatThrownBy(() -> totpService.verifyLogin("challenge", code))
                 .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> totpService.confirmEnrollment("challenge", code))
+                .isInstanceOf(ValidationException.class);
+        assertThatThrownBy(() -> totpService.verifyRecovery("challenge", code))
+                .isInstanceOf(ValidationException.class);
+
+        verifyNoInteractions(loginChallengeService);
     }
 }

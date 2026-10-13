@@ -17,14 +17,6 @@ public class EmailPreviewDTO {
     private final LocalDateTime sentAt;
 
     // constructors
-    public EmailPreviewDTO(String from,
-                           String to,
-                           String subject,
-                           String body,
-                           LocalDateTime sentAt) {
-        this(EmailPreviewType.LOGIN_OTP, from, to, subject, body, null, null, sentAt);
-    }
-
     public EmailPreviewDTO(EmailPreviewType type,
                            String from,
                            String to,
@@ -34,7 +26,7 @@ public class EmailPreviewDTO {
                            String highlightValue,
                            LocalDateTime sentAt) {
 
-        this.type = type == null ? EmailPreviewType.LOGIN_OTP : type;
+        this.type = type == null ? EmailPreviewType.TEMPORARY_PASSWORD : type;
         this.from = cleanRequired(from, "Sender email is required.");
         this.to = cleanRequired(to, "Recipient email is required.");
         this.subject = cleanRequired(subject, "Email subject is required.");

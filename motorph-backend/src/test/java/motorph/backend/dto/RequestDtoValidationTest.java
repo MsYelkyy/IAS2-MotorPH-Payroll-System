@@ -7,7 +7,10 @@ import jakarta.validation.ValidatorFactory;
 import motorph.backend.dto.auth.ChangePasswordRequest;
 import motorph.backend.dto.auth.LoginRequest;
 import motorph.backend.dto.auth.RefreshRequest;
-import motorph.backend.dto.auth.VerifyOtpRequest;
+import motorph.backend.dto.auth.CompleteTemporaryPasswordRequest;
+import motorph.backend.dto.auth.ResetPasswordRequest;
+import motorph.backend.dto.auth.TotpCodeRequest;
+import motorph.backend.dto.auth.TotpSetupStartRequest;
 import motorph.backend.dto.support.TicketSubmitRequest;
 import motorph.backend.dto.user.UserRolesUpdateRequest;
 
@@ -184,23 +187,32 @@ class RequestDtoValidationTest {
     }
 
     @Nested
-    @DisplayName("VerifyOtpRequest")
-    class VerifyOtp {
+    @DisplayName("TotpCodeRequest")
+    class TotpCode {
 
         private static final String CHALLENGE = "k3J9-_xQ2mP0aBcDeFgHiJkLmNoPqRsTuVwXyZ01234";
 
         @Test
         @DisplayName("An ordinary request is accepted")
         void validRequestIsAccepted() {
-            assertThat(failingFields(new VerifyOtpRequest(CHALLENGE, "012345"))).isEmpty();
+            assertThat(failingFields(new TotpCodeRequest(CHALLENGE, "012345"))).isEmpty();
         }
 
-        @ParameterizedTest(name = "otp \"{0}\"")
-        @DisplayName("An OTP that is not exactly six digits is rejected")
+        @Test
+        @DisplayName("A challenge ID from the server, real or decoy, passes: both are 43 URL-safe Base64 characters")
+        void serverGeneratedChallengeIdsPass() {
+            String generated = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(new byte[32]);
+
+            assertThat(generated).hasSize(43);
+            assertThat(failingFields(new TotpCodeRequest(generated, "123456"))).isEmpty();
+        }
+
+        @ParameterizedTest(name = "code \"{0}\"")
+        @DisplayName("An authenticator code that is not exactly six digits is rejected")
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "12345", "1234567", "12345a", "abcdef", "123 456", " 123456", "123456 ", "123456\n", "-12345", "\u0661\u0662\u0663\u0664\u0665\u0666"})
-        void invalidOtpIsRejected(String otp) {
-            assertThat(failingFields(new VerifyOtpRequest(CHALLENGE, otp))).containsExactly("otp");
+        void invalidCodeIsRejected(String code) {
+            assertThat(failingFields(new TotpCodeRequest(CHALLENGE, code))).containsExactly("code");
         }
 
         @ParameterizedTest(name = "challenge \"{0}\"")
@@ -208,14 +220,72 @@ class RequestDtoValidationTest {
         @NullAndEmptySource
         @ValueSource(strings = {"   ", "has space", "dot.separated", "../../etc/passwd", "semi;colon", "quote'", "<script>", "pad=="})
         void invalidChallengeIsRejected(String challengeId) {
-            assertThat(failingFields(new VerifyOtpRequest(challengeId, "123456"))).containsExactly("challengeId");
+            assertThat(failingFields(new TotpCodeRequest(challengeId, "123456"))).containsExactly("challengeId");
         }
 
         @Test
         @DisplayName("A challenge ID is accepted up to 128 characters and rejected beyond it")
         void challengeLengthLimit() {
-            assertThat(failingFields(new VerifyOtpRequest(repeat('A', 128), "123456"))).isEmpty();
-            assertThat(failingFields(new VerifyOtpRequest(repeat('A', 129), "123456"))).containsExactly("challengeId");
+            assertThat(failingFields(new TotpCodeRequest(repeat('A', 128), "123456"))).isEmpty();
+            assertThat(failingFields(new TotpCodeRequest(repeat('A', 129), "123456"))).containsExactly("challengeId");
+        }
+    }
+
+    @Nested
+    @DisplayName("Other requests in the active authenticator flow")
+    class OtherAuthenticatorFlowRequests {
+
+        private static final String ID = "k3J9-_xQ2mP0aBcDeFgHiJkLmNoPqRsTuVwXyZ01234";
+
+        @Test
+        @DisplayName("Ordinary requests are accepted")
+        void validRequestsAreAccepted() {
+            assertThat(failingFields(new TotpSetupStartRequest(ID))).isEmpty();
+            assertThat(failingFields(new ResetPasswordRequest(ID, "NewPassw0rd1", "NewPassw0rd1"))).isEmpty();
+            assertThat(failingFields(new CompleteTemporaryPasswordRequest(ID, "NewPassw0rd1", "NewPassw0rd1"))).isEmpty();
+        }
+
+        @ParameterizedTest(name = "challenge \"{0}\"")
+        @DisplayName("Setup start: a missing, blank or oddly shaped challenge ID is rejected")
+        @NullAndEmptySource
+        @ValueSource(strings = {"   ", "has space", "dot.separated", "../../etc/passwd", "semi;colon", "<script>", "pad=="})
+        void setupStartRejectsBadChallenge(String challengeId) {
+            assertThat(failingFields(new TotpSetupStartRequest(challengeId))).containsExactly("challengeId");
+        }
+
+        @ParameterizedTest(name = "reset token \"{0}\"")
+        @DisplayName("Password reset: a missing, blank or oddly shaped reset token is rejected")
+        @NullAndEmptySource
+        @ValueSource(strings = {"   ", "has space", "dot.separated", "../../etc/passwd", "semi;colon", "<script>", "pad=="})
+        void resetRejectsBadToken(String resetToken) {
+            assertThat(failingFields(new ResetPasswordRequest(resetToken, "NewPassw0rd1", "NewPassw0rd1")))
+                    .containsExactly("resetToken");
+        }
+
+        @ParameterizedTest(name = "challenge \"{0}\"")
+        @DisplayName("Temporary password change: a missing, blank or oddly shaped challenge ID is rejected")
+        @NullAndEmptySource
+        @ValueSource(strings = {"   ", "has space", "dot.separated", "../../etc/passwd", "semi;colon", "<script>", "pad=="})
+        void temporaryPasswordRejectsBadChallenge(String challengeId) {
+            assertThat(failingFields(new CompleteTemporaryPasswordRequest(challengeId, "NewPassw0rd1", "NewPassw0rd1")))
+                    .containsExactly("challengeId");
+        }
+
+        @Test
+        @DisplayName("Each ID is accepted up to 128 characters and rejected beyond it")
+        void idLengthLimit() {
+            assertThat(failingFields(new TotpSetupStartRequest(repeat('A', 128)))).isEmpty();
+            assertThat(failingFields(new TotpSetupStartRequest(repeat('A', 129)))).containsExactly("challengeId");
+            assertThat(failingFields(new ResetPasswordRequest(repeat('A', 129), "x", "x"))).containsExactly("resetToken");
+            assertThat(failingFields(new CompleteTemporaryPasswordRequest(repeat('A', 129), "x", "x")))
+                    .containsExactly("challengeId");
+        }
+
+        @Test
+        @DisplayName("Password rules are not request-shape rules, so they still reach the service")
+        void passwordRulesAreLeftToTheService() {
+            assertThat(failingFields(new ResetPasswordRequest(ID, "short", "different"))).isEmpty();
+            assertThat(failingFields(new CompleteTemporaryPasswordRequest(ID, null, null))).isEmpty();
         }
     }
 

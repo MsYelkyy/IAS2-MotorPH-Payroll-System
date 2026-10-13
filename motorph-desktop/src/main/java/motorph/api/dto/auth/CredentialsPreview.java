@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Dev-only stand-in for a sent email, present on EmployeeCreateResponse only
- * when the backend has no real SMTP integration wired up (see the backend's
- * EmployeeCredentialsDeliveryService). Mirrors OtpPreview's role for login.
+ * Temporary email preview used only when real SMTP delivery is not configured.
  */
 public record CredentialsPreview(
         String senderEmail,

@@ -121,7 +121,7 @@ public final class EmailPreviewDialog {
         return row;
     }
 
-    // the OTP / temporary password, large and selectable, with a copy button
+    // the temporary password, large and selectable, with a copy button
     private static HBox highlightRow(EmailPreviewDTO preview) {
         HBox box = new HBox();
         box.setAlignment(Pos.CENTER_LEFT);
@@ -182,8 +182,6 @@ public final class EmailPreviewDialog {
         }
 
         return switch (type) {
-            case LOGIN_OTP -> "Login verification email";
-            case PASSWORD_RESET_OTP -> "Password reset verification email";
             case TEMPORARY_PASSWORD -> "Temporary password email";
             case EMPLOYEE_ACCOUNT_CREDENTIALS -> "Employee account credentials";
         };

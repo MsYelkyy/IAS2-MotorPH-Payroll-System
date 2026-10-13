@@ -11,9 +11,8 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Stateless security configuration using JWT bearer tokens. Only the endpoints needed before a user
- * has a token are public: login, OTP verification, token refresh, forgot password, and completing a
- * temporary password change. Logout requires a valid token so it can be recorded in the audit log.
+ * Configures stateless security using JWT access tokens.
+ * Authentication and recovery endpoints are public, while logout requires a valid token.
  */
 @Configuration
 public class SecurityConfig {
@@ -34,9 +33,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/v1/auth/login",
-                                "/api/v1/auth/verify-otp",
+                                "/api/v1/auth/totp/setup/start",
+                                "/api/v1/auth/totp/setup/confirm",
+                                "/api/v1/auth/totp/verify",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/forgot-password/verify",
+                                "/api/v1/auth/forgot-password/reset",
                                 "/api/v1/auth/complete-temporary-password"
                         ).permitAll()
                         .anyRequest().authenticated()

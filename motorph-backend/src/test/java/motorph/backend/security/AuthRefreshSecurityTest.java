@@ -7,8 +7,9 @@ import motorph.backend.repository.TokenRevocationRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.service.AuthenticationService;
 import motorph.backend.service.LoginChallengeService;
-import motorph.backend.service.PasswordResetService;
+import motorph.backend.service.PasswordRecoveryService;
 import motorph.backend.service.PermissionService;
+import motorph.backend.service.TotpService;
 import motorph.backend.service.UserAccessLogService;
 import motorph.backend.service.UserAccountService;
 
@@ -61,7 +62,8 @@ class AuthRefreshSecurityTest {
     @MockitoBean private LoginChallengeService loginChallengeService;
     @MockitoBean private UserAccessLogService userAccessLogService;
     @MockitoBean private LoginRateLimiter loginRateLimiter;
-    @MockitoBean private PasswordResetService passwordResetService;
+    @MockitoBean private PasswordRecoveryService passwordRecoveryService;
+    @MockitoBean private TotpService totpService;
     @MockitoBean private UserAccountService userAccountService;
     @MockitoBean private PermissionService permissionService;
 

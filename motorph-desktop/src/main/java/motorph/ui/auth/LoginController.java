@@ -1,20 +1,17 @@
 package motorph.ui.auth;
 
 import motorph.api.ApiException;
-import motorph.application.dto.auth.EmailPreviewDTO;
-import motorph.application.dto.auth.EmailPreviewType;
 import motorph.application.dto.login.LoginResultDTO;
+import motorph.application.session.UserSession;
 import motorph.domain.value.Role;
 import motorph.api.ApiClientFactory;
 import motorph.api.AuthApiClient;
 import motorph.api.dto.auth.LoginResponse;
-import motorph.ui.factory.EmployeeUIServiceFactory;
+import motorph.api.dto.auth.MeResponse;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.NavigationUtil;
 import motorph.ui.util.UiMessageUtil;
 import motorph.ui.util.UiValidationUtil;
-
-import java.time.LocalDateTime;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -26,7 +23,11 @@ import javafx.scene.layout.VBox;
 
 import java.util.List;
 
-/** Manages employee login page actions and navigation. */
+/**
+ * Manages the sign-in page and the screens that follow the password: authenticator enrolment, the
+ * authenticator code, Forgot Password and the new-password screens. The dashboard opens only after the
+ * backend has accepted the authenticator code and issued tokens.
+ */
 public class LoginController {
 
     private static final String ACCOUNT_LOCKED_MESSAGE =
@@ -37,11 +38,17 @@ public class LoginController {
 
     @FXML private StackPane rootPane;
     @FXML private VBox loginCard;
-    @FXML private VBox otpCard;
+    @FXML private VBox totpCard;
+    @FXML private VBox totpSetupCard;
     @FXML private VBox forgotCard;
+    @FXML private VBox recoveryCard;
+    @FXML private VBox resetPasswordCard;
     @FXML private VBox forceChangeCard;
-    @FXML private OtpController otpCardController;
+    @FXML private TotpVerifyController totpCardController;
+    @FXML private TotpSetupController totpSetupCardController;
     @FXML private ForgotPasswordController forgotCardController;
+    @FXML private TotpVerifyController recoveryCardController;
+    @FXML private ForceChangePasswordController resetPasswordCardController;
     @FXML private ForceChangePasswordController forceChangeCardController;
     @FXML private TextField companyEmailField;
     @FXML private PasswordField passwordField;
@@ -105,10 +112,39 @@ public class LoginController {
         NavigationUtil.goToEmployeeApp(rootPane.getScene());
     }
 
-    // returns to login after password reset
-    public void onPasswordResetComplete(String successMessage) {
-        showLoginCard();
-        UiMessageUtil.setInlineSuccess(loginMessageLabel, successMessage);
+    // loads the signed-in account from the backend and opens its workspace; called once the backend
+    // has accepted the authenticator code and the tokens are held
+    public void finishLogin() {
+        MeResponse me = authApiClient.me();
+        List<Role> roles = me.roles().stream().map(Role::fromValue).toList();
+        Role activeRole = Role.fromValue(me.activeRole());
+
+        LoginResultDTO result = new LoginResultDTO(
+                me.userAccountId(),
+                me.employeeId(),
+                me.companyEmail(),
+                roles,
+                activeRole,
+                true,
+                false,
+                roles.size() > 1,
+                "Login successful."
+        );
+
+        UserSession.getInstance().login(result);
+        onLoginSuccess(result);
+    }
+
+    // Opens the authenticator code screen for password recovery without revealing whether the account exists.
+    public void onRecoveryStarted(String challengeId) {
+        recoveryCardController.showForRecovery(challengeId);
+        showCard(recoveryCard);
+    }
+
+    // opens the new-password screen once the authenticator code was accepted for a recovery
+    public void onRecoveryVerified(String resetToken) {
+        resetPasswordCardController.setPendingResetToken(resetToken);
+        showCard(resetPasswordCard);
     }
 
     // returns to login after forced password change and shows a confirmation message
@@ -154,23 +190,22 @@ public class LoginController {
         try {
             LoginResponse response = authApiClient.login(email, password);
 
-            if (response.temporaryPasswordChangeRequired()) {
-                // login stops here on a temporary password; the challenge lets the
-                // change be completed server-side without a token or an account ID
-                forceChangeCardController.setPendingChallenge(response.challengeId());
-                showCard(forceChangeCard);
-                return;
-            }
-
-            otpCardController.setPendingChallenge(response.challengeId());
-            showCard(otpCard);
-            otpCardController.showWithMessage("OTP sent to " + response.maskedEmail() + ".");
-
-            // No real SMTP is wired up on the backend yet (Phase 1) - when it says so,
-            // show the OTP the same way the app always has: via the existing in-app
-            // email preview dialog (see Main.java's global EmailPreviewService listener).
-            if (response.otpPreview() != null) {
-                showOtpPreview(response.otpPreview());
+            switch (response.status()) {
+                case LoginResponse.TEMPORARY_PASSWORD_CHANGE_REQUIRED -> {
+                    // the challenge lets the change be completed server-side without a token or an account ID
+                    forceChangeCardController.setPendingChallenge(response.challengeId());
+                    showCard(forceChangeCard);
+                }
+                case LoginResponse.TOTP_SETUP_REQUIRED -> {
+                    showCard(totpSetupCard);
+                    totpSetupCardController.begin(response.challengeId());
+                }
+                case LoginResponse.TOTP_REQUIRED -> {
+                    totpCardController.showForLogin(response.challengeId());
+                    showCard(totpCard);
+                }
+                default -> UiMessageUtil.setInlineError(loginMessageLabel,
+                        "This version of the app cannot complete sign-in. Please update and try again.");
             }
 
         } catch (Exception e) {
@@ -219,27 +254,10 @@ public class LoginController {
         passwordToggleBtn.setText("Show");
     }
 
-    // feeds the backend's dev-only OTP preview into the app's existing
-    // EmailPreviewService, which Main.java's global listener renders via
-    // EmailPreviewDialog - unchanged from how this always worked pre-migration
-    private void showOtpPreview(motorph.api.dto.auth.OtpPreview otpPreview) {
-        EmailPreviewDTO preview = new EmailPreviewDTO(
-                EmailPreviewType.LOGIN_OTP,
-                otpPreview.senderEmail(),
-                otpPreview.recipientEmail(),
-                otpPreview.subject(),
-                otpPreview.body(),
-                "OTP Code",
-                otpPreview.otpCode(),
-                LocalDateTime.now()
-        );
-
-        EmployeeUIServiceFactory.getInstance().getEmailPreviewService().savePreview(preview);
-    }
-
     // shows the selected auth card
     private void showCard(VBox cardToShow) {
-        for (VBox card : List.of(loginCard, otpCard, forgotCard, forceChangeCard)) {
+        for (VBox card : List.of(loginCard, totpCard, totpSetupCard, forgotCard, recoveryCard,
+                resetPasswordCard, forceChangeCard)) {
             boolean active = card == cardToShow;
             card.setVisible(active);
             card.setManaged(active);
@@ -279,8 +297,20 @@ public class LoginController {
 
     // connects included controllers to this controller
     private void wireSubControllers() {
-        if (otpCardController != null) {
-            otpCardController.setLoginController(this);
+        if (totpCardController != null) {
+            totpCardController.setLoginController(this);
+        }
+
+        if (totpSetupCardController != null) {
+            totpSetupCardController.setLoginController(this);
+        }
+
+        if (recoveryCardController != null) {
+            recoveryCardController.setLoginController(this);
+        }
+
+        if (resetPasswordCardController != null) {
+            resetPasswordCardController.setLoginController(this);
         }
 
         if (forgotCardController != null) {

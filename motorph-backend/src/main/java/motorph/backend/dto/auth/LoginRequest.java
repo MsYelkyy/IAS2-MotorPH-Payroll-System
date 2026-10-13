@@ -12,4 +12,10 @@ public record LoginRequest(
         @NotBlank @Email @Size(max = 255) String companyEmail,
         @NotBlank @Size(max = 128) String password
 ) {
+
+    // Spring logs the request body at DEBUG, so the password must not be in toString().
+    @Override
+    public String toString() {
+        return "LoginRequest[companyEmail=" + companyEmail + ", password=***]";
+    }
 }

@@ -106,6 +106,8 @@
                         styleClass="danger-outline-button" maxWidth="Infinity"/>
                 <Button fx:id="enableButton" text="Disable Account" onAction="#handleToggleEnable"
                         styleClass="danger-outline-button" maxWidth="Infinity"/>
+                <Button fx:id="resetTotpButton" text="Reset Authenticator" onAction="#handleResetTotp"
+                        styleClass="secondary-button" maxWidth="Infinity" visible="false" managed="false"/>
                 <Button text="Close" onAction="#handleCloseDetail"
                         styleClass="secondary-button" maxWidth="Infinity"/>
             </VBox>

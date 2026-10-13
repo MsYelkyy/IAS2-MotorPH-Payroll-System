@@ -1,11 +1,11 @@
 package motorph.backend.service;
 
 import motorph.backend.exception.AuthenticationException;
-import motorph.backend.exception.OtpVerificationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.security.PasswordHasher;
+import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
-import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult;
 
@@ -13,36 +13,33 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Verifies login credentials and OTPs. Roles and permissions are not handled here; they are
- * resolved per request by {@link PermissionService}.
+ * Verifies the user's login credentials and handles the next login step.
+ * A correct password alone does not complete the login. The user must still finish
+ * authenticator setup or enter a valid authenticator code before tokens are issued.
+ * Roles and permissions are handled separately by {@link PermissionService}.
  */
 @Service
 public class AuthenticationService {
 
     private final UserAccountRepository userAccountRepository;
-    private final EmployeeRepository employeeRepository;
-    private final TwoFactorService twoFactorService;
-    private final OtpDeliveryService otpDeliveryService;
+    private final TotpCredentialRepository totpCredentialRepository;
     private final UserAccessLogService userAccessLogService;
     @Value("${motorph.auth.lockout.max-failed-password-attempts:5}")
     private int maxFailedPasswordAttempts = 5;
 
     public AuthenticationService(UserAccountRepository userAccountRepository,
-                                 EmployeeRepository employeeRepository,
-                                 TwoFactorService twoFactorService,
-                                 OtpDeliveryService otpDeliveryService,
+                                 TotpCredentialRepository totpCredentialRepository,
                                  UserAccessLogService userAccessLogService) {
 
         this.userAccountRepository = userAccountRepository;
-        this.employeeRepository = employeeRepository;
-        this.twoFactorService = twoFactorService;
-        this.otpDeliveryService = otpDeliveryService;
+        this.totpCredentialRepository = totpCredentialRepository;
         this.userAccessLogService = userAccessLogService;
     }
 
     /**
-     * Verifies the email and password. If the account has a temporary password, the outcome asks
-     * for a password change; otherwise a login OTP is sent.
+     * Verifies the user's email and password.
+     * If the account uses a temporary password, the user must change it first.
+     * Otherwise, the next step is either authenticator setup or authenticator code verification.
      */
     public LoginAttemptOutcome authenticate(String companyEmailInput, String passwordInput) {
         validateCredentialsInput(companyEmailInput, passwordInput);
@@ -67,25 +64,27 @@ public class AuthenticationService {
             );
         }
 
-        getPersonalEmailOrThrow(account);
-
-        String rawOtp = twoFactorService.createLoginOtp(account.getUserAccountId());
-        var otpPreview = otpDeliveryService.sendLoginOtp(account.getCompanyEmail(), rawOtp);
+        TotpCredential credential = totpCredentialRepository.findByUserAccountId(account.getUserAccountId());
+        boolean enrolled = credential != null && credential.isEnabled();
 
         return new LoginAttemptOutcome(
-                LoginAttemptOutcome.Type.OTP_SENT,
+                enrolled ? LoginAttemptOutcome.Type.TOTP_REQUIRED : LoginAttemptOutcome.Type.TOTP_SETUP_REQUIRED,
                 account.getUserAccountId(),
                 account.getCompanyEmail(),
-                "OTP verification required.",
-                otpPreview
+                enrolled
+                        ? "Enter the code from your authenticator app."
+                        : "Set up your authenticator app to continue."
         );
     }
 
     /**
-     * Verifies the login OTP, records the successful login, and returns the authenticated account.
+     * Loads the account linked to the challenge and checks if the user can still sign in.
+     * The account is checked again before the login is completed in case it was locked or deactivated.
      */
-    public UserAccount verifyLoginOtp(int userAccountId, String rawOtp) {
-        validateUserAccountId(userAccountId);
+    public UserAccount requireLoginEligible(int userAccountId) {
+        if (userAccountId <= 0) {
+            throw new ValidationException("User account ID is required.");
+        }
 
         UserAccount account = userAccountRepository.findById(userAccountId);
 
@@ -94,18 +93,15 @@ public class AuthenticationService {
         }
 
         validateAccountForLogin(account);
-
-        try {
-            twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
-        } catch (OtpVerificationException e) {
-            logOtpFailed(account, e.getReason());
-            throw e;
-        }
-
-        userAccountRepository.updateLastLogin(userAccountId);
-        logSuccess(account);
-
         return account;
+    }
+
+    /**
+     * Records a successful login once the authenticator code has been accepted.
+     */
+    public void completeLogin(UserAccount account) {
+        userAccountRepository.updateLastLogin(account.getUserAccountId());
+        userAccessLogService.logLoginSuccess(account.getUserAccountId(), "Login successful.");
     }
 
     private void validateAccountForLogin(UserAccount account) {
@@ -133,16 +129,6 @@ public class AuthenticationService {
             logFailed(account.getCompanyEmail(), "Login failed because temporary password expired.");
             throw new AuthenticationException("Temporary password has expired. Please request another password reset.");
         }
-    }
-
-    private String getPersonalEmailOrThrow(UserAccount account) {
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
-
-        if (personalEmail == null || personalEmail.isBlank()) {
-            throw new ValidationException("Registered personal email is required for OTP verification.");
-        }
-
-        return personalEmail.trim();
     }
 
     private void validateCredentialsInput(String companyEmail, String password) {
@@ -180,32 +166,22 @@ public class AuthenticationService {
             logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
             throw new AuthenticationException("Invalid email or password.");
         }
+
+        upgradePasswordHashIfNeeded(rawPassword, account);
     }
 
-    private void validateUserAccountId(int userAccountId) {
-        if (userAccountId <= 0) {
-            throw new ValidationException("User account ID is required.");
+    private void upgradePasswordHashIfNeeded(String rawPassword, UserAccount account) {
+        if (!PasswordHasher.needsRehash(account.getPasswordHash())) {
+            return;
         }
-    }
 
-    private void logSuccess(UserAccount account) {
-        userAccessLogService.logLoginSuccess(account.getUserAccountId(), "Login successful.");
+        String salt = PasswordHasher.generateSalt();
+
+        userAccountRepository.updatePasswordHash(
+                account.getUserAccountId(), PasswordHasher.hash(rawPassword, salt), salt);
     }
 
     private void logFailed(String companyEmail, String details) {
         userAccessLogService.logLoginFailed(companyEmail, details);
-    }
-
-    /**
-     * Records a failed OTP verification without storing the submitted code.
-     */
-    private void logOtpFailed(UserAccount account, OtpVerificationException.Reason reason) {
-        String details = switch (reason) {
-            case INVALID_CODE -> "OTP verification failed: incorrect code.";
-            case EXPIRED_OR_UNAVAILABLE -> "OTP verification failed: code expired or unavailable.";
-            case ATTEMPT_LIMIT_REACHED -> "OTP verification failed: attempt limit reached.";
-        };
-
-        userAccessLogService.logEvent(account.getUserAccountId(), UserAccessLogService.ACTION_OTP_FAILED, details);
     }
 }

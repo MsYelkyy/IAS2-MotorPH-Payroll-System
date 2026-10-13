@@ -5,6 +5,7 @@ import motorph.api.UserAccountApiClient;
 import motorph.api.dto.user.UserAccountRowDTO;
 import motorph.domain.value.AccountStatus;
 import motorph.domain.value.Role;
+import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -95,6 +96,7 @@ public class ITUserAccountController {
     @FXML private Button saveRolesButton;
     @FXML private Button lockButton;
     @FXML private Button enableButton;
+    @FXML private Button resetTotpButton;
 
     @FXML
     private void initialize() {
@@ -276,6 +278,8 @@ public class ITUserAccountController {
         setVisible(saveRolesButton, !disabled);
         setVisible(lockButton, !disabled);
         setVisible(enableButton, !disabled);
+        // the backend allows this for the Admin role only; the button just avoids offering a refused action
+        setVisible(resetTotpButton, !disabled && CurrentUserSession.getActiveRole() == Role.ADMIN);
 
         boolean locked = isLocked(row);
         lockButton.setText(locked ? "Unlock Account" : "Lock Account");
@@ -303,6 +307,31 @@ public class ITUserAccountController {
         } catch (Exception e) {
             UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
         }
+    }
+
+    @FXML
+    private void handleResetTotp() {
+        if (selectedAccount == null || isDisabled(selectedAccount)) return;
+        int id = selectedAccount.getUserAccountId();
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm");
+        confirm.setHeaderText("Reset this user's authenticator?");
+        confirm.setContentText(nullSafe(selectedAccount.getCompanyEmail())
+                + "\n\nThey will have to set up their authenticator app again the next time they sign in.");
+        if (accountTable.getScene() != null) {
+            confirm.initOwner(accountTable.getScene().getWindow());
+        }
+        confirm.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    userAccountApiClient.resetTotp(id);
+                    UiMessageUtil.setSuccess(moduleMessageLabel, "Authenticator reset. The user must set it up again at next sign-in.");
+                } catch (Exception e) {
+                    UiMessageUtil.setError(moduleMessageLabel, UiMessageUtil.toUserMessage(e));
+                }
+            }
+        });
     }
 
     @FXML

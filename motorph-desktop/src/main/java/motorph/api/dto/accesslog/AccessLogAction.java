@@ -40,6 +40,12 @@ public final class AccessLogAction {
     public static final String PROFILE_PHOTO_UPDATED = "PROFILE_PHOTO_UPDATED";
     public static final String ACCESS_DENIED = "ACCESS_DENIED";
     public static final String OTP_FAILED = "OTP_FAILED";
+    public static final String TOTP_ENROLLMENT_STARTED = "TOTP_ENROLLMENT_STARTED";
+    public static final String TOTP_ENROLLMENT_COMPLETED = "TOTP_ENROLLMENT_COMPLETED";
+    public static final String TOTP_VERIFICATION_SUCCEEDED = "TOTP_VERIFICATION_SUCCEEDED";
+    public static final String TOTP_VERIFICATION_FAILED = "TOTP_VERIFICATION_FAILED";
+    public static final String TOTP_RESET_BY_ADMIN = "TOTP_RESET_BY_ADMIN";
+    public static final String PASSWORD_RESET_COMPLETED = "PASSWORD_RESET_COMPLETED";
     public static final String ACCESS_LOG_VIEWED = "ACCESS_LOG_VIEWED";
 
     private AccessLogAction() {

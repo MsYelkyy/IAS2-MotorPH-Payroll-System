@@ -1065,7 +1065,7 @@ public class HrEmployeeController {
     }
 
     // feeds the backend's dev-only credentials preview into the app's existing
-    // EmailPreviewService, same pattern as LoginController's OTP preview
+    // EmailPreviewService
     private void showCredentialsPreview(CredentialsPreview credentialsPreview) {
         EmailPreviewDTO preview = new EmailPreviewDTO(
                 EmailPreviewType.EMPLOYEE_ACCOUNT_CREDENTIALS,

@@ -1,4 +1,4 @@
-/* One blue-and-white appearance for login, OTP and password recovery. */
+/* One blue-and-white appearance for sign-in, authenticator verification and password recovery. */
 .auth-page {
     -fx-font-family: "Segoe UI";
     -fx-font-size: 13px;
@@ -122,3 +122,39 @@
 .auth-page .message-label { -fx-text-fill: #697386; -fx-font-size: 12px; }
 .auth-page .message-label.error-message { -fx-text-fill: #B91C1C; }
 .auth-page .message-label.success-message { -fx-text-fill: #166534; }
+
+.code-input {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-pref-height: 56;
+    -fx-min-height: 56;
+}
+.countdown-bar { -fx-pref-height: 4; -fx-min-height: 4; -fx-max-height: 4; }
+.countdown-bar > .track { -fx-background-color: #E4E8ED; -fx-background-radius: 2; -fx-background-insets: 0; -fx-pref-height: 4; }
+.countdown-bar > .bar { -fx-background-color: #2F6FAE; -fx-background-radius: 2; -fx-background-insets: 0; -fx-padding: 0; }
+.countdown-label { -fx-font-size: 11px; -fx-text-fill: #697386; }
+
+.qr-box {
+    -fx-background-color: white;
+    -fx-border-color: #C8D2DF;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 12;
+    -fx-min-width: 200;
+    -fx-min-height: 200;
+    -fx-max-width: 200;
+    -fx-max-height: 200;
+}
+.manual-key {
+    -fx-font-family: "Consolas", "Courier New", monospace;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #191C22;
+    -fx-background-color: #F4F7FA;
+    -fx-background-radius: 4;
+    -fx-padding: 8 12;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}

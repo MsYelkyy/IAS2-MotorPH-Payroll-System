@@ -295,6 +295,33 @@ public class UserAccountRepository implements motorph.backend.repository.Reposit
     }
 
     /**
+     * Replaces the stored hash and salt only, for upgrading an older hash after a successful login.
+     * Temporary-password state is left untouched.
+     */
+    public void updatePasswordHash(int userAccountId, String hash, String salt) {
+        validatePositive(userAccountId, "User account ID must be positive.");
+
+        String sql = """
+                UPDATE user_account
+                SET password_hash = ?,
+                    password_salt = ?
+                WHERE user_account_id = ?
+                """;
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, normalizeRequired(hash, "Password hash is required."));
+            stmt.setString(2, normalizeRequired(salt, "Password salt is required."));
+            stmt.setInt(3, userAccountId);
+            stmt.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to upgrade password hash.", e);
+        }
+    }
+
+    /**
      * Sets an IT-issued temporary password that the user must change at next login.
      */
     public void updateTemporaryPassword(int userAccountId, String hash, String salt, LocalDateTime expiresAt) {
