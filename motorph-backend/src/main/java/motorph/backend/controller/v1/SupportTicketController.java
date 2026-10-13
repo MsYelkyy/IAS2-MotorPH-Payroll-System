@@ -47,14 +47,11 @@ public class SupportTicketController {
     public void submitTicket(@RequestBody @Valid TicketSubmitRequest request) {
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
 
-        String cleanSubject = sanitizeText(request.subject());
-        String cleanDescription = sanitizeText(request.description());
-
         supportTicketService.submitTicket(
                 principal.employeeId(),
                 SupportTicketCategory.fromValue(request.category()),
-                cleanSubject,
-                cleanDescription,
+                request.subject(),
+                request.description(),
                 principal.userAccountId()
         );
     }
@@ -105,13 +102,5 @@ public class SupportTicketController {
         if (id <= 0) {
             throw new ValidationException(name + " must be a positive integer.");
         }
-    }
-
-    private String sanitizeText(String input) {
-        if (input == null) {
-            return null;
-        }
-        // Strips basic HTML/script tags to prevent XSS payloads in persistent ticket fields
-        return input.replaceAll("<[^>]*>", "").trim();
     }
 }

@@ -33,13 +33,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * Employee management and self-service endpoints. Permissions are checked on the server for every
  * request; menu restrictions in the client are for display only.
  * Refactored to include @RequestBody @Valid.
- * Also enforced filetype and size for profile photo -- also not null.
+ * Profile photo type, size and content are validated by {@link ProfilePhotoService}.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -53,9 +52,6 @@ public class EmployeeController {
     private static final PermissionKey[] PAYROLL_DETAIL_READERS = {
             PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE, PermissionKey.VIEW_PAYROLL
     };
-
-    private static final Set<String> ALLOWED_PHOTO_EXTENSIONS = Set.of("jpg", "jpeg", "png");
-    private static final int MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
     private final EmployeeService employeeService;
     private final PermissionService permissionService;
@@ -118,9 +114,8 @@ public class EmployeeController {
      */
     @PostMapping(value = "/employees/me/photo", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public void uploadOwnPhoto(@RequestParam String extension, @RequestBody byte[] content) {
-        validatePhotoUpload(extension, content);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
-        profilePhotoService.storePhoto(principal.employeeId(), content, extension.toLowerCase().trim(), principal.userAccountId());
+        profilePhotoService.storePhoto(principal.employeeId(), content, extension, principal.userAccountId());
     }
 
     /**
@@ -206,18 +201,6 @@ public class EmployeeController {
     private void validatePositiveId(int id, String name) {
         if (id <= 0) {
             throw new ValidationException(name + " must be a positive integer.");
-        }
-    }
-
-    private void validatePhotoUpload(String extension, byte[] content) {
-        if (extension == null || extension.isBlank() || !ALLOWED_PHOTO_EXTENSIONS.contains(extension.trim().toLowerCase())) {
-            throw new ValidationException("Invalid photo extension. Allowed types: jpg, jpeg, png.");
-        }
-        if (content == null || content.length == 0) {
-            throw new ValidationException("Photo content cannot be empty.");
-        }
-        if (content.length > MAX_PHOTO_SIZE_BYTES) {
-            throw new ValidationException("Photo size exceeds the maximum limit of 5 MB.");
         }
     }
 }
