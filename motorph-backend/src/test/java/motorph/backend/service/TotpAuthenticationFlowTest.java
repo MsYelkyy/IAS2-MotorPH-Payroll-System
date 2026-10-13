@@ -141,7 +141,7 @@ class TotpAuthenticationFlowTest {
                 recoveryTokens, revocations, userAccountService, logs, clock, 10);
 
         JwtTokenProvider jwt = new JwtTokenProvider("a-test-signing-secret-of-at-least-32-bytes!!", 15, 1440);
-        tokenIssuance = spy(new TokenIssuanceService(jwt, revocations));
+        tokenIssuance = spy(new TokenIssuanceService(jwt, revocations, users));
         rateLimiter = new LoginRateLimiter(1000, 1);
 
         PermissionService permissionService =

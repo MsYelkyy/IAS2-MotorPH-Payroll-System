@@ -5,6 +5,7 @@ import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.auth.CredentialsPreview;
 import motorph.backend.dto.user.PasswordResetCountsDTO;
 import motorph.backend.dto.user.PasswordResetRequestRowDTO;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PasswordResetService;
@@ -43,9 +44,10 @@ public class PasswordResetRequestController {
     public List<PasswordResetRequestRowDTO> getRequests(@RequestParam(required = false) String status) {
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
-        PasswordResetStatus filter = status == null || status.isBlank()
+        String cleanStatus = (status == null || status.isBlank()) ? null : status.trim();
+        PasswordResetStatus filter = cleanStatus == null
                 ? null
-                : PasswordResetStatus.fromValue(status);
+                : PasswordResetStatus.fromValue(cleanStatus);
 
         return passwordResetService.getRequestRows(filter);
     }
@@ -58,6 +60,7 @@ public class PasswordResetRequestController {
 
     @PostMapping("/{resetRequestId}/process")
     public CredentialsPreview processRequest(@PathVariable int resetRequestId) {
+        validatePositiveId(resetRequestId, "Reset Request ID");
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
@@ -68,11 +71,18 @@ public class PasswordResetRequestController {
 
     @PostMapping("/{resetRequestId}/cancel")
     public void cancelRequest(@PathVariable int resetRequestId) {
+        validatePositiveId(resetRequestId, "Reset Request ID");
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
 
         passwordResetService.cancelPasswordResetRequest(
                 resetRequestId, principal.userAccountId(), principal.employeeId());
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }

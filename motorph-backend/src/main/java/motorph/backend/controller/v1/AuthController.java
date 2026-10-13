@@ -3,6 +3,7 @@ package motorph.backend.controller.v1;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.ChallengePurpose;
 import motorph.backend.domain.value.PermissionKey;
@@ -98,7 +99,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+    public LoginResponse login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
 
         LoginAttemptOutcome outcome = authenticationService.authenticate(request.companyEmail(), request.password());
@@ -128,7 +129,7 @@ public class AuthController {
      * is enabled until the confirmation below succeeds.
      */
     @PostMapping("/totp/setup/start")
-    public TotpSetupResponse startTotpSetup(@RequestBody TotpSetupStartRequest request, HttpServletRequest httpRequest) {
+    public TotpSetupResponse startTotpSetup(@RequestBody @Valid TotpSetupStartRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         TotpService.EnrollmentDetails details = totpService.startEnrollment(request.challengeId());
@@ -148,7 +149,7 @@ public class AuthController {
      * Confirms enrolment with one valid code, enables TOTP, and completes the login.
      */
     @PostMapping("/totp/setup/confirm")
-    public TokenResponse confirmTotpSetup(@RequestBody TotpCodeRequest request, HttpServletRequest httpRequest) {
+    public TokenResponse confirmTotpSetup(@RequestBody @Valid TotpCodeRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         UserAccount account = totpService.confirmEnrollment(request.challengeId(), request.code());
@@ -160,7 +161,7 @@ public class AuthController {
      * Verifies the authenticator code for a login and, only then, issues the token pair.
      */
     @PostMapping("/totp/verify")
-    public TokenResponse verifyTotp(@RequestBody TotpCodeRequest request, HttpServletRequest httpRequest) {
+    public TokenResponse verifyTotp(@RequestBody @Valid TotpCodeRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         UserAccount account = totpService.verifyLogin(request.challengeId(), request.code());
@@ -174,7 +175,7 @@ public class AuthController {
      * without an authenticator cannot recover this way and must ask an administrator.
      */
     @PostMapping("/forgot-password")
-    public ForgotPasswordResponse forgotPassword(@RequestBody ForgotPasswordRequest request,
+    public ForgotPasswordResponse forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
                                                  HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
 
@@ -189,7 +190,7 @@ public class AuthController {
      * Verifies the authenticator code for a recovery and returns the single-use reset token.
      */
     @PostMapping("/forgot-password/verify")
-    public PasswordRecoveryVerifyResponse verifyPasswordRecovery(@RequestBody TotpCodeRequest request,
+    public PasswordRecoveryVerifyResponse verifyPasswordRecovery(@RequestBody @Valid TotpCodeRequest request,
                                                                  HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
@@ -203,7 +204,7 @@ public class AuthController {
      * Sets the new password with the reset token and signs the user out of every session.
      */
     @PostMapping("/forgot-password/reset")
-    public void resetPassword(@RequestBody ResetPasswordRequest request, HttpServletRequest httpRequest) {
+    public void resetPassword(@RequestBody @Valid ResetPasswordRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.resetToken()));
 
         passwordRecoveryService.resetPassword(request.resetToken(), request.newPassword(), request.confirmPassword());
@@ -214,8 +215,8 @@ public class AuthController {
      * comes from the single-use challenge issued by {@code /login}, never from the request body.
      */
     @PostMapping("/complete-temporary-password")
-    public void completeTemporaryPassword(@RequestBody CompleteTemporaryPasswordRequest request,
-                                          HttpServletRequest httpRequest) {
+    public void completeTemporaryPassword(@RequestBody @Valid CompleteTemporaryPasswordRequest request,
+                                           HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         int userAccountId = loginChallengeService.resolveAndConsume(
@@ -229,7 +230,7 @@ public class AuthController {
      * Changes the caller's own password. The account is taken from the access token.
      */
     @PostMapping("/change-password")
-    public void changePassword(@RequestBody ChangePasswordRequest request) {
+    public void changePassword(@RequestBody @Valid ChangePasswordRequest request) {
         permissionService.requirePermission(PermissionKey.CHANGE_OWN_PASSWORD);
 
         userAccountService.changeOwnPassword(
@@ -239,7 +240,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public TokenResponse refresh(@RequestBody RefreshRequest request) {
+    public TokenResponse refresh(@RequestBody @Valid RefreshRequest request) {
         return tokenIssuanceService.refresh(request.refreshToken());
     }
 
@@ -254,7 +255,7 @@ public class AuthController {
         tokenIssuanceService.revoke(principal.jti(), principal.userAccountId(), principal.tokenExpiresAt());
 
         if (request != null && request.refreshToken() != null && !request.refreshToken().isBlank()) {
-            revokeRefreshTokenBestEffort(request.refreshToken());
+            revokeRefreshTokenBestEffort(request.refreshToken().trim());
         }
 
         userAccessLogService.logLogout(principal.userAccountId());

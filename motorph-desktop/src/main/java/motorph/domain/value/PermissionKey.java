@@ -42,7 +42,12 @@ public enum PermissionKey {
     MANAGE_PASSWORD_RESET,
 
     VIEW_DATABASE_TOOLS,
-    BACKUP_DATABASE;
+    BACKUP_DATABASE,
+
+    VIEW_TICKETS,
+    RESOLVE_TICKETS,
+    CANCEL_TICKETS,
+    VIEW_ALL_TICKETS;
 
     // converts text to permission key
     public static PermissionKey fromValue(String value) {

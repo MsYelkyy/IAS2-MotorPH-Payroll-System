@@ -4,7 +4,9 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import motorph.backend.dto.auth.TokenResponse;
 import motorph.backend.exception.AuthenticationException;
+import motorph.backend.domain.UserAccount;
 import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.UserAccountRepository;
 
 import org.springframework.stereotype.Service;
 
@@ -12,19 +14,24 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 /**
- * Creates access and refresh tokens and manages token refresh and revocation.
- * Revoked refresh tokens cannot be used to create new access tokens.
+ * Creates access and refresh tokens and handles token refresh and revocation.
+ * Refresh tokens are rejected if they are revoked, were issued before the user's sessions were
+ * revoked (for example by a password reset), or belong to an account that is missing, inactive,
+ * or locked.
  */
 @Service
 public class TokenIssuanceService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRevocationRepository tokenRevocationRepository;
+    private final UserAccountRepository userAccountRepository;
 
     public TokenIssuanceService(JwtTokenProvider jwtTokenProvider,
-                                TokenRevocationRepository tokenRevocationRepository) {
+                                TokenRevocationRepository tokenRevocationRepository,
+                                UserAccountRepository userAccountRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenRevocationRepository = tokenRevocationRepository;
+        this.userAccountRepository = userAccountRepository;
     }
 
     public TokenResponse issueTokenPair(int userAccountId, int employeeId) {
@@ -39,8 +46,8 @@ public class TokenIssuanceService {
     }
 
     /**
-     * Exchanges a valid, non-revoked refresh token for a new access token. The refresh token itself
-     * is returned unchanged.
+     * Exchanges a valid, non-revoked refresh token for a new access token, provided the account is
+     * still active and unlocked. The refresh token itself is returned unchanged.
      */
     public TokenResponse refresh(String refreshToken) {
         Claims claims = parseOrThrow(refreshToken);
@@ -59,6 +66,12 @@ public class TokenIssuanceService {
 
         if (tokenRevocationRepository.isIssuedBeforeSessionRevocation(userAccountId, claims.getIssuedAt().toInstant())) {
             throw new AuthenticationException("Refresh token has been revoked.");
+        }
+
+        UserAccount account = userAccountRepository.findById(userAccountId);
+
+        if (account == null || !account.canLogin()) {
+            throw new AuthenticationException("Account is not available.");
         }
 
         int employeeId = claims.get("employeeId", Integer.class);

@@ -1,5 +1,6 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.Department;
 import motorph.backend.domain.GovernmentDetails;
 import motorph.backend.domain.Position;
@@ -11,6 +12,7 @@ import motorph.backend.dto.employee.EmployeeProfileDTO;
 import motorph.backend.dto.employee.EmployeeSummaryDTO;
 import motorph.backend.dto.employee.EmployeeUpdateRequest;
 import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.EmployeeService;
@@ -35,6 +37,8 @@ import java.util.List;
 /**
  * Employee management and self-service endpoints. Permissions are checked on the server for every
  * request; menu restrictions in the client are for display only.
+ * Refactored to include @RequestBody @Valid.
+ * Profile photo type, size and content are validated by {@link ProfilePhotoService}.
  */
 @RestController
 @RequestMapping("/api/v1")
@@ -80,6 +84,8 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{employeeId}")
     public EmployeeProfileDTO getEmployee(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
+
         if (permissionService.hasAnyPermission(PAYROLL_DETAIL_READERS)) {
             return employeeService.getEmployeeProfileAdmin(employeeId);
         }
@@ -117,6 +123,7 @@ public class EmployeeController {
      */
     @GetMapping("/employees/{employeeId}/photo")
     public ResponseEntity<byte[]> getEmployeePhoto(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         requireOwnOrEmployeeViewer(employeeId);
 
         byte[] photo = profilePhotoService.readPhoto(employeeId);
@@ -128,6 +135,7 @@ public class EmployeeController {
 
     @GetMapping("/employees/{employeeId}/government-details")
     public GovernmentDetails getGovernmentDetails(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requireAnyPermission(PAYROLL_DETAIL_READERS);
         return employeeService.getGovernmentDetails(employeeId);
     }
@@ -142,9 +150,12 @@ public class EmployeeController {
     public List<Position> listPositions(@RequestParam(required = false) Integer departmentId) {
         permissionService.requireAnyPermission(DIRECTORY_READERS);
 
-        return departmentId != null
-                ? employeeService.getPositionsByDepartment(departmentId)
-                : employeeService.getAllPositions();
+        if (departmentId != null) {
+            validatePositiveId(departmentId, "Department ID");
+            return employeeService.getPositionsByDepartment(departmentId);
+        }
+
+        return employeeService.getAllPositions();
     }
 
     /**
@@ -152,13 +163,14 @@ public class EmployeeController {
      * account with a temporary password.
      */
     @PostMapping("/employees")
-    public EmployeeCreateResponse createEmployee(@RequestBody EmployeeCreateRequest request) {
+    public EmployeeCreateResponse createEmployee(@RequestBody @Valid EmployeeCreateRequest request) {
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         return employeeService.createEmployeeWithSalaryAndBenefits(request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PutMapping("/employees/{employeeId}")
-    public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody EmployeeUpdateRequest request) {
+    public EmployeeProfileDTO updateEmployee(@PathVariable int employeeId, @RequestBody @Valid EmployeeUpdateRequest request) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         return employeeService.updateEmployee(employeeId, request, currentUserProvider.getCurrentUserAccountId());
     }
@@ -168,10 +180,12 @@ public class EmployeeController {
      */
     @DeleteMapping("/employees/{employeeId}")
     public void deactivateEmployee(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requirePermission(PermissionKey.MANAGE_EMPLOYEE);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         employeeService.deactivateEmployee(employeeId, principal.employeeId(), principal.userAccountId());
     }
+
     private void requireOwnOrEmployeeViewer(int employeeId) {
         if (permissionService.hasAnyPermission(PermissionKey.VIEW_EMPLOYEE, PermissionKey.MANAGE_EMPLOYEE)) {
             return;
@@ -182,5 +196,11 @@ public class EmployeeController {
         }
 
         throw new UnauthorizedException("You do not have permission to view this employee.");
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }
