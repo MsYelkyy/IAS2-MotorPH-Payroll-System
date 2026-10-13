@@ -19,7 +19,7 @@ public enum SupportTicketCategory {
         try {
             return SupportTicketCategory.valueOf(value.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid support ticket category: " + value);
+            throw new IllegalArgumentException("Invalid support ticket category.");
         }
     }
 }

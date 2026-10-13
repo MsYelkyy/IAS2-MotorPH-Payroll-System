@@ -43,7 +43,8 @@ class ProfilePhotoServiceTest {
 
     private static final int EMPLOYEE_ID = 42;
     private static final int ACTOR_ACCOUNT_ID = 9;
-    private static final byte[] IMAGE = new byte[]{1, 2, 3, 4};
+    private static final byte[] IMAGE = ImageFixtures.png();
+    private static final byte[] JPEG_IMAGE = ImageFixtures.jpeg();
 
     @TempDir Path photoDirectory;
 
@@ -73,7 +74,7 @@ class ProfilePhotoServiceTest {
     @DisplayName("Replacing a photo does not leave the previous one behind")
     void replacingPhotoRemovesTheOldFile() {
         profilePhotoService.storePhoto(EMPLOYEE_ID, IMAGE, "png", ACTOR_ACCOUNT_ID);
-        profilePhotoService.storePhoto(EMPLOYEE_ID, IMAGE, "jpg", ACTOR_ACCOUNT_ID);
+        profilePhotoService.storePhoto(EMPLOYEE_ID, JPEG_IMAGE, "jpg", ACTOR_ACCOUNT_ID);
 
         assertThat(photoDirectory.resolve("employee-42.png")).doesNotExist();
         assertThat(photoDirectory.resolve("employee-42.jpg")).exists();
@@ -167,7 +168,7 @@ class ProfilePhotoServiceTest {
     @DisplayName("Every replacement of the photo is audited")
     void everyReplacementIsAudited() {
         profilePhotoService.storePhoto(EMPLOYEE_ID, IMAGE, "png", ACTOR_ACCOUNT_ID);
-        profilePhotoService.storePhoto(EMPLOYEE_ID, IMAGE, "jpg", ACTOR_ACCOUNT_ID);
+        profilePhotoService.storePhoto(EMPLOYEE_ID, JPEG_IMAGE, "jpg", ACTOR_ACCOUNT_ID);
 
         verify(userAccessLogService, times(2)).logEvent(
                 ACTOR_ACCOUNT_ID, "PROFILE_PHOTO_UPDATED",

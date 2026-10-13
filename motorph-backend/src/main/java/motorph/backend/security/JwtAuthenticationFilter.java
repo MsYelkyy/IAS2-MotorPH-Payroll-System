@@ -6,7 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import motorph.backend.domain.UserAccount;
 import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.UserAccountRepository;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,11 +29,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRevocationRepository tokenRevocationRepository;
+    private final UserAccountRepository userAccountRepository;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
-                                   TokenRevocationRepository tokenRevocationRepository) {
+                                   TokenRevocationRepository tokenRevocationRepository,
+                                   UserAccountRepository userAccountRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenRevocationRepository = tokenRevocationRepository;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Override
@@ -64,6 +69,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             int userAccountId = Integer.parseInt(claims.getSubject());
+
+            // Realtime Active/Locked Account Check for JWT
+            UserAccount account = userAccountRepository.findById(userAccountId);
+            if (account == null || !account.isActive() || account.isLocked()) {
+                return; // Rejects access immediately if inactive or locked
+            }
+
             int employeeId = claims.get("employeeId", Integer.class);
             Instant expiresAt = claims.getExpiration().toInstant();
 

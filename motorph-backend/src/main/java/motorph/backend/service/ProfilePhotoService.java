@@ -21,7 +21,8 @@ import java.util.Locale;
 /**
  * Stores and serves employee profile photos. Photos are kept in a configured directory on the
  * backend host, and {@code photo_path} holds only the filename. Uploaded extensions are checked
- * against an allowlist, and reads are restricted to the photo directory.
+ * against an allowlist, the file's header bytes must match the claimed type, and reads are
+ * restricted to the photo directory.
  */
 @Service
 public class ProfilePhotoService {
@@ -57,6 +58,7 @@ public class ProfilePhotoService {
         }
 
         String normalized = normalizeExtension(extension);
+        requireContentMatchingExtension(content, normalized);
         String filename = FILE_PREFIX + employeeId + "." + normalized;
 
         try {
@@ -172,6 +174,22 @@ public class ProfilePhotoService {
         }
 
         return normalized;
+    }
+
+    /**
+     * Checks the uploaded bytes themselves. The content must have a well-formed PNG, JPEG or GIF
+     * header, and that format must be the one the extension claims.
+     */
+    private void requireContentMatchingExtension(byte[] content, String normalizedExtension) {
+        ImageFormat detected = ImageFormat.detect(content);
+
+        if (detected == null) {
+            throw new ValidationException("Profile photo must be a valid PNG, JPG or GIF image.");
+        }
+
+        if (!detected.matchesExtension(normalizedExtension)) {
+            throw new ValidationException("Profile photo content does not match its file type.");
+        }
     }
 
     /**

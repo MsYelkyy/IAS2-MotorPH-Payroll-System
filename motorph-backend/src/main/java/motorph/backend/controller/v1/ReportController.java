@@ -2,6 +2,7 @@ package motorph.backend.controller.v1;
 
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.report.payroll.PayrollDashboardDTO;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.UserAccessLogService;
@@ -67,7 +68,12 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
-        byte[] pdf = attendanceReportService.generateAttendanceReportPdf(departmentId, employeeId, status, startDate, endDate);
+        validateOptionalPositiveId(departmentId, "Department ID");
+        validateOptionalPositiveId(employeeId, "Employee ID");
+        validateDateRange(startDate, endDate);
+
+        byte[] pdf = attendanceReportService.generateAttendanceReportPdf(
+                departmentId, employeeId, sanitizeString(status), startDate, endDate);
         return pdfResponse(pdf, "attendance-report.pdf", "Exported attendance report" + period(startDate, endDate));
     }
 
@@ -78,6 +84,9 @@ public class ReportController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
+        validatePositiveId(employeeId, "Employee ID");
+        validateDateRange(startDate, endDate);
+
         byte[] pdf = attendanceReportService.generateEmployeeTimecardReportPdf(employeeId, startDate, endDate);
         return pdfResponse(pdf, "employee-timecard-" + employeeId + ".pdf",
                 "Exported timecard report of employee ID " + employeeId + period(startDate, endDate));
@@ -91,7 +100,10 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
-        byte[] pdf = auditReportService.generateAuditReportPdf(userAccountId, action, startDate, endDate);
+        validateOptionalPositiveId(userAccountId, "User Account ID");
+        validateOptionalDateRange(startDate, endDate);
+
+        byte[] pdf = auditReportService.generateAuditReportPdf(userAccountId, sanitizeString(action), startDate, endDate);
         return pdfResponse(pdf, "audit-report.pdf", "Exported audit report" + period(startDate, endDate));
     }
 
@@ -105,8 +117,13 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
+        validateOptionalPositiveId(departmentId, "Department ID");
+        validateOptionalPositiveId(employeeId, "Employee ID");
+        validateOptionalPositiveId(payrunId, "Payrun ID");
+        validateOptionalDateRange(startDate, endDate);
+
         byte[] pdf = payrollReportService.generateOrganizationPayrollReportPdf(
-                departmentId, departmentName, employeeId, payrunId, startDate, endDate);
+                departmentId, sanitizeString(departmentName), employeeId, payrunId, startDate, endDate);
         return pdfResponse(pdf, "organization-payroll-report.pdf",
                 "Exported organization payroll report" + period(startDate, endDate));
     }
@@ -119,6 +136,10 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
+        validateOptionalPositiveId(departmentId, "Department ID");
+        validateOptionalPositiveId(payrunId, "Payrun ID");
+        validateOptionalDateRange(startDate, endDate);
+
         byte[] pdf = payrollReportService.generatePayrollSummaryReportPdf(departmentId, payrunId, startDate, endDate);
         return pdfResponse(pdf, "payroll-summary-report.pdf",
                 "Exported payroll summary report" + (payrunId == null ? "" : " for payrun ID " + payrunId)
@@ -136,20 +157,26 @@ public class ReportController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
 
         requireReportsPermission();
+        validateOptionalPositiveId(departmentId, "Department ID");
+        validateOptionalPositiveId(employeeId, "Employee ID");
+        validateOptionalDateRange(startDate, endDate);
+
         byte[] pdf = ticketReportService.generateTicketReportPdf(
-                departmentId, employeeId, category, routingTeam, status, startDate, endDate);
+                departmentId, employeeId, sanitizeString(category), sanitizeString(routingTeam),
+                sanitizeString(status), startDate, endDate);
         return pdfResponse(pdf, "ticket-report.pdf", "Exported support ticket report" + period(startDate, endDate));
     }
 
-    @GetMapping("/payroll-dashboard/latest")
+    @GetMapping(value = "/payroll-dashboard/latest", produces = MediaType.APPLICATION_JSON_VALUE)
     public PayrollDashboardDTO latestPayrollDashboard() {
         permissionService.requireAnyPermission(PermissionKey.VIEW_PAYROLL, PermissionKey.VIEW_REPORTS, PermissionKey.GENERATE_REPORTS);
         return payrollDashboardService.getLatestDashboard();
     }
 
-    @GetMapping("/payroll-dashboard/{payrollMonth}")
+    @GetMapping(value = "/payroll-dashboard/{payrollMonth}", produces = MediaType.APPLICATION_JSON_VALUE)
     public PayrollDashboardDTO payrollDashboard(@PathVariable String payrollMonth) {
         permissionService.requireAnyPermission(PermissionKey.VIEW_PAYROLL, PermissionKey.VIEW_REPORTS, PermissionKey.GENERATE_REPORTS);
+        validatePayrollMonth(payrollMonth);
         return payrollDashboardService.getDashboard(payrollMonth);
     }
 
@@ -168,8 +195,46 @@ public class ReportController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
+                .header("X-Content-Type-Options", "nosniff")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
+    }
+
+    private void validateOptionalPositiveId(Integer id, String name) {
+        if (id != null && id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new ValidationException("Start date and end date are required.");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new ValidationException("Start date cannot be after end date.");
+        }
+    }
+
+    private void validateOptionalDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new ValidationException("Start date cannot be after end date.");
+        }
+    }
+
+    private void validatePayrollMonth(String month) {
+        if (month == null || !month.matches("^\\d{4}-\\d{2}$")) {
+            throw new ValidationException("Payroll month must be formatted as YYYY-MM.");
+        }
+    }
+
+    private String sanitizeString(String input) {
+        return (input == null || input.isBlank()) ? null : input.trim();
     }
 
     private String period(LocalDate startDate, LocalDate endDate) {

@@ -3,6 +3,7 @@ package motorph.backend.controller.v1;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.auth.ChangePasswordRequest;
@@ -85,7 +86,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+    public LoginResponse login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
 
         LoginAttemptOutcome outcome = authenticationService.authenticate(request.companyEmail(), request.password());
@@ -103,7 +104,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify-otp")
-    public TokenResponse verifyOtp(@RequestBody VerifyOtpRequest request, HttpServletRequest httpRequest) {
+    public TokenResponse verifyOtp(@RequestBody @Valid VerifyOtpRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         int userAccountId = loginChallengeService.resolve(request.challengeId());
@@ -119,7 +120,7 @@ public class AuthController {
      * exist.
      */
     @PostMapping("/forgot-password")
-    public void forgotPassword(@RequestBody ForgotPasswordRequest request, HttpServletRequest httpRequest) {
+    public void forgotPassword(@RequestBody @Valid ForgotPasswordRequest request, HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
         passwordResetService.requestPasswordReset(request.companyEmail());
     }
@@ -129,8 +130,8 @@ public class AuthController {
      * comes from the single-use challenge issued by {@code /login}, never from the request body.
      */
     @PostMapping("/complete-temporary-password")
-    public void completeTemporaryPassword(@RequestBody CompleteTemporaryPasswordRequest request,
-                                          HttpServletRequest httpRequest) {
+    public void completeTemporaryPassword(@RequestBody @Valid CompleteTemporaryPasswordRequest request,
+                                           HttpServletRequest httpRequest) {
         loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
 
         int userAccountId = loginChallengeService.resolveAndConsume(request.challengeId());
@@ -143,7 +144,7 @@ public class AuthController {
      * Changes the caller's own password. The account is taken from the access token.
      */
     @PostMapping("/change-password")
-    public void changePassword(@RequestBody ChangePasswordRequest request) {
+    public void changePassword(@RequestBody @Valid ChangePasswordRequest request) {
         permissionService.requirePermission(PermissionKey.CHANGE_OWN_PASSWORD);
 
         userAccountService.changeOwnPassword(
@@ -153,7 +154,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public TokenResponse refresh(@RequestBody RefreshRequest request) {
+    public TokenResponse refresh(@RequestBody @Valid RefreshRequest request) {
         return tokenIssuanceService.refresh(request.refreshToken());
     }
 
@@ -168,7 +169,7 @@ public class AuthController {
         tokenIssuanceService.revoke(principal.jti(), principal.userAccountId(), principal.tokenExpiresAt());
 
         if (request != null && request.refreshToken() != null && !request.refreshToken().isBlank()) {
-            revokeRefreshTokenBestEffort(request.refreshToken());
+            revokeRefreshTokenBestEffort(request.refreshToken().trim());
         }
 
         userAccessLogService.logLogout(principal.userAccountId());
@@ -212,7 +213,7 @@ public class AuthController {
         }
     }
 
-    private String clientKey(HttpServletRequest request, String secondaryKey) {
+        private String clientKey(HttpServletRequest request, String secondaryKey) {
         String ip = request.getRemoteAddr();
         return ip + "|" + (secondaryKey == null ? "" : secondaryKey.trim().toLowerCase());
     }
