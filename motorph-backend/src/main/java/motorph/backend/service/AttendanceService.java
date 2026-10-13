@@ -14,12 +14,8 @@ import java.time.LocalTime;
 import java.util.List;
 
 /**
- * Handles business logic for employee attendance and daily time logs.
- * Ported from the desktop's AttendanceService (updateStatus/delete excluded -
- * dead code, no UI caller). timeIn/timeOut always use the server clock -
- * the desktop's date/time-parameterized overloads were only ever invoked
- * with LocalDate.now()/LocalTime.now(), never client-supplied values, so
- * only the no-arg shape is exposed here.
+ * Handles employee attendance and daily time logs. Time-in and time-out always use the server's
+ * clock, never a time supplied by the client.
  */
 @Service
 public class AttendanceService {
@@ -66,8 +62,6 @@ public class AttendanceService {
         return attendance;
     }
 
-    // records time in for the current server date/time - employeeId is always
-    // the caller's own, resolved server-side by the controller
     public void timeIn(int employeeId) {
         LocalDate workDate = LocalDate.now();
 
@@ -80,7 +74,6 @@ public class AttendanceService {
         attendanceRepository.timeIn(employeeId, workDate, LocalTime.now(), AttendanceStatus.PRESENT);
     }
 
-    // records time out for the current server date/time
     public void timeOut(int employeeId) {
         LocalDate workDate = LocalDate.now();
         LocalTime timeOut = LocalTime.now();

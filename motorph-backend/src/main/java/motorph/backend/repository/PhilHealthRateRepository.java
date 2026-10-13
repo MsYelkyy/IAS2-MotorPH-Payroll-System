@@ -18,9 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manages PhilHealth contribution rate records. findEffectiveOn is not
- * ported - it's only used by PayrollCalculator, which stays out of scope
- * until Phase 4.
+ * Manages PhilHealth contribution rate records.
  */
 @Repository
 public class PhilHealthRateRepository {

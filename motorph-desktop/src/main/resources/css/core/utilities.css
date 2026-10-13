@@ -1,131 +1,47 @@
-/* ══════════════════════════════════════════════════
-   CORE — UTILITIES
-   Popup-window styles ONLY.
-
-   WHY this file exists:
-   JavaFX ComboBox and DatePicker popups are rendered
-   in separate PopupWindow stages that do NOT share the
-   main scene's node hierarchy.  Selectors that require
-   an ancestor present only in the main scene (e.g.
-   .root-canvas.light-mode .combo-box-popup) can NEVER
-   match inside a popup window.
-
-   Therefore all popup styles live here WITHOUT any
-   ancestor context — they match both the main scene's
-   inline popup pane AND the floating popup stage.
-
-   What does NOT belong here:
-   - ComboBox closed-field colors  → themes/dark.css  (dark default)
-                                   → themes/light.css (light override)
-                                   → roles/X.css      (role override)
-   - TableView colors              → same split
-   - TextArea colors               → same split
-   - DatePicker closed-field       → same split
-   - Any .root-canvas.light-mode   → themes/light.css
-   ══════════════════════════════════════════════════ */
-
-
-/* ── ComboBox dropdown popup ────────────────────────────────────────── */
+/* Popup windows do not share the main scene's ancestors, so these rules carry no .root-canvas prefix. */
 
 .combo-box-popup .list-view {
-    -fx-background-color: #1A0505;
-    -fx-background-radius: 10;
-    -fx-border-color: rgba(255,95,95,0.40);
-    -fx-border-radius: 10;
+    -fx-background-color: white;
+    -fx-background-radius: 4;
+    -fx-border-color: #CBD4DD;
+    -fx-border-radius: 4;
     -fx-border-width: 1;
-    -fx-padding: 4 0;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.52), 20, 0.24, 0, 7);
+    -fx-padding: 0;
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.12), 10, 0, 0, 3);
 }
-
 .combo-box-popup .list-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: #F8FAFC;
-    -fx-font-size: 13px;
-    -fx-font-weight: 400;
-    -fx-padding: 8 14;
+    -fx-text-fill: #17191F;
+    -fx-font-size: 12px;
+    -fx-padding: 10 14;
 }
-
 .combo-box-popup .list-cell:empty {
     -fx-background-color: transparent;
-    -fx-border-color: transparent;
     -fx-padding: 0;
 }
-
 .combo-box-popup .list-cell:filled:hover {
-    -fx-background-color: #7F1D1D;
-    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #EAF2FA;
+    -fx-text-fill: #17191F;
 }
-
 .combo-box-popup .list-cell:filled:selected,
-.combo-box-popup .list-view:focused .list-cell:filled:selected {
-    -fx-background-color: #991B1B;
-    -fx-text-fill: #FFFFFF;
-}
-
 .combo-box-popup .list-cell:filled:selected:hover,
-.combo-box-popup .list-view:focused .list-cell:filled:selected:hover {
-    -fx-background-color: #B91C1C;
-    -fx-text-fill: #FFFFFF;
+.combo-box-popup .list-view:focused .list-cell:filled:selected {
+    -fx-background-color: #2F6FAE;
+    -fx-text-fill: white;
 }
-
-
-/* ── DatePicker calendar popup ──────────────────────────────────────── */
 
 .date-picker-popup {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: #D1D5DB;
+    -fx-background-color: white;
+    -fx-border-color: #CBD4DD;
     -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 20, 0.10, 0, 6);
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.12), 10, 0, 0, 3);
 }
-
-.date-picker-popup > * > .spinner {
-    -fx-background-color: #991B1B;
-}
-
-.date-picker-popup > * > .spinner > .label {
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: 900;
-}
-
-.date-picker-popup > * > .spinner > .button {
-    -fx-background-color: transparent;
-}
-
+.date-picker-popup > * > .spinner { -fx-background-color: #2F6FAE; }
+.date-picker-popup > * > .spinner > .label { -fx-text-fill: white; -fx-font-weight: bold; }
+.date-picker-popup > * > .spinner > .button { -fx-background-color: transparent; }
 .date-picker-popup > * > .spinner > .button .left-arrow,
-.date-picker-popup > * > .spinner > .button .right-arrow {
-    -fx-background-color: #FFFFFF;
-}
-
-.date-picker-popup .day-cell {
-    -fx-background-color: #FFFFFF;
-    -fx-text-fill: #111827;
-}
-
-.date-picker-popup .day-cell:hover {
-    -fx-background-color: #FEE2E2;
-}
-
-.date-picker-popup .today {
-    -fx-border-color: #B91C1C;
-    -fx-border-width: 1;
-}
-
-.date-picker-popup .selected {
-    -fx-background-color: #B91C1C;
-    -fx-text-fill: #FFFFFF;
-}
-
-.combo-box-popup .list-view .list-cell:filled:hover,
-.combo-box-popup .list-view .list-cell:filled:selected:hover {
-    -fx-background-color: #7F1D1D;
-    -fx-text-fill: #FFFFFF;
-}
-
-.combo-box-popup .list-view:focused .list-cell:filled:selected {
-    -fx-background-color: #991B1B;
-    -fx-text-fill: #FFFFFF;
-}
-
-.combo-box-popup .list-view .list-cell:filled {
-    -fx-text-fill: #F8FAFC;
-}
+.date-picker-popup > * > .spinner > .button .right-arrow { -fx-background-color: white; }
+.date-picker-popup .day-cell { -fx-background-color: white; -fx-text-fill: #17191F; }
+.date-picker-popup .day-cell:hover { -fx-background-color: #EAF2FA; }
+.date-picker-popup .today { -fx-border-color: #2F6FAE; -fx-border-width: 1; }
+.date-picker-popup .selected { -fx-background-color: #2F6FAE; -fx-text-fill: white; }

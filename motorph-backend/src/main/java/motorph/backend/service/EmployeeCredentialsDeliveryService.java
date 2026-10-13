@@ -2,21 +2,17 @@ package motorph.backend.service;
 
 import motorph.backend.dto.auth.CredentialsPreview;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Phase-3-scoped credentials delivery for newly created employee accounts.
- * Mirrors OtpDeliveryService: no real EmailService/SMTP integration exists
- * on the backend yet, so this logs server-side always and returns a preview
- * for the client to display only when no real delivery channel exists.
+ * Delivers login credentials for newly created employee accounts. There is no mail integration yet,
+ * so the credentials are only returned, while preview mode is enabled, for the client to display.
+ * They are never written to the application log.
  */
 @Service
 public class EmployeeCredentialsDeliveryService {
 
-    private static final Logger log = LoggerFactory.getLogger(EmployeeCredentialsDeliveryService.class);
     private static final String DEV_SENDER_EMAIL = "no-reply@motorph.com";
 
     private final boolean previewEnabled;
@@ -28,9 +24,6 @@ public class EmployeeCredentialsDeliveryService {
 
     public CredentialsPreview sendEmployeeAccountCredentials(
             String personalEmail, String companyEmail, String temporaryPassword) {
-
-        log.info("[DEV CREDENTIALS DELIVERY] Temporary password for {} ({}) is {}",
-                companyEmail, personalEmail, temporaryPassword);
 
         if (!previewEnabled) {
             return null;

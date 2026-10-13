@@ -10,6 +10,7 @@ import motorph.api.dto.employee.EmployeeProfileDTO;
 import motorph.api.dto.leave.LeaveCreditRowDTO;
 import motorph.api.dto.leave.LeaveRequestDTO;
 import motorph.api.dto.leave.LeaveSubmitRequest;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -456,8 +457,8 @@ public class EmployeeLeaveController {
     private void refreshLeaveHistory() {
         int employeeId = CurrentUserSession.getEmployeeId();
         allHistoryRows.clear();
+        leaveHistoryLabel.setText("View and track your leave requests.");
         if (employeeId <= 0) {
-            leaveHistoryLabel.setText("No leave requests found.");
             currentLeavePage = 1;
             renderHistoryRows();
             return;
@@ -470,9 +471,6 @@ public class EmployeeLeaveController {
                 allHistoryRows.add(new LeaveHistoryRow(request, resolveLeaveTypeName(request.getLeaveTypeId())));
             }
 
-            leaveHistoryLabel.setText(requests.isEmpty()
-                    ? "No leave requests found."
-                    : "Pending requests can be cancelled. Approved requests consume leave credits.");
         } catch (Exception e) {
             leaveHistoryLabel.setText(userMessage(e));
         }
@@ -504,9 +502,8 @@ public class EmployeeLeaveController {
 
         leaveHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         leavePageLabel.setText("Page " + currentLeavePage + " of " + totalPages);
-        leaveRecordInfoLabel.setText(total == 0
-                ? "No leave requests found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        EmptyState.apply(leaveHistoryTable, !allHistoryRows.isEmpty(), "leave requests", "Submitted leave requests will appear here.");
+        leaveRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allHistoryRows.size(), "requests"));
         leavePrevButton.setDisable(currentLeavePage <= 1);
         leaveNextButton.setDisable(currentLeavePage >= totalPages);
     }

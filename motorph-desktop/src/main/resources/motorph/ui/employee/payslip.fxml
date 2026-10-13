@@ -7,50 +7,51 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
 
 <VBox maxHeight="Infinity" maxWidth="Infinity"
       xmlns="http://javafx.com/javafx/21"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.employee.EmployeePayslipController">
 
-    <VBox styleClass="content-card" VBox.vgrow="ALWAYS" spacing="0">
+    <VBox styleClass="content-card, table-card" VBox.vgrow="ALWAYS" spacing="0">
 
         <!-- Card header -->
         <VBox spacing="4">
             <Label text="Payroll Summary" styleClass="section-title"/>
-            <Label text="List of your payroll records" styleClass="note-text"/>
+            
         </VBox>
 
-        <Region prefHeight="16"/>
+        <Region minHeight="16" prefHeight="16"/>
 
         <!-- Payroll summary table -->
-        <TableView fx:id="payrollTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-           styleClass="payroll-table">
+        <TableView fx:id="payrollTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
             <columns>
-                <TableColumn fx:id="colPayPeriod"  text="Pay Period"  prefWidth="230" minWidth="160"/>
-                <TableColumn fx:id="colBasicPay"   text="Basic Pay"   prefWidth="140" minWidth="100"/>
-                <TableColumn fx:id="colGrossPay"   text="Gross Pay"   prefWidth="140" minWidth="100"/>
-                <TableColumn fx:id="colDeductions" text="Deductions"  prefWidth="140" minWidth="100"/>
-                <TableColumn fx:id="colNetPay"     text="Net Pay"     prefWidth="140" minWidth="100"/>
-                <TableColumn fx:id="colAction"     text="Action"      prefWidth="160" minWidth="130"/>
+                <TableColumn fx:id="colPayPeriod"  text="PAY PERIOD"  prefWidth="230" minWidth="160"/>
+                <TableColumn fx:id="colBasicPay"   text="BASIC PAY"   prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colGrossPay"   text="GROSS PAY"   prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colDeductions" text="DEDUCTIONS"  prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colNetPay"     text="NET PAY"     prefWidth="140" minWidth="100"/>
+                <TableColumn fx:id="colAction"     text="ACTION"      prefWidth="160" minWidth="130"/>
             </columns>
             <placeholder>
-                <Label text="No payroll records found." styleClass="note-text"/>
-            </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No payroll records found" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
         </TableView>
 
-        <Region prefHeight="14"/>
+        <Region minHeight="14" prefHeight="14"/>
 
         <!-- Footer: pagination left · record info centre · next right -->
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="btnPrev" text="&#8592; Previous" onAction="#handlePrevPage"
-                    styleClass="secondary-button"/>
-            <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="note-text"/>
+        <HBox styleClass="table-pager">
+            <VBox.margin><Insets left="-19" right="-19"/></VBox.margin>
+            <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="pager-text"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="recordInfoLabel" text="" styleClass="note-text"/>
+            <Label fx:id="recordInfoLabel" text="" styleClass="pager-text"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="btnNext" text="Next &#8594;" onAction="#handleNextPage"
-                    styleClass="secondary-button"/>
+            <Button fx:id="btnPrev" text="Previous" onAction="#handlePrevPage" styleClass="pager-button"/>
+            <Button fx:id="btnNext" text="Next" onAction="#handleNextPage" styleClass="pager-button"/>
         </HBox>
 
     </VBox>

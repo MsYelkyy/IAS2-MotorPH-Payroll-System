@@ -1,6 +1,51 @@
+# Maven build output
 target/
+**/target/
+
+# Java and IDE-generated files
+*.class
 *.iml
 .idea/
+.vscode/
 out/
 .tools/
+nbproject/private/
+
+# Local environment files and secrets
+# .env.example contains placeholders only and must remain tracked.
+.env
+.env.*
+!.env.example
+motorph-backend/.env
+motorph-backend/.local-db-password.txt
+motorph-backend/.local-env.sh
+
+# Runtime logs
+*.log
+logs/
+**/logs/
+
+# Database backups containing payroll data
+backups/
+**/backups/
+
+# Runtime-generated uploads
+uploads/
+**/uploads/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+hs_err_pid*
+
+# Operating-system files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Test and coverage output
+coverage/
+test-results/
+surefire-reports/

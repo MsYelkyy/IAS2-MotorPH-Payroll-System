@@ -1,18 +1,25 @@
 package motorph.backend.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 
 /**
- * Stable error contract - `code` is the public API surface (documented string
- * enum), never a backend Java exception class name. Clients switch on `code`,
- * not on `message` (which may change wording) or on any Java type.
+ * Error body returned by every endpoint. Clients should branch on {@code code}, which is stable,
+ * and not on {@code message}, whose wording may change.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ErrorResponse(
         String code,
         String message,
-        List<String> fieldErrors
+        List<String> fieldErrors,
+        String reason
 ) {
     public ErrorResponse(String code, String message) {
-        this(code, message, List.of());
+        this(code, message, List.of(), null);
+    }
+
+    public ErrorResponse(String code, String message, List<String> fieldErrors) {
+        this(code, message, fieldErrors, null);
     }
 }

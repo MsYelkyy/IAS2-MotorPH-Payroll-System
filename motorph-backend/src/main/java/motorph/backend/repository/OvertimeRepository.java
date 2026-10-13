@@ -24,10 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles database operations for overtime request records. Methods with no
- * UI caller (findByStatus/findPending/findByDateRange/findByEmployeeAndDateRange)
- * are not ported, matching the dead-code-skip precedent used elsewhere this
- * session. getApprovedHours is ported for Phase 4 payroll computation.
+ * Handles database operations for overtime request records.
  */
 @Repository
 public class OvertimeRepository {
@@ -210,7 +207,10 @@ public class OvertimeRepository {
         }
     }
 
-    // finds recent completed attendance of an employee that has no active overtime request
+    /**
+     * Returns the employee's recent completed attendance records that do not already have an active
+     * overtime request.
+     */
     public List<Attendance> findEligibleAttendanceForOvertime(int employeeId, LocalDate windowStart, LocalDate windowEnd) {
         String sql = """
                 SELECT a.attendance_id,

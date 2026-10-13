@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import motorph.api.dto.auth.ErrorResponse;
+import motorph.application.session.UserSession;
+import motorph.domain.value.Role;
 
 import java.io.IOException;
 import java.net.URI;
@@ -16,12 +18,14 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * Low-level JSON-over-HTTPS client. Deliberately uses the JDK's default
- * HttpClient/SSLContext - real certificate validation - rather than a
- * trust-all SSLContext, so this stays safe to point at a non-localhost
- * backend. Attaches the Bearer token automatically when one is held.
+ * Sends JSON requests to the backend using Java's default HTTP client.
+ * Checks server certificates for HTTPS connections.
+ * Adds the Bearer token, the user's selected role, and a User-Agent to each request.
  */
 public final class HttpApiClient {
+
+    private static final String ACTIVE_ROLE_HEADER = "X-Active-Role";
+    static final String USER_AGENT = buildUserAgent();
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -37,10 +41,7 @@ public final class HttpApiClient {
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                // the backend serializes its domain objects whole, so responses carry
-                // derived getters the wire DTOs deliberately recompute client-side
-                // (hoursWorked, complete, pending, open, ...). Failing on those would
-                // reject otherwise-valid responses, so unknown fields are skipped.
+                // Ignore extra response fields that the client does not need.
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     }
 
@@ -61,12 +62,10 @@ public final class HttpApiClient {
         return send(newRequestBuilder(path).PUT(jsonBody(body)), responseType);
     }
 
-    // for endpoints that return no body (e.g. deactivate)
     public void delete(String path) {
         send(newRequestBuilder(path).DELETE(), Void.class);
     }
 
-    // for binary responses (e.g. a generated PDF) rather than JSON
     public byte[] getBytes(String path) {
         try {
             HttpResponse<byte[]> response = httpClient.send(
@@ -88,9 +87,7 @@ public final class HttpApiClient {
         }
     }
 
-    // for endpoints that take raw bytes rather than JSON (e.g. a photo upload)
     public void postBytes(String path, byte[] content) {
-        // setHeader, not header: newRequestBuilder already applied application/json
         HttpRequest.Builder builder = newRequestBuilder(path)
                 .setHeader("Content-Type", "application/octet-stream")
                 .POST(HttpRequest.BodyPublishers.ofByteArray(content));
@@ -98,7 +95,6 @@ public final class HttpApiClient {
         send(builder, Void.class);
     }
 
-    // for endpoints that return no body (e.g. logout)
     public void postNoContent(String path, Object body) {
         send(newRequestBuilder(path).POST(jsonBody(body)), Void.class);
     }
@@ -148,7 +144,7 @@ public final class HttpApiClient {
     private ApiException parseError(String body, int statusCode) {
         try {
             ErrorResponse error = objectMapper.readValue(body, ErrorResponse.class);
-            return new ApiException(statusCode, error.code(), error.message());
+            return new ApiException(statusCode, error.code(), error.message(), error.reason());
         } catch (IOException e) {
             return new ApiException(statusCode, "UNKNOWN_ERROR", "Request failed with status " + statusCode + ".");
         }
@@ -158,6 +154,7 @@ public final class HttpApiClient {
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .uri(URI.create(baseUrl + path))
                 .header("Content-Type", "application/json")
+                .header("User-Agent", USER_AGENT)
                 .timeout(Duration.ofSeconds(30));
 
         String accessToken = tokenHolder.getAccessToken();
@@ -166,7 +163,23 @@ public final class HttpApiClient {
             builder.header("Authorization", "Bearer " + accessToken);
         }
 
+        Role activeRole = UserSession.getInstance().getActiveRole();
+
+        if (activeRole != null) {
+            builder.header(ACTIVE_ROLE_HEADER, activeRole.name());
+        }
+
         return builder;
+    }
+
+    // Example: MotorPH-Desktop/1.0-SNAPSHOT (Windows 11 10.0; amd64; Java 21.0.5)
+    private static String buildUserAgent() {
+        String version = HttpApiClient.class.getPackage().getImplementationVersion();
+
+        return "MotorPH-Desktop/" + (version == null ? "dev" : version)
+                + " (" + System.getProperty("os.name") + " " + System.getProperty("os.version")
+                + "; " + System.getProperty("os.arch")
+                + "; Java " + System.getProperty("java.version") + ")";
     }
 
     private HttpRequest.BodyPublisher jsonBody(Object body) {

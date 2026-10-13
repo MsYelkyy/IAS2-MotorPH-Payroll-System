@@ -12,11 +12,16 @@ import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.PasswordHasher;
+import motorph.backend.security.PasswordPolicy;
 
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -24,55 +29,84 @@ import java.util.function.IntConsumer;
 import java.util.stream.Collectors;
 
 /**
- * Handles account provisioning for newly created/deactivated employees plus
- * the IT account-management operations (list/lock/unlock/enable/disable/
- * roles) ported from the desktop's UserAccountService + ITUserAccountService
- * in Phase 5a.
+ * Creates and manages user accounts, including account creation, status changes,
+ * role assignment, password changes, and authenticator resets.
  *
- * The employee-name join reads EmployeeRepository directly rather than
- * EmployeeService: EmployeeService already depends on this service for
- * account provisioning, so going back through it would be a constructor
- * injection cycle.
+ * <p>Employee names are read through {@link EmployeeRepository} rather than
+ * {@code EmployeeService}, because {@code EmployeeService} already depends on this class.
  */
 @Service
 public class UserAccountService {
 
     private static final int TEMPORARY_PASSWORD_EXPIRY_HOURS = 24;
-    private static final String TEMPORARY_PASSWORD_PREFIX = "MotorPH@";
+    private static final int TEMPORARY_PASSWORD_LENGTH = 12;
+
+    private static final String UPPERCASE = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    private static final String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
+    private static final String NUMBERS = "0123456789";
+    private static final String SPECIAL_CHARACTERS = "@#$%";
+    private static final String PASSWORD_CHARACTERS =
+            UPPERCASE + LOWERCASE + NUMBERS + SPECIAL_CHARACTERS;
+
     private static final String COMPANY_EMAIL_DOMAIN = "@motorph.com";
 
-    /** Carries the newly created account together with its delivery preview (dev-only, may be null). */
-    public record AccountProvisioningResult(UserAccount account, CredentialsPreview credentialsPreview) {
+    /**
+     * Contains the newly created account and its credentials preview.
+     * The preview is only available when preview mode is enabled.
+     */
+    public record AccountProvisioningResult(
+            UserAccount account,
+            CredentialsPreview credentialsPreview) {
     }
 
     private final UserAccountRepository userAccountRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeCredentialsDeliveryService credentialsDeliveryService;
     private final UserAccessLogService userAccessLogService;
+    private final TotpCredentialRepository totpCredentialRepository;
+    private final TokenRevocationRepository tokenRevocationRepository;
+    private final Clock clock;
 
-    public UserAccountService(UserAccountRepository userAccountRepository,
-                              EmployeeRepository employeeRepository,
-                              EmployeeCredentialsDeliveryService credentialsDeliveryService,
-                              UserAccessLogService userAccessLogService) {
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    public UserAccountService(
+            UserAccountRepository userAccountRepository,
+            EmployeeRepository employeeRepository,
+            EmployeeCredentialsDeliveryService credentialsDeliveryService,
+            UserAccessLogService userAccessLogService,
+            TotpCredentialRepository totpCredentialRepository,
+            TokenRevocationRepository tokenRevocationRepository,
+            Clock clock) {
+
         this.userAccountRepository = userAccountRepository;
         this.employeeRepository = employeeRepository;
         this.credentialsDeliveryService = credentialsDeliveryService;
         this.userAccessLogService = userAccessLogService;
+        this.totpCredentialRepository = totpCredentialRepository;
+        this.tokenRevocationRepository = tokenRevocationRepository;
+        this.clock = clock;
     }
 
-    // creates an active employee account with a temporary password
-    public AccountProvisioningResult createTemporaryEmployeeAccount(int employeeId,
-                                                                     String firstName,
-                                                                     String lastName,
-                                                                     String personalEmail) {
+    /**
+     * Creates an active account for the employee with a temporary password.
+     */
+    public AccountProvisioningResult createTemporaryEmployeeAccount(
+            int employeeId,
+            String firstName,
+            String lastName,
+            String personalEmail) {
+
         validateEmployeeId(employeeId);
         validatePersonalEmail(personalEmail);
 
         String companyEmail = generateUniqueCompanyEmail(firstName, lastName);
-        String temporaryPassword = generateTemporaryPassword(employeeId);
+        String temporaryPassword = generateTemporaryPassword();
+
         String salt = PasswordHasher.generateSalt();
         String hash = PasswordHasher.hash(temporaryPassword, salt);
-        LocalDateTime expiresAt = LocalDateTime.now().plusHours(TEMPORARY_PASSWORD_EXPIRY_HOURS);
+
+        LocalDateTime expiresAt =
+                LocalDateTime.now().plusHours(TEMPORARY_PASSWORD_EXPIRY_HOURS);
 
         UserAccount account = new UserAccount(
                 null,
@@ -92,65 +126,98 @@ public class UserAccountService {
 
         userAccountRepository.save(account);
 
-        UserAccount savedAccount = userAccountRepository.findByCompanyEmail(companyEmail);
+        UserAccount savedAccount =
+                userAccountRepository.findByCompanyEmail(companyEmail);
 
         if (savedAccount == null) {
-            throw new IllegalStateException("User account was not created successfully.");
+            throw new IllegalStateException(
+                    "User account was not created successfully.");
         }
 
-        CredentialsPreview preview = credentialsDeliveryService.sendEmployeeAccountCredentials(
-                personalEmail, companyEmail, temporaryPassword);
+        CredentialsPreview preview =
+                credentialsDeliveryService.sendEmployeeAccountCredentials(
+                        personalEmail,
+                        companyEmail,
+                        temporaryPassword);
 
         return new AccountProvisioningResult(savedAccount, preview);
     }
 
-    // disables and locks the account linked to an employee
+    /**
+     * Disables and locks the account linked to the employee.
+     */
     public void deactivateAccountByEmployeeId(int employeeId) {
+
         validateEmployeeId(employeeId);
 
-        UserAccount account = userAccountRepository.findByEmployeeId(employeeId);
+        UserAccount account =
+                userAccountRepository.findByEmployeeId(employeeId);
 
         if (account == null) {
             return;
         }
 
-        userAccountRepository.updateLockStatus(account.getUserAccountId(), true);
-        userAccountRepository.updateActiveStatus(account.getUserAccountId(), false);
+        userAccountRepository.updateLockStatus(
+                account.getUserAccountId(), true);
+
+        userAccountRepository.updateActiveStatus(
+                account.getUserAccountId(), false);
     }
 
-    // returns every account as a display row, joined with the employee's name
+    /**
+     * Returns all user accounts together with the employee name.
+     */
     public List<UserAccountRowDTO> getUserAccountRows() {
-        Map<Integer, String> namesByEmployeeId = employeeRepository.findAllWithInactive()
-                .stream()
-                .collect(Collectors.toMap(Employee::getEmployeeId, Employee::getFullName, (first, second) -> first));
+
+        Map<Integer, String> namesByEmployeeId =
+                employeeRepository.findAllWithInactive()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Employee::getEmployeeId,
+                                Employee::getFullName,
+                                (first, second) -> first));
 
         return userAccountRepository.findAll()
                 .stream()
-                .map(account -> toRow(account, namesByEmployeeId))
+                .map(account ->
+                        toRow(account, namesByEmployeeId))
                 .toList();
     }
 
-    // returns the display-only summary of one account
+    /**
+     * Returns the account details for the given user account.
+     */
     public AccountSummaryDTO getAccountSummary(int userAccountId) {
+
         validateUserAccountId(userAccountId);
+
         return toSummary(requireAccount(userAccountId));
     }
 
-    // returns the display-only summary of the account belonging to an employee
-    public AccountSummaryDTO getAccountSummaryByEmployeeId(int employeeId) {
+    /**
+     * Returns the account details linked to an employee.
+     */
+    public AccountSummaryDTO getAccountSummaryByEmployeeId(
+            int employeeId) {
+
         validateEmployeeId(employeeId);
 
-        UserAccount account = userAccountRepository.findByEmployeeId(employeeId);
+        UserAccount account =
+                userAccountRepository.findByEmployeeId(employeeId);
 
         if (account == null) {
-            throw new EntityNotFoundException("This employee has no user account.");
+            throw new EntityNotFoundException(
+                    "This employee has no user account.");
         }
 
         return toSummary(account);
     }
 
-    // returns active/locked/disabled tallies for the dashboards
+    /**
+     * Returns the number of active, locked, and disabled accounts.
+     */
     public AccountCountsDTO getAccountCounts() {
+
         return new AccountCountsDTO(
                 userAccountRepository.countActive(),
                 userAccountRepository.countLocked(),
@@ -158,99 +225,275 @@ public class UserAccountService {
         );
     }
 
-    // locks an account, blocking login until IT unlocks it
-    public void lockAccount(int actorUserAccountId, int userAccountId) {
-        changeStatus(actorUserAccountId, userAccountId,
-                id -> userAccountRepository.updateLockStatus(id, true));
+    /**
+     * Locks an account and signs the user out everywhere. Sessions stay revoked after an unlock.
+     */
+    public void lockAccount(
+            int actorUserAccountId,
+            int userAccountId) {
+
+        changeStatus(
+                actorUserAccountId,
+                userAccountId,
+                id -> {
+                    userAccountRepository.updateLockStatus(id, true);
+                    revokeSessions(id);
+                });
     }
 
-    // unlocks a locked account
-    public void unlockAccount(int actorUserAccountId, int userAccountId) {
-        changeStatus(actorUserAccountId, userAccountId,
+    /**
+     * Unlocks a locked user account.
+     */
+    public void unlockAccount(
+            int actorUserAccountId,
+            int userAccountId) {
+
+        changeStatus(
+                actorUserAccountId,
+                userAccountId,
                 id -> userAccountRepository.updateLockStatus(id, false));
     }
 
-    // enables a disabled account
-    public void enableAccount(int actorUserAccountId, int userAccountId) {
-        changeStatus(actorUserAccountId, userAccountId,
+    /**
+     * Enables a user account.
+     */
+    public void enableAccount(
+            int actorUserAccountId,
+            int userAccountId) {
+
+        changeStatus(
+                actorUserAccountId,
+                userAccountId,
                 id -> userAccountRepository.updateActiveStatus(id, true));
     }
 
-    // disables an account
-    public void disableAccount(int actorUserAccountId, int userAccountId) {
-        changeStatus(actorUserAccountId, userAccountId,
-                id -> userAccountRepository.updateActiveStatus(id, false));
+    /**
+     * Disables a user account and signs the user out everywhere. Sessions stay revoked after the
+     * account is enabled again.
+     */
+    public void disableAccount(
+            int actorUserAccountId,
+            int userAccountId) {
+
+        changeStatus(
+                actorUserAccountId,
+                userAccountId,
+                id -> {
+                    userAccountRepository.updateActiveStatus(id, false);
+                    revokeSessions(id);
+                });
     }
 
-    // replaces the roles assigned to an account
-    public void updateRoles(int userAccountId, List<Role> roles) {
+    /**
+     * Replaces all roles assigned to the account.
+     */
+    public void updateRoles(
+            int actorUserAccountId,
+            int userAccountId,
+            List<Role> roles) {
+
         validateUserAccountId(userAccountId);
         validateRoles(roles);
-        requireAccount(userAccountId);
 
-        userAccountRepository.updateRoles(userAccountId, roles);
+        UserAccount account = requireAccount(userAccountId);
+
+        userAccountRepository.updateRoles(
+                userAccountId,
+                roles);
+
+        userAccessLogService.logEvent(
+                actorUserAccountId,
+                UserAccessLogService.ACTION_USER_ROLES_UPDATED,
+                "Changed roles of employee ID "
+                        + account.getEmployeeId()
+                        + " from "
+                        + account.getRoles()
+                        + " to "
+                        + roles,
+                UserAccessLogService.TARGET_USER_ACCOUNT,
+                userAccountId);
     }
 
-    // replaces the caller's own password after re-verifying the current one
-    public void changeOwnPassword(int userAccountId, String currentPassword, String newPassword) {
+    /**
+     * Changes the user's password after verifying the current password.
+     */
+    public void changeOwnPassword(
+            int userAccountId,
+            String currentPassword,
+            String newPassword) {
+
         validateUserAccountId(userAccountId);
 
-        if (currentPassword == null || currentPassword.trim().isEmpty()) {
-            throw new ValidationException("Current password is required.");
+        if (currentPassword == null
+                || currentPassword.trim().isEmpty()) {
+
+            throw new ValidationException(
+                    "Current password is required.");
         }
 
         validateNewPassword(newPassword);
 
-        UserAccount account = requireAccount(userAccountId);
+        UserAccount account =
+                requireAccount(userAccountId);
 
-        if (!PasswordHasher.verify(currentPassword, account.getPasswordSalt(), account.getPasswordHash())) {
-            throw new AuthenticationException("Current password is incorrect.");
+        if (!PasswordHasher.verify(
+                currentPassword,
+                account.getPasswordSalt(),
+                account.getPasswordHash())) {
+
+            throw new AuthenticationException(
+                    "Current password is incorrect.");
         }
 
-        writePassword(userAccountId, newPassword);
+        writePassword(
+                userAccountId,
+                newPassword);
+
+        userAccessLogService.logEvent(
+                userAccountId,
+                UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Changed own password.",
+                UserAccessLogService.TARGET_USER_ACCOUNT,
+                userAccountId);
     }
 
-    // replaces an IT-issued temporary password with one the user chose
-    public void completeTemporaryPasswordChange(int userAccountId, String newPassword, String confirmPassword) {
+    /**
+     * Replaces a temporary password with a password chosen by the user.
+     */
+    public void completeTemporaryPasswordChange(
+            int userAccountId,
+            String newPassword,
+            String confirmPassword) {
+
         validateUserAccountId(userAccountId);
         validateNewPassword(newPassword);
 
         if (!newPassword.equals(confirmPassword)) {
-            throw new ValidationException("Passwords do not match.");
+            throw new ValidationException(
+                    "Passwords do not match.");
         }
 
-        UserAccount account = requireAccount(userAccountId);
+        UserAccount account =
+                requireAccount(userAccountId);
 
-        // guards against this path being used to overwrite a normal account's
-        // password - it only ever applies to an account still on a temp password
+        // Only accounts using a temporary password can use this method.
         if (!account.mustChangePassword()) {
-            throw new BusinessRuleException("This account is not awaiting a temporary password change.");
+            throw new BusinessRuleException(
+                    "This account is not awaiting a temporary password change.");
         }
 
-        writePassword(userAccountId, newPassword);
+        writePassword(
+                userAccountId,
+                newPassword);
+
+        userAccessLogService.logEvent(
+                userAccountId,
+                UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Replaced temporary password.",
+                UserAccessLogService.TARGET_USER_ACCOUNT,
+                userAccountId);
     }
 
-    private void writePassword(int userAccountId, String newPassword) {
-        String salt = PasswordHasher.generateSalt();
-        String hash = PasswordHasher.hash(newPassword.trim(), salt);
+    /**
+     * Sets a new password after password recovery has been verified.
+     */
+    public void resetPasswordAfterRecovery(
+            int userAccountId,
+            String newPassword,
+            String confirmPassword) {
 
-        userAccountRepository.updatePassword(userAccountId, hash, salt);
-    }
+        validateUserAccountId(userAccountId);
+        validateNewPassword(newPassword);
 
-    private void validateNewPassword(String newPassword) {
-        if (newPassword == null || newPassword.trim().isEmpty()) {
-            throw new ValidationException("New password is required.");
+        if (!newPassword.equals(confirmPassword)) {
+            throw new ValidationException(
+                    "Passwords do not match.");
         }
+
+        requireAccount(userAccountId);
+
+        writePassword(
+                userAccountId,
+                newPassword);
     }
 
-    // applies a status mutation and audits the before/after status
-    private void changeStatus(int actorUserAccountId, int userAccountId, IntConsumer mutation) {
+    /**
+     * Removes the user's authenticator setup.
+     * The user must set up an authenticator again on their next login.
+     */
+    public void resetTotp(
+            int actorUserAccountId,
+            int targetUserAccountId) {
+
+        validateUserAccountId(actorUserAccountId);
+        validateUserAccountId(targetUserAccountId);
+
+        UserAccount target =
+                requireAccount(targetUserAccountId);
+
+        boolean hadEnrollment =
+                totpCredentialRepository
+                        .deleteByUserAccountId(targetUserAccountId);
+
+        userAccessLogService.logEvent(
+                actorUserAccountId,
+                UserAccessLogService.ACTION_TOTP_RESET_BY_ADMIN,
+                (hadEnrollment
+                        ? "Reset authenticator enrollment of employee ID "
+                        : "Reset requested; no authenticator enrollment existed for employee ID ")
+                        + target.getEmployeeId(),
+                UserAccessLogService.TARGET_USER_ACCOUNT,
+                targetUserAccountId);
+    }
+
+    /**
+     * Hashes and saves a new password for the user.
+     */
+    private void writePassword(
+            int userAccountId,
+            String newPassword) {
+
+        String salt =
+                PasswordHasher.generateSalt();
+
+        String hash =
+                PasswordHasher.hash(
+                        newPassword.trim(),
+                        salt);
+
+        userAccountRepository.updatePassword(
+                userAccountId,
+                hash,
+                salt);
+    }
+
+    /**
+     * Checks that the new password follows the password requirements.
+     */
+    private void validateNewPassword(
+            String newPassword) {
+
+        PasswordPolicy.validate(newPassword);
+    }
+
+    /**
+     * Applies an account status change and records it in the audit log.
+     */
+    private void changeStatus(
+            int actorUserAccountId,
+            int userAccountId,
+            IntConsumer mutation) {
+
         validateUserAccountId(actorUserAccountId);
         validateUserAccountId(userAccountId);
 
-        UserAccount before = requireAccount(userAccountId);
+        UserAccount before =
+                requireAccount(userAccountId);
+
         mutation.accept(userAccountId);
-        UserAccount after = requireAccount(userAccountId);
+
+        UserAccount after =
+                requireAccount(userAccountId);
 
         userAccessLogService.logAccountStatusChanged(
                 actorUserAccountId,
@@ -260,31 +503,58 @@ public class UserAccountService {
         );
     }
 
-    private UserAccount requireAccount(int userAccountId) {
-        UserAccount account = userAccountRepository.findById(userAccountId);
+    private void revokeSessions(int userAccountId) {
+        tokenRevocationRepository.revokeAllSessions(userAccountId, LocalDateTime.now(clock));
+    }
+
+    /**
+     * Returns a user account or throws an error if it does not exist.
+     */
+    private UserAccount requireAccount(
+            int userAccountId) {
+
+        UserAccount account =
+                userAccountRepository.findById(userAccountId);
 
         if (account == null) {
-            throw new EntityNotFoundException("User account not found.");
+            throw new EntityNotFoundException(
+                    "User account not found.");
         }
 
         return account;
     }
 
-    private AccountSummaryDTO toSummary(UserAccount account) {
-        Employee employee = employeeRepository.findAnyById(account.getEmployeeId());
+    /**
+     * Converts a user account into an account summary.
+     */
+    private AccountSummaryDTO toSummary(
+            UserAccount account) {
+
+        Employee employee =
+                employeeRepository.findAnyById(
+                        account.getEmployeeId());
 
         return new AccountSummaryDTO(
                 account.getUserAccountId(),
                 account.getEmployeeId(),
-                employee == null ? "Employee #" + account.getEmployeeId() : employee.getFullName(),
+                employee == null
+                        ? "Employee #" + account.getEmployeeId()
+                        : employee.getFullName(),
                 account.getCompanyEmail()
         );
     }
 
-    private UserAccountRowDTO toRow(UserAccount account, Map<Integer, String> namesByEmployeeId) {
-        String fullName = namesByEmployeeId.getOrDefault(
-                account.getEmployeeId(),
-                "Employee #" + account.getEmployeeId());
+    /**
+     * Converts a user account into a row used by the account list.
+     */
+    private UserAccountRowDTO toRow(
+            UserAccount account,
+            Map<Integer, String> namesByEmployeeId) {
+
+        String fullName =
+                namesByEmployeeId.getOrDefault(
+                        account.getEmployeeId(),
+                        "Employee #" + account.getEmployeeId());
 
         return new UserAccountRowDTO(
                 account.getUserAccountId(),
@@ -301,83 +571,202 @@ public class UserAccountService {
         );
     }
 
-    // generates a unique company email for a new account
-    private String generateUniqueCompanyEmail(String firstName, String lastName) {
-        String baseEmail = buildBaseCompanyEmail(firstName, lastName);
+    /**
+     * Creates a unique company email for the employee.
+     */
+    private String generateUniqueCompanyEmail(
+            String firstName,
+            String lastName) {
+
+        String baseEmail =
+                buildBaseCompanyEmail(
+                        firstName,
+                        lastName);
+
         String candidate = baseEmail;
         int suffix = 2;
 
-        while (userAccountRepository.existsByCompanyEmail(candidate)) {
-            candidate = appendEmailSuffix(baseEmail, suffix);
+        while (userAccountRepository
+                .existsByCompanyEmail(candidate)) {
+
+            candidate =
+                    appendEmailSuffix(
+                            baseEmail,
+                            suffix);
+
             suffix++;
         }
 
         return candidate;
     }
 
-    private String generateTemporaryPassword(int employeeId) {
-        return TEMPORARY_PASSWORD_PREFIX + employeeId;
-    }
+    /**
+     * Generates a random temporary password for a new user account.
+     */
+    private String generateTemporaryPassword() {
 
-    private String buildBaseCompanyEmail(String firstName, String lastName) {
-        validateName(firstName, "First name is required.");
-        validateName(lastName, "Last name is required.");
+        char[] password =
+                new char[TEMPORARY_PASSWORD_LENGTH];
 
-        return sanitizeEmailName(firstName) + "." + sanitizeEmailName(lastName) + COMPANY_EMAIL_DOMAIN;
-    }
+        password[0] = randomCharacter(UPPERCASE);
+        password[1] = randomCharacter(LOWERCASE);
+        password[2] = randomCharacter(NUMBERS);
+        password[3] = randomCharacter(SPECIAL_CHARACTERS);
 
-    private String appendEmailSuffix(String baseEmail, int suffix) {
-        int atIndex = baseEmail.indexOf("@");
-
-        if (atIndex < 0) {
-            throw new IllegalStateException("Base company email is invalid.");
+        for (int i = 4; i < password.length; i++) {
+            password[i] =
+                    randomCharacter(PASSWORD_CHARACTERS);
         }
 
-        return baseEmail.substring(0, atIndex) + suffix + baseEmail.substring(atIndex);
+        for (int i = password.length - 1; i > 0; i--) {
+
+            int index =
+                    secureRandom.nextInt(i + 1);
+
+            char temp = password[i];
+            password[i] = password[index];
+            password[index] = temp;
+        }
+
+        return new String(password);
     }
 
-    private String sanitizeEmailName(String value) {
+    /**
+     * Returns a random character from the given set.
+     */
+    private char randomCharacter(
+            String characters) {
+
+        return characters.charAt(
+                secureRandom.nextInt(
+                        characters.length()));
+    }
+
+    /**
+     * Creates the employee's company email address.
+     */
+    private String buildBaseCompanyEmail(
+            String firstName,
+            String lastName) {
+
+        validateName(
+                firstName,
+                "First name is required.");
+
+        validateName(
+                lastName,
+                "Last name is required.");
+
+        return sanitizeEmailName(firstName)
+                + "."
+                + sanitizeEmailName(lastName)
+                + COMPANY_EMAIL_DOMAIN;
+    }
+
+    /**
+     * Adds a number to an email when the original email is already in use.
+     */
+    private String appendEmailSuffix(
+            String baseEmail,
+            int suffix) {
+
+        int atIndex =
+                baseEmail.indexOf("@");
+
+        if (atIndex < 0) {
+            throw new IllegalStateException(
+                    "Base company email is invalid.");
+        }
+
+        return baseEmail.substring(0, atIndex)
+                + suffix
+                + baseEmail.substring(atIndex);
+    }
+
+    /**
+     * Removes unsupported characters before using a name in an email address.
+     */
+    private String sanitizeEmailName(
+            String value) {
+
         return value.trim()
                 .toLowerCase()
                 .replaceAll("[^a-z0-9]", "");
     }
 
-    private void validatePersonalEmail(String personalEmail) {
-        if (personalEmail == null || personalEmail.trim().isEmpty()) {
-            throw new ValidationException("Personal email is required.");
+    /**
+     * Checks that a personal email was provided.
+     */
+    private void validatePersonalEmail(
+            String personalEmail) {
+
+        if (personalEmail == null
+                || personalEmail.trim().isEmpty()) {
+
+            throw new ValidationException(
+                    "Personal email is required.");
         }
 
         if (!personalEmail.contains("@")) {
-            throw new ValidationException("Personal email must be a valid email address.");
+            throw new ValidationException(
+                    "Personal email must be a valid email address.");
         }
     }
 
-    private void validateEmployeeId(int employeeId) {
+    /**
+     * Checks that the employee ID is valid.
+     */
+    private void validateEmployeeId(
+            int employeeId) {
+
         if (employeeId <= 0) {
-            throw new ValidationException("Employee ID is required.");
+            throw new ValidationException(
+                    "Employee ID is required.");
         }
     }
 
-    private void validateUserAccountId(int userAccountId) {
+    /**
+     * Checks that the user account ID is valid.
+     */
+    private void validateUserAccountId(
+            int userAccountId) {
+
         if (userAccountId <= 0) {
-            throw new ValidationException("User account ID is required.");
+            throw new ValidationException(
+                    "User account ID is required.");
         }
     }
 
-    private void validateRoles(List<Role> roles) {
+    /**
+     * Checks that at least one valid role was provided.
+     */
+    private void validateRoles(
+            List<Role> roles) {
+
         if (roles == null || roles.isEmpty()) {
-            throw new ValidationException("At least one role is required.");
+            throw new ValidationException(
+                    "At least one role is required.");
         }
 
         for (Role role : roles) {
+
             if (role == null) {
-                throw new ValidationException("Role cannot be null.");
+                throw new ValidationException(
+                        "Role cannot be null.");
             }
         }
     }
 
-    private void validateName(String value, String message) {
-        if (value == null || value.trim().isEmpty()) {
+    /**
+     * Checks that a required name was provided.
+     */
+    private void validateName(
+            String value,
+            String message) {
+
+        if (value == null
+                || value.trim().isEmpty()) {
+
             throw new ValidationException(message);
         }
     }

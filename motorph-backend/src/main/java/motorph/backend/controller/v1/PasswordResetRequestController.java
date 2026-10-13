@@ -5,6 +5,7 @@ import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.auth.CredentialsPreview;
 import motorph.backend.dto.user.PasswordResetCountsDTO;
 import motorph.backend.dto.user.PasswordResetRequestRowDTO;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PasswordResetService;
@@ -20,10 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * IT resolution of password reset requests, gated MANAGE_PASSWORD_RESET.
- * Who processed or cancelled a request is taken from the caller's token, not
- * from the request - the desktop version passed the acting employee ID in
- * from the client, which a modified client could have forged.
+ * IT handling of password reset requests. Requires {@code MANAGE_PASSWORD_RESET}. The IT user who
+ * processes or cancels a request is taken from the access token, not from the request.
  */
 @RestController
 @RequestMapping("/api/v1/password-reset-requests")
@@ -45,9 +44,10 @@ public class PasswordResetRequestController {
     public List<PasswordResetRequestRowDTO> getRequests(@RequestParam(required = false) String status) {
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
-        PasswordResetStatus filter = status == null || status.isBlank()
+        String cleanStatus = (status == null || status.isBlank()) ? null : status.trim();
+        PasswordResetStatus filter = cleanStatus == null
                 ? null
-                : PasswordResetStatus.fromValue(status);
+                : PasswordResetStatus.fromValue(cleanStatus);
 
         return passwordResetService.getRequestRows(filter);
     }
@@ -60,6 +60,7 @@ public class PasswordResetRequestController {
 
     @PostMapping("/{resetRequestId}/process")
     public CredentialsPreview processRequest(@PathVariable int resetRequestId) {
+        validatePositiveId(resetRequestId, "Reset Request ID");
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
@@ -70,9 +71,18 @@ public class PasswordResetRequestController {
 
     @PostMapping("/{resetRequestId}/cancel")
     public void cancelRequest(@PathVariable int resetRequestId) {
+        validatePositiveId(resetRequestId, "Reset Request ID");
         permissionService.requirePermission(PermissionKey.MANAGE_PASSWORD_RESET);
 
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+
         passwordResetService.cancelPasswordResetRequest(
-                resetRequestId, currentUserProvider.getCurrentPrincipal().employeeId());
+                resetRequestId, principal.userAccountId(), principal.employeeId());
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }

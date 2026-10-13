@@ -10,11 +10,17 @@ public class ApiException extends RuntimeException {
 
     private final String code;
     private final int httpStatus;
+    private final String reason;
 
     public ApiException(int httpStatus, String code, String message) {
+        this(httpStatus, code, message, null);
+    }
+
+    public ApiException(int httpStatus, String code, String message, String reason) {
         super(message);
         this.httpStatus = httpStatus;
         this.code = code;
+        this.reason = reason;
     }
 
     public String getCode() {
@@ -23,5 +29,9 @@ public class ApiException extends RuntimeException {
 
     public int getHttpStatus() {
         return httpStatus;
+    }
+
+    public String getReason() {
+        return reason;
     }
 }

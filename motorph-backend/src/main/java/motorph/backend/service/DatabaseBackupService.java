@@ -30,18 +30,12 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Creates, lists, restores, and deletes SQL backup files. The dump/replay
- * mechanics are ported unchanged from the desktop service - they are database
- * engine plumbing, not business logic.
+ * Creates, lists, restores, and deletes SQL backup files stored in a configured directory on the
+ * backend host.
  *
- * Two things did change with the move to the server. Backups now live in a
- * configured directory on the backend host rather than a relative folder next
- * to the client, so restore never needs an upload: the file is already where
- * it will be replayed. And because a filename now arrives as a URL segment
- * from a remote caller, every filename is matched against the exact pattern
- * this service generates before it touches the filesystem - a name that does
- * not match is rejected outright, so ".." and absolute paths cannot escape
- * the backup directory.
+ * <p>Filenames arrive from remote callers, so each one must match the exact pattern this service
+ * generates before the filesystem is touched. This stops {@code ..} and absolute paths from
+ * escaping the backup directory.
  */
 @Service
 public class DatabaseBackupService {
@@ -63,7 +57,9 @@ public class DatabaseBackupService {
         this.backupDirectory = Paths.get(backupDirectory).toAbsolutePath().normalize();
     }
 
-    // dumps every table to a timestamped .sql file and returns its listing entry
+    /**
+     * Dumps every table to a timestamped {@code .sql} file.
+     */
     public BackupFileDTO createBackup(int performedByUserAccountId) {
         String filename = FILE_PREFIX + LocalDateTime.now().format(FILE_FMT) + ".sql";
         Path backupPath = backupDirectory.resolve(filename);
@@ -101,7 +97,9 @@ public class DatabaseBackupService {
         }
     }
 
-    // lists existing backups, newest first
+    /**
+     * Lists existing backups, newest first.
+     */
     public List<BackupFileDTO> listBackups() {
         if (!Files.exists(backupDirectory)) {
             return List.of();
@@ -127,18 +125,25 @@ public class DatabaseBackupService {
         return entries;
     }
 
-    // reads one backup file for download
-    public byte[] readBackup(String filename) {
+    public byte[] readBackup(String filename, int performedByUserAccountId) {
         Path path = resolveExisting(filename);
+        byte[] content;
 
         try {
-            return Files.readAllBytes(path);
+            content = Files.readAllBytes(path);
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to read backup file.", e);
         }
+
+        userAccessLogService.logEvent(performedByUserAccountId,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DOWNLOADED, "Downloaded backup: " + filename);
+
+        return content;
     }
 
-    // replays a backup file over the live database in one transaction
+    /**
+     * Replays a backup file over the live database in a single transaction.
+     */
     public void restoreBackup(String filename, int performedByUserAccountId) {
         Path path = resolveExisting(filename);
 
@@ -176,7 +181,7 @@ public class DatabaseBackupService {
         userAccessLogService.logDatabaseRestore(performedByUserAccountId, filename);
     }
 
-    public void deleteBackup(String filename) {
+    public void deleteBackup(String filename, int performedByUserAccountId) {
         Path path = resolveExisting(filename);
 
         try {
@@ -184,10 +189,15 @@ public class DatabaseBackupService {
         } catch (IOException e) {
             throw new UncheckedIOException("Failed to delete backup file.", e);
         }
+
+        userAccessLogService.logEvent(performedByUserAccountId,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DELETED, "Deleted backup: " + filename);
     }
 
-    // resolves a caller-supplied filename to a real file inside the backup
-    // directory, rejecting anything that is not a name this service generated
+    /**
+     * Resolves a caller-supplied filename to a file in the backup directory, rejecting any name
+     * this service did not generate.
+     */
     private Path resolveExisting(String filename) {
         if (filename == null || !BACKUP_FILENAME.matcher(filename).matches()) {
             throw new ValidationException("Invalid backup filename.");

@@ -19,18 +19,10 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Stores and serves employee profile photos.
- *
- * The desktop version copied a file the user picked into a path relative to
- * the client's working directory and saved that whole path in photo_path,
- * which only ever worked because the client and the database were the same
- * machine. Photos now live in a configured directory on the backend host and
- * photo_path holds a bare filename, so any client can fetch a photo over the
- * API instead of needing the file locally.
- *
- * The uploaded extension becomes part of a filename, so it is checked against
- * an allowlist rather than taken as given, and reads resolve strictly inside
- * the photo directory.
+ * Stores and serves employee profile photos. Photos are kept in a configured directory on the
+ * backend host, and {@code photo_path} holds only the filename. Uploaded extensions are checked
+ * against an allowlist, the file's header bytes must match the claimed type, and reads are
+ * restricted to the photo directory.
  */
 @Service
 public class ProfilePhotoService {
@@ -40,16 +32,21 @@ public class ProfilePhotoService {
     private static final String FILE_PREFIX = "employee-";
 
     private final EmployeeRepository employeeRepository;
+    private final UserAccessLogService userAccessLogService;
     private final Path photoDirectory;
 
     public ProfilePhotoService(EmployeeRepository employeeRepository,
+                               UserAccessLogService userAccessLogService,
                                @Value("${motorph.photo.directory:profile-photos}") String photoDirectory) {
         this.employeeRepository = employeeRepository;
+        this.userAccessLogService = userAccessLogService;
         this.photoDirectory = Paths.get(photoDirectory).toAbsolutePath().normalize();
     }
 
-    // stores an employee's own uploaded photo, replacing whatever they had
-    public void storePhoto(int employeeId, byte[] content, String extension) {
+    /**
+     * Stores the employee's profile photo and records the update in the audit log.
+     */
+    public void storePhoto(int employeeId, byte[] content, String extension, int actorUserAccountId) {
         requireActiveEmployee(employeeId);
 
         if (content == null || content.length == 0) {
@@ -61,6 +58,7 @@ public class ProfilePhotoService {
         }
 
         String normalized = normalizeExtension(extension);
+        requireContentMatchingExtension(content, normalized);
         String filename = FILE_PREFIX + employeeId + "." + normalized;
 
         try {
@@ -76,9 +74,12 @@ public class ProfilePhotoService {
         }
 
         employeeRepository.updatePhotoPath(employeeId, filename);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PROFILE_PHOTO_UPDATED,
+                "Updated profile photo of employee ID " + employeeId,
+                UserAccessLogService.TARGET_EMPLOYEE, employeeId);
     }
 
-    // reads an employee's stored photo
     public byte[] readPhoto(int employeeId) {
         Employee employee = employeeRepository.findAnyById(employeeId);
 
@@ -99,7 +100,9 @@ public class ProfilePhotoService {
         }
     }
 
-    // maps a stored filename to the media type the download should advertise
+    /**
+     * Returns the media type to use when serving the employee's photo.
+     */
     public String contentTypeFor(int employeeId) {
         Employee employee = employeeRepository.findAnyById(employeeId);
         String stored = employee == null ? null : employee.getPhotoPath();
@@ -112,9 +115,11 @@ public class ProfilePhotoService {
         };
     }
 
-    // resolves a stored photo_path to a real file inside the photo directory.
-    // Only the filename is honoured, so legacy rows still holding the desktop's
-    // full relative path resolve to the right file once it has been moved here.
+    /**
+     * Resolves a stored {@code photo_path} to a file inside the photo directory. Only the filename
+     * part is used, so older rows that still hold a full relative path resolve correctly once the
+     * file has been moved here.
+     */
     private Path resolveStoredPhoto(String storedPath) {
         if (storedPath == null || storedPath.isBlank()) {
             return null;
@@ -135,7 +140,9 @@ public class ProfilePhotoService {
         return candidate;
     }
 
-    // removes any previously stored photo for this employee, whatever its extension
+    /**
+     * Deletes any existing photo for the employee, whatever its extension.
+     */
     private void deleteExistingPhotos(int employeeId) throws IOException {
         if (!Files.exists(photoDirectory)) {
             return;
@@ -169,7 +176,25 @@ public class ProfilePhotoService {
         return normalized;
     }
 
-    // accepts either a bare extension or a filename to take it from
+    /**
+     * Checks the uploaded bytes themselves. The content must have a well-formed PNG, JPEG or GIF
+     * header, and that format must be the one the extension claims.
+     */
+    private void requireContentMatchingExtension(byte[] content, String normalizedExtension) {
+        ImageFormat detected = ImageFormat.detect(content);
+
+        if (detected == null) {
+            throw new ValidationException("Profile photo must be a valid PNG, JPG or GIF image.");
+        }
+
+        if (!detected.matchesExtension(normalizedExtension)) {
+            throw new ValidationException("Profile photo content does not match its file type.");
+        }
+    }
+
+    /**
+     * Returns the extension from either a bare extension or a filename.
+     */
     private String extensionOf(String value) {
         String trimmed = value.trim().toLowerCase(Locale.ROOT);
         int dot = trimmed.lastIndexOf('.');

@@ -15,10 +15,9 @@
 
         <javafx.version>21.0.6</javafx.version>
         <javafx.maven.plugin.version>0.0.8</javafx.maven.plugin.version>
-        <jasperreports.version>7.0.6</jasperreports.version>
+        <jasperreports.version>7.0.7</jasperreports.version>
 
-        <jakarta.mail.version>2.0.1</jakarta.mail.version>
-        <jackson.version>2.22.1</jackson.version>
+        <jackson.version>2.22.3</jackson.version>
         <junit.jupiter.version>5.10.2</junit.jupiter.version>
         <mockito.version>5.12.0</mockito.version>
         <maven.surefire.version>3.2.5</maven.surefire.version>
@@ -36,13 +35,6 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- Email -->
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>jakarta.mail</artifactId>
-            <version>${jakarta.mail.version}</version>
         </dependency>
 
         <!-- JavaFX -->

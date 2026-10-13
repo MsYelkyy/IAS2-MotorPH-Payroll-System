@@ -47,6 +47,11 @@ public final class UserAccountApiClient {
         httpApiClient.postNoContent(BASE_PATH + "/" + userAccountId + "/unlock", null);
     }
 
+    // removes the user's authenticator enrolment (Admin only); they enrol again at their next login
+    public void resetTotp(int userAccountId) {
+        httpApiClient.postNoContent(BASE_PATH + "/" + userAccountId + "/reset-totp", null);
+    }
+
     public void enableAccount(int userAccountId) {
         httpApiClient.postNoContent(BASE_PATH + "/" + userAccountId + "/enable", null);
     }

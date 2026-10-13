@@ -14,10 +14,8 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * Mints and parses short-lived, minimal-claim JWTs. Deliberately does NOT
- * embed roles/permissions - those are always resolved fresh from the DB per
- * request (see CurrentUserProvider) so a role change takes effect on the
- * user's very next request instead of waiting for a stale token to expire.
+ * Creates and parses short-lived JWTs. Tokens deliberately carry no roles or permissions; those are
+ * loaded from the database on each request, so a role change takes effect immediately.
  */
 @Component
 public class JwtTokenProvider {
@@ -71,7 +69,11 @@ public class JwtTokenProvider {
         return new IssuedToken(token, jti, expiresAt, userAccountId, employeeId);
     }
 
-    // parses and validates signature/expiry; throws JwtException on any failure
+    /**
+     * Parses the token and verifies its signature and expiry.
+     *
+     * @throws JwtException if the token is invalid or expired
+     */
     public Claims parseClaims(String token) {
         return Jwts.parser()
                 .verifyWith(signingKey)

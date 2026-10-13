@@ -16,10 +16,8 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Manages statutory government rate configuration. Ported from the
- * desktop's SystemConfigService; every mutation is audited via
- * UserAccessLogService with an actor account ID resolved server-side by
- * the controller (never trusted from the client).
+ * Manages government contribution rate configuration. Every change is recorded in the audit log
+ * under the acting user, whose ID the controller takes from the access token.
  */
 @Service
 public class SystemConfigService {
@@ -42,8 +40,6 @@ public class SystemConfigService {
         this.logService = logService;
     }
 
-    // ── PhilHealth ────────────────────────────────────────────────────────────
-
     public List<PhilHealthRateDTO> getAllPhilHealthRates() {
         return philRepo.findAll();
     }
@@ -52,18 +48,18 @@ public class SystemConfigService {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         philRepo.closeAllOpenEnded(dto.getEffectiveStartDate().minusDays(1));
         philRepo.save(dto);
-        logService.logAction(actorAccountId, "CONFIG_PHILHEALTH_ADDED",
-                "Added PhilHealth rate effective " + dto.getEffectiveStartDate(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_PHILHEALTH_ADDED",
+                "Added PhilHealth rate effective " + dto.getEffectiveStartDate(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, null);
     }
 
     public void updatePhilHealthRate(PhilHealthRateDTO dto, int actorAccountId) {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         philRepo.update(dto);
-        logService.logAction(actorAccountId, "CONFIG_PHILHEALTH_UPDATED",
-                "Updated PhilHealth rate ID " + dto.getPhilhealthRateId(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_PHILHEALTH_UPDATED",
+                "Updated PhilHealth rate ID " + dto.getPhilhealthRateId(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, dto.getPhilhealthRateId());
     }
-
-    // ── SSS ───────────────────────────────────────────────────────────────────
 
     public List<SssRateDTO> getAllSssRates() {
         return sssRepo.findAll();
@@ -73,18 +69,18 @@ public class SystemConfigService {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         sssRepo.closeAllOpenEnded(dto.getEffectiveStartDate().minusDays(1));
         sssRepo.save(dto);
-        logService.logAction(actorAccountId, "CONFIG_SSS_ADDED",
-                "Added SSS rate effective " + dto.getEffectiveStartDate(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_SSS_ADDED",
+                "Added SSS rate effective " + dto.getEffectiveStartDate(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, null);
     }
 
     public void updateSssRate(SssRateDTO dto, int actorAccountId) {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         sssRepo.update(dto);
-        logService.logAction(actorAccountId, "CONFIG_SSS_UPDATED",
-                "Updated SSS rate ID " + dto.getSssRateId(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_SSS_UPDATED",
+                "Updated SSS rate ID " + dto.getSssRateId(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, dto.getSssRateId());
     }
-
-    // ── Pag-IBIG ──────────────────────────────────────────────────────────────
 
     public List<PagIbigRateDTO> getAllPagIbigRates() {
         return pagibigRepo.findAll();
@@ -94,18 +90,18 @@ public class SystemConfigService {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         pagibigRepo.closeAllOpenEnded(dto.getEffectiveStartDate().minusDays(1));
         pagibigRepo.save(dto);
-        logService.logAction(actorAccountId, "CONFIG_PAGIBIG_ADDED",
-                "Added Pag-IBIG rate effective " + dto.getEffectiveStartDate(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_PAGIBIG_ADDED",
+                "Added Pag-IBIG rate effective " + dto.getEffectiveStartDate(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, null);
     }
 
     public void updatePagIbigRate(PagIbigRateDTO dto, int actorAccountId) {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         pagibigRepo.update(dto);
-        logService.logAction(actorAccountId, "CONFIG_PAGIBIG_UPDATED",
-                "Updated Pag-IBIG rate ID " + dto.getPagibigRateId(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_PAGIBIG_UPDATED",
+                "Updated Pag-IBIG rate ID " + dto.getPagibigRateId(),
+                UserAccessLogService.TARGET_GOVERNMENT_RATE, dto.getPagibigRateId());
     }
-
-    // ── Withholding Tax ───────────────────────────────────────────────────────
 
     public List<WithholdingTaxBracketDTO> getAllTaxBrackets() {
         return taxRepo.findAll();
@@ -115,18 +111,18 @@ public class SystemConfigService {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         taxRepo.closeAllOpenEnded(dto.getEffectiveStartDate().minusDays(1));
         taxRepo.save(dto);
-        logService.logAction(actorAccountId, "CONFIG_TAX_ADDED",
-                "Added tax bracket effective " + dto.getEffectiveStartDate(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_TAX_ADDED",
+                "Added tax bracket effective " + dto.getEffectiveStartDate(),
+                UserAccessLogService.TARGET_TAX_BRACKET, null);
     }
 
     public void updateTaxBracket(WithholdingTaxBracketDTO dto, int actorAccountId) {
         validateDates(dto.getEffectiveStartDate(), dto.getEffectiveEndDate());
         taxRepo.update(dto);
-        logService.logAction(actorAccountId, "CONFIG_TAX_UPDATED",
-                "Updated tax bracket ID " + dto.getTaxBracketId(), "", "");
+        logService.logEvent(actorAccountId, "CONFIG_TAX_UPDATED",
+                "Updated tax bracket ID " + dto.getTaxBracketId(),
+                UserAccessLogService.TARGET_TAX_BRACKET, dto.getTaxBracketId());
     }
-
-    // ── Shared validation ─────────────────────────────────────────────────────
 
     private void validateDates(LocalDate start, LocalDate end) {
         if (start == null)

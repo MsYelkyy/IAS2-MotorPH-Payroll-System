@@ -1,16 +1,15 @@
 package motorph.backend.service;
 
-import motorph.backend.dto.auth.OtpPreview;
-
 /**
- * Internal, non-wire result of a password-verification attempt. AuthController
- * maps this into the public {@code LoginResponse} - this type never leaves the
- * backend, so it is free to carry the userAccountId that the wire contract must not.
+ * Result of a password check used only inside the backend.
+ * {@code AuthController} converts it into a {@code LoginResponse} before sending the response to the client.
+ * Since it stays inside the backend, it can include the user account ID.
  */
 public final class LoginAttemptOutcome {
 
     public enum Type {
-        OTP_SENT,
+        TOTP_REQUIRED,
+        TOTP_SETUP_REQUIRED,
         TEMPORARY_PASSWORD_CHANGE_REQUIRED
     }
 
@@ -18,22 +17,12 @@ public final class LoginAttemptOutcome {
     private final int userAccountId;
     private final String companyEmail;
     private final String message;
-    private final OtpPreview otpPreview;
 
     public LoginAttemptOutcome(Type type, int userAccountId, String companyEmail, String message) {
-        this(type, userAccountId, companyEmail, message, null);
-    }
-
-    public LoginAttemptOutcome(Type type, int userAccountId, String companyEmail, String message, OtpPreview otpPreview) {
         this.type = type;
         this.userAccountId = userAccountId;
         this.companyEmail = companyEmail;
         this.message = message;
-        this.otpPreview = otpPreview;
-    }
-
-    public OtpPreview getOtpPreview() {
-        return otpPreview;
     }
 
     public Type getType() {

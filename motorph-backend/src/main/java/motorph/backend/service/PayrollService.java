@@ -43,6 +43,7 @@ import motorph.backend.repository.SssRateRepository;
 import motorph.backend.repository.WithholdingTaxBracketRepository;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -52,16 +53,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handles payroll execution: computation, persistence, and the pending/
- * completed payrun landing views. Ported from the desktop's PayrollService -
- * runPayrollForPayrun (batch-all, no UI caller) and the employeeId+payrunId
- * overload of getPayrollResult (no UI caller) are dropped as dead code, and
- * buildPayslip/PayslipDTO are dropped because payslip viewing was already
- * covered by PayslipService/PayslipController in Phase 2.
+ * Handles payroll computation and persistence, payrun creation, and the pending and completed
+ * payrun views.
  */
 @Service
 public class PayrollService {
 
+    private static final String EMPLOYEE_ID_LABEL = "Employee ID";
+    private static final String PAYRUN_ID_LABEL = "Payrun ID";
     private static final String BASIC_PAY_CODE = "BASIC_PAY";
     private static final String OVERTIME_PAY_CODE = "OVERTIME_PAY";
     private static final String RICE_SUBSIDY_CODE = "RICE_SUBSIDY";
@@ -93,6 +92,7 @@ public class PayrollService {
     private final OvertimeService overtimeService;
     private final EmployeeService employeeService;
     private final PayrollCalculator payrollCalculator;
+    private final UserAccessLogService userAccessLogService;
 
     public PayrollService(PayrunRepository payrunRepository,
                           PayrollResultRepository payrollResultRepository,
@@ -112,7 +112,8 @@ public class PayrollService {
                           AttendanceService attendanceService,
                           OvertimeService overtimeService,
                           EmployeeService employeeService,
-                          PayrollCalculator payrollCalculator) {
+                          PayrollCalculator payrollCalculator,
+                          UserAccessLogService userAccessLogService) {
 
         this.payrunRepository = payrunRepository;
         this.payrollResultRepository = payrollResultRepository;
@@ -133,12 +134,17 @@ public class PayrollService {
         this.overtimeService = overtimeService;
         this.employeeService = employeeService;
         this.payrollCalculator = payrollCalculator;
+        this.userAccessLogService = userAccessLogService;
     }
 
-    // runs payroll for one employee
+    /**
+     * Computes and saves payroll for one employee in a payrun. Fails if a result already exists for
+     * that employee and payrun.
+     */
+    @Transactional
     public PayrollResult runPayrollForEmployee(int employeeId, int payrunId) {
-        validate(employeeId, "Employee ID");
-        validate(payrunId, "Payrun ID");
+        validate(employeeId, EMPLOYEE_ID_LABEL);
+        validate(payrunId, PAYRUN_ID_LABEL);
 
         Payrun payrun = getPayrunOrThrow(payrunId);
 
@@ -180,10 +186,12 @@ public class PayrollService {
         );
     }
 
-    // computes a payroll preview without persisting any result
+    /**
+     * Computes payroll for one employee without saving it.
+     */
     public PayrollPreviewDTO previewPayrollForEmployee(int employeeId, int payrunId) {
-        validate(employeeId, "Employee ID");
-        validate(payrunId, "Payrun ID");
+        validate(employeeId, EMPLOYEE_ID_LABEL);
+        validate(payrunId, PAYRUN_ID_LABEL);
 
         Payrun payrun = getPayrunOrThrow(payrunId);
         ComponentTypes componentTypes = resolveComponentTypes();
@@ -202,7 +210,6 @@ public class PayrollService {
         );
     }
 
-    // fetches employee data and computes the payroll breakdown without saving
     private ComputedPayroll computeBreakdown(int employeeId, Payrun payrun, ComponentTypes componentTypes) {
         Employee employee = employeeService.getEmployeeById(employeeId);
 
@@ -259,7 +266,6 @@ public class PayrollService {
         return new ComputedPayroll(breakdown, totalHoursWorked);
     }
 
-    // holds a computed breakdown and its total hours before persistence
     private static final class ComputedPayroll {
         private final PayrollBreakdown breakdown;
         private final double totalHoursWorked;
@@ -270,52 +276,49 @@ public class PayrollService {
         }
     }
 
-    // gets payroll results for an employee
     public List<PayrollResult> getPayrollResultsByEmployee(int employeeId) {
-        validate(employeeId, "Employee ID");
+        validate(employeeId, EMPLOYEE_ID_LABEL);
         return payrollResultRepository.findByEmployeeId(employeeId);
     }
 
-    // returns the payrun by id
     public Payrun getPayrun(int payrunId) {
-        validate(payrunId, "Payrun ID");
+        validate(payrunId, PAYRUN_ID_LABEL);
         return payrunRepository.findById(payrunId);
     }
 
-    // saves payroll component records for reporting
+    /**
+     * Saves the earning, benefit, and deduction rows that make up a payroll result.
+     */
     private void savePayrollComponents(int payrollResultId, PayrollBreakdown breakdown, ComponentTypes componentTypes) {
         payrollEarningRepository.save(new PayrollEarning(
-                null, payrollResultId, componentTypes.basicPayEarningTypeId, breakdown.getBasicPay()));
+                null, payrollResultId, componentTypes.earnings.basicPayEarningTypeId, breakdown.getBasicPay()));
 
-        saveEarningIfPresent(payrollResultId, componentTypes.overtimePayEarningTypeId, breakdown.getOvertimePay());
+        saveEarningIfPresent(payrollResultId, componentTypes.earnings.overtimePayEarningTypeId, breakdown.getOvertimePay());
 
-        saveBenefitIfPresent(payrollResultId, componentTypes.riceSubsidyBenefitTypeId, breakdown.getRiceSubsidy());
-        saveBenefitIfPresent(payrollResultId, componentTypes.phoneAllowanceBenefitTypeId, breakdown.getPhoneAllowance());
-        saveBenefitIfPresent(payrollResultId, componentTypes.clothingAllowanceBenefitTypeId, breakdown.getClothingAllowance());
+        saveBenefitIfPresent(payrollResultId, componentTypes.benefits.riceSubsidyBenefitTypeId, breakdown.getRiceSubsidy());
+        saveBenefitIfPresent(payrollResultId, componentTypes.benefits.phoneAllowanceBenefitTypeId, breakdown.getPhoneAllowance());
+        saveBenefitIfPresent(payrollResultId, componentTypes.benefits.clothingAllowanceBenefitTypeId, breakdown.getClothingAllowance());
 
-        saveDeductionIfPresent(payrollResultId, componentTypes.sssDeductionType, breakdown.getSssDeduction());
-        saveDeductionIfPresent(payrollResultId, componentTypes.philhealthDeductionType, breakdown.getPhilhealthDeduction());
-        saveDeductionIfPresent(payrollResultId, componentTypes.pagibigDeductionType, breakdown.getPagibigDeduction());
-        saveDeductionIfPresent(payrollResultId, componentTypes.withholdingTaxDeductionType, breakdown.getWithholdingTax());
-        saveDeductionIfPresent(payrollResultId, componentTypes.lateDeductionType, breakdown.getLateDeduction());
-        saveDeductionIfPresent(payrollResultId, componentTypes.undertimeDeductionType, breakdown.getUndertimeDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.sssDeductionType, breakdown.getSssDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.philhealthDeductionType, breakdown.getPhilhealthDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.pagibigDeductionType, breakdown.getPagibigDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.withholdingTaxDeductionType, breakdown.getWithholdingTax());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.lateDeductionType, breakdown.getLateDeduction());
+        saveDeductionIfPresent(payrollResultId, componentTypes.deductions.undertimeDeductionType, breakdown.getUndertimeDeduction());
     }
 
-    // saves earning only when amount exists
     private void saveEarningIfPresent(int payrollResultId, int earningTypeId, double amount) {
         if (amount > 0) {
             payrollEarningRepository.save(new PayrollEarning(null, payrollResultId, earningTypeId, amount));
         }
     }
 
-    // saves benefit only when amount exists
     private void saveBenefitIfPresent(int payrollResultId, int benefitTypeId, double amount) {
         if (amount > 0) {
             payrollBenefitRepository.save(new PayrollBenefit(null, payrollResultId, benefitTypeId, amount));
         }
     }
 
-    // saves deduction only when amount exists
     private void saveDeductionIfPresent(int payrollResultId, DeductionType deductionType, double amount) {
         if (amount > 0) {
             payrollDeductionRepository.save(new PayrollDeduction(
@@ -330,11 +333,45 @@ public class PayrollService {
 
     /** Holds resolved identifiers for required payroll component types. */
     private static final class ComponentTypes {
+        private final EarningTypes earnings;
+        private final BenefitTypes benefits;
+        private final DeductionTypes deductions;
+
+        private ComponentTypes(EarningTypes earnings,
+                               BenefitTypes benefits,
+                               DeductionTypes deductions) {
+            this.earnings = earnings;
+            this.benefits = benefits;
+            this.deductions = deductions;
+        }
+    }
+
+    private static final class EarningTypes {
         private final int basicPayEarningTypeId;
         private final int overtimePayEarningTypeId;
+
+        private EarningTypes(int basicPayEarningTypeId,
+                             int overtimePayEarningTypeId) {
+            this.basicPayEarningTypeId = basicPayEarningTypeId;
+            this.overtimePayEarningTypeId = overtimePayEarningTypeId;
+        }
+    }
+
+    private static final class BenefitTypes {
         private final int riceSubsidyBenefitTypeId;
         private final int phoneAllowanceBenefitTypeId;
         private final int clothingAllowanceBenefitTypeId;
+
+        private BenefitTypes(int riceSubsidyBenefitTypeId,
+                             int phoneAllowanceBenefitTypeId,
+                             int clothingAllowanceBenefitTypeId) {
+            this.riceSubsidyBenefitTypeId = riceSubsidyBenefitTypeId;
+            this.phoneAllowanceBenefitTypeId = phoneAllowanceBenefitTypeId;
+            this.clothingAllowanceBenefitTypeId = clothingAllowanceBenefitTypeId;
+        }
+    }
+
+    private static final class DeductionTypes {
         private final DeductionType sssDeductionType;
         private final DeductionType philhealthDeductionType;
         private final DeductionType pagibigDeductionType;
@@ -342,22 +379,12 @@ public class PayrollService {
         private final DeductionType lateDeductionType;
         private final DeductionType undertimeDeductionType;
 
-        private ComponentTypes(int basicPayEarningTypeId,
-                               int overtimePayEarningTypeId,
-                               int riceSubsidyBenefitTypeId,
-                               int phoneAllowanceBenefitTypeId,
-                               int clothingAllowanceBenefitTypeId,
-                               DeductionType sssDeductionType,
+        private DeductionTypes(DeductionType sssDeductionType,
                                DeductionType philhealthDeductionType,
                                DeductionType pagibigDeductionType,
                                DeductionType withholdingTaxDeductionType,
                                DeductionType lateDeductionType,
                                DeductionType undertimeDeductionType) {
-            this.basicPayEarningTypeId = basicPayEarningTypeId;
-            this.overtimePayEarningTypeId = overtimePayEarningTypeId;
-            this.riceSubsidyBenefitTypeId = riceSubsidyBenefitTypeId;
-            this.phoneAllowanceBenefitTypeId = phoneAllowanceBenefitTypeId;
-            this.clothingAllowanceBenefitTypeId = clothingAllowanceBenefitTypeId;
             this.sssDeductionType = sssDeductionType;
             this.philhealthDeductionType = philhealthDeductionType;
             this.pagibigDeductionType = pagibigDeductionType;
@@ -367,20 +394,29 @@ public class PayrollService {
         }
     }
 
-    // resolves all required payroll component types before result persistence
+    /**
+     * Resolves the component type IDs needed to save a payroll result. This runs before anything is
+     * saved, so a missing type fails the run early.
+     */
     private ComponentTypes resolveComponentTypes() {
         return new ComponentTypes(
-                requireEarningTypeId(BASIC_PAY_CODE),
-                requireEarningTypeId(OVERTIME_PAY_CODE),
-                requireBenefitTypeId(RICE_SUBSIDY_CODE),
-                requireBenefitTypeId(PHONE_ALLOWANCE_CODE),
-                requireBenefitTypeId(CLOTHING_ALLOWANCE_CODE),
-                requireDeductionType(SSS_CODE),
-                requireDeductionType(PHILHEALTH_CODE),
-                requireDeductionType(PAGIBIG_CODE),
-                requireDeductionType(WITHHOLDING_TAX_CODE),
-                requireDeductionType(LATE_CODE),
-                requireDeductionType(UNDERTIME_CODE)
+                new EarningTypes(
+                        requireEarningTypeId(BASIC_PAY_CODE),
+                        requireEarningTypeId(OVERTIME_PAY_CODE)
+                ),
+                new BenefitTypes(
+                        requireBenefitTypeId(RICE_SUBSIDY_CODE),
+                        requireBenefitTypeId(PHONE_ALLOWANCE_CODE),
+                        requireBenefitTypeId(CLOTHING_ALLOWANCE_CODE)
+                ),
+                new DeductionTypes(
+                        requireDeductionType(SSS_CODE),
+                        requireDeductionType(PHILHEALTH_CODE),
+                        requireDeductionType(PAGIBIG_CODE),
+                        requireDeductionType(WITHHOLDING_TAX_CODE),
+                        requireDeductionType(LATE_CODE),
+                        requireDeductionType(UNDERTIME_CODE)
+                )
         );
     }
 
@@ -408,7 +444,9 @@ public class PayrollService {
         return deductionType;
     }
 
-    // fetches government contribution rates effective on the given cutoff date
+    /**
+     * Loads the government contribution rates in effect on the cutoff date.
+     */
     private GovernmentRatesDTO fetchEffectiveRates(LocalDate cutoffDate) {
         var sss = sssRateRepository.findEffectiveOn(cutoffDate);
         if (sss == null) {
@@ -433,7 +471,6 @@ public class PayrollService {
         return new GovernmentRatesDTO(sss, philHealth, pagIbig, taxBrackets);
     }
 
-    // builds payroll input from employee, salary, government details, and benefits
     private PayrollInputDTO buildPayrollInput(Employee employee,
                                               SalaryHistory salary,
                                               GovernmentDetails governmentDetails,
@@ -445,11 +482,11 @@ public class PayrollService {
         double clothing = 0.0;
 
         for (EmployeeBenefit benefit : benefits) {
-            if (benefit.getBenefitTypeId() == componentTypes.riceSubsidyBenefitTypeId) {
+            if (benefit.getBenefitTypeId() == componentTypes.benefits.riceSubsidyBenefitTypeId) {
                 rice += benefit.getAmount();
-            } else if (benefit.getBenefitTypeId() == componentTypes.phoneAllowanceBenefitTypeId) {
+            } else if (benefit.getBenefitTypeId() == componentTypes.benefits.phoneAllowanceBenefitTypeId) {
                 phone += benefit.getAmount();
-            } else if (benefit.getBenefitTypeId() == componentTypes.clothingAllowanceBenefitTypeId) {
+            } else if (benefit.getBenefitTypeId() == componentTypes.benefits.clothingAllowanceBenefitTypeId) {
                 clothing += benefit.getAmount();
             }
         }
@@ -473,8 +510,11 @@ public class PayrollService {
         );
     }
 
-    // creates a new payrun; rejects duplicate, overlapping, invalid, and future periods
-    public Payrun createPayrun(PayrunCreateRequest request) {
+    /**
+     * Creates a payrun. Rejects periods that are invalid, in the future, or that duplicate or
+     * overlap an existing payrun.
+     */
+    public Payrun createPayrun(PayrunCreateRequest request, int actorUserAccountId) {
         if (request == null) {
             throw new ValidationException("Payrun create data is required.");
         }
@@ -500,10 +540,18 @@ public class PayrollService {
         Payrun payrun = new Payrun(null, request.getStartDate(), request.getEndDate(),
                 request.getPayDate(), request.getPayrollType());
         int id = payrunRepository.saveAndReturnId(payrun);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYRUN_CREATED,
+                "Created payrun ID " + id + " for " + request.getStartDate() + " to " + request.getEndDate(),
+                UserAccessLogService.TARGET_PAYRUN, id);
+
         return payrunRepository.findById(id);
     }
 
-    // enforces standard semi-monthly cutoffs: 1st-15th or 16th-end of month
+    /**
+     * Ensures the period is a standard semi-monthly cutoff: the 1st to the 15th, or the 16th to the
+     * end of the month.
+     */
     private void validateSemiMonthlyPeriod(LocalDate start, LocalDate end) {
         if (start.getYear() != end.getYear() || start.getMonthValue() != end.getMonthValue()) {
             throw new ValidationException(
@@ -518,9 +566,11 @@ public class PayrollService {
         }
     }
 
-    // returns payroll summaries for a payrun enriched with employee full names
+    /**
+     * Returns the payroll summaries for a payrun with employee names filled in.
+     */
     public List<PayrollSummaryDTO> getPayrollSummaries(int payrunId) {
-        validate(payrunId, "Payrun ID");
+        validate(payrunId, PAYRUN_ID_LABEL);
         Payrun payrun = getPayrunOrThrow(payrunId);
         List<PayrollResult> results = payrollResultRepository.findByPayrunId(payrunId);
         List<PayrollSummaryDTO> summaries = new ArrayList<>();
@@ -542,7 +592,6 @@ public class PayrollService {
         return summaries;
     }
 
-    // returns the payrun or throws when not found
     private Payrun getPayrunOrThrow(int payrunId) {
         Payrun payrun = payrunRepository.findById(payrunId);
 
@@ -553,7 +602,10 @@ public class PayrollService {
         return payrun;
     }
 
-    // resolves an employee's full name; falls back to id on error
+    /**
+     * Returns the employee's full name, or a fallback based on the ID if the employee cannot be
+     * loaded.
+     */
     private String resolveEmployeeName(int employeeId) {
         try {
             EmployeeProfileDTO profile = employeeService.getEmployeeProfileAdmin(employeeId);
@@ -563,26 +615,23 @@ public class PayrollService {
         }
     }
 
-    // validates id input with context
     private void validate(int id, String fieldName) {
         if (id <= 0) {
             throw new ValidationException(fieldName + " is required.");
         }
     }
 
-    // returns all payruns ordered by most recent first
+    /**
+     * Returns all payruns, most recent first.
+     */
     public List<Payrun> getAllPayruns() {
         return payrunRepository.findAll();
     }
 
-    // returns only payruns with generated payroll results
     public List<Payrun> getPayrunsWithPayrollData() {
         return payrunRepository.findAllWithPayrollResults();
     }
 
-    // ----------------------------------------------------------------------
-    // Payroll-date / payrun-centered workflow (pending vs completed)
-    // ----------------------------------------------------------------------
 
     /** Returns pending payruns (no payroll results yet) with attendance readiness counts. */
     public List<PendingPayrunSummaryDTO> getPendingPayruns() {
@@ -595,32 +644,30 @@ public class PayrollService {
             }
 
             Map<Integer, List<Attendance>> attendanceByEmployee = getAttendanceByEmployee(payrun);
-            if (attendanceByEmployee.isEmpty()) {
-                continue; // no activity in the payrun period -> do not show on Pending landing
-            }
-
-            int ready = 0;
-            int incomplete = 0;
-            int noAttendance = 0;
-            for (Employee employee : activeEmployees) {
-                switch (computeReadiness(attendanceByEmployee.get(employee.getEmployeeId())).status) {
-                    case READY -> ready++;
-                    case INCOMPLETE -> incomplete++;
-                    case NO_ATTENDANCE -> noAttendance++;
+            if (!attendanceByEmployee.isEmpty()) {
+                int ready = 0;
+                int incomplete = 0;
+                int noAttendance = 0;
+                for (Employee employee : activeEmployees) {
+                    switch (computeReadiness(attendanceByEmployee.get(employee.getEmployeeId())).status) {
+                        case READY -> ready++;
+                        case INCOMPLETE -> incomplete++;
+                        case NO_ATTENDANCE -> noAttendance++;
+                    }
                 }
-            }
 
-            pending.add(new PendingPayrunSummaryDTO(
-                    payrun.getPayrunId(),
-                    payrun.getStartDate(),
-                    payrun.getEndDate(),
-                    payrun.getPayDate(),
-                    payrun.getPayrollType(),
-                    activeEmployees.size(),
-                    ready,
-                    incomplete,
-                    noAttendance
-            ));
+                pending.add(new PendingPayrunSummaryDTO(
+                        payrun.getPayrunId(),
+                        payrun.getStartDate(),
+                        payrun.getEndDate(),
+                        payrun.getPayDate(),
+                        payrun.getPayrollType(),
+                        activeEmployees.size(),
+                        ready,
+                        incomplete,
+                        noAttendance
+                ));
+            }
         }
         return pending;
     }
@@ -653,7 +700,7 @@ public class PayrollService {
 
     /** Returns per-employee attendance readiness rows for a payrun's pending detail view. */
     public List<PayrunReadinessDTO> getPayrunReadiness(int payrunId) {
-        validate(payrunId, "Payrun ID");
+        validate(payrunId, PAYRUN_ID_LABEL);
         Payrun payrun = getPayrunOrThrow(payrunId);
         Map<Integer, List<Attendance>> attendanceByEmployee = getAttendanceByEmployee(payrun);
 
@@ -670,7 +717,7 @@ public class PayrollService {
                     position = profile.getPositionName() != null ? profile.getPositionName() : "—";
                 }
             } catch (Exception ignored) {
-                // fall back to placeholders when profile cannot be resolved
+                // Fall back to placeholders if the profile cannot be loaded.
             }
 
             rows.add(new PayrunReadinessDTO(
@@ -690,26 +737,34 @@ public class PayrollService {
      * Generates payroll for the payrun, processing only employees whose attendance
      * is READY and who do not already have a result. Returns the number generated.
      */
-    public int generatePayrollForReadyEmployees(int payrunId) {
-        validate(payrunId, "Payrun ID");
+    // 4.2 fix: one failed employee rolls back the whole batch, including the audit entry
+    @Transactional
+    public int generatePayrollForReadyEmployees(int payrunId, int actorUserAccountId) {
+        validate(payrunId, PAYRUN_ID_LABEL);
         Payrun payrun = getPayrunOrThrow(payrunId);
 
         int generated = 0;
         for (Employee employee : employeeService.getAllActiveEmployees()) {
             int employeeId = employee.getEmployeeId();
-            if (computeReadiness(employeeId, payrun).status != ReadinessStatus.READY) {
-                continue;
-            }
-            if (payrollResultRepository.existsByEmployeeAndPayrunId(employeeId, payrunId)) {
+            if (computeReadiness(employeeId, payrun).status != ReadinessStatus.READY
+                    || payrollResultRepository.existsByEmployeeAndPayrunId(employeeId, payrunId)) {
                 continue;
             }
             runPayrollForEmployee(employeeId, payrunId);
             generated++;
         }
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_PAYROLL_GENERATED,
+                "Generated payroll for " + generated + " employee(s) in payrun ID " + payrunId,
+                UserAccessLogService.TARGET_PAYRUN, payrunId);
+
         return generated;
     }
 
-    // computes an employee's attendance readiness, days worked, and total hours for a payrun period
+    /**
+     * Computes an employee's attendance readiness, days worked, and total hours for the payrun
+     * period.
+     */
     private ReadinessResult computeReadiness(int employeeId, Payrun payrun) {
         return computeReadiness(attendanceService.getAttendanceByEmployeeAndDateRange(
                 employeeId, payrun.getStartDate(), payrun.getEndDate()));
@@ -741,7 +796,6 @@ public class PayrollService {
         return attendanceByEmployee;
     }
 
-    // holds the computed readiness for one employee in one payrun period
     private static final class ReadinessResult {
         private final ReadinessStatus status;
         private final int daysWorked;

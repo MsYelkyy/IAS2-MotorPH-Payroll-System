@@ -1,7 +1,8 @@
 package motorph.backend.repository;
 
-import motorph.backend.exception.DataAccessException;
 import motorph.backend.domain.PayrollResult;
+import motorph.backend.exception.BusinessRuleException;
+import motorph.backend.exception.DataAccessException;
 
 import org.springframework.stereotype.Repository;
 
@@ -58,13 +59,19 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to find payroll results by employee id.", e);
+            throw new DataAccessException(
+                    "Failed to find payroll results by employee id.",
+                    e
+            );
         }
 
         return results;
     }
 
-    public PayrollResult findByEmployeeAndPayrunId(int employeeId, int payrunId) {
+    public PayrollResult findByEmployeeAndPayrunId(
+            int employeeId,
+            int payrunId
+    ) {
         String sql = """
                 SELECT payroll_result_id,
                        employee_id,
@@ -91,7 +98,10 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to find payroll result by employee and payrun.", e);
+            throw new DataAccessException(
+                    "Failed to find payroll result by employee and payrun.",
+                    e
+            );
         }
 
         return null;
@@ -126,13 +136,19 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to find payroll results by payrun id.", e);
+            throw new DataAccessException(
+                    "Failed to find payroll results by payrun id.",
+                    e
+            );
         }
 
         return results;
     }
 
-    public boolean existsByEmployeeAndPayrunId(int employeeId, int payrunId) {
+    public boolean existsByEmployeeAndPayrunId(
+            int employeeId,
+            int payrunId
+    ) {
         String sql = """
                 SELECT COUNT(*)
                 FROM payroll_result
@@ -152,29 +168,34 @@ public class PayrollResultRepository {
             }
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to check payroll result existence.", e);
+            throw new DataAccessException(
+                    "Failed to check payroll result existence.",
+                    e
+            );
         }
 
         return false;
     }
 
-    // saves a payroll result and returns the generated id
     public int save(PayrollResult payrollResult) {
         String sql = """
-            INSERT INTO payroll_result (
-                employee_id,
-                pay_run_id,
-                total_hours_worked,
-                gross_pay,
-                total_deductions,
-                net_pay,
-                generated_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """;
+                INSERT INTO payroll_result (
+                    employee_id,
+                    pay_run_id,
+                    total_hours_worked,
+                    gross_pay,
+                    total_deductions,
+                    net_pay,
+                    generated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
 
         try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             PreparedStatement stmt = conn.prepareStatement(
+                     sql,
+                     Statement.RETURN_GENERATED_KEYS
+             )) {
 
             stmt.setInt(1, payrollResult.getEmployeeId());
             stmt.setInt(2, payrollResult.getPayrunId());
@@ -182,7 +203,11 @@ public class PayrollResultRepository {
             stmt.setDouble(4, payrollResult.getGrossPay());
             stmt.setDouble(5, payrollResult.getTotalDeductions());
             stmt.setDouble(6, payrollResult.getNetPay());
-            setNullableTimestamp(stmt, 7, payrollResult.getGeneratedAt());
+            setNullableTimestamp(
+                    stmt,
+                    7,
+                    payrollResult.getGeneratedAt()
+            );
 
             stmt.executeUpdate();
 
@@ -192,14 +217,34 @@ public class PayrollResultRepository {
                 }
             }
 
-            throw new DataAccessException("Failed to retrieve generated payroll result ID.");
+            throw new DataAccessException(
+                    "Failed to retrieve generated payroll result ID."
+            );
 
         } catch (SQLException e) {
-            throw new DataAccessException("Failed to save payroll result.", e);
+            if (isDuplicateKey(e)) {
+                throw new BusinessRuleException(
+                        "Payroll already generated for this employee and payrun.",
+                        e
+                );
+            }
+
+            throw new DataAccessException(
+                    "Failed to save payroll result.",
+                    e
+            );
         }
     }
 
-    private void setNullableTimestamp(PreparedStatement stmt, int index, LocalDateTime value) throws SQLException {
+    private boolean isDuplicateKey(SQLException exception) {
+        return exception.getErrorCode() == 1062;
+    }
+
+    private void setNullableTimestamp(
+            PreparedStatement stmt,
+            int index,
+            LocalDateTime value
+    ) throws SQLException {
         if (value == null) {
             stmt.setNull(index, Types.TIMESTAMP);
             return;
@@ -210,7 +255,9 @@ public class PayrollResultRepository {
 
     private PayrollResult mapRow(ResultSet rs) throws SQLException {
         Timestamp generatedAtValue = rs.getTimestamp("generated_at");
-        LocalDateTime generatedAt = generatedAtValue == null ? null : generatedAtValue.toLocalDateTime();
+        LocalDateTime generatedAt = generatedAtValue == null
+                ? null
+                : generatedAtValue.toLocalDateTime();
 
         return new PayrollResult(
                 rs.getInt("payroll_result_id"),

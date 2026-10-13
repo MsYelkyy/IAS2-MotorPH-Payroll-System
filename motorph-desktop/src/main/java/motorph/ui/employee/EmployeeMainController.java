@@ -2,20 +2,15 @@ package motorph.ui.employee;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
-import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.session.CurrentUserSession;
-import motorph.ui.util.AnimationUtil;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
-import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -72,9 +67,6 @@ public class EmployeeMainController {
     @FXML
     private Label pageSubtitleLabel;
 
-    @FXML
-    private HBox globalControlsHostApp;
-
     // Content views (roots from fx:include)
     @FXML
     private VBox dashboardView;
@@ -125,52 +117,38 @@ public class EmployeeMainController {
     @FXML
     private EmployeeSettingsController settingsViewController;
 
-    // Footer
-    @FXML
-    private Label appMessageLabel;
-
-    // Side panel
-    @FXML
-    private VBox sidePanel;
-
     @FXML
     private void initialize() {
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
-        buildGlobalControls();
         wireSubControllers();
-        initSidePanel();
-
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
 
         loadSidebarData();
         configureSwitchRoleButton();
         showDashboard();
-
-        UiMessageUtil.setSuccess(appMessageLabel, "Employee workspace is ready.");
     }
 
     @FXML
     private void showDashboard() {
-        showView(dashboardView, dashboardNavButton, "Dashboard", "EMPLOYEE WORKSPACE");
+        showView(dashboardView, dashboardNavButton, "Dashboard");
         if (dashboardViewController != null) dashboardViewController.refresh();
     }
 
     @FXML
     private void showProfile() {
-        showView(profileView, profileNavButton, "My Profile", "View and update your contact information");
+        showView(profileView, profileNavButton, "My Profile");
         if (profileViewController != null) profileViewController.refresh();
     }
 
     @FXML
     private void showAttendance() {
-        showView(attendanceView, attendanceNavButton, "Attendance", "Daily time-in, time-out, and attendance logs");
+        showView(attendanceView, attendanceNavButton, "Attendance");
         if (attendanceViewController != null) attendanceViewController.refresh();
     }
 
     @FXML
     private void showLeave() {
-        showView(leaveView, leaveNavButton, "Leave Request", "Submit leave requests and monitor credits");
+        showView(leaveView, leaveNavButton, "Leave Request");
 
         if (leaveViewController != null) {
             leaveViewController.resetForm();
@@ -180,7 +158,7 @@ public class EmployeeMainController {
 
     @FXML
     private void showOvertime() {
-        showView(overtimeView, overtimeNavButton, "Overtime Request", "File overtime against recent attendance and track requests");
+        showView(overtimeView, overtimeNavButton, "Overtime Request");
 
         if (overtimeViewController != null) {
             overtimeViewController.resetForm();
@@ -190,20 +168,19 @@ public class EmployeeMainController {
 
     @FXML
     private void showPayslip() {
-        showView(payslipView, payslipNavButton, "Payslip / Payroll", "View persisted payroll results and payslips");
+        showView(payslipView, payslipNavButton, "Payslip / Payroll");
         if (payslipViewController != null) payslipViewController.refresh();
     }
 
     @FXML
     private void showSupportTickets() {
-        showView(supportTicketsView, supportTicketsNavButton, "Support Tickets",
-                "Submit a support ticket and track your requests");
+        showView(supportTicketsView, supportTicketsNavButton, "Support Tickets");
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
 
     @FXML
     private void showSettings() {
-        showView(settingsView, settingsNavButton, "Account Settings", "Manage password and recovery-account details");
+        showView(settingsView, settingsNavButton, "Account Settings");
 
         if (settingsViewController != null) {
             settingsViewController.resetForm();
@@ -213,7 +190,7 @@ public class EmployeeMainController {
 
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), pageTitleLabel);
     }
 
     @FXML
@@ -222,18 +199,8 @@ public class EmployeeMainController {
         NavigationUtil.goToLogin(rootPane.getScene());
     }
 
-    @FXML
-    private void toggleSidePanel() {
-        if (sidePanel == null) return;
-        if (sidePanel.isVisible()) {
-            AnimationUtil.slideOutToRight(sidePanel, 280, null);
-        } else {
-            AnimationUtil.slideInFromRight(sidePanel, 280);
-        }
-    }
-
     // makes only the target view visible and marks the matching nav button as selected
-    private void showView(Region target, Button selectedBtn, String title, String subtitle) {
+    private void showView(Region target, Button selectedBtn, String title) {
         boolean leavingLeaveView = leaveView != null
                 && leaveView.isVisible()
                 && target != leaveView;
@@ -271,7 +238,7 @@ public class EmployeeMainController {
         NavigationHelper.setNavSelected(selectedBtn,
                 dashboardNavButton, profileNavButton, attendanceNavButton,
                 leaveNavButton, overtimeNavButton, payslipNavButton, supportTicketsNavButton, settingsNavButton);
-        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, "EMPLOYEE WORKSPACE");
     }
 
     // loads the current employee's name, role, and email into the sidebar
@@ -283,13 +250,9 @@ public class EmployeeMainController {
     // configures switch role button visibility
     private void configureSwitchRoleButton() {
         boolean show = CurrentUserSession.hasMultipleRoles();
+        if (show) switchRoleButton.setText("Switch to " + RoleSwitchHelper.nextRoleLabel());
         switchRoleButton.setVisible(show);
         switchRoleButton.setManaged(show);
-    }
-
-    // builds and inserts language/theme combos and the overflow button into the topbar host
-    private void buildGlobalControls() {
-        GlobalControlsHelper.build(globalControlsHostApp, rootPane, this::toggleSidePanel);
     }
 
     // wires cross-controller callbacks between sub-controllers and this shell
@@ -304,11 +267,4 @@ public class EmployeeMainController {
         }
     }
 
-    // hides the side panel on startup
-    private void initSidePanel() {
-        if (sidePanel != null) {
-            sidePanel.setVisible(false);
-            sidePanel.setManaged(false);
-        }
-    }
 }

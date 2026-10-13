@@ -4,40 +4,54 @@ import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.exception.ValidationException;
+import motorph.backend.domain.Employee;
 import motorph.backend.domain.SupportTicket;
+import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.RoutingTeam;
 import motorph.backend.domain.value.SupportTicketCategory;
 import motorph.backend.domain.value.SupportTicketStatus;
+import motorph.backend.dto.support.SupportTicketRowDTO;
+import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.SupportTicketRepository;
 
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
- * Handles business rules for employee support tickets. Ported from the
- * desktop's SupportTicketService. The role checks in resolveTicket/
- * cancelTicket are role-based, not permission-key based, matching the
- * original exactly - there is no dedicated ticket-management permission key
- * in the system, and this preserves the original's precise role set (note
- * the asymmetry: resolve allows IT/HR/ADMIN/FINANCE, cancel's privileged set
- * is IT/ADMIN/HR only - FINANCE cannot cancel another employee's ticket).
+ * Handles employee support tickets using permission-based access.
+ * Users can work with their team's tickets, while broader access and cancellation
+ * require the appropriate permissions.
  */
 @Service
 public class SupportTicketService {
 
     private final SupportTicketRepository supportTicketRepository;
+    private final EmployeeRepository employeeRepository;
+    private final UserAccessLogService userAccessLogService;
+    private final PermissionService permissionService;
 
-    public SupportTicketService(SupportTicketRepository supportTicketRepository) {
+    public SupportTicketService(SupportTicketRepository supportTicketRepository,
+                                EmployeeRepository employeeRepository,
+                                UserAccessLogService userAccessLogService,
+                                PermissionService permissionService) {
         this.supportTicketRepository = supportTicketRepository;
+        this.employeeRepository = employeeRepository;
+        this.userAccessLogService = userAccessLogService;
+        this.permissionService = permissionService;
     }
 
-    // submits a new employee support ticket - employeeId is always the caller's own
+    /**
+     * Submits a support ticket and records it in the audit log.
+     */
     public void submitTicket(int employeeId,
                              SupportTicketCategory category,
                              String subject,
-                             String description) {
+                             String description,
+                             int actorUserAccountId) {
 
         validateEmployeeId(employeeId);
         validateCategory(category);
@@ -55,6 +69,10 @@ public class SupportTicketService {
         );
 
         supportTicketRepository.save(ticket);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_SUBMITTED,
+                "Submitted a " + category.name() + " support ticket routed to " + routingTeam.name(),
+                UserAccessLogService.TARGET_SUPPORT_TICKET, null);
     }
 
     public SupportTicket getTicketById(int ticketId) {
@@ -69,8 +87,20 @@ public class SupportTicketService {
         return ticket;
     }
 
-    public int getOpenTicketCount() {
-        return supportTicketRepository.findOpenTickets().size();
+    /**
+     * Counts open tickets the caller can handle: every open ticket with {@code VIEW_ALL_TICKETS},
+     * otherwise their team's.
+     */
+    public int getOpenTicketCount(Role actorRole) {
+        permissionService.requirePermission(PermissionKey.VIEW_TICKETS);
+        List<SupportTicket> open = supportTicketRepository.findOpenTickets();
+
+        if (permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)) {
+            return open.size();
+        }
+
+        RoutingTeam team = requireHandlingTeam(actorRole);
+        return (int) open.stream().filter(ticket -> ticket.getRoutingTeam() == team).count();
     }
 
     public List<SupportTicket> getTicketsByEmployee(int employeeId) {
@@ -78,55 +108,107 @@ public class SupportTicketService {
         return supportTicketRepository.findByEmployeeId(employeeId);
     }
 
-    public List<SupportTicket> getTicketsByRoutingTeam(RoutingTeam routingTeam) {
+    public List<SupportTicketRowDTO> getTicketsByRoutingTeam(RoutingTeam routingTeam, Role actorRole) {
         if (routingTeam == null) {
             throw new ValidationException("Routing team is required.");
         }
 
-        return supportTicketRepository.findByRoutingTeam(routingTeam);
-    }
+        permissionService.requirePermission(PermissionKey.VIEW_TICKETS);
 
-    public List<SupportTicket> getAllTickets() {
-        return supportTicketRepository.findAll();
-    }
-
-    // resolves an open support ticket; only IT, HR, ADMIN, or FINANCE roles may resolve
-    public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
-        validateTicketId(ticketId);
-
-        if (resolverRole != Role.IT && resolverRole != Role.HR
-                && resolverRole != Role.ADMIN && resolverRole != Role.FINANCE) {
-            throw new UnauthorizedException("Only IT, HR, Admin, or Finance roles can resolve tickets.");
+        if (!permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)
+                && requireHandlingTeam(actorRole) != routingTeam) {
+            throw new UnauthorizedException("You can only view tickets routed to your team.");
         }
 
+        return toRows(supportTicketRepository.findByRoutingTeam(routingTeam));
+    }
+
+    public List<SupportTicketRowDTO> getAllTickets(Role actorRole) {
+        permissionService.requirePermission(PermissionKey.VIEW_ALL_TICKETS);
+        return toRows(supportTicketRepository.findAll());
+    }
+
+    /**
+     * Resolves an open ticket. {@code RESOLVE_TICKETS} is required, and without
+     * {@code VIEW_ALL_TICKETS} the ticket must be routed to the caller's team.
+     */
+    public void resolveTicket(int ticketId, int resolvedByUserAccountId, Role resolverRole) {
+        validateTicketId(ticketId);
+        permissionService.requirePermission(PermissionKey.RESOLVE_TICKETS);
+
         SupportTicket ticket = getTicketById(ticketId);
+
+        if (!permissionService.hasPermission(PermissionKey.VIEW_ALL_TICKETS)
+                && requireHandlingTeam(resolverRole) != ticket.getRoutingTeam()) {
+            throw new UnauthorizedException("You can only resolve tickets routed to your team.");
+        }
 
         if (ticket.getStatus() != SupportTicketStatus.OPEN) {
             throw new BusinessRuleException("Only open tickets can be resolved.");
         }
 
         supportTicketRepository.markResolved(ticketId, resolvedByUserAccountId);
+
+        userAccessLogService.logEvent(resolvedByUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_RESOLVED,
+                "Resolved support ticket ID " + ticketId,
+                UserAccessLogService.TARGET_SUPPORT_TICKET, ticketId);
     }
 
-    // cancels an open ticket; owner may cancel their own, IT/Admin/HR may cancel any
-    public void cancelTicket(int ticketId, int actorEmployeeId, Role actorRole) {
+    /**
+     * Cancels an open ticket. Requires {@code CANCEL_TICKETS}.
+     */
+    public void cancelTicket(int ticketId, Role actorRole, int actorUserAccountId) {
         validateTicketId(ticketId);
+        permissionService.requirePermission(PermissionKey.CANCEL_TICKETS);
 
         SupportTicket ticket = getTicketById(ticketId);
-
-        boolean isPrivileged = actorRole == Role.IT
-                || actorRole == Role.ADMIN
-                || actorRole == Role.HR;
-
-        if (!isPrivileged && ticket.getEmployeeId() != actorEmployeeId) {
-            throw new UnauthorizedException("You can only cancel your own support ticket.");
-        }
 
         if (ticket.getStatus() != SupportTicketStatus.OPEN) {
             throw new BusinessRuleException("Only open tickets can be cancelled.");
         }
 
         supportTicketRepository.markCancelled(ticketId);
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_SUPPORT_TICKET_CANCELLED,
+                "Cancelled support ticket ID " + ticketId,
+                UserAccessLogService.TARGET_SUPPORT_TICKET, ticketId);
+    }
+
+    private RoutingTeam requireHandlingTeam(Role role) {
+        RoutingTeam team = switch (role) {
+            case IT -> RoutingTeam.IT;
+            case HR -> RoutingTeam.HR;
+            case FINANCE -> RoutingTeam.PAYROLL;
+            case ADMIN, EMPLOYEE -> null;
+        };
+
+        if (team == null) {
+            throw new UnauthorizedException("You do not have permission to perform this action.");
+        }
+
+        return team;
+    }
+
+    private List<SupportTicketRowDTO> toRows(List<SupportTicket> tickets) {
+        Map<Integer, String> namesByEmployeeId = employeeRepository.findAllWithInactive()
+                .stream()
+                .collect(Collectors.toMap(Employee::getEmployeeId, Employee::getFullName, (a, b) -> a));
+
+        return tickets.stream()
+                .map(ticket -> new SupportTicketRowDTO(
+                        ticket.getTicketId(),
+                        ticket.getEmployeeId(),
+                        namesByEmployeeId.getOrDefault(ticket.getEmployeeId(), "Employee #" + ticket.getEmployeeId()),
+                        ticket.getCategory(),
+                        ticket.getRoutingTeam(),
+                        ticket.getSubject(),
+                        ticket.getDescription(),
+                        ticket.getStatus(),
+                        ticket.getResolvedByUserAccountId(),
+                        ticket.getResolvedAt(),
+                        ticket.getCreatedAt(),
+                        ticket.getUpdatedAt()))
+                .toList();
     }
 
     private RoutingTeam resolveRoutingTeam(SupportTicketCategory category) {

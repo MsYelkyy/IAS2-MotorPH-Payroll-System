@@ -6,6 +6,7 @@ import motorph.api.OvertimeApiClient;
 import motorph.api.dto.attendance.AttendanceDTO;
 import motorph.api.dto.overtime.OvertimeRequestDTO;
 import motorph.api.dto.overtime.OvertimeSubmitRequest;
+import motorph.ui.common.EmptyState;
 import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.UiMessageUtil;
 
@@ -278,8 +279,8 @@ public class EmployeeOvertimeController {
     private void refreshOvertimeHistory() {
         int employeeId = CurrentUserSession.getEmployeeId();
         allHistoryRows.clear();
+        overtimeHistoryLabel.setText("View and track your overtime requests.");
         if (employeeId <= 0) {
-            overtimeHistoryLabel.setText("No overtime requests found.");
             currentPage = 1;
             renderHistoryRows();
             return;
@@ -292,9 +293,6 @@ public class EmployeeOvertimeController {
                 allHistoryRows.add(new OvertimeHistoryRow(request, resolveOvertimeTypeName(request.getOvertimeTypeId())));
             }
 
-            overtimeHistoryLabel.setText(requests.isEmpty()
-                    ? "No overtime requests found."
-                    : "Pending requests can be cancelled. Approved overtime is included in payroll.");
         } catch (Exception e) {
             overtimeHistoryLabel.setText(userMessage(e));
         }
@@ -326,9 +324,8 @@ public class EmployeeOvertimeController {
 
         overtimeHistoryTable.getItems().setAll(filteredHistoryRows.subList(from, to));
         pageLabel.setText("Page " + currentPage + " of " + totalPages);
-        recordInfoLabel.setText(total == 0
-                ? "No overtime requests found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " records");
+        EmptyState.apply(overtimeHistoryTable, !allHistoryRows.isEmpty(), "overtime requests", "Submitted overtime requests will appear here.");
+        recordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allHistoryRows.size(), "requests"));
         prevButton.setDisable(currentPage <= 1);
         nextButton.setDisable(currentPage >= totalPages);
     }

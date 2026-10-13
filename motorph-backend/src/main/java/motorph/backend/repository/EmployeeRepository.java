@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles database operations for employee records. Read-only for Phase 2 -
- * write methods (save/update/deactivate) move with employee CRUD (Phase 3).
+ * Handles database operations for employee records.
  */
 @Repository
 public class EmployeeRepository {
@@ -84,7 +83,9 @@ public class EmployeeRepository {
         this.dataSource = dataSource;
     }
 
-    // finds any employee by id regardless of active status (for IT display use only)
+    /**
+     * Finds an employee by ID regardless of active status.
+     */
     public Employee findAnyById(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -108,7 +109,6 @@ public class EmployeeRepository {
         return null;
     }
 
-    // finds active employee by id
     public Employee findActiveById(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -135,7 +135,6 @@ public class EmployeeRepository {
         return null;
     }
 
-    // finds all active employees
     public List<Employee> findAllActive() {
         String sql = BASE_SELECT + """
                 WHERE is_active = 1
@@ -145,13 +144,11 @@ public class EmployeeRepository {
         return executeListQuery(sql);
     }
 
-    // finds all employees including inactive
     public List<Employee> findAllWithInactive() {
         String sql = BASE_SELECT + " ORDER BY employee_id";
         return executeListQuery(sql);
     }
 
-    // finds personal email by employee id (used by AuthenticationService)
     public String findPersonalEmailByEmployeeId(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -180,12 +177,16 @@ public class EmployeeRepository {
         return null;
     }
 
-    // finds employee profile with joined position, department, and supervisor names (active only)
+    /**
+     * Finds an active employee's profile, including the position, department, and supervisor names.
+     */
     public ProfileQueryResult findProfileById(int employeeId) {
         return findProfileQuery(employeeId, true);
     }
 
-    // finds employee profile including inactive employees (for admin use)
+    /**
+     * Same as {@link #findProfileById(int)}, but also returns inactive employees.
+     */
     public ProfileQueryResult findProfileByIdAny(int employeeId) {
         return findProfileQuery(employeeId, false);
     }
@@ -243,7 +244,6 @@ public class EmployeeRepository {
         return null;
     }
 
-    // saves a new employee and returns the generated employee id
     public int saveAndReturnId(Employee employee) {
         String sql = """
                 INSERT INTO employee (
@@ -285,7 +285,6 @@ public class EmployeeRepository {
         throw new IllegalStateException("Failed to retrieve generated employee ID.");
     }
 
-    // updates an existing employee
     public void update(Employee employee) {
         if (employee.getEmployeeId() == null || employee.getEmployeeId() <= 0) {
             throw new IllegalArgumentException("Employee ID is required for update.");
@@ -328,7 +327,6 @@ public class EmployeeRepository {
         }
     }
 
-    // deactivates an employee
     public void deactivate(int employeeId) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -350,7 +348,6 @@ public class EmployeeRepository {
         }
     }
 
-    // binds employee fields for insert or update
     private void bindEmployeeFields(PreparedStatement stmt, Employee employee) throws SQLException {
         stmt.setString(1, employee.getFirstName());
         stmt.setString(2, employee.getLastName());
@@ -408,7 +405,9 @@ public class EmployeeRepository {
         );
     }
 
-    // updates the contact details an employee is allowed to change themselves
+    /**
+     * Updates the contact fields an employee is allowed to change on their own profile.
+     */
     public void updateContactInfo(int employeeId, String phoneNumber, String address) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -427,7 +426,9 @@ public class EmployeeRepository {
         });
     }
 
-    // records the stored filename of an employee's profile photo
+    /**
+     * Stores the filename of the employee's profile photo.
+     */
     public void updatePhotoPath(int employeeId, String photoPath) {
         validatePositive(employeeId, "Employee ID must be positive.");
 
@@ -465,7 +466,6 @@ public class EmployeeRepository {
         }
     }
 
-    // binds prepared statement parameters
     private interface StatementBinder {
         void bind(PreparedStatement stmt) throws SQLException;
     }

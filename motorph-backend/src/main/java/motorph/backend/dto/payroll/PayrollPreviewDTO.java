@@ -14,7 +14,6 @@ public class PayrollPreviewDTO {
     private final double totalDeductions;
     private final double netPay;
 
-    // constructors
     public PayrollPreviewDTO(int employeeId,
                              String fullName,
                              LocalDate periodStart,

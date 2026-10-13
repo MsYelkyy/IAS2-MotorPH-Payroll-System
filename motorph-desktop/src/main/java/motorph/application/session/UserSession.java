@@ -1,7 +1,6 @@
 package motorph.application.session;
 
 import motorph.application.dto.login.LoginResultDTO;
-import motorph.domain.model.UserAccount;
 import motorph.domain.value.Role;
 
 import java.util.ArrayList;
@@ -15,7 +14,6 @@ public class UserSession {
 
     private static UserSession instance;
 
-    private UserAccount currentUser;
     private Integer userAccountId;
     private int employeeId;
     private String companyEmail;
@@ -36,25 +34,12 @@ public class UserSession {
         return instance;
     }
 
-    // stores the logged-in user from a user account
-    public void login(UserAccount currentUser) {
-        setCurrentUser(currentUser);
-
-        this.userAccountId = currentUser.getUserAccountId();
-        this.employeeId = currentUser.getEmployeeId();
-        this.companyEmail = currentUser.getCompanyEmail();
-        this.roles = new ArrayList<>(currentUser.getRoles());
-        this.activeRole = currentUser.getActiveRole();
-        this.loggedIn = true;
-    }
-
     // stores the logged-in user from a login result
     public void login(LoginResultDTO result) {
         if (result == null || !result.isAuthenticated()) {
             throw new IllegalArgumentException("Authenticated login result is required.");
         }
 
-        this.currentUser = null;
         this.userAccountId = result.getUserAccountId();
         this.employeeId = result.getEmployeeId();
         this.companyEmail = result.getCompanyEmail();
@@ -64,10 +49,6 @@ public class UserSession {
     }
 
     // getters
-    public UserAccount getCurrentUser() {
-        return currentUser;
-    }
-
     public Integer getUserAccountId() {
         return userAccountId;
     }
@@ -85,10 +66,6 @@ public class UserSession {
     }
 
     public List<Role> getRoles() {
-        if (currentUser != null) {
-            return currentUser.getRoles();
-        }
-
         return Collections.unmodifiableList(roles);
     }
 
@@ -102,19 +79,11 @@ public class UserSession {
             return false;
         }
 
-        if (currentUser != null) {
-            return currentUser.hasRole(role);
-        }
-
         return roles.contains(role);
     }
 
     // checks if the logged-in user has multiple roles
     public boolean hasMultipleRoles() {
-        if (currentUser != null) {
-            return currentUser.hasMultipleRoles();
-        }
-
         return roles.size() > 1;
     }
 
@@ -122,10 +91,6 @@ public class UserSession {
     public boolean isUsingRole(Role role) {
         if (role == null) {
             return false;
-        }
-
-        if (currentUser != null) {
-            return currentUser.isUsingRole(role);
         }
 
         return activeRole == role;
@@ -137,12 +102,6 @@ public class UserSession {
             throw new IllegalArgumentException("Role is required.");
         }
 
-        if (currentUser != null) {
-            currentUser.switchRole(role);
-            this.activeRole = currentUser.getActiveRole();
-            return;
-        }
-
         if (!roles.contains(role)) {
             throw new IllegalArgumentException("Cannot switch to a role that is not assigned to this account.");
         }
@@ -150,30 +109,8 @@ public class UserSession {
         this.activeRole = role;
     }
 
-    // sets the current user account
-    public void setCurrentUser(UserAccount currentUser) {
-        if (currentUser == null) {
-            throw new IllegalArgumentException("Current user is required.");
-        }
-
-        if (!currentUser.canLogin()) {
-            throw new IllegalArgumentException("Current user is not allowed to log in.");
-        }
-
-        if (currentUser.getRoles() == null || currentUser.getRoles().isEmpty()) {
-            throw new IllegalArgumentException("Current user must have at least one role.");
-        }
-
-        if (currentUser.getActiveRole() == null) {
-            throw new IllegalArgumentException("Current user must have an active role.");
-        }
-
-        this.currentUser = currentUser;
-    }
-
     // clears the current user session
     public void clear() {
-        this.currentUser = null;
         this.userAccountId = null;
         this.employeeId = 0;
         this.companyEmail = null;

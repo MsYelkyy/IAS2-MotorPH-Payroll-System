@@ -9,6 +9,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
 
 <VBox spacing="18"
       styleClass="user-access-logs-view"
@@ -16,7 +17,7 @@
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="motorph.ui.it.ITAccessLogsController">
 
-    <HBox spacing="14">
+    <HBox spacing="14" minHeight="-Infinity">
         <VBox spacing="6" styleClass="metric-card" HBox.hgrow="ALWAYS">
             <Label text="TOTAL ENTRIES" styleClass="metric-label"/>
             <Label fx:id="totalLogsLabel" text="0" styleClass="metric-value"/>
@@ -65,40 +66,40 @@
     </VBox>
 
     <VBox spacing="0" maxWidth="Infinity" maxHeight="Infinity"
-          styleClass="content-card, attendance-history-card"
+          styleClass="content-card, attendance-history-card, table-card"
           VBox.vgrow="ALWAYS">
 
         <VBox spacing="4">
             <Label text="Log Entries" styleClass="section-title"/>
-            <Label text="List of user access log entries" styleClass="note-text"/>
+            
         </VBox>
 
-        <Region prefHeight="16"/>
+        <Region minHeight="16" prefHeight="16"/>
 
-        <TableView fx:id="logsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity"
-                   styleClass="payroll-table, attendance-table">
+        <TableView fx:id="logsTable" VBox.vgrow="ALWAYS" maxHeight="Infinity">
             <columns>
-                <TableColumn fx:id="userIdColumn"    text="User ID"   prefWidth="80"  minWidth="60"/>
-                <TableColumn fx:id="actionColumn"    text="Action"    prefWidth="220" minWidth="140"/>
-                <TableColumn fx:id="detailsColumn"   text="Details"   prefWidth="340" minWidth="200"/>
-                <TableColumn fx:id="timestampColumn" text="Timestamp" prefWidth="175" minWidth="130"/>
+                <TableColumn fx:id="userIdColumn"    text="USER ID"   prefWidth="80"  minWidth="60"/>
+                <TableColumn fx:id="actionColumn"    text="ACTION"    prefWidth="220" minWidth="140"/>
+                <TableColumn fx:id="detailsColumn"   text="DETAILS"   prefWidth="340" minWidth="200"/>
+                <TableColumn fx:id="timestampColumn" text="TIMESTAMP" prefWidth="175" minWidth="130"/>
             </columns>
             <placeholder>
-                <Label text="No access log entries found." styleClass="note-text"/>
-            </placeholder>
+                    <VBox styleClass="table-empty">
+                        <Label text="No access log entries found" styleClass="table-empty-title"/>
+                    </VBox>
+                </placeholder>
         </TableView>
 
-        <Region prefHeight="14"/>
+        <Region minHeight="14" prefHeight="14"/>
 
-        <HBox alignment="CENTER_LEFT" spacing="10">
-            <Button fx:id="logsPrevButton" text="&#8592; Previous" onAction="#handleLogsPrevPage"
-                    styleClass="secondary-button"/>
-            <Label fx:id="logsPageLabel" text="Page 1 of 1" styleClass="note-text"/>
+        <HBox styleClass="table-pager">
+            <VBox.margin><Insets left="-19" right="-19"/></VBox.margin>
+            <Label fx:id="logsPageLabel" text="Page 1 of 1" styleClass="pager-text"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Label fx:id="logsRecordInfoLabel" text="" styleClass="note-text"/>
+            <Label fx:id="logsRecordInfoLabel" text="" styleClass="pager-text"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="logsNextButton" text="Next &#8594;" onAction="#handleLogsNextPage"
-                    styleClass="secondary-button"/>
+            <Button fx:id="logsPrevButton" text="Previous" onAction="#handleLogsPrevPage" styleClass="pager-button"/>
+            <Button fx:id="logsNextButton" text="Next" onAction="#handleLogsNextPage" styleClass="pager-button"/>
         </HBox>
 
     </VBox>

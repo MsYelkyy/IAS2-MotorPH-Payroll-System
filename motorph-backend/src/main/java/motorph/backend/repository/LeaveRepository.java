@@ -21,10 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles database operations for leave request records. findByDateRange is
- * not ported - grepping the desktop UI found no caller for the service
- * method that used it (dead code, same precedent as other skipped methods
- * this session).
+ * Handles database operations for leave request records.
  */
 @Repository
 public class LeaveRepository {
@@ -101,7 +98,9 @@ public class LeaveRepository {
         return findByStatus(RequestStatus.PENDING);
     }
 
-    // checks if employee has overlapping approved leave
+    /**
+     * Checks whether the employee already has approved leave overlapping the given dates.
+     */
     public boolean hasConflict(int employeeId, LocalDate startDate, LocalDate endDate) {
         String sql = """
                 SELECT COUNT(*)

@@ -25,14 +25,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Handles business logic for leave requests and leave approval actions.
- * Ported from the desktop's LeaveService. Permission gating (who may
- * approve/reject) moved to the controller via PermissionService, resolved
- * from DB-loaded roles per request - the old requireActiveHrOrAdmin()/
- * validateActorAccount() role checks are gone, replaced by
- * PermissionKey.APPROVE_LEAVE. Self-approval prevention stays here as pure
- * business logic. reverseApprovedLeave was not ported - grepping the
- * desktop UI found no caller (dead code).
+ * Handles leave requests and approvals. Permission checks are done in the controller; this service
+ * enforces the business rules, including preventing employees from approving their own requests.
  */
 @Service
 public class LeaveService {
@@ -40,13 +34,16 @@ public class LeaveService {
     private final LeaveRepository leaveRepository;
     private final LeaveCreditRepository leaveCreditRepository;
     private final EmployeeService employeeService;
+    private final UserAccessLogService userAccessLogService;
 
     public LeaveService(LeaveRepository leaveRepository,
                         LeaveCreditRepository leaveCreditRepository,
-                        EmployeeService employeeService) {
+                        EmployeeService employeeService,
+                        UserAccessLogService userAccessLogService) {
         this.leaveRepository = leaveRepository;
         this.leaveCreditRepository = leaveCreditRepository;
         this.employeeService = employeeService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<LeaveRequest> getAllLeaveRequests() {
@@ -70,7 +67,9 @@ public class LeaveService {
         return leaveRepository.findByEmployeeId(employeeId);
     }
 
-    // computes leave hours based on selected dates and paid business hours
+    /**
+     * Computes leave hours for a date range based on paid business hours.
+     */
     public double computeLeaveHours(LocalDate startDate, LocalDate endDate) {
         validateDateRange(startDate, endDate);
 
@@ -106,7 +105,6 @@ public class LeaveService {
         return Math.max(totalHours, 0.0);
     }
 
-    // submits a new leave request - employeeId is always the caller's own
     public void submitLeaveRequest(int employeeId,
                                    int leaveTypeId,
                                    LocalDate startDate,
@@ -151,7 +149,6 @@ public class LeaveService {
         leaveRepository.save(request);
     }
 
-    // approves a leave request - caller's permission already checked by the controller
     public void approveLeaveRequest(int actorEmployeeId, int actorUserAccountId, int leaveRequestId) {
         validateLeaveRequestId(leaveRequestId);
 
@@ -186,9 +183,13 @@ public class LeaveService {
                 year,
                 request.getLeaveHours()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_APPROVED,
+                "Approved leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId()
+                        + " (" + request.getStartDate() + " to " + request.getEndDate() + ")",
+                UserAccessLogService.TARGET_LEAVE_REQUEST, leaveRequestId);
     }
 
-    // rejects a leave request - caller's permission already checked by the controller
     public void rejectLeaveRequest(int actorEmployeeId, int actorUserAccountId, int leaveRequestId) {
         validateLeaveRequestId(leaveRequestId);
 
@@ -206,9 +207,15 @@ public class LeaveService {
                 request.getStatus(),
                 request.getApproverAccountId()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_LEAVE_REJECTED,
+                "Rejected leave request ID " + leaveRequestId + " of employee ID " + request.getEmployeeId(),
+                UserAccessLogService.TARGET_LEAVE_REQUEST, leaveRequestId);
     }
 
-    // cancels a pending leave request by the employee owner
+    /**
+     * Cancels a pending leave request. Only the employee who submitted it can cancel it.
+     */
     public void cancelLeaveRequest(int actorEmployeeId, int leaveRequestId) {
         validateEmployeeId(actorEmployeeId);
         validateLeaveRequestId(leaveRequestId);
@@ -228,7 +235,6 @@ public class LeaveService {
         leaveRepository.updateStatus(leaveRequestId, request.getStatus(), null);
     }
 
-    // dashboard counts
     public int countPendingRequests() {
         return leaveRepository.findPending().size();
     }
@@ -243,7 +249,9 @@ public class LeaveService {
                 .count();
     }
 
-    // returns all leave requests as display rows with employee names and leave type names resolved
+    /**
+     * Returns all leave requests as display rows, with employee and leave type names resolved.
+     */
     public List<LeaveRequestRowDTO> getLeaveRequestRows() {
         List<LeaveRequest> requests = leaveRepository.findAll();
 
@@ -273,7 +281,9 @@ public class LeaveService {
                 .collect(Collectors.toList());
     }
 
-    // returns leave credit rows for an employee in the current year
+    /**
+     * Returns the employee's leave credits for the current year.
+     */
     public List<LeaveCreditRowDTO> getLeaveCreditsForEmployee(int employeeId) {
         validateEmployeeId(employeeId);
         int year = LocalDate.now().getYear();
@@ -290,7 +300,6 @@ public class LeaveService {
                 .collect(Collectors.toList());
     }
 
-    // resolves a leave type ID to its display name
     public static String resolveLeaveTypeName(int leaveTypeId) {
         return switch (leaveTypeId) {
             case 1 -> "Vacation Leave";

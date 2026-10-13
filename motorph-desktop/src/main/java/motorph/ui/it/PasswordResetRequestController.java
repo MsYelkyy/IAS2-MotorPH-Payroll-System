@@ -5,6 +5,7 @@ import motorph.api.PasswordResetApiClient;
 import motorph.api.dto.user.PasswordResetCountsDTO;
 import motorph.api.dto.user.PasswordResetRequestRowDTO;
 import motorph.domain.value.PasswordResetStatus;
+import motorph.ui.common.EmptyState;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleObjectProperty;
@@ -119,7 +120,6 @@ public class PasswordResetRequestController {
 
     private void configureTable() {
         requestsTable.setItems(pagedRows);
-        requestsTable.setPlaceholder(new Label("No password reset requests found."));
         requestsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         requestIdColumn.setCellValueFactory(data ->
@@ -208,9 +208,8 @@ public class PasswordResetRequestController {
 
         pagedRows.setAll(filteredRows.subList(from, to));
         resetsPageLabel.setText("Page " + currentPage + " of " + totalPages);
-        resetsRecordInfoLabel.setText(total == 0
-                ? "No requests found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " requests");
+        EmptyState.apply(requestsTable, !allRows.isEmpty(), "requests", "Password reset requests will appear here.");
+        resetsRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allRows.size(), "requests"));
         resetsPrevButton.setDisable(currentPage <= 1);
         resetsNextButton.setDisable(currentPage >= totalPages);
     }

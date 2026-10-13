@@ -10,6 +10,8 @@ import motorph.api.ReportApiClient;
 import motorph.api.dto.employee.DepartmentDTO;
 import motorph.api.dto.employee.EmployeeSummaryDTO;
 import motorph.api.dto.payroll.PayrunDTO;
+import motorph.domain.value.Role;
+import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiMessageUtil;
 
@@ -20,6 +22,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.OverrunStyle;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -31,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,12 +110,22 @@ public class ReportsController {
     @FXML private ComboBox<String> dateRangeCombo;
 
     // Custom date pickers; kept in the grid and enabled only for DR_CUSTOM.
-    @FXML private VBox datePickerRow;
+    @FXML private HBox datePickerRow;
     @FXML private DatePicker dateFromPicker;
     @FXML private DatePicker dateToPicker;
 
     @FXML private Button previewButton;
     @FXML private Button exportButton;
+
+    // Summary panel: mirrors the current selections and says whether the report can be generated.
+    @FXML private Label reportStatusLabel;
+    @FXML private Label summaryTitleLabel;
+    @FXML private Label summaryDepartmentLabel;
+    @FXML private Label summaryEmployeeLabel;
+    @FXML private Label summaryDateRangeLabel;
+    @FXML private VBox  summaryStatusBox;
+    @FXML private Label summaryStatusTitleLabel;
+    @FXML private Label summaryStatusNoteLabel;
 
     // --- Services / API clients --------------------------------------------
 
@@ -147,6 +161,7 @@ public class ReportsController {
         DatePickerInputHelper.enableMaskedInput(dateFromPicker);
         DatePickerInputHelper.enableMaskedInput(dateToPicker);
 
+        watchSummaryInputs();
         reportTypeCombo.setValue(ReportType.ATTENDANCE);
         configureFilters();
 
@@ -174,8 +189,21 @@ public class ReportsController {
     // --- Setup helpers ----------------------------------------------------
 
     private void setupReportTypeCombo() {
-        reportTypeCombo.getItems().setAll(ReportType.values());
+        reportTypeCombo.getItems().setAll(availableReportTypes());
         reportTypeCombo.setOnAction(e -> configureFilters());
+    }
+
+    // the backend grants VIEW_ALL_PAYSLIPS to Admin, Finance and HR; other roles would only get a 403
+    private List<ReportType> availableReportTypes() {
+        boolean canViewAllPayslips = canViewAllPayslips(CurrentUserSession.getActiveRole());
+
+        return Arrays.stream(ReportType.values())
+                .filter(type -> type != ReportType.PAYSLIP || canViewAllPayslips)
+                .toList();
+    }
+
+    static boolean canViewAllPayslips(Role role) {
+        return role == Role.ADMIN || role == Role.HR || role == Role.FINANCE;
     }
 
     private void setupDepartmentCombo() {
@@ -413,6 +441,7 @@ public class ReportsController {
         statusRow.setManaged(!usesAction);
 
         updateDatePickerVisibility();
+        refreshSummary();
     }
 
     private void setDateRangeOptions(boolean payrollMode) {
@@ -488,6 +517,83 @@ public class ReportsController {
         buttonCell.setPrefWidth(0);
         buttonCell.setTextOverrun(OverrunStyle.ELLIPSIS);
         combo.setButtonCell(buttonCell);
+    }
+
+    // --- Summary panel ----------------------------------------------------
+
+    private void watchSummaryInputs() {
+        for (ComboBox<?> combo : List.of(reportTypeCombo, departmentCombo, employeeCombo, payrunCombo, dateRangeCombo)) {
+            combo.valueProperty().addListener((obs, was, now) -> refreshSummary());
+        }
+        dateFromPicker.valueProperty().addListener((obs, was, now) -> refreshSummary());
+        dateToPicker.valueProperty().addListener((obs, was, now) -> refreshSummary());
+    }
+
+    // mirrors the current selections and whether the report can be generated
+    private void refreshSummary() {
+        ReportType type = reportTypeCombo.getValue();
+        summaryTitleLabel.setText(type == null ? "Select a report" : type.toString());
+
+        summaryDepartmentLabel.setText(departmentCombo.isDisabled() ? "Not used"
+                : departmentCombo.getValue() == null ? "All Departments" : comboText(departmentCombo));
+
+        boolean employeeRequired = type == ReportType.EMPLOYEE_TIMECARD || type == ReportType.PAYSLIP;
+        summaryEmployeeLabel.setText(employeeCombo.isDisabled() ? "Not used"
+                : employeeCombo.getValue() != null ? comboText(employeeCombo)
+                : employeeRequired ? "Not selected" : "All employees");
+
+        summaryDateRangeLabel.setText(dateRangeCombo.isDisabled() || dateRangeCombo.getValue() == null ? "Not used"
+                : DR_CUSTOM.equals(dateRangeCombo.getValue()) ? customRangeText()
+                : dateRangeCombo.getValue());
+
+        String issue = configurationIssue();
+        boolean ready = issue == null;
+        reportStatusLabel.setText(ready ? "Required fields are ready" : "Required fields are missing");
+        summaryStatusTitleLabel.setText(ready ? "Preview ready" : "Needs attention");
+        summaryStatusNoteLabel.setText(ready ? "Your report configuration is valid and ready to export." : issue);
+        summaryStatusBox.getStyleClass().removeAll("report-status-ready", "report-status-warning");
+        summaryStatusBox.getStyleClass().add(ready ? "report-status-ready" : "report-status-warning");
+    }
+
+    // what is still missing for the current report, or null when it can be previewed/exported;
+    // the fetch methods below remain the source of truth and re-validate on click
+    private String configurationIssue() {
+        ReportType type = reportTypeCombo.getValue();
+        if (type == null) return "Select a report type.";
+
+        if ((type == ReportType.EMPLOYEE_TIMECARD || type == ReportType.PAYSLIP) && employeeCombo.getValue() == null) {
+            return "Select an employee.";
+        }
+        if (type == ReportType.PAYSLIP && payrunCombo.getValue() == null) {
+            return "Select a payroll run.";
+        }
+        if (!usesDateRange(type)) return null;
+
+        String mode = dateRangeCombo.getValue();
+        if (DR_CUSTOM.equals(mode)) {
+            LocalDate from = dateFromPicker.getValue();
+            LocalDate to = dateToPicker.getValue();
+            boolean datesOptional = type == ReportType.AUDIT_LOG || type == ReportType.SUPPORT_TICKET;
+            if (from == null && to == null) return datesOptional ? null : "Choose a start and end date.";
+            if (from == null || to == null) return "Choose both a start and end date.";
+            if (to.isBefore(from)) return "The end date is before the start date.";
+        } else if (isPayrollReport(type) && DR_LATEST.equals(mode)
+                && payrunCombo.getValue() == null && latestPayrun == null) {
+            return "No payroll data is available yet.";
+        }
+        return null;
+    }
+
+    private String customRangeText() {
+        LocalDate from = dateFromPicker.getValue();
+        LocalDate to = dateToPicker.getValue();
+        return from != null && to != null ? DATE_FMT.format(from) + " – " + DATE_FMT.format(to) : "Custom";
+    }
+
+    private <T> String comboText(ComboBox<T> combo) {
+        T value = combo.getValue();
+        StringConverter<T> converter = combo.getConverter();
+        return converter == null ? value.toString() : converter.toString(value);
     }
 
     // --- Date resolution --------------------------------------------------

@@ -18,8 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Manages Pag-IBIG contribution rate records. findEffectiveOn is not
- * ported - it's only used by PayrollCalculator, out of scope until Phase 4.
+ * Manages Pag-IBIG contribution rate records.
  */
 @Repository
 public class PagIbigRateRepository {

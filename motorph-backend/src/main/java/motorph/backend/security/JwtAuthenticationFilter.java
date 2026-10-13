@@ -6,7 +6,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import motorph.backend.domain.UserAccount;
 import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.UserAccountRepository;
 
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,21 +21,22 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * Validates the Bearer access token on every request: signature, expiry, and
- * NOT revoked (checked against token_revocation on every call, not just at
- * issuance) - this is what makes logout actually invalidate a token instead
- * of leaving it usable until natural expiry.
+ * Checks Bearer access tokens on authenticated requests.
+ * The token is verified for validity, expiration, and revocation.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final TokenRevocationRepository tokenRevocationRepository;
+    private final UserAccountRepository userAccountRepository;
 
     public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider,
-                                   TokenRevocationRepository tokenRevocationRepository) {
+                                   TokenRevocationRepository tokenRevocationRepository,
+                                   UserAccountRepository userAccountRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.tokenRevocationRepository = tokenRevocationRepository;
+        this.userAccountRepository = userAccountRepository;
     }
 
     @Override
@@ -66,6 +69,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             int userAccountId = Integer.parseInt(claims.getSubject());
+
+            // The account is checked on every request, so locking or disabling it takes effect at once.
+            UserAccount account = userAccountRepository.findById(userAccountId);
+
+            if (account == null || !account.isActive() || account.isLocked()) {
+                return;
+            }
+
+            // A password reset signs the user out everywhere, which individual token IDs cannot express.
+            if (tokenRevocationRepository.isIssuedBeforeSessionRevocation(userAccountId, claims.getIssuedAt().toInstant())) {
+                return;
+            }
+
             int employeeId = claims.get("employeeId", Integer.class);
             Instant expiresAt = claims.getExpiration().toInstant();
 
@@ -77,7 +93,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (JwtException | IllegalArgumentException e) {
-            // leave SecurityContext unauthenticated; SecurityConfig rejects with 401/403 downstream
+            // Leave the request unauthenticated; Spring Security rejects it further down the chain.
         }
     }
 }

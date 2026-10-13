@@ -17,13 +17,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Handles business logic for overtime requests and approval actions. Ported
- * from the desktop's OvertimeService. Unlike leave (a static APPROVE_LEAVE
- * permission check is enough), overtime approval is a per-request dynamic
- * check: ADMIN can approve any request, everyone else only the request of an
- * employee they are the assigned supervisor of. The controller still checks
- * APPROVE_OVERTIME first (does this role have approval capability at all);
- * this service enforces the supervisor-or-admin narrowing on top of that.
+ * Handles overtime requests and approvals. Holders of {@code APPROVE_OVERTIME} (HR and Admin) can
+ * approve any request, supervisors can approve their direct reports' requests, and nobody can
+ * approve their own.
  */
 @Service
 public class OvertimeService {
@@ -33,20 +29,25 @@ public class OvertimeService {
     private final OvertimeRepository overtimeRepository;
     private final AttendanceService attendanceService;
     private final EmployeeService employeeService;
+    private final UserAccessLogService userAccessLogService;
 
     public OvertimeService(OvertimeRepository overtimeRepository,
                            AttendanceService attendanceService,
-                           EmployeeService employeeService) {
+                           EmployeeService employeeService,
+                           UserAccessLogService userAccessLogService) {
         this.overtimeRepository = overtimeRepository;
         this.attendanceService = attendanceService;
         this.employeeService = employeeService;
+        this.userAccessLogService = userAccessLogService;
     }
 
     public List<OvertimeRequest> getAllOvertimeRequests() {
         return overtimeRepository.findAll();
     }
 
-    // sums approved overtime hours within a date range, used by payroll computation
+    /**
+     * Sums the employee's approved overtime hours in the date range, for payroll computation.
+     */
     public double getApprovedOvertimeHours(int employeeId, LocalDate startDate, LocalDate endDate) {
         validateEmployeeId(employeeId);
 
@@ -74,7 +75,10 @@ public class OvertimeService {
         return overtimeRepository.findByEmployeeId(employeeId);
     }
 
-    // returns recent completed attendance eligible for a new overtime request
+    /**
+     * Returns recent completed attendance records that can still be used for a new overtime
+     * request.
+     */
     public List<Attendance> getEligibleAttendanceForOvertime(int employeeId, LocalDate asOfDate) {
         validateEmployeeId(employeeId);
 
@@ -86,7 +90,6 @@ public class OvertimeService {
         return overtimeRepository.findEligibleAttendanceForOvertime(employeeId, windowStart, asOfDate);
     }
 
-    // submits a new overtime request - employeeId is always the caller's own
     public void submitOvertimeRequest(int employeeId,
                                       int attendanceId,
                                       int overtimeTypeId,
@@ -130,11 +133,9 @@ public class OvertimeService {
         overtimeRepository.save(request);
     }
 
-    // approves an overtime request - actorIsAdmin/actorEmployeeId come from
-    // the controller (PermissionService.getActiveRole() + CurrentUserProvider)
-    public void approveOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorIsAdmin,
+    public void approveOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorCanApproveAny,
                                        int overtimeRequestId, String remarks) {
-        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorIsAdmin, overtimeRequestId);
+        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorCanApproveAny, overtimeRequestId);
 
         request.approve(actorUserAccountId, remarks);
 
@@ -144,12 +145,16 @@ public class OvertimeService {
                 request.getApproverAccountId(),
                 request.getRemarks()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_APPROVED,
+                "Approved overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
+                        + " on " + request.getOvertimeDate(),
+                UserAccessLogService.TARGET_OVERTIME_REQUEST, overtimeRequestId);
     }
 
-    // rejects an overtime request
-    public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorIsAdmin,
+    public void rejectOvertimeRequest(int actorEmployeeId, int actorUserAccountId, boolean actorCanApproveAny,
                                       int overtimeRequestId, String remarks) {
-        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorIsAdmin, overtimeRequestId);
+        OvertimeRequest request = validateApprovalAction(actorEmployeeId, actorCanApproveAny, overtimeRequestId);
 
         request.reject(actorUserAccountId, remarks);
 
@@ -159,9 +164,16 @@ public class OvertimeService {
                 request.getApproverAccountId(),
                 request.getRemarks()
         );
+
+        userAccessLogService.logEvent(actorUserAccountId, UserAccessLogService.ACTION_OVERTIME_REJECTED,
+                "Rejected overtime request ID " + overtimeRequestId + " of employee ID " + request.getEmployeeId()
+                        + " on " + request.getOvertimeDate(),
+                UserAccessLogService.TARGET_OVERTIME_REQUEST, overtimeRequestId);
     }
 
-    // cancels a pending overtime request by the employee owner
+    /**
+     * Cancels a pending overtime request. Only the employee who submitted it can cancel it.
+     */
     public void cancelOvertimeRequest(int actorEmployeeId, int overtimeRequestId, String reason) {
         validateEmployeeId(actorEmployeeId);
         validateOvertimeRequestId(overtimeRequestId);
@@ -186,12 +198,17 @@ public class OvertimeService {
         );
     }
 
-    private OvertimeRequest validateApprovalAction(int actorEmployeeId, boolean actorIsAdmin, int overtimeRequestId) {
+    private OvertimeRequest validateApprovalAction(int actorEmployeeId, boolean actorCanApproveAny,
+                                                   int overtimeRequestId) {
         validateOvertimeRequestId(overtimeRequestId);
 
         OvertimeRequest request = getOvertimeRequestById(overtimeRequestId);
 
-        requireActiveSupervisorOrAdmin(actorEmployeeId, actorIsAdmin, request);
+        if (request.getEmployeeId() == actorEmployeeId) {
+            throw new UnauthorizedException("You cannot approve or reject your own overtime request.");
+        }
+
+        requireApproverOrSupervisor(actorEmployeeId, actorCanApproveAny, request);
 
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new BusinessRuleException("Only pending overtime requests can be approved or rejected.");
@@ -200,10 +217,10 @@ public class OvertimeService {
         return request;
     }
 
-    // ensures only the request's assigned supervisor or an admin may approve/reject -
-    // a per-request dynamic check, since supervisors have no dedicated role of their own
-    private void requireActiveSupervisorOrAdmin(int actorEmployeeId, boolean actorIsAdmin, OvertimeRequest request) {
-        if (actorIsAdmin) {
+    // supervisors have no role of their own, so their access is checked per request
+    private void requireApproverOrSupervisor(int actorEmployeeId, boolean actorCanApproveAny,
+                                             OvertimeRequest request) {
+        if (actorCanApproveAny) {
             return;
         }
 
@@ -244,7 +261,9 @@ public class OvertimeService {
         }
     }
 
-    // ensures the overtime date falls within the recent allowed window
+    /**
+     * Ensures the overtime date falls within the allowed recent window.
+     */
     private void validateOvertimeWindow(LocalDate overtimeDate) {
         LocalDate today = LocalDate.now();
         LocalDate windowStart = today.minusDays(OVERTIME_WINDOW_DAYS);

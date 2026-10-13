@@ -1,5 +1,6 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.Payrun;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.payroll.CompletedPayrunSummaryDTO;
@@ -8,6 +9,8 @@ import motorph.backend.dto.payroll.PayrollSummaryDTO;
 import motorph.backend.dto.payroll.PayrunCreateRequest;
 import motorph.backend.dto.payroll.PayrunReadinessDTO;
 import motorph.backend.dto.payroll.PendingPayrunSummaryDTO;
+import motorph.backend.exception.ValidationException;
+import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayrollService;
 import motorph.backend.service.PermissionService;
 
@@ -21,13 +24,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Payrun listing, processing, and generation endpoints. Payrun period listing
- * (getAllPayruns/getPayrunsWithPayrollData/getPayrun) carries no employee-
- * specific figures and matches the original desktop's PayrollService, which
- * had no permission check at all - any authenticated user could see payrun
- * schedule dates (the employee dashboard's upcoming-payday widget depends on
- * this). Everything that touches actual payroll figures or triggers
- * computation is gated by VIEW_PAYROLL/PROCESS_PAYROLL.
+ * Payrun endpoints with strict input validation for payrun and employee parameters.
+ * Listing payruns is open to any authenticated user because it only exposes
+ * period dates, which the employee dashboard uses to show the next payday. Anything that exposes
+ * payroll amounts or runs a computation requires {@code VIEW_PAYROLL} or {@code PROCESS_PAYROLL}.
  */
 @RestController
 @RequestMapping("/api/v1/payruns")
@@ -35,10 +35,14 @@ public class PayrunController {
 
     private final PayrollService payrollService;
     private final PermissionService permissionService;
+    private final CurrentUserProvider currentUserProvider;
 
-    public PayrunController(PayrollService payrollService, PermissionService permissionService) {
+    public PayrunController(PayrollService payrollService,
+                           PermissionService permissionService,
+                           CurrentUserProvider currentUserProvider) {
         this.payrollService = payrollService;
         this.permissionService = permissionService;
+        this.currentUserProvider = currentUserProvider;
     }
 
     @GetMapping
@@ -48,6 +52,7 @@ public class PayrunController {
 
     @GetMapping("/{payrunId}")
     public Payrun getPayrun(@PathVariable int payrunId) {
+        validatePositiveId(payrunId, "Payrun ID");
         return payrollService.getPayrun(payrunId);
     }
 
@@ -70,31 +75,42 @@ public class PayrunController {
 
     @GetMapping("/{payrunId}/readiness")
     public List<PayrunReadinessDTO> getPayrunReadiness(@PathVariable int payrunId) {
+        validatePositiveId(payrunId, "Payrun ID");
         permissionService.requirePermission(PermissionKey.VIEW_PAYROLL);
         return payrollService.getPayrunReadiness(payrunId);
     }
 
     @GetMapping("/{payrunId}/summaries")
     public List<PayrollSummaryDTO> getPayrollSummaries(@PathVariable int payrunId) {
+        validatePositiveId(payrunId, "Payrun ID");
         permissionService.requirePermission(PermissionKey.VIEW_PAYROLL);
         return payrollService.getPayrollSummaries(payrunId);
     }
 
     @GetMapping("/{payrunId}/preview/{employeeId}")
     public PayrollPreviewDTO previewPayrollForEmployee(@PathVariable int payrunId, @PathVariable int employeeId) {
+        validatePositiveId(payrunId, "Payrun ID");
+        validatePositiveId(employeeId, "Employee ID");
         permissionService.requirePermission(PermissionKey.PROCESS_PAYROLL);
         return payrollService.previewPayrollForEmployee(employeeId, payrunId);
     }
 
     @PostMapping
-    public Payrun createPayrun(@RequestBody PayrunCreateRequest request) {
+    public Payrun createPayrun(@RequestBody @Valid PayrunCreateRequest request) {
         permissionService.requirePermission(PermissionKey.PROCESS_PAYROLL);
-        return payrollService.createPayrun(request);
+        return payrollService.createPayrun(request, currentUserProvider.getCurrentUserAccountId());
     }
 
     @PostMapping("/{payrunId}/generate")
     public int generatePayroll(@PathVariable int payrunId) {
+        validatePositiveId(payrunId, "Payrun ID");
         permissionService.requirePermission(PermissionKey.PROCESS_PAYROLL);
-        return payrollService.generatePayrollForReadyEmployees(payrunId);
+        return payrollService.generatePayrollForReadyEmployees(payrunId, currentUserProvider.getCurrentUserAccountId());
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }

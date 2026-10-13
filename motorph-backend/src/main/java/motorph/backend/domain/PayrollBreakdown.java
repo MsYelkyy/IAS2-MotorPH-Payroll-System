@@ -22,7 +22,6 @@ public class PayrollBreakdown {
     private final double totalDeductions;
     private final double netPay;
 
-    // constructors
     public PayrollBreakdown(
             double basicPay,
             double riceSubsidy,
@@ -59,7 +58,6 @@ public class PayrollBreakdown {
         validateNetPay();
     }
 
-    // getters
     public double getBasicPay() {
         return basicPay;
     }
@@ -116,7 +114,6 @@ public class PayrollBreakdown {
         return netPay;
     }
 
-    // validates non-negative numeric values
     private double validateNonNegative(double value, String message) {
         if (value < 0) {
             throw new IllegalArgumentException(message);
@@ -124,7 +121,9 @@ public class PayrollBreakdown {
         return value;
     }
 
-    // validates computed net pay
+    /**
+     * Ensures net pay equals total earnings minus total deductions, within a one-centavo tolerance.
+     */
     private void validateNetPay() {
         double expectedNetPay = totalEarnings - totalDeductions;
         double tolerance = 0.01;

@@ -13,7 +13,6 @@ import java.sql.SQLException;
 
 /**
  * Handles database operations for government details records.
- * Read-only for Phase 2 - write methods move with employee CRUD (Phase 3).
  */
 @Repository
 public class GovernmentDetailsRepository {
@@ -54,7 +53,6 @@ public class GovernmentDetailsRepository {
         return null;
     }
 
-    // saves government details
     public void save(GovernmentDetails governmentDetails) {
         String sql = """
                 INSERT INTO government_details (
@@ -83,7 +81,6 @@ public class GovernmentDetailsRepository {
         }
     }
 
-    // updates government details
     public void update(GovernmentDetails governmentDetails) {
         String sql = """
                 UPDATE government_details

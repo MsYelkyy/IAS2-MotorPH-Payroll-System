@@ -1,11 +1,12 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.SupportTicket;
-import motorph.backend.domain.value.Role;
 import motorph.backend.domain.value.RoutingTeam;
 import motorph.backend.domain.value.SupportTicketCategory;
+import motorph.backend.dto.support.SupportTicketRowDTO;
 import motorph.backend.dto.support.TicketSubmitRequest;
-import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
@@ -21,13 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Support ticket endpoints. Submitting always acts on the caller's own
- * employeeId. Viewing the cross-employee ticket lists (all tickets / one
- * routing team / open count) requires an IT/HR/ADMIN/FINANCE active role -
- * a check the original desktop service never had at all (only its UI menu
- * structure restricted access). Since this API is reachable directly, that
- * gate is added here as a hardening step; resolve/cancel keep the original's
- * exact role logic, enforced in the service.
+ * Support ticket endpoints. Employees submit and view their own tickets; the team and cancel rules
+ * for everything else are enforced in {@link SupportTicketService}.
+ * Adds @Valid to TicketSubmitRequest.
+ * Validates routingTeam and ticketId path variables.
  */
 @RestController
 @RequestMapping("/api/v1/support-tickets")
@@ -46,12 +44,15 @@ public class SupportTicketController {
     }
 
     @PostMapping
-    public void submitTicket(@RequestBody TicketSubmitRequest request) {
+    public void submitTicket(@RequestBody @Valid TicketSubmitRequest request) {
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+
         supportTicketService.submitTicket(
-                callerEmployeeId(),
+                principal.employeeId(),
                 SupportTicketCategory.fromValue(request.category()),
                 request.subject(),
-                request.description()
+                request.description(),
+                principal.userAccountId()
         );
     }
 
@@ -61,44 +62,45 @@ public class SupportTicketController {
     }
 
     @GetMapping
-    public List<SupportTicket> getAllTickets() {
-        requireTicketManagerRole();
-        return supportTicketService.getAllTickets();
+    public List<SupportTicketRowDTO> getAllTickets() {
+        return supportTicketService.getAllTickets(permissionService.getActiveRole());
     }
 
     @GetMapping("/routing-team/{routingTeam}")
-    public List<SupportTicket> getTicketsByRoutingTeam(@PathVariable String routingTeam) {
-        requireTicketManagerRole();
-        return supportTicketService.getTicketsByRoutingTeam(RoutingTeam.fromValue(routingTeam));
+    public List<SupportTicketRowDTO> getTicketsByRoutingTeam(@PathVariable String routingTeam) {
+        if (routingTeam == null || routingTeam.isBlank()) {
+            throw new ValidationException("Routing team parameter is required.");
+        }
+        return supportTicketService.getTicketsByRoutingTeam(
+                RoutingTeam.fromValue(routingTeam), permissionService.getActiveRole());
     }
 
     @GetMapping("/open-count")
     public int getOpenTicketCount() {
-        requireTicketManagerRole();
-        return supportTicketService.getOpenTicketCount();
+        return supportTicketService.getOpenTicketCount(permissionService.getActiveRole());
     }
 
     @PostMapping("/{ticketId}/resolve")
     public void resolveTicket(@PathVariable int ticketId) {
+        validatePositiveId(ticketId, "Ticket ID");
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         supportTicketService.resolveTicket(ticketId, principal.userAccountId(), permissionService.getActiveRole());
     }
 
     @PostMapping("/{ticketId}/cancel")
     public void cancelTicket(@PathVariable int ticketId) {
-        supportTicketService.cancelTicket(ticketId, callerEmployeeId(), permissionService.getActiveRole());
-    }
-
-    private void requireTicketManagerRole() {
-        Role role = permissionService.getActiveRole();
-        boolean allowed = role == Role.IT || role == Role.HR || role == Role.ADMIN || role == Role.FINANCE;
-
-        if (!allowed) {
-            throw new UnauthorizedException("You do not have permission to perform this action.");
-        }
+        validatePositiveId(ticketId, "Ticket ID");
+        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+        supportTicketService.cancelTicket(ticketId, permissionService.getActiveRole(), principal.userAccountId());
     }
 
     private int callerEmployeeId() {
         return currentUserProvider.getCurrentPrincipal().employeeId();
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }

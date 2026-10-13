@@ -4,6 +4,7 @@ import motorph.api.AccessLogApiClient;
 import motorph.api.ApiClientFactory;
 import motorph.api.dto.accesslog.AccessLogAction;
 import motorph.api.dto.accesslog.UserAccessLogDTO;
+import motorph.ui.common.EmptyState;
 import motorph.ui.util.UiMessageUtil;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -106,9 +107,35 @@ public class ITAccessLogsController {
                 AccessLogAction.LOGIN_FAILED,
                 AccessLogAction.LOGOUT,
                 AccessLogAction.PASSWORD_RESET,
+                AccessLogAction.PASSWORD_RESET_COMPLETED,
+                AccessLogAction.TOTP_ENROLLMENT_STARTED,
+                AccessLogAction.TOTP_ENROLLMENT_COMPLETED,
+                AccessLogAction.TOTP_VERIFICATION_SUCCEEDED,
+                AccessLogAction.TOTP_VERIFICATION_FAILED,
+                AccessLogAction.TOTP_RESET_BY_ADMIN,
                 AccessLogAction.ACCOUNT_STATUS_CHANGED,
                 AccessLogAction.DATABASE_BACKUP_CREATED,
-                AccessLogAction.DATABASE_RESTORE
+                AccessLogAction.DATABASE_RESTORE,
+                AccessLogAction.DATABASE_BACKUP_DOWNLOADED,
+                AccessLogAction.DATABASE_BACKUP_DELETED,
+                AccessLogAction.PASSWORD_CHANGED,
+                AccessLogAction.PASSWORD_RESET_CANCELLED,
+                AccessLogAction.USER_ROLES_UPDATED,
+                AccessLogAction.ROLE_PERMISSIONS_UPDATED,
+                AccessLogAction.EMPLOYEE_CREATED,
+                AccessLogAction.EMPLOYEE_UPDATED,
+                AccessLogAction.EMPLOYEE_DEACTIVATED,
+                AccessLogAction.SALARY_RECORD_ADDED,
+                AccessLogAction.SALARY_RECORD_UPDATED,
+                AccessLogAction.BENEFIT_ENDED,
+                AccessLogAction.LEAVE_APPROVED,
+                AccessLogAction.LEAVE_REJECTED,
+                AccessLogAction.OVERTIME_APPROVED,
+                AccessLogAction.OVERTIME_REJECTED,
+                AccessLogAction.PAYRUN_CREATED,
+                AccessLogAction.PAYROLL_GENERATED,
+                AccessLogAction.PAYSLIP_EXPORTED,
+                AccessLogAction.REPORT_EXPORTED
         );
         actionFilterCombo.setValue("All Actions");
         searchField.textProperty().addListener((obs, old, val) -> applyFilters());
@@ -117,7 +144,6 @@ public class ITAccessLogsController {
 
     private void configureTable() {
         logsTable.setItems(pagedLogs);
-        logsTable.setPlaceholder(new Label("No access log entries found."));
         logsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         userIdColumn.setCellValueFactory(data -> {
@@ -213,9 +239,8 @@ public class ITAccessLogsController {
 
         pagedLogs.setAll(filteredLogs.subList(from, to));
         logsPageLabel.setText("Page " + currentPage + " of " + totalPages);
-        logsRecordInfoLabel.setText(total == 0
-                ? "No entries found."
-                : "Showing " + (from + 1) + " to " + to + " of " + total + " entries");
+        EmptyState.apply(logsTable, !allLogs.isEmpty(), "log entries", "User activity will appear here.");
+        logsRecordInfoLabel.setText(EmptyState.recordInfo(from, to, total, allLogs.size(), "entries"));
         logsPrevButton.setDisable(currentPage <= 1);
         logsNextButton.setDisable(currentPage >= totalPages);
     }

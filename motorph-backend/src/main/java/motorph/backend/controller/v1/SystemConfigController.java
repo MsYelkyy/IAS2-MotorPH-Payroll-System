@@ -1,16 +1,17 @@
 package motorph.backend.controller.v1;
 
 import motorph.backend.domain.value.Role;
-import motorph.backend.dto.systemconfig.OtpPolicyDTO;
 import motorph.backend.dto.systemconfig.PagIbigRateDTO;
 import motorph.backend.dto.systemconfig.PhilHealthRateDTO;
 import motorph.backend.dto.systemconfig.SssRateDTO;
+import motorph.backend.dto.systemconfig.TotpPolicyDTO;
 import motorph.backend.dto.systemconfig.WithholdingTaxBracketDTO;
 import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.SystemConfigService;
-import motorph.backend.service.TwoFactorService;
+import motorph.backend.service.LoginChallengeService;
+import motorph.backend.service.TotpCodeService;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,11 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Statutory government rate configuration endpoints. Admin-only - the
- * desktop's System Configuration screen has always lived exclusively under
- * the Admin module, and there is no dedicated permission key for it, so
- * this checks the active role directly (same pattern as SupportTicketController's
- * hardening gate).
+ * Government rate configuration endpoints. Restricted to the Admin role because there is no
+ * permission key for system configuration.
  */
 @RestController
 @RequestMapping("/api/v1/system-config")
@@ -44,15 +42,17 @@ public class SystemConfigController {
         this.currentUserProvider = currentUserProvider;
     }
 
-    // read-only view of the OTP policy this backend enforces
-    @GetMapping("/otp-policy")
-    public OtpPolicyDTO getOtpPolicy() {
+    /**
+     * Returns the authenticator-code policy currently enforced by the backend.
+     */
+    @GetMapping("/totp-policy")
+    public TotpPolicyDTO getTotpPolicy() {
         requireAdmin();
 
-        return new OtpPolicyDTO(
-                TwoFactorService.getOtpLength(),
-                TwoFactorService.getOtpExpiryMinutes(),
-                TwoFactorService.getMaxAttempts()
+        return new TotpPolicyDTO(
+                TotpCodeService.DIGITS,
+                TotpCodeService.PERIOD_SECONDS,
+                LoginChallengeService.MAX_ATTEMPTS
         );
     }
 

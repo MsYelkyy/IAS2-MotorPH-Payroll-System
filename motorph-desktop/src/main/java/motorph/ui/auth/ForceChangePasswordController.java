@@ -11,12 +11,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-/** Handles forced password change when user logs in with a temporary password. */
+/**
+ * Sets a new password. Serves two paths: the forced change after logging in with a temporary password,
+ * and the last step of Forgot Password, where the single-use reset token from the authenticator check
+ * authorises the change.
+ */
 public class ForceChangePasswordController {
 
     private AuthApiClient authApiClient;
     private LoginController loginController;
     private String pendingChallengeId;
+    private String pendingResetToken;
 
     private boolean newPasswordVisible     = false;
     private boolean confirmPasswordVisible = false;
@@ -30,6 +35,10 @@ public class ForceChangePasswordController {
     @FXML private Button        confirmPasswordToggleBtn;
 
     @FXML private Label forceChangeMessageLabel;
+    @FXML private Label eyebrowLabel;
+    @FXML private Label headingLabel;
+    @FXML private Label subheadingLabel;
+    @FXML private Button updateButton;
 
     @FXML
     private void initialize() {
@@ -44,6 +53,20 @@ public class ForceChangePasswordController {
     // stores the opaque challenge login issued for this forced change
     public void setPendingChallenge(String challengeId) {
         this.pendingChallengeId = challengeId;
+        this.pendingResetToken = null;
+        eyebrowLabel.setText("SECURE YOUR ACCOUNT");
+        headingLabel.setText("Create a new password");
+        subheadingLabel.setText("Choose a new password before continuing to your account.");
+        clearForm();
+    }
+
+    // stores the single-use token the backend issued after the authenticator code was accepted
+    public void setPendingResetToken(String resetToken) {
+        this.pendingResetToken = resetToken;
+        this.pendingChallengeId = null;
+        eyebrowLabel.setText("ACCOUNT RECOVERY");
+        headingLabel.setText("Choose a new password");
+        subheadingLabel.setText("Your identity is confirmed. Choose a new password for your account.");
         clearForm();
     }
 
@@ -52,7 +75,7 @@ public class ForceChangePasswordController {
     private void handleUpdatePassword() {
         UiMessageUtil.clearMessage(forceChangeMessageLabel);
 
-        if (pendingChallengeId == null) {
+        if (pendingChallengeId == null && pendingResetToken == null) {
             UiMessageUtil.setError(forceChangeMessageLabel, "Session expired. Please sign in again.");
             return;
         }
@@ -66,9 +89,15 @@ public class ForceChangePasswordController {
                 : UiValidationUtil.getText(confirmPasswordField);
 
         try {
-            authApiClient.completeTemporaryPassword(pendingChallengeId, newPassword, confirmPassword);
+            if (pendingResetToken != null) {
+                authApiClient.resetPassword(pendingResetToken, newPassword, confirmPassword);
+            } else {
+                authApiClient.completeTemporaryPassword(pendingChallengeId, newPassword, confirmPassword);
+            }
 
             pendingChallengeId = null;
+            pendingResetToken = null;
+            clearForm();
 
             if (loginController != null) {
                 loginController.onForceChangePasswordComplete(
@@ -130,6 +159,7 @@ public class ForceChangePasswordController {
     @FXML
     private void backToLogin() {
         pendingChallengeId = null;
+        pendingResetToken = null;
         clearForm();
 
         if (loginController != null) {

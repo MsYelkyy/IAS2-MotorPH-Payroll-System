@@ -3,41 +3,54 @@ package motorph.backend.service;
 import motorph.backend.exception.AuthenticationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.security.PasswordHasher;
+import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
-import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
+import motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
+import java.time.LocalDateTime;
+
 /**
- * Handles user authentication with password validation and OTP verification.
- * Ported from the desktop's AuthenticationService. Ownership of RBAC/roles
- * has moved to being resolved per-request from the DB (see CurrentUserProvider) -
- * this class only establishes "who is this" and "did the password match."
+ * Verifies the user's login credentials and handles the next login step.
+ * A correct password alone does not complete the login. The user must still finish
+ * authenticator setup or enter a valid authenticator code before tokens are issued.
+ * Roles and permissions are handled separately by {@link PermissionService}.
  */
 @Service
 public class AuthenticationService {
 
     private final UserAccountRepository userAccountRepository;
-    private final EmployeeRepository employeeRepository;
-    private final TwoFactorService twoFactorService;
-    private final OtpDeliveryService otpDeliveryService;
+    private final TotpCredentialRepository totpCredentialRepository;
     private final UserAccessLogService userAccessLogService;
+    private final TokenRevocationRepository tokenRevocationRepository;
+    private final Clock clock;
+    @Value("${motorph.auth.lockout.max-failed-password-attempts:5}")
+    private int maxFailedPasswordAttempts = 5;
 
     public AuthenticationService(UserAccountRepository userAccountRepository,
-                                 EmployeeRepository employeeRepository,
-                                 TwoFactorService twoFactorService,
-                                 OtpDeliveryService otpDeliveryService,
-                                 UserAccessLogService userAccessLogService) {
+                                 TotpCredentialRepository totpCredentialRepository,
+                                 UserAccessLogService userAccessLogService,
+                                 TokenRevocationRepository tokenRevocationRepository,
+                                 Clock clock) {
 
         this.userAccountRepository = userAccountRepository;
-        this.employeeRepository = employeeRepository;
-        this.twoFactorService = twoFactorService;
-        this.otpDeliveryService = otpDeliveryService;
+        this.totpCredentialRepository = totpCredentialRepository;
         this.userAccessLogService = userAccessLogService;
+        this.tokenRevocationRepository = tokenRevocationRepository;
+        this.clock = clock;
     }
 
-    // authenticates email and password, then sends OTP when needed
+    /**
+     * Verifies the user's email and password.
+     * If the account uses a temporary password, the user must change it first.
+     * Otherwise, the next step is either authenticator setup or authenticator code verification.
+     */
     public LoginAttemptOutcome authenticate(String companyEmailInput, String passwordInput) {
         validateCredentialsInput(companyEmailInput, passwordInput);
 
@@ -61,23 +74,27 @@ public class AuthenticationService {
             );
         }
 
-        getPersonalEmailOrThrow(account);
-
-        String rawOtp = twoFactorService.createLoginOtp(account.getUserAccountId());
-        var otpPreview = otpDeliveryService.sendLoginOtp(account.getCompanyEmail(), rawOtp);
+        TotpCredential credential = totpCredentialRepository.findByUserAccountId(account.getUserAccountId());
+        boolean enrolled = credential != null && credential.isEnabled();
 
         return new LoginAttemptOutcome(
-                LoginAttemptOutcome.Type.OTP_SENT,
+                enrolled ? LoginAttemptOutcome.Type.TOTP_REQUIRED : LoginAttemptOutcome.Type.TOTP_SETUP_REQUIRED,
                 account.getUserAccountId(),
                 account.getCompanyEmail(),
-                "OTP verification required.",
-                otpPreview
+                enrolled
+                        ? "Enter the code from your authenticator app."
+                        : "Set up your authenticator app to continue."
         );
     }
 
-    // verifies login OTP, completes login, and returns the authenticated account
-    public UserAccount verifyLoginOtp(int userAccountId, String rawOtp) {
-        validateUserAccountId(userAccountId);
+    /**
+     * Loads the account linked to the challenge and checks if the user can still sign in.
+     * The account is checked again before the login is completed in case it was locked or deactivated.
+     */
+    public UserAccount requireLoginEligible(int userAccountId) {
+        if (userAccountId <= 0) {
+            throw new ValidationException("User account ID is required.");
+        }
 
         UserAccount account = userAccountRepository.findById(userAccountId);
 
@@ -86,12 +103,15 @@ public class AuthenticationService {
         }
 
         validateAccountForLogin(account);
-        twoFactorService.verifyLoginOtp(userAccountId, rawOtp);
-
-        userAccountRepository.updateLastLogin(userAccountId);
-        logSuccess(account);
-
         return account;
+    }
+
+    /**
+     * Records a successful login once the authenticator code has been accepted.
+     */
+    public void completeLogin(UserAccount account) {
+        userAccountRepository.updateLastLogin(account.getUserAccountId());
+        userAccessLogService.logLoginSuccess(account.getUserAccountId(), "Login successful.");
     }
 
     private void validateAccountForLogin(UserAccount account) {
@@ -102,7 +122,8 @@ public class AuthenticationService {
 
         if (account.isLocked()) {
             logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
-            throw new AuthenticationException("Account is locked.");
+            throw new AuthenticationException(
+                    "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
         }
 
         if (account.getRoles() == null || account.getRoles().isEmpty()) {
@@ -118,16 +139,6 @@ public class AuthenticationService {
             logFailed(account.getCompanyEmail(), "Login failed because temporary password expired.");
             throw new AuthenticationException("Temporary password has expired. Please request another password reset.");
         }
-    }
-
-    private String getPersonalEmailOrThrow(UserAccount account) {
-        String personalEmail = employeeRepository.findPersonalEmailByEmployeeId(account.getEmployeeId());
-
-        if (personalEmail == null || personalEmail.isBlank()) {
-            throw new ValidationException("Registered personal email is required for OTP verification.");
-        }
-
-        return personalEmail.trim();
     }
 
     private void validateCredentialsInput(String companyEmail, String password) {
@@ -148,19 +159,37 @@ public class AuthenticationService {
         );
 
         if (!matched) {
+            FailedPasswordAttemptResult result = userAccountRepository.recordFailedPasswordAttempt(
+                    account.getUserAccountId(), maxFailedPasswordAttempts);
             logFailed(account.getCompanyEmail(), "Login failed because password did not match.");
+
+            if (result == FailedPasswordAttemptResult.LOCK_APPLIED) {
+                tokenRevocationRepository.revokeAllSessions(account.getUserAccountId(), LocalDateTime.now(clock));
+                userAccessLogService.logAutomaticAccountLock(account.getUserAccountId());
+                throw new AuthenticationException(
+                        "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);
+            }
+
             throw new AuthenticationException("Invalid email or password.");
         }
-    }
 
-    private void validateUserAccountId(int userAccountId) {
-        if (userAccountId <= 0) {
-            throw new ValidationException("User account ID is required.");
+        if (!userAccountRepository.resetFailedPasswordAttempts(account.getUserAccountId())) {
+            logFailed(account.getCompanyEmail(), "Login failed because account is locked.");
+            throw new AuthenticationException("Invalid email or password.");
         }
+
+        upgradePasswordHashIfNeeded(rawPassword, account);
     }
 
-    private void logSuccess(UserAccount account) {
-        userAccessLogService.logLoginSuccess(account.getUserAccountId(), "Login successful.");
+    private void upgradePasswordHashIfNeeded(String rawPassword, UserAccount account) {
+        if (!PasswordHasher.needsRehash(account.getPasswordHash())) {
+            return;
+        }
+
+        String salt = PasswordHasher.generateSalt();
+
+        userAccountRepository.updatePasswordHash(
+                account.getUserAccountId(), PasswordHasher.hash(rawPassword, salt), salt);
     }
 
     private void logFailed(String companyEmail, String details) {

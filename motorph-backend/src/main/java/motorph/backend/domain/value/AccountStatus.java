@@ -9,7 +9,6 @@ public enum AccountStatus {
     DISABLED,
     LOCKED;
 
-    // Converts text to account status.
     public static AccountStatus fromValue(String value) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException("Account status is required.");

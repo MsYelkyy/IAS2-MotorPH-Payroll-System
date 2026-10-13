@@ -1,11 +1,13 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.domain.value.Role;
 import motorph.backend.dto.user.AccountCountsDTO;
 import motorph.backend.dto.user.AccountSummaryDTO;
 import motorph.backend.dto.user.UserAccountRowDTO;
 import motorph.backend.dto.user.UserRolesUpdateRequest;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PermissionService;
 import motorph.backend.service.UserAccountService;
@@ -21,10 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * IT user account management. Reads accept either VIEW_USERS or MANAGE_USERS;
- * every status/role change requires MANAGE_USERS. The acting IT user is always
- * resolved from the validated token, never from the request body, so the audit
- * trail can't be forged by a modified client.
+ * IT user account management. Viewing accounts requires {@code VIEW_USERS} or {@code MANAGE_USERS};
+ * any status or role change requires {@code MANAGE_USERS}. The acting user is taken from the access
+ * token so audit entries cannot be forged by the client.
+ * Refactored to include @Valid checking on role updates (UserRolesUpdateRequest).
  */
 @RestController
 @RequestMapping("/api/v1/user-accounts")
@@ -54,54 +56,72 @@ public class UserAccountController {
         return userAccountService.getAccountCounts();
     }
 
-    // display-only lookups used by HR screens that show who approved a request
-    // or an employee's company email, so they also accept the employee-module
-    // permissions rather than requiring full user-administration rights
+    /**
+     * Returns a display-only summary of an account. HR screens use this to show who approved a
+     * request or an employee's company email, so employee-module permissions are accepted as well.
+     */
     @GetMapping("/{userAccountId}/summary")
     public AccountSummaryDTO getAccountSummary(@PathVariable int userAccountId) {
+        validatePositiveId(userAccountId, "User Account ID");
         requireAccountSummaryAccess();
         return userAccountService.getAccountSummary(userAccountId);
     }
 
     @GetMapping("/by-employee/{employeeId}/summary")
     public AccountSummaryDTO getAccountSummaryByEmployee(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         requireAccountSummaryAccess();
         return userAccountService.getAccountSummaryByEmployeeId(employeeId);
     }
 
     @PostMapping("/{userAccountId}/lock")
     public void lockAccount(@PathVariable int userAccountId) {
+        validatePositiveId(userAccountId, "User Account ID");
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
         userAccountService.lockAccount(actorUserAccountId(), userAccountId);
     }
 
+    /**
+     * Removes a user's authenticator enrolment so they must enrol again at their next login. Admin
+     * only: the {@code RESET_USER_TOTP} permission is granted to the Admin role alone.
+     */
+    @PostMapping("/{userAccountId}/reset-totp")
+    public void resetTotp(@PathVariable int userAccountId) {
+        permissionService.requirePermission(PermissionKey.RESET_USER_TOTP);
+        userAccountService.resetTotp(actorUserAccountId(), userAccountId);
+    }
+
     @PostMapping("/{userAccountId}/unlock")
     public void unlockAccount(@PathVariable int userAccountId) {
+        validatePositiveId(userAccountId, "User Account ID");
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
         userAccountService.unlockAccount(actorUserAccountId(), userAccountId);
     }
 
     @PostMapping("/{userAccountId}/enable")
     public void enableAccount(@PathVariable int userAccountId) {
+        validatePositiveId(userAccountId, "User Account ID");
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
         userAccountService.enableAccount(actorUserAccountId(), userAccountId);
     }
 
     @PostMapping("/{userAccountId}/disable")
     public void disableAccount(@PathVariable int userAccountId) {
+        validatePositiveId(userAccountId, "User Account ID");
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
         userAccountService.disableAccount(actorUserAccountId(), userAccountId);
     }
 
     @PutMapping("/{userAccountId}/roles")
-    public void updateRoles(@PathVariable int userAccountId, @RequestBody UserRolesUpdateRequest request) {
+    public void updateRoles(@PathVariable int userAccountId, @RequestBody @Valid UserRolesUpdateRequest request) {
+        validatePositiveId(userAccountId, "User Account ID");
         permissionService.requirePermission(PermissionKey.MANAGE_USERS);
 
         List<Role> roles = request.roles() == null
                 ? List.of()
                 : request.roles().stream().map(Role::fromValue).toList();
 
-        userAccountService.updateRoles(userAccountId, roles);
+        userAccountService.updateRoles(actorUserAccountId(), userAccountId, roles);
     }
 
     private void requireAccountSummaryAccess() {
@@ -114,5 +134,11 @@ public class UserAccountController {
 
     private int actorUserAccountId() {
         return currentUserProvider.getCurrentUserAccountId();
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
     }
 }

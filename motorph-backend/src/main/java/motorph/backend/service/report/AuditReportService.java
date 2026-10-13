@@ -55,7 +55,9 @@ public class AuditReportService {
         return parameters;
     }
 
-    // dates are optional here, but must be paired if either is present
+    /**
+     * Dates are optional, but if one is given the other must be too.
+     */
     private void validateDateRange(LocalDate startDate, LocalDate endDate) {
         if ((startDate == null) != (endDate == null)) {
             throw new ValidationException("Both start and end date are required together.");

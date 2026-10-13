@@ -28,7 +28,6 @@ public class EmployeeBenefitRepository {
         this.dataSource = dataSource;
     }
 
-    // finds employee benefits by employee id
     public List<EmployeeBenefit> findByEmployeeId(int employeeId) {
         List<EmployeeBenefit> benefits = new ArrayList<>();
 
@@ -62,7 +61,9 @@ public class EmployeeBenefitRepository {
         return benefits;
     }
 
-    // finds an employee's benefits active on a given date
+    /**
+     * Returns the employee's benefits that are active on the given date.
+     */
     public List<EmployeeBenefit> findActiveByEmployeeId(int employeeId, java.time.LocalDate effectiveDate) {
         List<EmployeeBenefit> benefits = new ArrayList<>();
 
@@ -100,7 +101,6 @@ public class EmployeeBenefitRepository {
         return benefits;
     }
 
-    // finds employee benefit by id
     public EmployeeBenefit findById(int employeeBenefitId) {
         String sql = """
                 SELECT employee_benefit_id,
@@ -131,7 +131,6 @@ public class EmployeeBenefitRepository {
         return null;
     }
 
-    // saves employee benefit
     public void save(EmployeeBenefit employeeBenefit) {
         String sql = """
                 INSERT INTO employee_benefit (
@@ -165,7 +164,6 @@ public class EmployeeBenefitRepository {
         }
     }
 
-    // updates employee benefit
     public void update(EmployeeBenefit employeeBenefit) {
         String sql = """
                 UPDATE employee_benefit

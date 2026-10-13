@@ -1,6 +1,6 @@
 package motorph.backend.dto.auth;
 
-/** Unauthenticated request to have IT issue a temporary password. */
+/** Request body for {@code POST /api/v1/auth/forgot-password}. */
 public record ForgotPasswordRequest(
         String companyEmail
 ) {

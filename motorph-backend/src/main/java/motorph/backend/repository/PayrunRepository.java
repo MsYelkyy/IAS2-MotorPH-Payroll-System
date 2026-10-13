@@ -58,7 +58,6 @@ public class PayrunRepository {
         return null;
     }
 
-    // finds all payruns
     public List<Payrun> findAll() {
         List<Payrun> payruns = new ArrayList<>();
 
@@ -87,7 +86,6 @@ public class PayrunRepository {
         return payruns;
     }
 
-    // finds payruns that already have generated payroll results
     public List<Payrun> findAllWithPayrollResults() {
         List<Payrun> payruns = new ArrayList<>();
 
@@ -118,7 +116,6 @@ public class PayrunRepository {
         return payruns;
     }
 
-    // checks if payrun already exists for the period
     public boolean existsByPeriod(LocalDate startDate, LocalDate endDate) {
         String sql = """
                 SELECT COUNT(*)
@@ -145,7 +142,6 @@ public class PayrunRepository {
         return false;
     }
 
-    // checks if any existing payrun overlaps with the given period
     public boolean existsOverlapping(LocalDate startDate, LocalDate endDate) {
         String sql = """
                 SELECT COUNT(*)
@@ -172,7 +168,6 @@ public class PayrunRepository {
         return false;
     }
 
-    // saves a payrun and returns the generated id
     public int saveAndReturnId(Payrun payrun) {
         String sql = """
                 INSERT INTO payrun (

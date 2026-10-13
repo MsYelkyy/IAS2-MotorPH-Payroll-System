@@ -1,12 +1,13 @@
 package motorph.backend.controller.v1;
 
+import jakarta.validation.Valid;
 import motorph.backend.domain.LeaveRequest;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.leave.LeaveCreditRowDTO;
 import motorph.backend.dto.leave.LeaveRequestRowDTO;
 import motorph.backend.dto.leave.LeaveSubmitRequest;
 import motorph.backend.dto.leave.LeaveSummaryDTO;
-import motorph.backend.exception.UnauthorizedException;
+import motorph.backend.exception.ValidationException;
 import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.LeaveService;
@@ -25,10 +26,9 @@ import java.time.LocalDate;
 import java.util.List;
 
 /**
- * Leave request endpoints. Submitting/cancelling always act on the caller's
- * own employeeId (never trusted from the client). Approving/rejecting
- * requires APPROVE_LEAVE, re-checked server-side every call; the service
- * still separately blocks self-approval as a business rule.
+ * Leave request endpoints. Submitting and cancelling always act on the caller's own record.
+ * Approving or rejecting requires {@code APPROVE_LEAVE}, and the service separately prevents
+ * employees from approving their own requests.
  */
 @RestController
 @RequestMapping("/api/v1/leave-requests")
@@ -47,14 +47,15 @@ public class LeaveController {
     }
 
     @PostMapping
-    public void submitLeaveRequest(@RequestBody LeaveSubmitRequest request) {
+    public void submitLeaveRequest(@RequestBody @Valid LeaveSubmitRequest request) {
+        String cleanReason = sanitizeText(request.reason());
         leaveService.submitLeaveRequest(
                 callerEmployeeId(),
                 request.leaveTypeId(),
                 request.startDate(),
                 request.endDate(),
                 request.leaveHours(),
-                request.reason()
+                cleanReason
         );
     }
 
@@ -82,6 +83,7 @@ public class LeaveController {
 
     @GetMapping("/credits/{employeeId}")
     public List<LeaveCreditRowDTO> getLeaveCredits(@PathVariable int employeeId) {
+        validatePositiveId(employeeId, "Employee ID");
         if (employeeId != callerEmployeeId()) {
             permissionService.requireAnyPermission(PermissionKey.VIEW_LEAVE, PermissionKey.APPROVE_LEAVE);
         }
@@ -92,11 +94,13 @@ public class LeaveController {
     public double computeLeaveHours(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        validateDateRange(startDate, endDate);
         return leaveService.computeLeaveHours(startDate, endDate);
     }
 
     @PostMapping("/{leaveRequestId}/approve")
     public void approveLeaveRequest(@PathVariable int leaveRequestId) {
+        validatePositiveId(leaveRequestId, "Leave Request ID");
         permissionService.requirePermission(PermissionKey.APPROVE_LEAVE);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         leaveService.approveLeaveRequest(principal.employeeId(), principal.userAccountId(), leaveRequestId);
@@ -104,6 +108,7 @@ public class LeaveController {
 
     @PostMapping("/{leaveRequestId}/reject")
     public void rejectLeaveRequest(@PathVariable int leaveRequestId) {
+        validatePositiveId(leaveRequestId, "Leave Request ID");
         permissionService.requirePermission(PermissionKey.APPROVE_LEAVE);
         AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
         leaveService.rejectLeaveRequest(principal.employeeId(), principal.userAccountId(), leaveRequestId);
@@ -111,10 +116,33 @@ public class LeaveController {
 
     @PostMapping("/{leaveRequestId}/cancel")
     public void cancelLeaveRequest(@PathVariable int leaveRequestId) {
+        validatePositiveId(leaveRequestId, "Leave Request ID");
         leaveService.cancelLeaveRequest(callerEmployeeId(), leaveRequestId);
     }
 
     private int callerEmployeeId() {
         return currentUserProvider.getCurrentPrincipal().employeeId();
+    }
+
+    private void validatePositiveId(int id, String name) {
+        if (id <= 0) {
+            throw new ValidationException(name + " must be a positive integer.");
+        }
+    }
+
+    private void validateDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new ValidationException("Start date and end date are required.");
+        }
+        if (startDate.isAfter(endDate)) {
+            throw new ValidationException("Start date cannot be after end date.");
+        }
+    }
+
+    private String sanitizeText(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.replaceAll("<[^>]*>", "").trim();
     }
 }

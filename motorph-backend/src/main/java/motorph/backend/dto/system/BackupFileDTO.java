@@ -2,7 +2,7 @@ package motorph.backend.dto.system;
 
 import java.time.Instant;
 
-/** One .sql backup file on the backend host. Formatting is the client's job. */
+/** A {@code .sql} backup file on the backend host. Values are raw; formatting is left to the client. */
 public record BackupFileDTO(
         String fileName,
         long sizeBytes,

@@ -9,10 +9,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Wire copy of the backend's LeaveRequest domain model (flattened - the
- * Request/LeaveRequest inheritance split was for server-side validation, not
- * needed on the wire). Mirrors the old motorph.domain.model.LeaveRequest and
- * its Request base class getter names.
+ * Client-side copy of the backend's {@code LeaveRequest}, flattened into one class. The backend's
+ * {@code Request}/{@code LeaveRequest} split exists for server-side validation and is not needed
+ * on the client.
  */
 public class LeaveRequestDTO {
 

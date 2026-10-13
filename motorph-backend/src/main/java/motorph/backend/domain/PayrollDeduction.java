@@ -8,7 +8,6 @@ public class PayrollDeduction extends PayrollComponent {
     private int deductionTypeId;
     private boolean taxable;
 
-    // constructors
     public PayrollDeduction(
             Integer payrollDeductionId,
             int payrollResultId,
@@ -21,7 +20,6 @@ public class PayrollDeduction extends PayrollComponent {
         setTaxable(taxable);
     }
 
-    // getters
     public Integer getPayrollDeductionId() {
         return getPayrollComponentId();
     }
@@ -34,7 +32,6 @@ public class PayrollDeduction extends PayrollComponent {
         return taxable;
     }
 
-    // setters
     public void setDeductionTypeId(int deductionTypeId) {
         if (deductionTypeId <= 0) {
             throw new IllegalArgumentException("Deduction type ID must be positive.");

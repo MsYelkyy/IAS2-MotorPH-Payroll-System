@@ -15,21 +15,13 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
- * Handles permission checks for the caller's active role. Ported from the
- * desktop's PermissionService, with one deliberate change: the active role
- * is resolved fresh per request from the DB via CurrentUserProvider +
- * UserAccountRepository - never from a static singleton (see Phase 1 notes
- * on UserSession) and never from anything the client claims.
- *
- * Known gap: multi-role accounts always evaluate against their first
- * assigned role (UserAccount's own default) since the client has no way yet
- * to tell the backend "I'm currently acting as role X" the way the desktop's
- * old in-memory role switch did. Closing this (an X-Active-Role-style header,
- * validated against the account's actual assigned roles before being
- * honored) is follow-up work, not a Phase 2 blocker since it only affects
- * accounts with more than one role.
+ * Checks permissions for the caller's active role: the role selected in the client, accepted only
+ * if the account holds it, or the account's default role when none is sent. Roles and their
+ * permissions are loaded from the database on every request.
  */
 @Service
 public class PermissionService {
@@ -37,16 +29,18 @@ public class PermissionService {
     private final PermissionRepository permissionRepository;
     private final UserAccountRepository userAccountRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final UserAccessLogService userAccessLogService;
 
     public PermissionService(PermissionRepository permissionRepository,
                              UserAccountRepository userAccountRepository,
-                             CurrentUserProvider currentUserProvider) {
+                             CurrentUserProvider currentUserProvider,
+                             UserAccessLogService userAccessLogService) {
         this.permissionRepository = permissionRepository;
         this.userAccountRepository = userAccountRepository;
         this.currentUserProvider = currentUserProvider;
+        this.userAccessLogService = userAccessLogService;
     }
 
-    // checks if the active role has the permission key
     public boolean hasPermission(String permissionKey) {
         validatePermissionKey(permissionKey);
         Role activeRole = getActiveRoleOrThrow();
@@ -54,7 +48,6 @@ public class PermissionService {
         return permissionRepository.roleHasPermission(activeRole, permissionKey);
     }
 
-    // checks if the active role has any permission key
     public boolean hasAnyPermission(String... permissionKeys) {
         if (permissionKeys == null || permissionKeys.length == 0) {
             return false;
@@ -69,8 +62,10 @@ public class PermissionService {
         return false;
     }
 
-    // throws UnauthorizedException unless the active role has the permission key -
-    // the standard first line of every gated controller method
+    /**
+     * Throws {@link UnauthorizedException} unless the caller's active role has the permission.
+     * Controllers call this before any protected operation.
+     */
     public void requirePermission(PermissionKey permissionKey) {
         if (!hasPermission(permissionKey)) {
             throw new UnauthorizedException("You do not have permission to perform this action.");
@@ -83,13 +78,11 @@ public class PermissionService {
         }
     }
 
-    // returns permission keys for the active role
     public Set<String> getActiveRolePermissionKeys() {
         Role activeRole = getActiveRoleOrThrow();
         return permissionRepository.findPermissionKeysByRole(activeRole);
     }
 
-    // returns menu visibility permissions for the active role
     public MenuPermissionDTO getMenuPermissions() {
         return new MenuPermissionDTO(
                 hasPermission(PermissionKey.VIEW_DASHBOARD),
@@ -107,7 +100,6 @@ public class PermissionService {
         );
     }
 
-    // returns all permissions assigned to a specific role (for admin role editor)
     public Set<Permission> getPermissionsByRole(Role role) {
         if (role == null) {
             throw new ValidationException("Role is required.");
@@ -115,12 +107,13 @@ public class PermissionService {
         return permissionRepository.findPermissionsByRole(role);
     }
 
-    // returns all permissions defined in the system (for admin role editor)
     public List<Permission> getAllPermissions() {
         return permissionRepository.findAllPermissions();
     }
 
-    // replaces the full permission set for a role (admin-only operation)
+    /**
+     * Replaces the full permission set of a role and logs which permissions were added and removed.
+     */
     public void updateRolePermissions(Role role, Set<PermissionKey> permissionKeys) {
         if (role == null) {
             throw new ValidationException("Role is required.");
@@ -128,10 +121,24 @@ public class PermissionService {
         if (permissionKeys == null) {
             throw new ValidationException("Permission keys are required.");
         }
+        Set<String> before = permissionRepository.findPermissionKeysByRole(role);
+        Set<String> after = permissionKeys.stream().map(Enum::name).collect(Collectors.toCollection(TreeSet::new));
+
         permissionRepository.updateRolePermissions(role, permissionKeys);
+
+        Set<String> added = new TreeSet<>(after);
+        added.removeAll(before);
+        Set<String> removed = new TreeSet<>(before);
+        removed.removeAll(after);
+
+        userAccessLogService.logEvent(currentUserProvider.getCurrentUserAccountId(),
+                UserAccessLogService.ACTION_ROLE_PERMISSIONS_UPDATED,
+                "Updated permissions of role " + role.name()
+                        + ". Added: " + (added.isEmpty() ? "none" : String.join(", ", added))
+                        + ". Removed: " + (removed.isEmpty() ? "none" : String.join(", ", removed)),
+                UserAccessLogService.TARGET_ROLE, role.name());
     }
 
-    // checks if the active role has the permission key
     public boolean hasPermission(PermissionKey permissionKey) {
         if (permissionKey == null) {
             throw new ValidationException("Permission key is required.");
@@ -140,7 +147,6 @@ public class PermissionService {
         return hasPermission(permissionKey.name());
     }
 
-    // checks if the active role has any permission key
     public boolean hasAnyPermission(PermissionKey... permissionKeys) {
         if (permissionKeys == null || permissionKeys.length == 0) {
             return false;
@@ -155,15 +161,14 @@ public class PermissionService {
         return false;
     }
 
-    // returns the caller's active role, resolved fresh from the DB every call -
-    // used where a dynamic per-request check (e.g. "is this actor an admin,
-    // or specifically this employee's assigned supervisor") can't be expressed
-    // as a static permission key
+    /**
+     * Returns the caller's active role. Used for per-request checks that cannot be expressed as a
+     * permission key, such as whether the caller supervises a particular employee.
+     */
     public Role getActiveRole() {
         return getActiveRoleOrThrow();
     }
 
-    // resolves the caller's active role fresh from the DB every call
     private Role getActiveRoleOrThrow() {
         int userAccountId = currentUserProvider.getCurrentUserAccountId();
         UserAccount account = userAccountRepository.findById(userAccountId);
@@ -172,7 +177,17 @@ public class PermissionService {
             throw new UnauthorizedException("Active role is required.");
         }
 
-        return account.getActiveRole();
+        Role requested = currentUserProvider.getRequestedRole();
+
+        if (requested == null) {
+            return account.getActiveRole();
+        }
+
+        if (!account.hasRole(requested)) {
+            throw new UnauthorizedException("Your account does not have the " + requested.name() + " role.");
+        }
+
+        return requested;
     }
 
     private void validatePermissionKey(String permissionKey) {

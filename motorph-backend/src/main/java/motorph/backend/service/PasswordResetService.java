@@ -26,16 +26,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Handles password reset requests and IT resolution. Ported from the desktop
- * service with two deliberate changes:
- *
- * - requestPasswordReset never tells its caller whether the account exists,
- *   is active, is unlocked, has a personal email on file, or already has a
- *   pending request. Those all log server-side and return silently, because
- *   this path is reachable unauthenticated (see the forgot-password endpoint).
- * - The desktop's self-service "verify OTP then set your own new password"
- *   methods are not ported: no UI ever called them, resolution has always
- *   been IT-driven through the temporary-password path.
+ * Handles password reset requests and their resolution by IT. Requests can be submitted without
+ * logging in, so {@link #requestPasswordReset(String)} never reveals whether an account exists or
+ * is eligible.
  */
 @Service
 public class PasswordResetService {
@@ -67,8 +60,10 @@ public class PasswordResetService {
         this.userAccessLogService = userAccessLogService;
     }
 
-    // records a pending reset request when the account qualifies; stays silent
-    // either way so an unauthenticated caller learns nothing about the account
+    /**
+     * Records a pending reset request if the account is eligible. Returns silently either way, so
+     * an unauthenticated caller learns nothing about the account.
+     */
     public void requestPasswordReset(String companyEmail) {
         if (companyEmail == null || companyEmail.trim().isEmpty()) {
             throw new ValidationException("Company email is required.");
@@ -98,7 +93,9 @@ public class PasswordResetService {
         passwordResetRequestRepository.saveAndReturnId(new PasswordResetRequest(account.getUserAccountId()));
     }
 
-    // returns reset requests as display rows, optionally narrowed to one status
+    /**
+     * Returns reset requests as display rows, optionally filtered by status.
+     */
     public List<PasswordResetRequestRowDTO> getRequestRows(PasswordResetStatus status) {
         List<PasswordResetRequest> requests = status == PasswordResetStatus.PENDING
                 ? passwordResetRequestRepository.findPendingRequests()
@@ -123,7 +120,6 @@ public class PasswordResetService {
                 .toList();
     }
 
-    // returns the summary card tallies
     public PasswordResetCountsDTO getCounts() {
         return new PasswordResetCountsDTO(
                 passwordResetRequestRepository.countByStatus(PasswordResetStatus.PENDING),
@@ -133,12 +129,13 @@ public class PasswordResetService {
         );
     }
 
-    // returns the pending request count on its own - the dashboard metric
     public int getPendingRequestCount() {
         return passwordResetRequestRepository.countByStatus(PasswordResetStatus.PENDING);
     }
 
-    // issues a temporary password for a pending request and closes it out
+    /**
+     * Issues a temporary password for a pending request and marks the request as resolved.
+     */
     public CredentialsPreview processPasswordResetRequest(int resetRequestId,
                                                           int resolverUserAccountId,
                                                           int resolverEmployeeId) {
@@ -169,12 +166,17 @@ public class PasswordResetService {
         return preview;
     }
 
-    // cancels a pending request without issuing a password
-    public void cancelPasswordResetRequest(int resetRequestId, int cancellerEmployeeId) {
+    public void cancelPasswordResetRequest(int resetRequestId,
+                                           int cancellerUserAccountId,
+                                           int cancellerEmployeeId) {
         validateResetRequestId(resetRequestId);
 
         PasswordResetRequest request = getPendingRequestOrThrow(resetRequestId);
         passwordResetRequestRepository.markCancelled(request.getResetRequestId(), cancellerEmployeeId);
+
+        userAccessLogService.logEvent(cancellerUserAccountId, UserAccessLogService.ACTION_PASSWORD_RESET_CANCELLED,
+                "Cancelled password reset request ID " + resetRequestId,
+                UserAccessLogService.TARGET_PASSWORD_RESET_REQUEST, resetRequestId);
     }
 
     private PasswordResetRequestRowDTO toRow(PasswordResetRequest request,
@@ -246,7 +248,10 @@ public class PasswordResetService {
         return password.toString();
     }
 
-    // a failed audit write must not undo an already-applied password reset
+    /**
+     * Records the reset in the audit log. A failure is logged but not rethrown, because the
+     * password has already been changed.
+     */
     private void logPasswordReset(int resolverUserAccountId, int targetEmployeeId) {
         try {
             userAccessLogService.logPasswordReset(resolverUserAccountId, targetEmployeeId);

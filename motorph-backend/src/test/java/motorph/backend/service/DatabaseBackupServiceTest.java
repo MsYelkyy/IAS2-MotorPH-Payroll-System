@@ -20,6 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 /**
  * Backup filenames now arrive from a remote caller as a URL segment, which
@@ -28,16 +30,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class DatabaseBackupServiceTest {
 
     private static final String VALID_NAME = "motorph_backup_2026-08-10_09-30-00.sql";
+    private static final int ACTOR_ID = 7;
 
     @TempDir Path backupDirectory;
 
+    private UserAccessLogService userAccessLogService;
     private DatabaseBackupService databaseBackupService;
 
     @BeforeEach
     void setUp() {
+        userAccessLogService = Mockito.mock(UserAccessLogService.class);
         databaseBackupService = new DatabaseBackupService(
                 Mockito.mock(DataSource.class),
-                Mockito.mock(UserAccessLogService.class),
+                userAccessLogService,
                 backupDirectory.toString());
     }
 
@@ -55,20 +60,22 @@ class DatabaseBackupServiceTest {
             ""
     })
     void rejectsFilenamesOutsideTheGeneratedPattern(String filename) {
-        assertThatThrownBy(() -> databaseBackupService.readBackup(filename))
+        assertThatThrownBy(() -> databaseBackupService.readBackup(filename, ACTOR_ID))
                 .isInstanceOf(ValidationException.class);
 
-        assertThatThrownBy(() -> databaseBackupService.deleteBackup(filename))
+        assertThatThrownBy(() -> databaseBackupService.deleteBackup(filename, ACTOR_ID))
                 .isInstanceOf(ValidationException.class);
 
-        assertThatThrownBy(() -> databaseBackupService.restoreBackup(filename, 1))
+        assertThatThrownBy(() -> databaseBackupService.restoreBackup(filename, ACTOR_ID))
                 .isInstanceOf(ValidationException.class);
+
+        verifyNoInteractions(userAccessLogService);
     }
 
     @Test
     @DisplayName("A well-formed name for a file that is not there is a not-found, not a validation error")
     void reportsMissingBackupSeparatelyFromAnInvalidName() {
-        assertThatThrownBy(() -> databaseBackupService.readBackup(VALID_NAME))
+        assertThatThrownBy(() -> databaseBackupService.readBackup(VALID_NAME, ACTOR_ID))
                 .isInstanceOf(EntityNotFoundException.class);
     }
 
@@ -82,8 +89,10 @@ class DatabaseBackupServiceTest {
                 .toList();
 
         assertThat(names).containsExactly(VALID_NAME);
-        assertThat(databaseBackupService.readBackup(VALID_NAME))
+        assertThat(databaseBackupService.readBackup(VALID_NAME, ACTOR_ID))
                 .isEqualTo("-- dump --".getBytes(StandardCharsets.UTF_8));
+        verify(userAccessLogService).logEvent(ACTOR_ID,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DOWNLOADED, "Downloaded backup: " + VALID_NAME);
     }
 
     @Test
@@ -92,9 +101,11 @@ class DatabaseBackupServiceTest {
         Path stored = backupDirectory.resolve(VALID_NAME);
         Files.writeString(stored, "-- dump --");
 
-        databaseBackupService.deleteBackup(VALID_NAME);
+        databaseBackupService.deleteBackup(VALID_NAME, ACTOR_ID);
 
         assertThat(Files.exists(stored)).isFalse();
+        verify(userAccessLogService).logEvent(ACTOR_ID,
+                UserAccessLogService.ACTION_DATABASE_BACKUP_DELETED, "Deleted backup: " + VALID_NAME);
     }
 
     @Test

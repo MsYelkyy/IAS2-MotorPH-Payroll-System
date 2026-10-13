@@ -9,142 +9,118 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
 <StackPane fx:id="toastRoot"
-      styleClass="support-ticket-root"
-      maxWidth="Infinity"
-      maxHeight="Infinity"
-      xmlns="http://javafx.com/javafx/21"
-      xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="motorph.ui.employee.EmployeeSupportTicketController">
+           styleClass="support-ticket-root"
+           maxWidth="Infinity"
+           maxHeight="Infinity"
+           xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="motorph.ui.employee.EmployeeSupportTicketController">
 
-    <GridPane hgap="18" maxWidth="Infinity" maxHeight="Infinity">
-        <columnConstraints>
-            <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
-            <ColumnConstraints percentWidth="38" hgrow="ALWAYS"/>
-        </columnConstraints>
-        <rowConstraints>
-            <RowConstraints vgrow="ALWAYS"/>
-        </rowConstraints>
+    <VBox spacing="14" maxWidth="Infinity" maxHeight="Infinity">
 
-        <!-- ── LEFT: My Tickets ────────────────────────────────────────── -->
-        <VBox spacing="0" minWidth="0" maxWidth="Infinity" maxHeight="Infinity"
-              GridPane.columnIndex="0" GridPane.hgrow="ALWAYS"
-              styleClass="content-card, leave-card">
-
-            <Label text="My Tickets" styleClass="ticket-card-title"/>
-
-            <Region prefHeight="16"/>
-
-            <TableView fx:id="ticketTable"
-                       VBox.vgrow="ALWAYS"
-                       maxHeight="Infinity"
-                       minHeight="300"
-                       styleClass="payroll-table, ticket-table">
-                <columns>
-                    <TableColumn fx:id="colTicketId"    text="Ticket ID"    prefWidth="105" minWidth="80"/>
-                    <TableColumn fx:id="colCategory"    text="Category"     prefWidth="125" minWidth="90"/>
-                    <TableColumn fx:id="colTitle"       text="Title"        prefWidth="235" minWidth="130"/>
-                    <TableColumn fx:id="colStatus"      text="Status"       prefWidth="115" minWidth="80"/>
-                    <TableColumn fx:id="colDateCreated" text="Date Created" prefWidth="190" minWidth="130"/>
-                </columns>
-                <placeholder>
-                    <Label text="No support tickets submitted yet." styleClass="note-text"/>
-                </placeholder>
-            </TableView>
-
-            <Region prefHeight="14"/>
-
-            <HBox alignment="CENTER_LEFT" spacing="10" minHeight="44" prefHeight="44">
-                <Button fx:id="prevButton" text="&#8592; Previous" onAction="#handlePrevPage"
-                        styleClass="secondary-button"/>
-                <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="note-text"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="recordInfoLabel" text="" styleClass="note-text"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Button fx:id="nextButton" text="Next &#8594;" onAction="#handleNextPage"
-                        styleClass="secondary-button"/>
-            </HBox>
-        </VBox>
-
-        <!-- ── RIGHT: Create New Ticket ───────────────────────────────── -->
-        <VBox spacing="0" minWidth="0" maxWidth="Infinity" maxHeight="Infinity"
-              GridPane.columnIndex="1" GridPane.hgrow="ALWAYS"
-              styleClass="content-card, leave-card, leave-form-card">
-
-            <Label text="Create New Ticket" styleClass="leave-card-title"/>
-
-            <Region prefHeight="20"/>
-
-            <!-- Category -->
-            <VBox spacing="6">
-                <HBox alignment="CENTER_LEFT" spacing="8">
-                    <Label text="Category" styleClass="field-label"/>
-                    <Label text="*" styleClass="required-asterisk"/>
-                    <Label fx:id="categoryErrorLabel" styleClass="field-error"/>
-                </HBox>
-                <ComboBox fx:id="categoryComboBox" promptText="Select a category"
-                          maxWidth="Infinity" styleClass="input-field"/>
+        <HBox styleClass="hero">
+            <VBox styleClass="hero-text" HBox.hgrow="ALWAYS">
+                <Label text="EMPLOYEE SUPPORT" styleClass="hero-kicker"/>
+                <Label text="Need help? Send us a support request" styleClass="hero-title"/>
+                <Label text="Track your requests from submission through resolution." styleClass="hero-note"/>
             </VBox>
+        </HBox>
 
-            <Region prefHeight="12"/>
+        <GridPane hgap="14" maxWidth="Infinity" maxHeight="Infinity" VBox.vgrow="ALWAYS">
+            <columnConstraints>
+                <ColumnConstraints percentWidth="62" minWidth="0" hgrow="ALWAYS"/>
+                <ColumnConstraints percentWidth="38" minWidth="0" hgrow="ALWAYS"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="ALWAYS"/>
+            </rowConstraints>
 
-            <!-- Title -->
-            <VBox spacing="6">
-                <HBox alignment="CENTER_LEFT" spacing="8">
-                    <Label text="Title" styleClass="field-label"/>
-                    <Label text="*" styleClass="required-asterisk"/>
-                    <Label fx:id="titleErrorLabel" styleClass="field-error"/>
-                </HBox>
-                <TextField fx:id="titleField"
-                           maxWidth="Infinity" styleClass="input-field"/>
-            </VBox>
+            <VBox styleClass="panel" minWidth="0" maxWidth="Infinity" maxHeight="Infinity"
+                  GridPane.columnIndex="0" GridPane.hgrow="ALWAYS">
 
-            <Region prefHeight="12"/>
+                <VBox styleClass="ticket-list" VBox.vgrow="ALWAYS">
+                    <VBox styleClass="ticket-list-head">
+                        <Label text="My tickets" styleClass="ticket-list-title"/>
+                        <Label text="Requests you have submitted" styleClass="ticket-list-note"/>
+                    </VBox>
 
-            <!-- Message -->
-            <VBox spacing="6" VBox.vgrow="ALWAYS">
-                <HBox alignment="CENTER_LEFT" spacing="8">
-                    <Label text="Message" styleClass="field-label"/>
-                    <Label text="*" styleClass="required-asterisk"/>
-                    <Label fx:id="messageErrorLabel" styleClass="field-error"/>
+                    <TableView fx:id="ticketTable" VBox.vgrow="ALWAYS"
+                               maxHeight="Infinity" minHeight="300">
+                        <columns>
+                            <TableColumn fx:id="colTicketId"    text="TICKET ID"     prefWidth="85"  minWidth="60"/>
+                            <TableColumn fx:id="colCategory"    text="CATEGORY"      prefWidth="125" minWidth="112"/>
+                            <TableColumn fx:id="colTitle"       text="TITLE"         prefWidth="170" minWidth="110"/>
+                            <TableColumn fx:id="colStatus"      text="STATUS"        prefWidth="110" minWidth="100"/>
+                            <TableColumn fx:id="colDateCreated" text="DATE CREATED"  prefWidth="160" minWidth="130"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+
+                <HBox styleClass="table-pager">
+                    <Label fx:id="pageLabel" text="Page 1 of 1" styleClass="pager-text"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Label fx:id="messageCounterLabel" text="0 / 1000" styleClass="character-counter"/>
+                    <Label fx:id="recordInfoLabel" text="" styleClass="pager-text"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="prevButton" text="Previous" onAction="#handlePrevPage" styleClass="pager-button"/>
+                    <Button fx:id="nextButton" text="Next" onAction="#handleNextPage" styleClass="pager-button"/>
                 </HBox>
-                <TextArea fx:id="messageArea"
-                          wrapText="true" prefRowCount="5"
-                          maxWidth="Infinity" VBox.vgrow="ALWAYS"
-                          styleClass="input-field, leave-reason-area"/>
             </VBox>
 
-            <Region prefHeight="16"/>
+            <VBox styleClass="panel" minWidth="0" maxWidth="Infinity" maxHeight="Infinity"
+                  GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
 
-            <!-- Buttons + feedback -->
-            <HBox spacing="12" alignment="CENTER_LEFT">
-                <Button text="Submit Ticket" onAction="#handleSubmitTicket"
-                        styleClass="primary-button"/>
-                <Button text="Clear" onAction="#handleClearForm"
-                        styleClass="secondary-button"/>
-                <Region HBox.hgrow="ALWAYS"/>
-                <Label fx:id="formMessageLabel" wrapText="true" styleClass="message-label"
-                       maxWidth="200"/>
-            </HBox>
+                <VBox styleClass="ticket-form" VBox.vgrow="ALWAYS">
+                    <VBox styleClass="ticket-list-head">
+                        <Label text="Create new ticket" styleClass="ticket-list-title"/>
+                        <Label text="Tell us what you need help with" styleClass="ticket-list-note"/>
+                    </VBox>
 
-            <Region prefHeight="14"/>
+                    <VBox spacing="6">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <Label text="CATEGORY" styleClass="ticket-field-label"/>
+                            <Label text="*" styleClass="required-asterisk"/>
+                            <Label fx:id="categoryErrorLabel" styleClass="field-error"/>
+                        </HBox>
+                        <ComboBox fx:id="categoryComboBox" promptText="Select a category"
+                                  maxWidth="Infinity" styleClass="ticket-filter-input"/>
+                    </VBox>
 
-            <!-- Info hint -->
-            <HBox spacing="8" alignment="TOP_LEFT" styleClass="ticket-info-row">
-                <Label text="&#9432;" styleClass="ticket-info-icon"/>
-                <Label text="Our team will review your ticket and respond as soon as possible."
-                       wrapText="true" styleClass="ticket-info-text" HBox.hgrow="ALWAYS"
-                       maxWidth="Infinity"/>
-            </HBox>
+                    <VBox spacing="6">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <Label text="TITLE" styleClass="ticket-field-label"/>
+                            <Label text="*" styleClass="required-asterisk"/>
+                            <Label fx:id="titleErrorLabel" styleClass="field-error"/>
+                        </HBox>
+                        <TextField fx:id="titleField" maxWidth="Infinity" styleClass="ticket-filter-input"/>
+                    </VBox>
 
-        </VBox>
-    </GridPane>
+                    <VBox spacing="6" VBox.vgrow="ALWAYS">
+                        <HBox alignment="CENTER_LEFT" spacing="6">
+                            <Label text="MESSAGE" styleClass="ticket-field-label"/>
+                            <Label text="*" styleClass="required-asterisk"/>
+                            <Label fx:id="messageErrorLabel" styleClass="field-error"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label fx:id="messageCounterLabel" text="0 / 1000" styleClass="pager-text"/>
+                        </HBox>
+                        <TextArea fx:id="messageArea" wrapText="true" prefRowCount="5"
+                                  maxWidth="Infinity" VBox.vgrow="ALWAYS"/>
+                    </VBox>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Button text="Submit ticket" onAction="#handleSubmitTicket" styleClass="primary-button"/>
+                        <Button text="Clear" onAction="#handleClearForm" styleClass="secondary-button"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="formMessageLabel" wrapText="true" styleClass="message-label" maxWidth="200"/>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </GridPane>
+    </VBox>
 </StackPane>

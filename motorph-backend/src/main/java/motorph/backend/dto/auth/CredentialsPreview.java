@@ -1,9 +1,8 @@
 package motorph.backend.dto.auth;
 
 /**
- * Dev-only stand-in for a sent email, returned inline on the employee-create
- * response when no real SMTP integration exists yet (see
- * EmployeeCredentialsDeliveryService). Same rationale as OtpPreview.
+ * Development stand-in for an email containing login credentials. It is returned in the API
+ * response only while preview mode is enabled, because the backend has no mail integration yet.
  */
 public record CredentialsPreview(
         String senderEmail,
@@ -13,4 +12,8 @@ public record CredentialsPreview(
         String companyEmail,
         String temporaryPassword
 ) {
+    @Override
+    public String toString() {
+        return "CredentialsPreview[companyEmail=" + companyEmail + ", temporaryPassword=***, body=***]";
+    }
 }

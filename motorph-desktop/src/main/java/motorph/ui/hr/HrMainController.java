@@ -2,20 +2,17 @@ package motorph.ui.hr;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
-import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
+import motorph.ui.support.SupportTicketController;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
-import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -43,7 +40,6 @@ public class HrMainController {
     // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
-    @FXML private HBox  globalControlsHost;
 
     // Dashboard sub-view
     @FXML private VBox                 dashboardView;
@@ -67,31 +63,24 @@ public class HrMainController {
 
     // Support Tickets sub-view
     @FXML private VBox                    supportTicketsView;
-    @FXML private HrSupportTicketController supportTicketsViewController;
-
-    // Footer
-    @FXML private Label appMessageLabel;
+    @FXML private SupportTicketController supportTicketsViewController;
 
     // sets up services, controls, and the default dashboard view
     @FXML
     private void initialize() {
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
-        buildGlobalControls();
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
         wireDashboard();
         showDashboard();
         loadSidebarData();
         configureSwitchRoleButton();
-
-        UiMessageUtil.setSuccess(appMessageLabel, "HR Management System is ready.");
     }
 
     // shows the HR dashboard view
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
-        setHeader("Dashboard", "HR MANAGEMENT SYSTEM");
+        setHeader("Dashboard");
         showView(ActiveView.DASHBOARD);
         if (dashboardViewController != null) dashboardViewController.refresh();
     }
@@ -100,7 +89,7 @@ public class HrMainController {
     @FXML
     private void showEmployees() {
         setNavSelected(employeesNavButton);
-        setHeader("Employee Management", "View and manage all employees");
+        setHeader("Employee Management");
         showView(ActiveView.EMPLOYEES);
         if (employeeViewController != null) employeeViewController.refresh();
     }
@@ -109,7 +98,7 @@ public class HrMainController {
     @FXML
     private void showAttendance() {
         setNavSelected(attendanceNavButton);
-        setHeader("Attendance", "Monitor employee attendance logs");
+        setHeader("Attendance");
         showView(ActiveView.ATTENDANCE);
         if (attendanceViewController != null) attendanceViewController.refresh();
     }
@@ -118,7 +107,7 @@ public class HrMainController {
     @FXML
     private void showLeaveOvertime() {
         setNavSelected(leaveOvertimeNavButton);
-        setHeader("Leave & Overtime", "Review and approve leave requests");
+        setHeader("Leave & Overtime");
         showView(ActiveView.LEAVE);
         if (leaveViewController != null) leaveViewController.refresh();
     }
@@ -127,7 +116,7 @@ public class HrMainController {
     @FXML
     private void showReports() {
         setNavSelected(reportsNavButton);
-        setHeader("Reports", "Generate and preview organization reports");
+        setHeader("Reports");
         showView(ActiveView.REPORTS);
         if (reportsViewController != null) reportsViewController.refresh();
     }
@@ -136,7 +125,7 @@ public class HrMainController {
     @FXML
     private void showSupportTickets() {
         setNavSelected(supportTicketsNavButton);
-        setHeader("Support Tickets", "Review and respond to employee support requests");
+        setHeader("Support Tickets");
         showView(ActiveView.SUPPORT_TICKETS);
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
@@ -144,7 +133,7 @@ public class HrMainController {
     // switches to the next assigned role
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), pageTitleLabel);
     }
 
     // clears the session and returns to login
@@ -190,8 +179,8 @@ public class HrMainController {
     }
 
     // updates the topbar title and subtitle
-    private void setHeader(String title, String subtitle) {
-        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
+    private void setHeader(String title) {
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, "HR WORKSPACE");
     }
 
     // loads the logged-in HR user's identity into the sidebar
@@ -203,12 +192,9 @@ public class HrMainController {
     // shows the switch-role button only for multi-role users
     private void configureSwitchRoleButton() {
         boolean show = CurrentUserSession.hasMultipleRoles();
+        if (show) switchRoleButton.setText("Switch to " + RoleSwitchHelper.nextRoleLabel());
         switchRoleButton.setVisible(show);
         switchRoleButton.setManaged(show);
     }
 
-    // builds the language and theme controls in the topbar
-    private void buildGlobalControls() {
-        GlobalControlsHelper.build(globalControlsHost, rootPane, null);
-    }
 }

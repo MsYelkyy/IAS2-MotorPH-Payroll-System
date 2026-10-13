@@ -2,21 +2,18 @@ package motorph.ui.it;
 
 import motorph.api.ApiClientFactory;
 import motorph.api.EmployeeApiClient;
-import motorph.ui.common.GlobalControlsHelper;
 import motorph.ui.common.NavigationHelper;
 import motorph.ui.common.RoleSwitchHelper;
 import motorph.ui.common.SidebarHelper;
 import motorph.ui.reports.ReportsController;
 import motorph.ui.session.CurrentUserSession;
+import motorph.ui.support.SupportTicketController;
 import motorph.ui.util.NavigationUtil;
-import motorph.ui.util.ThemeManager;
-import motorph.ui.util.UiMessageUtil;
 
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
@@ -45,7 +42,6 @@ public class ITMainController {
     // Topbar
     @FXML private Label pageTitleLabel;
     @FXML private Label pageSubtitleLabel;
-    @FXML private HBox  globalControlsHost;
 
     // Dashboard sub-view
     @FXML private VBox                  dashboardView;
@@ -73,30 +69,23 @@ public class ITMainController {
 
     // Support Tickets sub-view
     @FXML private VBox                    supportTicketsView;
-    @FXML private ITSupportTicketController supportTicketsViewController;
-
-    // Footer
-    @FXML private Label appMessageLabel;
+    @FXML private SupportTicketController supportTicketsViewController;
 
     @FXML
     private void initialize() {
         employeeApiClient = ApiClientFactory.getInstance().getEmployeeApiClient();
 
-        buildGlobalControls();
-        ThemeManager.getInstance().applyCurrentTo(rootPane);
         wireDashboard();
         showDashboard();
         loadSidebarData();
         configureSwitchRoleButton();
-
-        UiMessageUtil.setSuccess(appMessageLabel, "IT Management System is ready.");
     }
 
     // Navigation handlers
     @FXML
     private void showDashboard() {
         setNavSelected(dashboardNavButton);
-        setHeader("Dashboard", "IT MANAGEMENT SYSTEM");
+        setHeader("Dashboard");
         showView(dashboardView);
         if (dashboardViewController != null) dashboardViewController.refresh();
     }
@@ -104,7 +93,7 @@ public class ITMainController {
     @FXML
     private void showReports() {
         setNavSelected(reportsNavButton);
-        setHeader("Reports", "Generate and preview organization reports");
+        setHeader("Reports");
         showView(reportsView);
         if (reportsViewController != null) reportsViewController.refresh();
     }
@@ -112,7 +101,7 @@ public class ITMainController {
     @FXML
     private void showUserManagement() {
         setNavSelected(userManagementNavButton);
-        setHeader("User Management", "Manage system access and account status");
+        setHeader("User Management");
         showView(userManagementView);
         if (userManagementViewController != null) userManagementViewController.refresh();
     }
@@ -120,7 +109,7 @@ public class ITMainController {
     @FXML
     private void showRoleManagement() {
         setNavSelected(roleManagementNavButton);
-        setHeader("Role Management", "Configure role permissions");
+        setHeader("Role Management");
         showView(roleManagementView);
         if (roleManagementViewController != null) roleManagementViewController.refresh();
     }
@@ -128,7 +117,7 @@ public class ITMainController {
     @FXML
     private void showAccessLogs() {
         setNavSelected(accessLogsNavButton);
-        setHeader("User Access Logs", "Monitor login and access activity");
+        setHeader("User Access Logs");
         showView(accessLogsView);
         if (accessLogsViewController != null) accessLogsViewController.refresh();
     }
@@ -136,7 +125,7 @@ public class ITMainController {
     @FXML
     private void showPasswordReset() {
         setNavSelected(passwordResetNavButton);
-        setHeader("Password Reset Requests", "Review and process employee password reset requests");
+        setHeader("Password Reset Requests");
         showView(passwordResetRequestsView);
         if (passwordResetRequestsViewController != null) passwordResetRequestsViewController.refresh();
     }
@@ -144,7 +133,7 @@ public class ITMainController {
     @FXML
     private void showSupportTickets() {
         setNavSelected(supportTicketsNavButton);
-        setHeader("Support Tickets", "Manage and respond to employee support requests");
+        setHeader("Support Tickets");
         showView(supportTicketsView);
         if (supportTicketsViewController != null) supportTicketsViewController.refresh();
     }
@@ -163,7 +152,7 @@ public class ITMainController {
     // Auth handlers
     @FXML
     private void handleSwitchRole() {
-        RoleSwitchHelper.switchToNext(rootPane.getScene(), appMessageLabel);
+        RoleSwitchHelper.switchToNext(rootPane.getScene(), pageTitleLabel);
     }
 
     @FXML
@@ -180,8 +169,8 @@ public class ITMainController {
                 passwordResetNavButton, supportTicketsNavButton);
     }
 
-    private void setHeader(String title, String subtitle) {
-        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, subtitle);
+    private void setHeader(String title) {
+        NavigationHelper.setHeader(pageTitleLabel, pageSubtitleLabel, title, "IT WORKSPACE");
     }
 
     private void showView(Node view) {
@@ -211,11 +200,9 @@ public class ITMainController {
 
     private void configureSwitchRoleButton() {
         boolean show = CurrentUserSession.hasMultipleRoles();
+        if (show) switchRoleButton.setText("Switch to " + RoleSwitchHelper.nextRoleLabel());
         switchRoleButton.setVisible(show);
         switchRoleButton.setManaged(show);
     }
 
-    private void buildGlobalControls() {
-        GlobalControlsHelper.build(globalControlsHost, rootPane, null);
-    }
 }

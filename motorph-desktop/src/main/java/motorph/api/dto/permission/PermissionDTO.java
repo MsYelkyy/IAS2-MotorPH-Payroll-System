@@ -6,8 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 /**
- * Wire copy of the backend's Permission domain model, mirroring the old
- * motorph.domain.model.Permission getter names.
+ * Client-side copy of the backend's {@code Permission}.
  */
 public class PermissionDTO {
 

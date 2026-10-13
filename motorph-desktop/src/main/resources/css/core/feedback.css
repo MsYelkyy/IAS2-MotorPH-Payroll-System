@@ -1,112 +1,50 @@
-/* Feedback/message labels shared by Admin, IT, and Employee app shells. */
+.message-label  { -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6B7280; }
+.error-message,
+.error-text,
+.danger-text,
+.warning-text   { -fx-text-fill: #B54444; -fx-font-weight: bold; -fx-font-size: 11px; }
+.success-message { -fx-text-fill: #3F8F82; -fx-font-weight: bold; -fx-font-size: 11px; }
+.inline-link    { -fx-text-fill: #2F6FAE; -fx-font-weight: bold; -fx-border-color: transparent; }
 
-.message-label {
-    -fx-font-size: 12px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #3B82F6;
+.toast {
+    -fx-background-color: white;
+    -fx-background-radius: 3;
+    -fx-border-width: 0 0 0 4;
+    -fx-border-radius: 3;
+    -fx-effect: dropshadow(gaussian, rgba(23,25,31,0.14), 16, 0, 0, 4);
+    -fx-spacing: 14;
+    -fx-padding: 14 12 14 16;
+    -fx-min-height: 74;
 }
+.toast-success { -fx-border-color: transparent transparent transparent #45D75C; }
+.toast-info    { -fx-border-color: transparent transparent transparent #2D89EB; }
+.toast-warning { -fx-border-color: transparent transparent transparent #FFBE23; }
+.toast-error   { -fx-border-color: transparent transparent transparent #F0524F; }
 
-.error-message {
-    -fx-text-fill: #FCA5A5;
-    -fx-font-weight: 800;
-    -fx-font-size: 12px;
-}
-
-.success-message {
-    -fx-text-fill: #86EFAC;
-    -fx-font-weight: 800;
-    -fx-font-size: 12px;
-}
-
-.positive-text {
-    -fx-text-fill: #86EFAC;
-    -fx-font-weight: 800;
-    -fx-font-size: 12px;
-}
-
-.light-mode .error-message,
-.light-mode .error-text,
-.light-mode .danger-text,
-.light-mode .warning-text {
-    -fx-text-fill: #991b1b;
-}
-
-.light-mode .success-message {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .error-message,
-.root-canvas.light-mode .error-text,
-.root-canvas.light-mode .danger-text,
-.root-canvas.light-mode .warning-text,
-.root-canvas.light-mode .content-card .error-message,
-.root-canvas.light-mode .content-card .error-text,
-.root-canvas.light-mode .content-card .danger-text,
-.root-canvas.light-mode .content-card .warning-text {
-    -fx-text-fill: #991b1b;
-}
-
-.root-canvas.light-mode .success-message,
-.root-canvas.light-mode .content-card .success-message {
-    -fx-text-fill: #166534;
-}
-
-.root-canvas.light-mode .positive-text,
-.root-canvas.light-mode .content-card .positive-text {
-    -fx-text-fill: #16A34A;
-}
-
-/* ── Toast notification ─────────────────────────────────────────── */
-.toast-label {
-    -fx-background-color: #1E2736;
-    -fx-background-radius: 8;
-    -fx-text-fill: #86EFAC;
+.toast-icon {
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-background-radius: 12;
+    -fx-alignment: CENTER;
+    -fx-text-fill: white;
     -fx-font-size: 13px;
-    -fx-font-weight: 700;
-    -fx-padding: 10 18 10 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+    -fx-font-weight: bold;
 }
+.toast-success .toast-icon { -fx-background-color: #45D75C; }
+.toast-info .toast-icon    { -fx-background-color: #2D89EB; }
+.toast-warning .toast-icon { -fx-background-color: #FFBE23; }
+.toast-error .toast-icon   { -fx-background-color: #F0524F; }
 
-.root-canvas.light-mode .toast-label {
-    -fx-background-color: #FFFFFF;
-    -fx-text-fill: #166534;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
-}
+.toast-body    { -fx-spacing: 2; }
+.toast-title   { -fx-text-fill: #17191F; -fx-font-size: 13px; -fx-font-weight: bold; }
+.toast-message { -fx-text-fill: #6B7280; -fx-font-size: 12px; }
 
-/* Error toast variant */
-.toast-label-error {
-    -fx-background-color: #1E2736;
-    -fx-background-radius: 8;
-    -fx-text-fill: #FCA5A5;
-    -fx-font-size: 13px;
-    -fx-font-weight: 700;
-    -fx-padding: 10 18 10 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
+.toast-close {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-text-fill: #B9B9B9;
+    -fx-font-size: 14px;
+    -fx-padding: 4 8;
+    -fx-cursor: hand;
 }
-
-/* Error toast in light mode */
-.root-canvas.light-mode .toast-label-error {
-    -fx-background-color: #FFFFFF;
-    -fx-text-fill: #B91C1C;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 12, 0, 0, 4);
-}
-
-/* Solid red error toast (validation failures) — MotorPH dark-red theme */
-.toast-label-danger {
-    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #DC2626 0%, #B91C1C 100%);
-    -fx-background-radius: 8;
-    -fx-border-color: rgba(248,113,113,0.55);
-    -fx-border-radius: 8;
-    -fx-border-width: 1;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-size: 13px;
-    -fx-font-weight: 800;
-    -fx-padding: 10 18 10 18;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.45), 12, 0, 0, 4);
-}
-
-.root-canvas.light-mode .toast-label-danger {
-    -fx-background-color: linear-gradient(from 0% 0% to 0% 100%, #DC2626 0%, #B91C1C 100%);
-    -fx-text-fill: #FFFFFF;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 12, 0, 0, 4);
-}
+.toast-close:hover { -fx-text-fill: #6B7280; }

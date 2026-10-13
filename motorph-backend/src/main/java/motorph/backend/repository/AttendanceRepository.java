@@ -21,9 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles database operations for attendance records. updateStatus/delete
- * are not ported - grepping the desktop UI confirmed neither is called from
- * any controller (dead code), same as LeaveReportService in Phase 2.
+ * Handles database operations for attendance records.
  */
 @Repository
 public class AttendanceRepository {

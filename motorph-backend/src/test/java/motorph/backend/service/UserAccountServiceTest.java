@@ -7,25 +7,31 @@ import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TokenRevocationRepository;
+import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.PasswordHasher;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /** Covers the two self-service password paths and the status-change audit trail. */
@@ -40,8 +46,20 @@ class UserAccountServiceTest {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private EmployeeCredentialsDeliveryService credentialsDeliveryService;
     @Mock private UserAccessLogService userAccessLogService;
+    @Mock private TotpCredentialRepository totpCredentialRepository;
+    @Mock private TokenRevocationRepository tokenRevocationRepository;
 
-    @InjectMocks private UserAccountService userAccountService;
+    private final MutableClock clock = new MutableClock(Instant.parse("2026-10-13T08:00:00Z"));
+    private final LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneId.systemDefault());
+
+    private UserAccountService userAccountService;
+
+    @BeforeEach
+    void setUp() {
+        userAccountService = new UserAccountService(userAccountRepository, employeeRepository,
+                credentialsDeliveryService, userAccessLogService, totpCredentialRepository,
+                tokenRevocationRepository, clock);
+    }
 
     @Test
     @DisplayName("Changing your own password replaces it once the current one checks out")
@@ -51,6 +69,8 @@ class UserAccountServiceTest {
         userAccountService.changeOwnPassword(ACCOUNT_ID, CURRENT_PASSWORD, "BrandNewPass1");
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
+        verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Changed own password.", UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     @Test
@@ -62,6 +82,7 @@ class UserAccountServiceTest {
                 .isInstanceOf(AuthenticationException.class);
 
         verify(userAccountRepository, never()).updatePassword(anyInt(), anyString(), anyString());
+        verifyNoInteractions(userAccessLogService);
     }
 
     @Test
@@ -72,6 +93,8 @@ class UserAccountServiceTest {
         userAccountService.completeTemporaryPasswordChange(ACCOUNT_ID, "BrandNewPass1", "BrandNewPass1");
 
         verify(userAccountRepository).updatePassword(eq(ACCOUNT_ID), anyString(), anyString());
+        verify(userAccessLogService).logEvent(ACCOUNT_ID, UserAccessLogService.ACTION_PASSWORD_CHANGED,
+                "Replaced temporary password.", UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     @Test
@@ -116,6 +139,94 @@ class UserAccountServiceTest {
 
         verify(userAccountRepository).updateLockStatus(ACCOUNT_ID, true);
         verify(userAccessLogService).logAccountStatusChanged(ACTOR_ID, 101, "ACTIVE", "LOCKED");
+    }
+
+    @Test
+    @DisplayName("IT unlocks through the authorized service path and resets failures in the repository")
+    void unlockAccountUsesExistingItWorkflow() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(true, false, true))
+                .thenReturn(account(true, false, false));
+
+        userAccountService.unlockAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verify(userAccountRepository).updateLockStatus(ACCOUNT_ID, false);
+        verify(userAccessLogService).logAccountStatusChanged(ACTOR_ID, 101, "LOCKED", "ACTIVE");
+    }
+
+    @Test
+    @DisplayName("Locking an account signs the user out everywhere")
+    void lockAccountRevokesAllSessions() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(true, false, false))
+                .thenReturn(account(true, false, true));
+
+        userAccountService.lockAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verify(tokenRevocationRepository).revokeAllSessions(ACCOUNT_ID, now);
+    }
+
+    @Test
+    @DisplayName("Disabling an account signs the user out everywhere")
+    void disableAccountRevokesAllSessions() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(true, false, false))
+                .thenReturn(account(false, false, false));
+
+        userAccountService.disableAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verify(userAccountRepository).updateActiveStatus(ACCOUNT_ID, false);
+        verify(tokenRevocationRepository).revokeAllSessions(ACCOUNT_ID, now);
+    }
+
+    @Test
+    @DisplayName("Unlocking an account revokes nothing, so the sessions revoked at lock stay revoked")
+    void unlockAccountLeavesRevocationInPlace() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(true, false, true))
+                .thenReturn(account(true, false, false));
+
+        userAccountService.unlockAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verifyNoInteractions(tokenRevocationRepository);
+    }
+
+    @Test
+    @DisplayName("Enabling an account revokes nothing, so the sessions revoked at disable stay revoked")
+    void enableAccountLeavesRevocationInPlace() {
+        when(userAccountRepository.findById(ACCOUNT_ID))
+                .thenReturn(account(false, false, false))
+                .thenReturn(account(true, false, false));
+
+        userAccountService.enableAccount(ACTOR_ID, ACCOUNT_ID);
+
+        verify(userAccountRepository).updateActiveStatus(ACCOUNT_ID, true);
+        verifyNoInteractions(tokenRevocationRepository);
+    }
+
+    @Test
+    @DisplayName("An account that does not exist is never locked or revoked")
+    void lockUnknownAccountRevokesNothing() {
+        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(null);
+
+        assertThatThrownBy(() -> userAccountService.lockAccount(ACTOR_ID, ACCOUNT_ID))
+                .isInstanceOf(EntityNotFoundException.class);
+
+        verify(userAccountRepository, never()).updateLockStatus(anyInt(), anyBoolean());
+        verifyNoInteractions(tokenRevocationRepository);
+    }
+
+    @Test
+    @DisplayName("Changing an account's roles audits the old and new roles against the acting user")
+    void updateRolesAuditsRoleChange() {
+        when(userAccountRepository.findById(ACCOUNT_ID)).thenReturn(account(true, false, false));
+
+        userAccountService.updateRoles(ACTOR_ID, ACCOUNT_ID, List.of(Role.EMPLOYEE, Role.HR));
+
+        verify(userAccountRepository).updateRoles(ACCOUNT_ID, List.of(Role.EMPLOYEE, Role.HR));
+        verify(userAccessLogService).logEvent(ACTOR_ID, UserAccessLogService.ACTION_USER_ROLES_UPDATED,
+                "Changed roles of employee ID 101 from [EMPLOYEE] to [EMPLOYEE, HR]",
+                UserAccessLogService.TARGET_USER_ACCOUNT, ACCOUNT_ID);
     }
 
     private UserAccount accountWithPassword(String rawPassword) {

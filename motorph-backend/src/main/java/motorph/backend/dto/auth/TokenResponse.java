@@ -1,6 +1,6 @@
 package motorph.backend.dto.auth;
 
-/** Wire response body carrying newly issued tokens. */
+/** Response body carrying a newly issued token pair. */
 public record TokenResponse(
         String accessToken,
         String refreshToken,

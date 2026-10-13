@@ -68,17 +68,17 @@
             </HBox>
         </VBox>
 
-        <!-- Panel 4: OTP info (read-only) -->
+        <!-- Panel 4: authenticator (TOTP) settings (read-only) -->
         <VBox fx:id="otpInfoPanel" visible="false" managed="false"
               spacing="20" style="-fx-padding: 24;">
-            <Label text="OTP Configuration" styleClass="section-label"/>
+            <Label text="Authenticator (TOTP) Settings" styleClass="section-label"/>
             <VBox spacing="8">
-                <Label fx:id="otpLengthLabel"   text="OTP Length: —"         styleClass="muted-text"/>
-                <Label fx:id="otpExpiryLabel"   text="OTP Expiry: — minutes" styleClass="muted-text"/>
-                <Label fx:id="otpAttemptsLabel" text="Max Attempts: —"        styleClass="muted-text"/>
-                <Label text="Supported Purposes: LOGIN_2FA, PASSWORD_RESET"   styleClass="muted-text"/>
+                <Label fx:id="otpLengthLabel"   text="Code length: —"          styleClass="muted-text"/>
+                <Label fx:id="otpExpiryLabel"   text="Code refresh: — seconds" styleClass="muted-text"/>
+                <Label fx:id="otpAttemptsLabel" text="Max attempts: —"         styleClass="muted-text"/>
+                <Label text="Used for: sign-in and Forgot Password"            styleClass="muted-text"/>
             </VBox>
-            <Label text="OTP settings are system-defined. Contact a developer to modify."
+            <Label text="Authenticator settings are system-defined. Contact a developer to modify."
                    styleClass="muted-text" wrapText="true"/>
         </VBox>
 

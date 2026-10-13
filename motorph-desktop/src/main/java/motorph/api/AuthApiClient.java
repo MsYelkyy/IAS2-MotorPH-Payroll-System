@@ -3,17 +3,21 @@ package motorph.api;
 import motorph.api.dto.auth.ChangePasswordRequest;
 import motorph.api.dto.auth.CompleteTemporaryPasswordRequest;
 import motorph.api.dto.auth.ForgotPasswordRequest;
+import motorph.api.dto.auth.ForgotPasswordResponse;
 import motorph.api.dto.auth.LoginRequest;
 import motorph.api.dto.auth.LoginResponse;
 import motorph.api.dto.auth.LogoutRequest;
 import motorph.api.dto.auth.MeResponse;
+import motorph.api.dto.auth.PasswordRecoveryVerifyResponse;
+import motorph.api.dto.auth.ResetPasswordRequest;
 import motorph.api.dto.auth.TokenResponse;
-import motorph.api.dto.auth.VerifyOtpRequest;
+import motorph.api.dto.auth.TotpCodeRequest;
+import motorph.api.dto.auth.TotpSetupResponse;
+import motorph.api.dto.auth.TotpSetupStartRequest;
 
 /**
- * Thin wrapper mirroring the backend's /api/v1/auth endpoints. Method shapes
- * intentionally resemble the old desktop AuthenticationService so call sites
- * in ui/auth/** change minimally.
+ * Connects the desktop app to the backend authentication endpoints.
+ * The methods are kept similar to the old AuthenticationService to reduce changes in the UI code.
  */
 public final class AuthApiClient {
 
@@ -29,23 +33,46 @@ public final class AuthApiClient {
         return httpApiClient.post("/api/v1/auth/login", new LoginRequest(companyEmail, password), LoginResponse.class);
     }
 
-    // verifies the OTP and stores the returned token pair
-    public TokenResponse verifyOtp(String challengeId, String otp) {
-        TokenResponse tokens = httpApiClient.post(
-                "/api/v1/auth/verify-otp",
-                new VerifyOtpRequest(challengeId, otp),
-                TokenResponse.class
-        );
+    // Gets the authenticator secret for first-time setup.
+    public TotpSetupResponse startTotpSetup(String challengeId) {
+        return httpApiClient.post("/api/v1/auth/totp/setup/start",
+                new TotpSetupStartRequest(challengeId), TotpSetupResponse.class);
+    }
+
+    // Confirms authenticator setup and stores the returned login tokens.
+    public TokenResponse confirmTotpSetup(String challengeId, String code) {
+        TokenResponse tokens = httpApiClient.post("/api/v1/auth/totp/setup/confirm",
+                new TotpCodeRequest(challengeId, code), TokenResponse.class);
 
         tokenHolder.store(tokens.accessToken(), tokens.refreshToken(), tokens.expiresIn());
         return tokens;
     }
 
-    // asks IT to issue a temporary password; the backend answers the same way
-    // whether or not the address maps to an eligible account, so a success
-    // here is not confirmation that the account exists
-    public void forgotPassword(String companyEmail) {
-        httpApiClient.postNoContent("/api/v1/auth/forgot-password", new ForgotPasswordRequest(companyEmail));
+    // verifies the authenticator code for a login and stores the returned token pair
+    public TokenResponse verifyTotp(String challengeId, String code) {
+        TokenResponse tokens = httpApiClient.post("/api/v1/auth/totp/verify",
+                new TotpCodeRequest(challengeId, code), TokenResponse.class);
+
+        tokenHolder.store(tokens.accessToken(), tokens.refreshToken(), tokens.expiresIn());
+        return tokens;
+    }
+
+    // Starts password recovery without revealing whether the account exists.
+    public ForgotPasswordResponse forgotPassword(String companyEmail) {
+        return httpApiClient.post("/api/v1/auth/forgot-password",
+                new ForgotPasswordRequest(companyEmail), ForgotPasswordResponse.class);
+    }
+
+    // checks the authenticator code for a recovery and returns the single-use reset token
+    public PasswordRecoveryVerifyResponse verifyRecoveryCode(String challengeId, String code) {
+        return httpApiClient.post("/api/v1/auth/forgot-password/verify",
+                new TotpCodeRequest(challengeId, code), PasswordRecoveryVerifyResponse.class);
+    }
+
+    // sets the new password with the reset token; the backend signs the user out everywhere
+    public void resetPassword(String resetToken, String newPassword, String confirmPassword) {
+        httpApiClient.postNoContent("/api/v1/auth/forgot-password/reset",
+                new ResetPasswordRequest(resetToken, newPassword, confirmPassword));
     }
 
     // finishes a forced temporary-password change; the challenge came from login
@@ -60,12 +87,12 @@ public final class AuthApiClient {
                 new ChangePasswordRequest(currentPassword, newPassword));
     }
 
-    // DB-loaded, for UI display only - never treat as an authorization source
+    // Loaded from the database for display only, not for permission checks.
     public MeResponse me() {
         return httpApiClient.get("/api/v1/auth/me", MeResponse.class);
     }
 
-    // revokes the held tokens server-side, then clears them locally regardless of outcome
+    // Revokes the current tokens and clears them from the client.
     public void logout() {
         try {
             if (tokenHolder.isAuthenticated()) {

@@ -1,200 +1,87 @@
 .email-preview-dialog-pane {
-    -fx-background-color: transparent;
+    -fx-font-family: "Inter";
+    -fx-background-color: white;
     -fx-padding: 0;
 }
+.email-preview-dialog-pane > .content { -fx-padding: 0; }
 
-.email-preview-dialog-pane > .content {
-    -fx-padding: 0;
-}
-
-.email-preview-root {
-    -fx-pref-width: 620;
-    -fx-background-color: #111114;
-    -fx-background-radius: 14;
-    -fx-border-color: rgba(255,80,80,0.34);
-    -fx-border-width: 1;
-    -fx-border-radius: 14;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.54), 32, 0.22, 0, 12);
-}
+.email-preview-root { -fx-pref-width: 440; }
 
 .email-preview-header {
-    -fx-padding: 20 22 18 22;
-    -fx-background-color:
-        linear-gradient(to bottom right, #151A2B, #10131F 56%, #2A090C);
-    -fx-background-radius: 14 14 0 0;
-    -fx-border-color: transparent transparent rgba(255,80,80,0.24) transparent;
+    -fx-spacing: 10;
+    -fx-padding: 22 24 18 24;
+    -fx-border-color: transparent transparent #E3E8ED transparent;
     -fx-border-width: 0 0 1 0;
 }
-
-.email-preview-brand {
-    -fx-font-size: 13px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #E84343;
+.email-preview-tag {
+    -fx-background-color: #FFF1DB;
+    -fx-background-radius: 2;
+    -fx-text-fill: #B35F00;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 8;
 }
+.email-preview-title { -fx-text-fill: #17191F; -fx-font-size: 18px; }
 
-.email-preview-title {
-    -fx-font-size: 25px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #F8FAFC;
-}
-
-.email-preview-subtitle {
-    -fx-font-size: 11px;
-    -fx-font-weight: 800;
-    -fx-text-fill: rgba(220,225,240,0.68);
-}
-
-.email-preview-close-x {
-    -fx-min-width: 32;
-    -fx-min-height: 32;
-    -fx-background-color: rgba(255,255,255,0.08);
-    -fx-background-radius: 999;
-    -fx-border-color: rgba(255,255,255,0.16);
-    -fx-border-radius: 999;
-    -fx-text-fill: #F8FAFC;
-    -fx-font-weight: 900;
-    -fx-cursor: hand;
-}
-
-.email-preview-close-x:hover {
-    -fx-background-color: rgba(232,67,67,0.28);
-    -fx-border-color: rgba(255,120,120,0.42);
-}
-
-.email-preview-paper-wrap {
-    -fx-padding: 18 20 0 20;
-}
-
-.email-preview-paper {
-    -fx-padding: 22;
-    -fx-background-color: #FFFFFF;
-    -fx-background-radius: 8;
-    -fx-border-color: #E5E7EB;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-}
-
-.email-preview-meta-row {
-    -fx-min-height: 24;
-}
-
-.email-preview-meta-label {
-    -fx-min-width: 72;
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #6B7280;
-}
-
-.email-preview-meta-value {
-    -fx-font-size: 13px;
-    -fx-font-weight: 700;
-    -fx-text-fill: #111827;
-}
-
-.email-preview-divider {
-    -fx-pref-height: 1;
-    -fx-max-height: 1;
-    -fx-background-color: #E5E7EB;
-}
+.email-preview-body { -fx-spacing: 12; -fx-padding: 18 24 6 24; }
+.email-preview-meta { -fx-spacing: 12; }
+.email-preview-meta-label { -fx-min-width: 64; -fx-text-fill: #6B7280; -fx-font-size: 10px; -fx-font-weight: bold; }
+.email-preview-meta-value { -fx-text-fill: #17191F; -fx-font-size: 12px; }
 
 .email-preview-highlight {
-    -fx-padding: 12;
-    -fx-background-color: #FEF2F2;
-    -fx-background-radius: 8;
-    -fx-border-color: #FECACA;
-    -fx-border-width: 1;
-    -fx-border-radius: 8;
-}
-
-.email-preview-highlight-label {
-    -fx-font-size: 11px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #991B1B;
-}
-
-.email-preview-highlight-value {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: #F5F7FB;
     -fx-background-radius: 6;
-    -fx-border-color: #FCA5A5;
+    -fx-border-color: #E3E8ED;
     -fx-border-radius: 6;
-    -fx-border-width: 1;
-    -fx-text-fill: #111827;
-    -fx-font-size: 18px;
-    -fx-font-weight: 900;
-    -fx-padding: 8 10;
+    -fx-spacing: 12;
+    -fx-padding: 12 14;
 }
-
-.email-preview-body {
-    -fx-pref-height: 180;
-    -fx-background-color: #FFFFFF;
-    -fx-background-radius: 0;
-    -fx-border-color: transparent;
-    -fx-text-fill: #111827;
-    -fx-font-size: 13px;
-    -fx-control-inner-background: #FFFFFF;
+.email-preview-highlight-text  { -fx-spacing: 2; }
+.email-preview-highlight-label { -fx-text-fill: #6B7280; -fx-font-size: 10px; -fx-font-weight: bold; }
+.email-preview-highlight-value {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-text-fill: #182B4C;
+    -fx-font-size: 24px;
+    -fx-font-weight: bold;
     -fx-focus-color: transparent;
     -fx-faint-focus-color: transparent;
 }
 
-.email-preview-body .content {
-    -fx-background-color: #FFFFFF;
+.email-preview-text {
+    -fx-pref-height: 110;
+    -fx-control-inner-background: white;
+    -fx-background-color: #E3E8ED, white;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 6, 5;
+    -fx-text-fill: #4D5055;
+    -fx-font-size: 12px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
 }
+.email-preview-text .content { -fx-background-color: white; }
 
-.email-preview-footer {
-    -fx-padding: 16 20 20 20;
-    -fx-background-color: #111114;
-    -fx-background-radius: 0 0 14 14;
-}
+.email-preview-footer { -fx-spacing: 12; -fx-padding: 12 24 20 24; }
+.email-preview-note   { -fx-text-fill: #6B7280; -fx-font-size: 11px; }
 
-.email-preview-primary-button {
-    -fx-min-height: 38;
+.email-preview-copy,
+.email-preview-close {
+    -fx-background-insets: 0;
+    -fx-background-radius: 4;
+    -fx-border-radius: 4;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-min-height: 34;
     -fx-padding: 0 18;
-    -fx-background-color:
-        linear-gradient(to bottom, #EF4444, #B91C1C 58%, #7F1D1D);
-    -fx-background-radius: 8;
-    -fx-border-color: rgba(255,160,160,0.42);
-    -fx-border-radius: 8;
-    -fx-border-width: 1;
-    -fx-text-fill: #FFFFFF;
-    -fx-font-weight: 900;
     -fx-cursor: hand;
 }
-
-.email-preview-primary-button:hover {
-    -fx-background-color:
-        linear-gradient(to bottom, #FF6060, #DC2626 58%, #991B1B);
+.email-preview-copy {
+    -fx-background-color: white;
+    -fx-border-color: #2F6FAE;
+    -fx-border-width: 1.5;
+    -fx-text-fill: #17191F;
 }
-
-.email-preview-secondary-button {
-    -fx-min-height: 38;
-    -fx-padding: 0 18;
-    -fx-background-color: rgba(255,255,255,0.06);
-    -fx-background-radius: 8;
-    -fx-border-color: rgba(255,255,255,0.16);
-    -fx-border-radius: 8;
-    -fx-border-width: 1;
-    -fx-text-fill: #D8DEE9;
-    -fx-font-weight: 800;
-    -fx-cursor: hand;
-}
-
-.email-preview-secondary-button:hover,
-.email-preview-secondary-button:focused {
-    -fx-background-color: rgba(255,255,255,0.10);
-    -fx-text-fill: #FFFFFF;
-}
-
-.email-preview-dialog-pane.light-mode .email-preview-root {
-    -fx-background-color: #F8FAFC;
-    -fx-border-color: rgba(15,23,42,0.12);
-}
-
-.email-preview-dialog-pane.light-mode .email-preview-footer {
-    -fx-background-color: #F8FAFC;
-}
-
-.email-preview-dialog-pane.light-mode .email-preview-secondary-button {
-    -fx-background-color: #FFFFFF;
-    -fx-border-color: rgba(15,23,42,0.14);
-    -fx-text-fill: #1F2937;
-}
+.email-preview-copy:hover { -fx-background-color: #EAF2FA; }
+.email-preview-close { -fx-background-color: #2F6FAE; -fx-text-fill: white; }
+.email-preview-close:hover { -fx-background-color: #285F97; }

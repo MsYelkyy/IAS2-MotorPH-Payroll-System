@@ -26,6 +26,7 @@ public enum PermissionKey {
     VIEW_PAYROLL,
     PROCESS_PAYROLL,
     VIEW_PAYSLIP,
+    VIEW_ALL_PAYSLIPS,
 
     VIEW_REPORTS,
     GENERATE_REPORTS,
@@ -38,10 +39,17 @@ public enum PermissionKey {
 
     VIEW_ACCESS_LOGS,
     MANAGE_2FA,
+    RESET_USER_TOTP,
     MANAGE_PASSWORD_RESET,
 
     VIEW_DATABASE_TOOLS,
-    BACKUP_DATABASE;
+    BACKUP_DATABASE,
+
+    // --- Control 2 (RBAC) Support Ticket Permissions ---
+    VIEW_TICKETS,
+    RESOLVE_TICKETS,
+    CANCEL_TICKETS,
+    VIEW_ALL_TICKETS;
 
     public static PermissionKey fromValue(String value) {
         if (value == null || value.trim().isEmpty()) {
