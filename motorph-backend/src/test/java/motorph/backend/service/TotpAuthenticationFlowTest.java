@@ -131,18 +131,18 @@ class TotpAuthenticationFlowTest {
 
         TotpSecretCipher cipher = new TotpSecretCipher(ENCRYPTION_KEY);
         LoginChallengeService challengeService = new LoginChallengeService(challenges, clock, 10, 10, 5);
-        AuthenticationService authentication = new AuthenticationService(users, credentials, logs);
+        AuthenticationService authentication = new AuthenticationService(users, credentials, logs, revocations, clock);
         TotpService totpService = new TotpService(challengeService, authentication, credentials, cipher, codes,
                 new TotpQrCodeGenerator(), logs, clock);
 
         userAccountService = new UserAccountService(users, mock(EmployeeRepository.class),
-                mock(EmployeeCredentialsDeliveryService.class), logs, credentials);
+                mock(EmployeeCredentialsDeliveryService.class), logs, credentials, revocations, clock);
         PasswordRecoveryService recovery = new PasswordRecoveryService(users, challengeService, totpService,
                 recoveryTokens, revocations, userAccountService, logs, clock, 10);
 
         JwtTokenProvider jwt = new JwtTokenProvider("a-test-signing-secret-of-at-least-32-bytes!!", 15, 1440);
         tokenIssuance = spy(new TokenIssuanceService(jwt, revocations, users));
-        rateLimiter = new LoginRateLimiter(1000, 1);
+        rateLimiter = new LoginRateLimiter(1000, 1000, 1, 1000, "", clock);
 
         PermissionService permissionService =
                 new PermissionService(permissionRepository, users, currentUser, logs);
@@ -443,7 +443,7 @@ class TotpAuthenticationFlowTest {
     @Test
     @DisplayName("The authenticator endpoints share the login rate limit")
     void codeEntryIsRateLimited() {
-        rateLimiter = new LoginRateLimiter(2, 1);
+        rateLimiter = new LoginRateLimiter(2, 1000, 1, 1000, "", clock);
         AuthController limited = new AuthController(null, null, null, null, null, null, rateLimiter, null,
                 null, null, null, null);
 

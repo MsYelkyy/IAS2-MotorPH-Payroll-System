@@ -2,20 +2,18 @@ package motorph.backend.service;
 
 import motorph.backend.dto.auth.CredentialsPreview;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Delivers IT-issued temporary passwords. There is no mail integration yet, so the password is
- * logged on the server and, in preview mode, returned to the IT user handling the request rather
- * than to the account holder. Turn preview mode off once real email delivery is available.
+ * Delivers IT-issued temporary passwords. There is no mail integration yet, so the password is only
+ * returned, in preview mode, to the IT user handling the request rather than to the account holder.
+ * It is never written to the application log. Turn preview mode off once real email delivery is
+ * available.
  */
 @Service
 public class PasswordResetDeliveryService {
 
-    private static final Logger log = LoggerFactory.getLogger(PasswordResetDeliveryService.class);
     private static final String DEV_SENDER_EMAIL = "no-reply@motorph.com";
 
     private final boolean previewEnabled;
@@ -28,9 +26,6 @@ public class PasswordResetDeliveryService {
     public CredentialsPreview sendTemporaryPassword(String personalEmail,
                                                     String companyEmail,
                                                     String temporaryPassword) {
-        log.info("[DEV PASSWORD RESET DELIVERY] Temporary password for {} ({}) is {}",
-                companyEmail, personalEmail, temporaryPassword);
-
         if (!previewEnabled) {
             return null;
         }

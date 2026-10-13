@@ -26,6 +26,7 @@ public enum PermissionKey {
     VIEW_PAYROLL,
     PROCESS_PAYROLL,
     VIEW_PAYSLIP,
+    VIEW_ALL_PAYSLIPS,
 
     VIEW_REPORTS,
     GENERATE_REPORTS,

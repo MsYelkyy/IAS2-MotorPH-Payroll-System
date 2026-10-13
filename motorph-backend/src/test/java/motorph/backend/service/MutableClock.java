@@ -6,15 +6,15 @@ import java.time.Instant;
 import java.time.ZoneId;
 
 /** A clock tests move by hand, so expiry and time-step behaviour never needs real waiting. */
-final class MutableClock extends Clock {
+public final class MutableClock extends Clock {
 
     private Instant now;
 
-    MutableClock(Instant start) {
+    public MutableClock(Instant start) {
         this.now = start;
     }
 
-    void advance(Duration duration) {
+    public void advance(Duration duration) {
         now = now.plus(duration);
     }
 

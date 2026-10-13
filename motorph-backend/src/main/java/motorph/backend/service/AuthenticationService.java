@@ -5,12 +5,16 @@ import motorph.backend.exception.ValidationException;
 import motorph.backend.security.PasswordHasher;
 import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
+import motorph.backend.repository.TokenRevocationRepository;
 import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
+import java.time.Clock;
+import java.time.LocalDateTime;
 
 /**
  * Verifies the user's login credentials and handles the next login step.
@@ -24,16 +28,22 @@ public class AuthenticationService {
     private final UserAccountRepository userAccountRepository;
     private final TotpCredentialRepository totpCredentialRepository;
     private final UserAccessLogService userAccessLogService;
+    private final TokenRevocationRepository tokenRevocationRepository;
+    private final Clock clock;
     @Value("${motorph.auth.lockout.max-failed-password-attempts:5}")
     private int maxFailedPasswordAttempts = 5;
 
     public AuthenticationService(UserAccountRepository userAccountRepository,
                                  TotpCredentialRepository totpCredentialRepository,
-                                 UserAccessLogService userAccessLogService) {
+                                 UserAccessLogService userAccessLogService,
+                                 TokenRevocationRepository tokenRevocationRepository,
+                                 Clock clock) {
 
         this.userAccountRepository = userAccountRepository;
         this.totpCredentialRepository = totpCredentialRepository;
         this.userAccessLogService = userAccessLogService;
+        this.tokenRevocationRepository = tokenRevocationRepository;
+        this.clock = clock;
     }
 
     /**
@@ -154,6 +164,7 @@ public class AuthenticationService {
             logFailed(account.getCompanyEmail(), "Login failed because password did not match.");
 
             if (result == FailedPasswordAttemptResult.LOCK_APPLIED) {
+                tokenRevocationRepository.revokeAllSessions(account.getUserAccountId(), LocalDateTime.now(clock));
                 userAccessLogService.logAutomaticAccountLock(account.getUserAccountId());
                 throw new AuthenticationException(
                         "Invalid email or password.", AuthenticationException.Reason.ACCOUNT_LOCKED);

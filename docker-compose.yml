@@ -98,6 +98,9 @@ services:
 
       MOTORPH_PROFILE: ${MOTORPH_PROFILE:-default}
 
+      # Reverse proxies whose X-Forwarded-For header is trusted for rate limiting. Leave empty for none.
+      MOTORPH_TRUSTED_PROXIES: ${MOTORPH_TRUSTED_PROXIES:-}
+
       # Folders inside the container, linked to local folders below.
       MOTORPH_PHOTO_DIR: /app/profile-photos
       MOTORPH_BACKUP_DIR: /app/backups

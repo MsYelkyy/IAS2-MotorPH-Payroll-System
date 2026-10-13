@@ -91,6 +91,20 @@ class EmployeeServiceTest {
     }
 
     @Test
+    @DisplayName("Employee summaries keep the repository's employee ID order instead of re-sorting by name")
+    void employeeSummariesStayInEmployeeIdOrder() {
+        when(employeeRepository.findAllWithInactive()).thenReturn(List.of(
+                employee(10001, "Manuel", "Garcia"),
+                employee(10002, "Antonio", "Lim"),
+                employee(10003, "Bianca", "Aquino"),
+                employee(10010, "Carlo", "Alvaro")));
+
+        assertThat(employeeService.getAllEmployeeSummaries())
+                .extracting(summary -> summary.getEmployeeId())
+                .containsExactly(10001, 10002, 10003, 10010);
+    }
+
+    @Test
     @DisplayName("Changing only the gender logs personal information and leaves IDs and benefits alone")
     void genderOnlyChangeLogsPersonalInformation() {
         update(new Form().gender(Gender.FEMALE));
@@ -241,6 +255,12 @@ class EmployeeServiceTest {
         assertThatThrownBy(() -> update(form)).isInstanceOf(DataAccessException.class);
 
         verify(userAccessLogService, never()).logEvent(anyInt(), anyString(), anyString(), any(), any());
+    }
+
+    private static Employee employee(int id, String firstName, String lastName) {
+        return new Employee(id, firstName, lastName, BIRTH_DATE, Gender.MALE, "Quezon City", "SINGLE",
+                "0917-123-4567", firstName.toLowerCase() + "@gmail.com", EmploymentStatus.REGULAR, 3, 2,
+                HIRE_DATE, null, true, null);
     }
 
     private void update(Form form) {

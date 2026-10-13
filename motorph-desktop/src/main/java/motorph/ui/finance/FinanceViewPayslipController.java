@@ -1,6 +1,7 @@
 package motorph.ui.finance;
 
 import motorph.api.ApiClientFactory;
+import motorph.api.ApiException;
 import motorph.api.EmployeeApiClient;
 import motorph.api.PayrunApiClient;
 import motorph.api.PayslipApiClient;
@@ -102,10 +103,16 @@ public class FinanceViewPayslipController {
             setActionsDisabled(false);
         } catch (Exception e) {
             clearResult();
-            showError("Payslip Not Found",
-                    "No persisted payslip exists for this employee and payrun.\n\n"
-                            + UiMessageUtil.toUserMessage(e));
+            showError("Could Not Load Payslip", searchFailureMessage(e));
         }
+    }
+
+    // only a 404 means the payslip is missing; a permission or server error is reported as what it is
+    static String searchFailureMessage(Exception e) {
+        if (e instanceof ApiException api && api.getHttpStatus() == 404) {
+            return "No persisted payslip exists for this employee and payrun.";
+        }
+        return UiMessageUtil.toUserMessage(e);
     }
 
     // shows the payslip summary in the preview container

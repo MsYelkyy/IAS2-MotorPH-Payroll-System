@@ -10,6 +10,8 @@ import motorph.api.ReportApiClient;
 import motorph.api.dto.employee.DepartmentDTO;
 import motorph.api.dto.employee.EmployeeSummaryDTO;
 import motorph.api.dto.payroll.PayrunDTO;
+import motorph.domain.value.Role;
+import motorph.ui.session.CurrentUserSession;
 import motorph.ui.util.DatePickerInputHelper;
 import motorph.ui.util.UiMessageUtil;
 
@@ -32,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -186,8 +189,21 @@ public class ReportsController {
     // --- Setup helpers ----------------------------------------------------
 
     private void setupReportTypeCombo() {
-        reportTypeCombo.getItems().setAll(ReportType.values());
+        reportTypeCombo.getItems().setAll(availableReportTypes());
         reportTypeCombo.setOnAction(e -> configureFilters());
+    }
+
+    // the backend grants VIEW_ALL_PAYSLIPS to Admin, Finance and HR; other roles would only get a 403
+    private List<ReportType> availableReportTypes() {
+        boolean canViewAllPayslips = canViewAllPayslips(CurrentUserSession.getActiveRole());
+
+        return Arrays.stream(ReportType.values())
+                .filter(type -> type != ReportType.PAYSLIP || canViewAllPayslips)
+                .toList();
+    }
+
+    static boolean canViewAllPayslips(Role role) {
+        return role == Role.ADMIN || role == Role.HR || role == Role.FINANCE;
     }
 
     private void setupDepartmentCombo() {

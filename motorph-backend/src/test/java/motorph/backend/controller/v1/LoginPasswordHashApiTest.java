@@ -1,6 +1,7 @@
 package motorph.backend.controller.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import motorph.backend.configuration.ClockConfig;
 import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.ChallengePurpose;
@@ -75,7 +76,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         JwtAuthenticationFilter.class,
         JwtTokenProvider.class,
         CurrentUserProvider.class,
-        AuthenticationService.class
+        AuthenticationService.class,
+        ClockConfig.class
 })
 @TestPropertySource(properties = {
         "motorph.jwt.secret=control-three-test-signing-secret-with-at-least-32-bytes",

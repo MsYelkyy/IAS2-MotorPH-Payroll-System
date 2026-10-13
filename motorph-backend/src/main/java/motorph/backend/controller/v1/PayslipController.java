@@ -3,9 +3,7 @@ package motorph.backend.controller.v1;
 import motorph.backend.domain.value.PermissionKey;
 import motorph.backend.dto.payroll.PayslipReportDTO;
 import motorph.backend.dto.payroll.PayslipSummaryDTO;
-import motorph.backend.exception.UnauthorizedException;
 import motorph.backend.exception.ValidationException;
-import motorph.backend.security.AuthenticatedPrincipal;
 import motorph.backend.security.CurrentUserProvider;
 import motorph.backend.service.PayslipService;
 import motorph.backend.service.PermissionService;
@@ -22,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /**
- * Payslip endpoints. Employees can always view their own payslips; viewing another employee's
- * requires {@code VIEW_PAYSLIP}.
+ * Payslip endpoints. Viewing your own payslips requires {@code VIEW_PAYSLIP}; viewing another
+ * employee's requires {@code VIEW_ALL_PAYSLIPS}.
  */
 @RestController
 @RequestMapping("/api/v1/payslips")
@@ -49,6 +47,7 @@ public class PayslipController {
      */
     @GetMapping
     public List<PayslipSummaryDTO> getOwnPayslips() {
+        permissionService.requirePermission(PermissionKey.VIEW_PAYSLIP);
         int employeeId = currentUserProvider.getCurrentPrincipal().employeeId();
         return payslipService.getPayslipSummaries(employeeId);
     }
@@ -57,7 +56,7 @@ public class PayslipController {
     public PayslipReportDTO getPayslip(@PathVariable int employeeId, @PathVariable int payrunId) {
         validatePositiveId(employeeId, "Employee ID");
         validatePositiveId(payrunId, "Payrun ID");
-        requireOwnOrPermitted(employeeId);
+        requireAccessTo(employeeId);
         return payslipService.getPayslipReport(employeeId, payrunId);
     }
 
@@ -65,7 +64,7 @@ public class PayslipController {
     public ResponseEntity<byte[]> getPayslipPdf(@PathVariable int employeeId, @PathVariable int payrunId) {
         validatePositiveId(employeeId, "Employee ID");
         validatePositiveId(payrunId, "Payrun ID");
-        requireOwnOrPermitted(employeeId);
+        requireAccessTo(employeeId);
 
         byte[] pdf = payslipService.generatePayslipPdf(employeeId, payrunId);
 
@@ -82,16 +81,10 @@ public class PayslipController {
                 .body(pdf);
     }
 
-    private void requireOwnOrPermitted(int employeeId) {
-        AuthenticatedPrincipal principal = currentUserProvider.getCurrentPrincipal();
+    private void requireAccessTo(int employeeId) {
+        boolean own = currentUserProvider.getCurrentPrincipal().employeeId() == employeeId;
 
-        if (principal.employeeId() == employeeId) {
-            return;
-        }
-
-        if (!permissionService.hasPermission(PermissionKey.VIEW_PAYSLIP)) {
-            throw new UnauthorizedException("You do not have permission to view this payslip.");
-        }
+        permissionService.requirePermission(own ? PermissionKey.VIEW_PAYSLIP : PermissionKey.VIEW_ALL_PAYSLIPS);
     }
 
     private void validatePositiveId(int id, String name) {

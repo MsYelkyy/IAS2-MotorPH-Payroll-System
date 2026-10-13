@@ -100,7 +100,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public LoginResponse login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.companyEmail());
 
         LoginAttemptOutcome outcome = authenticationService.authenticate(request.companyEmail(), request.password());
         String maskedEmail = maskEmail(outcome.getCompanyEmail());
@@ -130,7 +130,7 @@ public class AuthController {
      */
     @PostMapping("/totp/setup/start")
     public TotpSetupResponse startTotpSetup(@RequestBody @Valid TotpSetupStartRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.challengeId());
 
         TotpService.EnrollmentDetails details = totpService.startEnrollment(request.challengeId());
 
@@ -150,7 +150,7 @@ public class AuthController {
      */
     @PostMapping("/totp/setup/confirm")
     public TokenResponse confirmTotpSetup(@RequestBody @Valid TotpCodeRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.challengeId());
 
         UserAccount account = totpService.confirmEnrollment(request.challengeId(), request.code());
 
@@ -162,7 +162,7 @@ public class AuthController {
      */
     @PostMapping("/totp/verify")
     public TokenResponse verifyTotp(@RequestBody @Valid TotpCodeRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.challengeId());
 
         UserAccount account = totpService.verifyLogin(request.challengeId(), request.code());
 
@@ -177,7 +177,7 @@ public class AuthController {
     @PostMapping("/forgot-password")
     public ForgotPasswordResponse forgotPassword(@RequestBody @Valid ForgotPasswordRequest request,
                                                  HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.companyEmail()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.companyEmail());
 
         PasswordRecoveryService.RecoveryStart start = passwordRecoveryService.start(request.companyEmail());
 
@@ -192,7 +192,7 @@ public class AuthController {
     @PostMapping("/forgot-password/verify")
     public PasswordRecoveryVerifyResponse verifyPasswordRecovery(@RequestBody @Valid TotpCodeRequest request,
                                                                  HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.challengeId());
 
         PasswordRecoveryService.RecoveryToken token =
                 passwordRecoveryService.verifyCode(request.challengeId(), request.code());
@@ -205,7 +205,7 @@ public class AuthController {
      */
     @PostMapping("/forgot-password/reset")
     public void resetPassword(@RequestBody @Valid ResetPasswordRequest request, HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.resetToken()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.resetToken());
 
         passwordRecoveryService.resetPassword(request.resetToken(), request.newPassword(), request.confirmPassword());
     }
@@ -217,7 +217,7 @@ public class AuthController {
     @PostMapping("/complete-temporary-password")
     public void completeTemporaryPassword(@RequestBody @Valid CompleteTemporaryPasswordRequest request,
                                            HttpServletRequest httpRequest) {
-        loginRateLimiter.checkAndRecord(clientKey(httpRequest, request.challengeId()));
+        loginRateLimiter.checkAndRecord(httpRequest, request.challengeId());
 
         int userAccountId = loginChallengeService.resolveAndConsume(
                 request.challengeId(), ChallengePurpose.TEMPORARY_PASSWORD);
@@ -307,11 +307,6 @@ public class AuthController {
         authenticationService.completeLogin(account);
 
         return tokenIssuanceService.issueTokenPair(account.getUserAccountId(), account.getEmployeeId());
-    }
-
-    private String clientKey(HttpServletRequest request, String secondaryKey) {
-        String ip = request.getRemoteAddr();
-        return ip + "|" + (secondaryKey == null ? "" : secondaryKey.trim().toLowerCase());
     }
 
     private String maskEmail(String email) {

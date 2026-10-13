@@ -37,4 +37,9 @@ motorph:
       max-failed-password-attempts: ${MOTORPH_AUTH_MAX_FAILED_PASSWORD_ATTEMPTS:5}
     login-rate-limit:
       max-attempts: 10
+      max-attempts-per-ip: 60
       window-minutes: 1
+      max-entries: 10000
+    # Comma-separated addresses of reverse proxies whose X-Forwarded-For header is trusted. Empty means
+    # the header is ignored and the connection address is used.
+    trusted-proxies: ${MOTORPH_TRUSTED_PROXIES:}

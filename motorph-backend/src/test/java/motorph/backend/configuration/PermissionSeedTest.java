@@ -28,6 +28,11 @@ class PermissionSeedTest {
     private static final Path DATABASE_DIR = Paths.get("..", "database");
     private static final Path DUMP = DATABASE_DIR.resolve("payrollsystem_db.sql");
     private static final Path MIGRATION = DATABASE_DIR.resolve("sql_scripts").resolve("support_ticket_permissions.sql");
+    private static final Path PAYSLIP_MIGRATION =
+            DATABASE_DIR.resolve("sql_scripts").resolve("payslip_view_all_permission.sql");
+
+    private static final Set<String> ROLES_WITH_VIEW_ALL_PAYSLIPS = Set.of("ADMIN", "FINANCE", "HR");
+    private static final Set<String> ALL_ROLES = Set.of("ADMIN", "HR", "FINANCE", "IT", "EMPLOYEE");
 
     private static final Map<String, Set<PermissionKey>> EXPECTED_TICKET_GRANTS = Map.of(
             "ADMIN", Set.of(PermissionKey.VIEW_TICKETS, PermissionKey.RESOLVE_TICKETS,
@@ -90,6 +95,58 @@ class PermissionSeedTest {
                 .doesNotContain("UPDATE ")
                 .doesNotContain("REPLACE ");
         assertThat(statements).contains("NOT EXISTS");
+    }
+
+    @Test
+    @DisplayName("The database dump grants VIEW_ALL_PAYSLIPS to Admin, Finance and HR only")
+    void dumpGrantsViewAllPayslipsOnlyToAdminFinanceAndHr() throws IOException {
+        String dump = read(DUMP);
+        Map<String, Integer> idsByKey = permissionIds(dump);
+        Map<String, Integer> roleIds = roleIds(dump);
+        Set<String> grants = rolePermissionPairs(dump);
+
+        for (String role : ALL_ROLES) {
+            boolean granted = grants.contains(roleIds.get(role) + ":" + idsByKey.get(PermissionKey.VIEW_ALL_PAYSLIPS.name()));
+
+            assertThat(granted)
+                    .describedAs("%s granted VIEW_ALL_PAYSLIPS", role)
+                    .isEqualTo(ROLES_WITH_VIEW_ALL_PAYSLIPS.contains(role));
+        }
+    }
+
+    @Test
+    @DisplayName("The database dump still grants VIEW_PAYSLIP to every role, so everyone sees their own payslips")
+    void dumpGrantsViewPayslipToEveryRole() throws IOException {
+        String dump = read(DUMP);
+        Map<String, Integer> idsByKey = permissionIds(dump);
+        Map<String, Integer> roleIds = roleIds(dump);
+        Set<String> grants = rolePermissionPairs(dump);
+
+        for (String role : ALL_ROLES) {
+            assertThat(grants)
+                    .describedAs("%s granted VIEW_PAYSLIP", role)
+                    .contains(roleIds.get(role) + ":" + idsByKey.get(PermissionKey.VIEW_PAYSLIP.name()));
+        }
+    }
+
+    @Test
+    @DisplayName("The payslip migration only adds VIEW_ALL_PAYSLIPS and grants it to Admin, Finance and HR, and can be rerun")
+    void payslipMigrationIsAdditiveIdempotentAndScopedToAdminFinanceAndHr() throws IOException {
+        String migration = read(PAYSLIP_MIGRATION);
+        String statements = migration.replaceAll("(?m)^--.*$", "").toUpperCase();
+
+        assertThat(migration)
+                .contains("'VIEW_ALL_PAYSLIPS'")
+                .contains("IN ('ADMIN', 'FINANCE', 'HR')")
+                .doesNotContain("'IT'")
+                .doesNotContain("'EMPLOYEE'");
+        assertThat(statements)
+                .doesNotContain("DELETE ")
+                .doesNotContain("DROP ")
+                .doesNotContain("TRUNCATE ")
+                .doesNotContain("UPDATE ")
+                .doesNotContain("REPLACE ");
+        assertThat(statements.split("NOT EXISTS", -1).length - 1).isEqualTo(2);
     }
 
     private static String read(Path path) throws IOException {

@@ -12,6 +12,7 @@ import motorph.backend.exception.BusinessRuleException;
 import motorph.backend.exception.EntityNotFoundException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
+import motorph.backend.repository.TokenRevocationRepository;
 import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.PasswordHasher;
@@ -20,6 +21,7 @@ import motorph.backend.security.PasswordPolicy;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +64,8 @@ public class UserAccountService {
     private final EmployeeCredentialsDeliveryService credentialsDeliveryService;
     private final UserAccessLogService userAccessLogService;
     private final TotpCredentialRepository totpCredentialRepository;
+    private final TokenRevocationRepository tokenRevocationRepository;
+    private final Clock clock;
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -70,13 +74,17 @@ public class UserAccountService {
             EmployeeRepository employeeRepository,
             EmployeeCredentialsDeliveryService credentialsDeliveryService,
             UserAccessLogService userAccessLogService,
-            TotpCredentialRepository totpCredentialRepository) {
+            TotpCredentialRepository totpCredentialRepository,
+            TokenRevocationRepository tokenRevocationRepository,
+            Clock clock) {
 
         this.userAccountRepository = userAccountRepository;
         this.employeeRepository = employeeRepository;
         this.credentialsDeliveryService = credentialsDeliveryService;
         this.userAccessLogService = userAccessLogService;
         this.totpCredentialRepository = totpCredentialRepository;
+        this.tokenRevocationRepository = tokenRevocationRepository;
+        this.clock = clock;
     }
 
     /**
@@ -218,7 +226,7 @@ public class UserAccountService {
     }
 
     /**
-     * Locks an account and prevents the user from signing in until it is unlocked.
+     * Locks an account and signs the user out everywhere. Sessions stay revoked after an unlock.
      */
     public void lockAccount(
             int actorUserAccountId,
@@ -227,7 +235,10 @@ public class UserAccountService {
         changeStatus(
                 actorUserAccountId,
                 userAccountId,
-                id -> userAccountRepository.updateLockStatus(id, true));
+                id -> {
+                    userAccountRepository.updateLockStatus(id, true);
+                    revokeSessions(id);
+                });
     }
 
     /**
@@ -257,7 +268,8 @@ public class UserAccountService {
     }
 
     /**
-     * Disables a user account.
+     * Disables a user account and signs the user out everywhere. Sessions stay revoked after the
+     * account is enabled again.
      */
     public void disableAccount(
             int actorUserAccountId,
@@ -266,7 +278,10 @@ public class UserAccountService {
         changeStatus(
                 actorUserAccountId,
                 userAccountId,
-                id -> userAccountRepository.updateActiveStatus(id, false));
+                id -> {
+                    userAccountRepository.updateActiveStatus(id, false);
+                    revokeSessions(id);
+                });
     }
 
     /**
@@ -486,6 +501,10 @@ public class UserAccountService {
                 before.getAccountStatus().name(),
                 after.getAccountStatus().name()
         );
+    }
+
+    private void revokeSessions(int userAccountId) {
+        tokenRevocationRepository.revokeAllSessions(userAccountId, LocalDateTime.now(clock));
     }
 
     /**

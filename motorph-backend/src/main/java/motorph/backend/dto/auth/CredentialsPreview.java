@@ -12,4 +12,8 @@ public record CredentialsPreview(
         String companyEmail,
         String temporaryPassword
 ) {
+    @Override
+    public String toString() {
+        return "CredentialsPreview[companyEmail=" + companyEmail + ", temporaryPassword=***, body=***]";
+    }
 }

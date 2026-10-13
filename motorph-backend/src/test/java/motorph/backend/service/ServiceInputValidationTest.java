@@ -6,6 +6,7 @@ import motorph.backend.exception.AuthenticationException;
 import motorph.backend.exception.ValidationException;
 import motorph.backend.repository.EmployeeRepository;
 import motorph.backend.repository.SupportTicketRepository;
+import motorph.backend.repository.TokenRevocationRepository;
 import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.TotpSecretCipher;
@@ -62,9 +63,11 @@ class ServiceInputValidationTest {
 
         userAccountService = new UserAccountService(
                 userAccountRepository, mock(EmployeeRepository.class),
-                mock(EmployeeCredentialsDeliveryService.class), userAccessLogService, totpCredentialRepository);
+                mock(EmployeeCredentialsDeliveryService.class), userAccessLogService, totpCredentialRepository,
+                mock(TokenRevocationRepository.class), Clock.systemUTC());
         authenticationService = new AuthenticationService(
-                userAccountRepository, totpCredentialRepository, userAccessLogService);
+                userAccountRepository, totpCredentialRepository, userAccessLogService,
+                mock(TokenRevocationRepository.class), Clock.systemUTC());
         loginChallengeService = mock(LoginChallengeService.class);
         totpService = new TotpService(
                 loginChallengeService, authenticationService, totpCredentialRepository, mock(TotpSecretCipher.class),

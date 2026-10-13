@@ -4,6 +4,7 @@ import motorph.backend.domain.TotpCredential;
 import motorph.backend.domain.UserAccount;
 import motorph.backend.domain.value.Role;
 import motorph.backend.exception.AuthenticationException;
+import motorph.backend.repository.TokenRevocationRepository;
 import motorph.backend.repository.TotpCredentialRepository;
 import motorph.backend.repository.UserAccountRepository;
 import motorph.backend.security.PasswordHasher;
@@ -15,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -23,7 +23,9 @@ import org.mockito.quality.Strictness;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.List;
 
@@ -31,6 +33,7 @@ import static motorph.backend.repository.UserAccountRepository.FailedPasswordAtt
 import static motorph.backend.repository.UserAccountRepository.FailedPasswordAttemptResult.LOCK_APPLIED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,14 +57,18 @@ class AuthenticationServiceTest {
     @Mock private UserAccountRepository userAccountRepository;
     @Mock private TotpCredentialRepository totpCredentialRepository;
     @Mock private UserAccessLogService userAccessLogService;
+    @Mock private TokenRevocationRepository tokenRevocationRepository;
 
-    @InjectMocks private AuthenticationService authenticationService;
+    private final MutableClock clock = new MutableClock(Instant.parse("2026-10-13T08:00:00Z"));
+    private AuthenticationService authenticationService;
 
     private String salt;
     private String hash;
 
     @BeforeEach
     void setUp() {
+        authenticationService = new AuthenticationService(userAccountRepository, totpCredentialRepository,
+                userAccessLogService, tokenRevocationRepository, clock);
         salt = PasswordHasher.generateSalt();
         hash = PasswordHasher.hash(PASSWORD, salt);
         when(userAccountRepository.resetFailedPasswordAttempts(ACCOUNT_ID)).thenReturn(true);
@@ -135,6 +142,31 @@ class AuthenticationServiceTest {
                 });
 
         verify(userAccessLogService).logAutomaticAccountLock(ACCOUNT_ID);
+    }
+
+    @Test
+    @DisplayName("An automatic lock signs the user out everywhere")
+    void automaticLockRevokesAllSessions() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+        when(userAccountRepository.recordFailedPasswordAttempt(ACCOUNT_ID, 5)).thenReturn(LOCK_APPLIED);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassw0rd"))
+                .isInstanceOf(AuthenticationException.class);
+
+        verify(tokenRevocationRepository).revokeAllSessions(
+                ACCOUNT_ID, LocalDateTime.ofInstant(clock.instant(), ZoneId.systemDefault()));
+    }
+
+    @Test
+    @DisplayName("A failed attempt below the threshold revokes nothing")
+    void failedAttemptWithoutLockRevokesNothing() {
+        when(userAccountRepository.findByCompanyEmail(EMAIL)).thenReturn(account(false, false));
+        when(userAccountRepository.recordFailedPasswordAttempt(ACCOUNT_ID, 5)).thenReturn(ATTEMPT_RECORDED);
+
+        assertThatThrownBy(() -> authenticationService.authenticate(EMAIL, "WrongPassw0rd"))
+                .isInstanceOf(AuthenticationException.class);
+
+        verify(tokenRevocationRepository, never()).revokeAllSessions(anyInt(), any());
     }
 
     @ParameterizedTest(name = "A persistently locked account rejects password: {0}")
